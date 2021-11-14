@@ -30,7 +30,7 @@ impl<'ctx> CstConverter<'ctx> {
     fn emit_error(
         &self,
         error_type: ErrorKind,
-        labels: impl Iterator<Item = Label<FileId>>,
+        labels: impl IntoIterator<Item = Label<FileId>>,
         msg: Option<&str>,
     ) {
         self.ctx.emit_error(error_type, labels, msg);
@@ -250,23 +250,23 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some((namespace_span, _)) = self.schema.namespace {
             self.emit_error(
                 ErrorKind::FILE_ORDER,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, namespace_span)
                         .with_message("namespace was here"),
                     Label::secondary(self.schema.file_id, self.current_span)
                         .with_message("include was here"),
-                ]),
+                ],
                 Some("Cannot have includes after the namespace has been set"),
             );
         } else if let Some((_, type_declaration)) = self.schema.type_declarations.first() {
             self.emit_error(
                 ErrorKind::FILE_ORDER,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, type_declaration.full_span)
                         .with_message("type declaration was here"),
                     Label::secondary(self.schema.file_id, self.current_span)
                         .with_message("include was here"),
-                ]),
+                ],
                 Some("Cannot have includes after the first type declaration"),
             );
         }
@@ -276,23 +276,23 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some((namespace_span, _)) = self.schema.namespace {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, namespace_span)
                         .with_message("first declaration was here"),
                     Label::secondary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),
-                ]),
+                ],
                 Some("Cannot set namespace twice"),
             );
         } else if let Some((_, type_declaration)) = self.schema.type_declarations.first() {
             self.emit_error(
                 ErrorKind::FILE_ORDER,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, type_declaration.full_span)
                         .with_message("type declaration was here"),
                     Label::secondary(self.schema.file_id, self.current_span)
                         .with_message("namespace declaration was here"),
-                ]),
+                ],
                 Some("Cannot have namespace declaration after the first type declaration"),
             );
         }
@@ -302,12 +302,12 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some((root_type_span, _)) = self.schema.root_type {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, root_type_span)
                         .with_message("first declaration was here"),
                     Label::secondary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),
-                ]),
+                ],
                 Some("Cannot set root_type twice"),
             );
         }
@@ -317,12 +317,12 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some((file_extension_span, _)) = self.schema.file_extension {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, file_extension_span)
                         .with_message("first declaration was here"),
                     Label::primary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),
-                ]),
+                ],
                 Some("Cannot set file_extension twice"),
             );
         }
@@ -332,12 +332,12 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some((file_identifier_span, _)) = self.schema.file_identifier {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
-                std::array::IntoIter::new([
+                [
                     Label::secondary(self.schema.file_id, file_identifier_span)
                         .with_message("first declaration was here"),
                     Label::primary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),
-                ]),
+                ],
                 Some("Cannot set file_identifier twice"),
             );
         }
@@ -429,12 +429,12 @@ impl<'ctx> CstConverter<'ctx> {
                         let span = entry.get().full_span;
                         self_.emit_error(
                             ErrorKind::TYPE_DEFINED_TWICE,
-                            std::array::IntoIter::new([
+                            [
                                 Label::secondary(self_.schema.file_id, span)
                                     .with_message("first definition was here"),
                                 Label::secondary(self_.schema.file_id, self_.current_span)
                                     .with_message("second definition was here"),
-                            ]),
+                            ],
                             Some(&format!(
                                 "cannot define type {} twice",
                                 self_.ctx.resolve_identifier(declaration.identifier.value)
@@ -483,12 +483,12 @@ impl<'ctx> CstConverter<'ctx> {
                         let span = entry.get().span;
                         self_.emit_error(
                             ErrorKind::FIELD_DEFINED_TWICE,
-                            std::array::IntoIter::new([
+                            [
                                 Label::secondary(self_.schema.file_id, span)
                                     .with_message("first field was here"),
                                 Label::secondary(self_.schema.file_id, self_.current_span)
                                     .with_message("second field was here"),
-                            ]),
+                            ],
                             Some(&format!(
                                 "cannot define field {} twice",
                                 self_.ctx.resolve_identifier(identifier.value)
@@ -524,12 +524,12 @@ impl<'ctx> CstConverter<'ctx> {
                         let span = entry.get().span;
                         self_.emit_error(
                             ErrorKind::FIELD_DEFINED_TWICE,
-                            std::array::IntoIter::new([
+                            [
                                 Label::secondary(self_.schema.file_id, span)
                                     .with_message("first field was here"),
                                 Label::secondary(self_.schema.file_id, self_.current_span)
                                     .with_message("second field was here"),
-                            ]),
+                            ],
                             Some(&format!(
                                 "cannot define field {} twice",
                                 self_.ctx.resolve_identifier(identifier.value)
@@ -582,12 +582,12 @@ impl<'ctx> CstConverter<'ctx> {
                         let span = entry.get().span;
                         self_.emit_error(
                             ErrorKind::FIELD_DEFINED_TWICE,
-                            std::array::IntoIter::new([
+                            [
                                 Label::secondary(self_.schema.file_id, span)
                                     .with_message("first variant was here"),
                                 Label::secondary(self_.schema.file_id, self_.current_span)
                                     .with_message("second variant was here"),
-                            ]),
+                            ],
                             Some(&format!(
                                 "cannot define variant {} twice",
                                 self_.ctx.resolve_identifier(identifier.value)
@@ -648,12 +648,12 @@ impl<'ctx> CstConverter<'ctx> {
                         if let Some(ident) = variant.ident {
                             self_.emit_error(
                                 ErrorKind::FIELD_DEFINED_TWICE,
-                                std::array::IntoIter::new([
+                                [
                                     Label::secondary(self_.schema.file_id, span)
                                         .with_message("first variant was here"),
                                     Label::secondary(self_.schema.file_id, self_.current_span)
                                         .with_message("second variant was here"),
-                                ]),
+                                ],
                                 Some(&format!(
                                     "cannot define union variant with name {} twice",
                                     self_.ctx.resolve_identifier(ident.value)
@@ -662,12 +662,12 @@ impl<'ctx> CstConverter<'ctx> {
                         } else {
                             self_.emit_error(
                                 ErrorKind::FIELD_DEFINED_TWICE,
-                                std::array::IntoIter::new([
+                                [
                                     Label::secondary(self_.schema.file_id, span)
                                         .with_message("first variant was here"),
                                     Label::secondary(self_.schema.file_id, self_.current_span)
                                         .with_message("second variant was here"),
-                                ]),
+                                ],
                                 Some(&format!(
                                     "cannot define union variant with type {} twice",
                                     variant.type_.to_string(self_.ctx),
@@ -717,12 +717,12 @@ impl<'ctx> CstConverter<'ctx> {
                         let span = entry.get().span;
                         self_.emit_error(
                             ErrorKind::FIELD_DEFINED_TWICE,
-                            std::array::IntoIter::new([
+                            [
                                 Label::secondary(self_.schema.file_id, span)
                                     .with_message("first method was here"),
                                 Label::secondary(self_.schema.file_id, self_.current_span)
                                     .with_message("second method was here"),
-                            ]),
+                            ],
                             Some(&format!(
                                 "cannot define rpc method {} twice",
                                 self_.ctx.resolve_identifier(identifier.value)

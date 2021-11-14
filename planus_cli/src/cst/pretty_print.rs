@@ -239,15 +239,13 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 if decl.fields.is_empty() {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([
-                            &decl.start_brace.token_metadata,
-                            &decl.end_brace.token_metadata,
-                        ]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([
+                                &decl.start_brace.token_metadata,
+                                &decl.end_brace.token_metadata,
+                            ]),
                     )?;
                     self.write_str("table ")?;
                     self.write_str(decl.ident.ident)?;
@@ -257,12 +255,10 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 } else {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([&decl.start_brace.token_metadata]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([&decl.start_brace.token_metadata]),
                     )?;
                     self.write_str("table ")?;
                     self.write_str(decl.ident.ident)?;
@@ -282,15 +278,13 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 if decl.fields.is_empty() {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([
-                            &decl.start_brace.token_metadata,
-                            &decl.end_brace.token_metadata,
-                        ]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([
+                                &decl.start_brace.token_metadata,
+                                &decl.end_brace.token_metadata,
+                            ]),
                     )?;
                     self.write_str("struct ")?;
                     self.write_str(decl.ident.ident)?;
@@ -300,12 +294,10 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 } else {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([&decl.start_brace.token_metadata]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([&decl.start_brace.token_metadata]),
                     )?;
                     self.write_str("struct ")?;
                     self.write_str(decl.ident.ident)?;
@@ -325,11 +317,12 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 if decl.declarations.is_empty() {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
+                        [
                             &decl.keyword.token_metadata,
                             &decl.ident.token_metadata,
                             &decl.colon.token_metadata,
-                        ])
+                        ]
+                        .into_iter()
                         .chain(decl.type_.kind.token_metas())
                         .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
                         .chain([
@@ -347,11 +340,12 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 } else {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
+                        [
                             &decl.keyword.token_metadata,
                             &decl.ident.token_metadata,
                             &decl.colon.token_metadata,
-                        ])
+                        ]
+                        .into_iter()
                         .chain(decl.type_.kind.token_metas())
                         .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
                         .chain([&decl.start_brace.token_metadata]),
@@ -376,15 +370,13 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 if decl.declarations.is_empty() {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([
-                            &decl.start_brace.token_metadata,
-                            &decl.end_brace.token_metadata,
-                        ]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([
+                                &decl.start_brace.token_metadata,
+                                &decl.end_brace.token_metadata,
+                            ]),
                     )?;
                     self.write_str("union ")?;
                     self.write_str(decl.ident.ident)?;
@@ -394,12 +386,10 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 } else {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        std::array::IntoIter::new([
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                        ])
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([&decl.start_brace.token_metadata]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([&decl.start_brace.token_metadata]),
                     )?;
                     self.write_str("union ")?;
                     self.write_str(decl.ident.ident)?;
@@ -497,7 +487,8 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
     fn write_field_decl(&mut self, decl: &FieldDeclaration<'_>) -> Result<(), std::fmt::Error> {
         let saved_post_comment = self.write_token_metas(
             true,
-            std::array::IntoIter::new([&decl.ident.token_metadata, &decl.colon.token_metadata])
+            [&decl.ident.token_metadata, &decl.colon.token_metadata]
+                .into_iter()
                 .chain(decl.type_.kind.token_metas())
                 .chain(decl.assignment.iter().flat_map(|(equals, expr)| {
                     std::iter::once(&equals.token_metadata).chain(expr.kind.token_metas())
@@ -573,19 +564,17 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
     fn write_rpc_method(&mut self, decl: &RpcMethod<'_>) -> Result<(), std::fmt::Error> {
         let saved_post_comment = self.write_token_metas(
             true,
-            std::array::IntoIter::new([
-                &decl.ident.token_metadata,
-                &decl.start_paren.token_metadata,
-            ])
-            .chain(decl.argument_type.kind.token_metas())
-            .chain([&decl.end_paren.token_metadata, &decl.colon.token_metadata])
-            .chain(decl.return_type.kind.token_metas())
-            .chain(
-                decl.metadata
-                    .iter()
-                    .flat_map(|metadata| metadata.token_metas()),
-            )
-            .chain([&decl.semicolon.token_metadata]),
+            [&decl.ident.token_metadata, &decl.start_paren.token_metadata]
+                .into_iter()
+                .chain(decl.argument_type.kind.token_metas())
+                .chain([&decl.end_paren.token_metadata, &decl.colon.token_metadata])
+                .chain(decl.return_type.kind.token_metas())
+                .chain(
+                    decl.metadata
+                        .iter()
+                        .flat_map(|metadata| metadata.token_metas()),
+                )
+                .chain([&decl.semicolon.token_metadata]),
         )?;
         self.write_str(INDENT_STRING)?;
         self.write_str(decl.ident.ident)?;

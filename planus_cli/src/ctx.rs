@@ -95,14 +95,14 @@ impl Ctx {
     fn emit(
         &self,
         severity: Severity,
-        labels: impl Iterator<Item = Label<FileId>>,
+        labels: impl IntoIterator<Item = Label<FileId>>,
         msg: Option<&str>,
     ) {
         let mut diagnostic = Diagnostic::new(severity);
         if let Some(msg) = msg {
             diagnostic = diagnostic.with_message(msg);
         }
-        let labels = labels.collect::<Vec<_>>();
+        let labels = labels.into_iter().collect::<Vec<_>>();
         if !labels.is_empty() {
             diagnostic = diagnostic.with_labels(labels);
         }
@@ -118,22 +118,22 @@ impl Ctx {
     pub fn emit_error(
         &self,
         error_type: ErrorKind,
-        labels: impl Iterator<Item = Label<FileId>>,
+        labels: impl IntoIterator<Item = Label<FileId>>,
         msg: Option<&str>,
     ) {
         self.emit(Severity::Error, labels, msg);
         self.errors_seen.set(self.errors_seen.get() | error_type);
     }
 
-    pub fn emit_warning(&self, labels: impl Iterator<Item = Label<FileId>>, msg: Option<&str>) {
+    pub fn emit_warning(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
         self.emit(Severity::Warning, labels, msg)
     }
 
-    pub fn emit_note(&self, labels: impl Iterator<Item = Label<FileId>>, msg: Option<&str>) {
+    pub fn emit_note(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
         self.emit(Severity::Note, labels, msg)
     }
 
-    pub fn emit_bug(&self, labels: impl Iterator<Item = Label<FileId>>, msg: Option<&str>) {
+    pub fn emit_bug(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
         self.emit(Severity::Bug, labels, msg)
     }
 

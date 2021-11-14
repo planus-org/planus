@@ -69,12 +69,12 @@ impl<'a> Translator<'a> {
                 Entry::Occupied(entry) => {
                     self.ctx.emit_error(
                         ErrorKind::TYPE_DEFINED_TWICE,
-                        std::array::IntoIter::new([
+                        [
                             Label::secondary(entry.get().file_id, entry.get().definition_span)
                                 .with_message("first definition was here"),
                             Label::secondary(schema.file_id, decl.definition_span)
                                 .with_message("second definition was here"),
-                        ]),
+                        ],
                         Some("Overlapping declarations"),
                     );
                     continue;
@@ -142,12 +142,12 @@ impl<'a> Translator<'a> {
                     TypeDescription::RpcService => {
                         self.ctx.emit_error(
                             ErrorKind::TYPE_ERROR,
-                            std::array::IntoIter::new([
+                            [
                                 Label::primary(current_file_id, namespace_path.span)
                                     .with_message("Rpc services cannot be used as types"),
                                 Label::secondary(decl.file_id, decl.definition_span)
                                     .with_message("Service was defined here"),
-                            ]),
+                            ],
                             Some(&format!("Cannot use the RpcService {} in a type", path)),
                         );
                         return None;
