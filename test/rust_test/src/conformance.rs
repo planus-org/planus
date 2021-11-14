@@ -37,14 +37,7 @@ mod tests {
         let foo: &[Offset<MyTable3>] = &[MyTable3::create(&mut buffer, 4)];
         let w = MyTable3::create(&mut buffer, 1337);
         let w = HelloUnion::create_y(&mut buffer, w);
-        let offset = MyTable::create(
-            &mut buffer,
-            3,
-            true,
-            MyEnumse::Banaaaaaaaan,
-            &foo[..],
-            Some(w),
-        );
+        let offset = MyTable::create(&mut buffer, 3, true, MyEnumse::Banaaaaaaaan, foo, Some(w));
         let offset = MyTable2::create(
             &mut buffer,
             1,
