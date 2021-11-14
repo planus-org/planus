@@ -362,15 +362,21 @@ impl<'a> Translator<'a> {
             .filter_map(|(ident, field)| {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &field.type_)?;
-                let assignment = field.assignment.as_ref().and_then(|assignment| {
-                    self.translate_literal(current_namespace, current_file_id, assignment, &type_)
-                });
+                if let Some(assignment) = &field.assignment {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        std::iter::once(
+                            Label::primary(current_file_id, assignment.span)
+                                .with_message("Struct fields cannot have default values"),
+                        ),
+                        None,
+                    )
+                }
                 match type_.kind {
                     TypeKind::SimpleType(type_) => Some((
                         self.ctx.resolve_identifier(*ident),
                         StructField {
                             type_,
-                            assignment,
                             offset: u32::MAX,
                             size: u32::MAX,
                         },

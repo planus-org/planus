@@ -192,7 +192,6 @@ pub struct Struct {
 #[derive(Debug)]
 pub struct StructField {
     pub type_: SimpleType,
-    pub assignment: Option<Literal>,
     pub offset: u32,
     pub size: u32,
 }
