@@ -138,10 +138,8 @@ impl<'input> Lexer<'input> {
                 }
                 Some(Token::Comment(c)) => {
                     if token_begins_paragraph && !self.current_comment_block.0.is_empty() {
-                        self.pre_comment_blocks.push(std::mem::replace(
-                            &mut self.current_comment_block,
-                            CommentBlock::default(),
-                        ));
+                        self.pre_comment_blocks
+                            .push(std::mem::take(&mut self.current_comment_block));
                     }
 
                     self.current_comment_block.0.push(Comment {
@@ -174,18 +172,16 @@ impl<'input> Lexer<'input> {
     }
 
     fn next_post_comment(&mut self) -> Option<Comment<'input>> {
-        loop {
-            return match self.next_raw_token()? {
-                Token::Comment(c) => Some(Comment {
-                    span: self.span(),
-                    kind: c.kind,
-                    content: c.content,
-                }),
-                token => {
-                    self.saved_token = Some(token);
-                    None
-                }
-            };
+        match self.next_raw_token()? {
+            Token::Comment(c) => Some(Comment {
+                span: self.span(),
+                kind: c.kind,
+                content: c.content,
+            }),
+            token => {
+                self.saved_token = Some(token);
+                None
+            }
         }
     }
 }
@@ -196,13 +192,9 @@ impl<'input> Iterator for Lexer<'input> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.next_token()? {
             Ok((span, token_begins_paragraph, token)) => {
-                let mut pre_comment_blocks =
-                    std::mem::replace(&mut self.pre_comment_blocks, Vec::new());
+                let mut pre_comment_blocks = std::mem::take(&mut self.pre_comment_blocks);
                 if !self.current_comment_block.0.is_empty() {
-                    pre_comment_blocks.push(std::mem::replace(
-                        &mut self.current_comment_block,
-                        CommentBlock::default(),
-                    ));
+                    pre_comment_blocks.push(std::mem::take(&mut self.current_comment_block));
                 }
                 let metadata = TokenMetadata {
                     pre_comment_blocks,

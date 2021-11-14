@@ -80,9 +80,9 @@ impl<'a> Into<NamespaceIndex> for &'a NamespaceIndex {
     }
 }
 
-impl<'a, 'b> Into<NamespaceIndex> for &'b &'a NamespaceIndex {
-    fn into(self) -> NamespaceIndex {
-        **self
+impl<'a, 'b> From<&'b &'a NamespaceIndex> for NamespaceIndex {
+    fn from(namespace: &'b &'a NamespaceIndex) -> NamespaceIndex {
+        **namespace
     }
 }
 

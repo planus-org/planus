@@ -65,8 +65,12 @@ impl<'buf> BufferWithStartOffset<'buf> {
         self.buffer.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn as_slice(&self) -> &'buf [u8] {
-        &self.buffer
+        self.buffer
     }
 
     pub fn advance(&self, amount: usize) -> std::result::Result<Self, errors::ErrorKind> {
@@ -228,25 +232,25 @@ impl<T: ?Sized> WriteAsOptionalUnion<T> for UnionOffset<T> {
 
 impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
     fn prepare(&self, buffer: &mut Buffer) -> P {
-        T::prepare(&self, buffer)
+        T::prepare(self, buffer)
     }
 }
 
 impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'a T {
     fn prepare(&self, buffer: &mut Buffer) -> Option<P> {
-        T::prepare(&self, buffer)
+        T::prepare(self, buffer)
     }
 }
 
 impl<'a, T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for &'a T2 {
     fn prepare(&self, buffer: &mut Buffer) -> UnionOffset<T1> {
-        T2::prepare(&self, buffer)
+        T2::prepare(self, buffer)
     }
 }
 
 impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for &'a T2 {
     fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
-        T2::prepare(&self, buffer)
+        T2::prepare(self, buffer)
     }
 }
 
@@ -472,10 +476,10 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
     }
 }
 
-fn array_from_buffer<'buf>(
-    buffer: BufferWithStartOffset<'buf>,
+fn array_from_buffer(
+    buffer: BufferWithStartOffset<'_>,
     offset: usize,
-) -> std::result::Result<(BufferWithStartOffset<'buf>, usize), ErrorKind> {
+) -> std::result::Result<(BufferWithStartOffset<'_>, usize), ErrorKind> {
     let value: u32 = TableRead::from_buffer(buffer, offset)?;
     let vector_offset = offset
         .checked_add(value as usize)
@@ -589,7 +593,7 @@ where
     T: VectorWrite<P>,
 {
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
-        <[T] as WriteAs<Offset<[P]>>>::prepare(&self, buffer)
+        <[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer)
     }
 }
 
@@ -599,7 +603,7 @@ where
     T: VectorWrite<P>,
 {
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
-        Some(<[T] as WriteAs<Offset<[P]>>>::prepare(&self, buffer))
+        Some(<[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer))
     }
 }
 
@@ -640,10 +644,7 @@ impl<'buf> TableRead<'buf> for &'buf [u8] {
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
-        Ok(buffer
-            .as_slice()
-            .get(..len)
-            .ok_or(ErrorKind::InvalidLength)?)
+        buffer.as_slice().get(..len).ok_or(ErrorKind::InvalidLength)
     }
 }
 

@@ -103,7 +103,7 @@ impl<'ctx> CstConverter<'ctx> {
 
                 values.map(LiteralKind::List)
             }
-            cst::ExprKind::Signed { sign, inner } => match self.convert_expr(&inner)?.kind {
+            cst::ExprKind::Signed { sign, inner } => match self.convert_expr(inner)?.kind {
                 LiteralKind::Integer { is_negative, value } => {
                     let is_negative = is_negative ^ sign.is_negative;
                     Some(LiteralKind::Integer { is_negative, value })
@@ -112,18 +112,13 @@ impl<'ctx> CstConverter<'ctx> {
                     let is_negative = is_negative ^ sign.is_negative;
                     Some(LiteralKind::Float { is_negative, value })
                 }
-                LiteralKind::Bool(_) => self.emit_simple_error(
-                    ErrorKind::TYPE_ERROR,
-                    &format!("Cannot use prefix sign on booleans"),
-                ),
-                LiteralKind::String(_) => self.emit_simple_error(
-                    ErrorKind::TYPE_ERROR,
-                    &format!("Cannot use prefix sign on strings"),
-                ),
-                LiteralKind::List(_) => self.emit_simple_error(
-                    ErrorKind::TYPE_ERROR,
-                    &format!("Cannot use prefix sign on lists"),
-                ),
+                LiteralKind::Bool(_) => self
+                    .emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on booleans"),
+                LiteralKind::String(_) => self
+                    .emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on strings"),
+                LiteralKind::List(_) => {
+                    self.emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on lists")
+                }
             },
         }
     }
@@ -242,9 +237,9 @@ impl<'ctx> CstConverter<'ctx> {
     fn convert_namespace_path(&mut self, path: &cst::NamespacePath<'_>) -> NamespacePath {
         let mut parts = Vec::with_capacity(path.initial_segments.len() + 1);
         for segment in &path.initial_segments {
-            parts.push(self.ctx.intern(&segment.ident.ident));
+            parts.push(self.ctx.intern(segment.ident.ident));
         }
-        parts.push(self.ctx.intern(&path.final_segment.ident));
+        parts.push(self.ctx.intern(path.final_segment.ident));
         NamespacePath {
             span: path.span,
             parts,
@@ -564,7 +559,7 @@ impl<'ctx> CstConverter<'ctx> {
             assignment: field
                 .assignment
                 .as_ref()
-                .and_then(|(_eq, assignment)| self.convert_expr(&assignment)),
+                .and_then(|(_eq, assignment)| self.convert_expr(assignment)),
             metadata: self.convert_metadata(&field.metadata),
         }
     }
@@ -649,8 +644,8 @@ impl<'ctx> CstConverter<'ctx> {
                     .unwrap_or_else(|| UnionKey::Type(variant.type_.clone()));
                 match variants.entry(key) {
                     Entry::Occupied(entry) => {
+                        let span = entry.get().span;
                         if let Some(ident) = variant.ident {
-                            let span = entry.get().span;
                             self_.emit_error(
                                 ErrorKind::FIELD_DEFINED_TWICE,
                                 std::array::IntoIter::new([
@@ -665,7 +660,6 @@ impl<'ctx> CstConverter<'ctx> {
                                 )),
                             );
                         } else {
-                            let span = entry.get().span;
                             self_.emit_error(
                                 ErrorKind::FIELD_DEFINED_TWICE,
                                 std::array::IntoIter::new([
@@ -779,7 +773,7 @@ impl<'ctx> CstConverter<'ctx> {
         self.with_span(metadata_value.span, |self_| {
             let key = self_.convert_ident(&metadata_value.key);
             let value = if let Some((_equals, assignment)) = &metadata_value.assignment {
-                self_.convert_expr(&assignment)
+                self_.convert_expr(assignment)
             } else {
                 None
             };

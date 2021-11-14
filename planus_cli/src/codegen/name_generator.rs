@@ -39,7 +39,7 @@ impl ReservedNames {
         padding: char,
     ) -> Cow<'a, str> {
         if self.try_reserve(scope, binding_kind, &value) {
-            return value.into();
+            return value;
         }
 
         let mut value = format!("{}{}", value, padding);

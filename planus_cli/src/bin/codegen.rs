@@ -1,8 +1,5 @@
 use anyhow::Result;
-use planus_cli::{
-    ast_map::AstMap, codegen::generate_code, ctx::Ctx,
-    intermediate_language::translation::Translator,
-};
+use planus_cli::codegen::generate_code;
 
 #[derive(structopt::StructOpt)]
 struct Args {

@@ -284,9 +284,9 @@ fn owned_type(decl_infos: &[RustDeclInfo], type_: &Type, box_it: bool) -> Cow<'s
                 format!("self::{}", decl_infos[index.0].owned_type).into()
             }
         }
-        TypeKind::Vector(inner) => format!("Vec<{}>", owned_type(decl_infos, &inner, false)).into(),
+        TypeKind::Vector(inner) => format!("Vec<{}>", owned_type(decl_infos, inner, false)).into(),
         TypeKind::Array(inner, size) => {
-            format!("[{}; {}]", owned_type(decl_infos, &inner, false), size).into()
+            format!("[{}; {}]", owned_type(decl_infos, inner, false), size).into()
         }
         TypeKind::SimpleType(typ) => owned_simple_type(decl_infos, typ),
         TypeKind::String => "String".into(),

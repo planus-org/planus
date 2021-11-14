@@ -28,6 +28,10 @@ impl<K, V> SortedMap<K, V> {
         self.0.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.len() == 0
+    }
+
     pub fn capacity(&self) -> usize {
         self.0.capacity()
     }
@@ -215,6 +219,10 @@ impl<K> SortedSet<K> {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.len() == 0
     }
 
     pub fn capacity(&self) -> usize {

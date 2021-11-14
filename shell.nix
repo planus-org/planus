@@ -2,6 +2,7 @@
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
+    bacon
     flatbuffers
     cargo-make
   ];

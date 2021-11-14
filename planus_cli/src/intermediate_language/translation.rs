@@ -49,7 +49,7 @@ impl<'a> Translator<'a> {
 
     pub fn add_schema(&mut self, schema: &ast::Schema) {
         let mut namespace_path = if let Some((_span, path)) = &schema.namespace {
-            AbsolutePath::from_ctx(&self.ctx, &path.parts)
+            AbsolutePath::from_ctx(self.ctx, &path.parts)
         } else {
             AbsolutePath::ROOT_PATH
         };
@@ -121,7 +121,7 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         namespace_path: &NamespacePath,
     ) -> Option<TypeKind> {
-        let absolute_path = AbsolutePath::from_ctx(&self.ctx, &namespace_path.parts);
+        let absolute_path = AbsolutePath::from_ctx(self.ctx, &namespace_path.parts);
         let mut relative_path = current_namespace.clone();
         relative_path.0.extend(absolute_path.0.iter().cloned());
         let mut hints: Vec<Label<FileId>> = Vec::new();
@@ -279,10 +279,10 @@ impl<'a> Translator<'a> {
         match (&literal.kind, &type_.kind) {
             (LiteralKind::Bool(value), SimpleType(Bool)) => Some(Literal::Bool(*value)),
             (LiteralKind::Integer { is_negative, value }, SimpleType(Integer(type_))) => self
-                .translate_integer(literal.span, *is_negative, &value, &type_)
+                .translate_integer(literal.span, *is_negative, value, type_)
                 .map(Literal::Int),
             (LiteralKind::Float { is_negative, value }, SimpleType(Float(type_))) => self
-                .translate_float(literal.span, *is_negative, &value, &type_)
+                .translate_float(literal.span, *is_negative, value, type_)
                 .map(Literal::Float),
             (LiteralKind::String(s), String) => Some(Literal::String(s.clone())),
             (LiteralKind::List(literals), Vector(type_)) => {
@@ -344,7 +344,7 @@ impl<'a> Translator<'a> {
             }),
             ast::TypeKind::Path(path) => Some(Type {
                 span: type_.span,
-                kind: self.lookup_path(current_namespace, current_file_id, &path)?,
+                kind: self.lookup_path(current_namespace, current_file_id, path)?,
             }),
             ast::TypeKind::Invalid => None,
         }
@@ -363,7 +363,7 @@ impl<'a> Translator<'a> {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &field.type_)?;
                 let assignment = field.assignment.as_ref().and_then(|assignment| {
-                    self.translate_literal(current_namespace, current_file_id, &assignment, &type_)
+                    self.translate_literal(current_namespace, current_file_id, assignment, &type_)
                 });
                 match type_.kind {
                     TypeKind::SimpleType(type_) => Some((
@@ -444,7 +444,7 @@ impl<'a> Translator<'a> {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &field.type_)?;
                 let assignment = field.assignment.as_ref().and_then(|assignment| {
-                    self.translate_literal(current_namespace, current_file_id, &assignment, &type_)
+                    self.translate_literal(current_namespace, current_file_id, assignment, &type_)
                 });
                 let mut required = false;
                 let mut deprecated = false;
@@ -707,68 +707,61 @@ impl<'a> Translator<'a> {
     pub fn resolve_table_sizes(&mut self) {
         for decl in self.declarations.values_mut() {
             let mut max_size = 4u32;
-            match &mut decl.kind {
-                DeclarationKind::Table(decl) => {
-                    for field in decl.fields.values_mut() {
-                        let (value_size, tag_size, alignment) = match &field.type_.kind {
-                            TypeKind::Table(_) | TypeKind::Vector(_) | TypeKind::String => {
-                                (4, 0, 4)
-                            }
-                            TypeKind::Union(_) => (4, 1, 4),
-                            TypeKind::Array(_, _) => todo!(),
-                            TypeKind::SimpleType(SimpleType::Struct(index))
-                            | TypeKind::SimpleType(SimpleType::Enum(index)) => {
-                                match &self.descriptions[index.0] {
-                                    TypeDescription::Struct { size, alignment } => {
-                                        (*size, 0, *alignment)
-                                    }
-                                    TypeDescription::Enum { size, alignment } => {
-                                        (*size, 0, *alignment)
-                                    }
-                                    _ => panic!("BUG"),
+            if let DeclarationKind::Table(decl) = &mut decl.kind {
+                for field in decl.fields.values_mut() {
+                    let (value_size, tag_size, alignment) = match &field.type_.kind {
+                        TypeKind::Table(_) | TypeKind::Vector(_) | TypeKind::String => (4, 0, 4),
+                        TypeKind::Union(_) => (4, 1, 4),
+                        TypeKind::Array(_, _) => todo!(),
+                        TypeKind::SimpleType(SimpleType::Struct(index))
+                        | TypeKind::SimpleType(SimpleType::Enum(index)) => {
+                            match &self.descriptions[index.0] {
+                                TypeDescription::Struct { size, alignment } => {
+                                    (*size, 0, *alignment)
                                 }
+                                TypeDescription::Enum { size, alignment } => (*size, 0, *alignment),
+                                _ => panic!("BUG"),
                             }
-                            TypeKind::SimpleType(SimpleType::Bool)
-                            | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I8))
-                            | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U8)) => {
-                                (1, 0, 1)
-                            }
-                            TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I16))
-                            | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U16)) => {
-                                (2, 0, 2)
-                            }
-                            TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I32))
-                            | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U32))
-                            | TypeKind::SimpleType(SimpleType::Float(FloatType::F32)) => (4, 0, 4),
-                            TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I64))
-                            | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U64))
-                            | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 0, 8),
-                        };
-                        max_size = max_size.saturating_add(value_size + tag_size);
-                        field.object_value_size = value_size;
-                        field.object_tag_size = tag_size;
-                        field.object_alignment = alignment;
-                        field.object_alignment_mask = alignment - 1;
-                    }
-                    decl.max_size = max_size;
-                    let mut indices = (0..decl.fields.len()).collect::<Vec<_>>();
-                    indices.sort_by(|&i, &j| {
-                        std::cmp::Ord::cmp(
-                            &decl.fields[i].object_alignment,
-                            &decl.fields[j].object_alignment,
-                        )
-                        .reverse()
-                    });
-                    decl.alignment_order = indices;
+                        }
+                        TypeKind::SimpleType(SimpleType::Bool)
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I8))
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U8)) => {
+                            (1, 0, 1)
+                        }
+                        TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I16))
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U16)) => {
+                            (2, 0, 2)
+                        }
+                        TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I32))
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U32))
+                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F32)) => (4, 0, 4),
+                        TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I64))
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U64))
+                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 0, 8),
+                    };
+                    max_size = max_size.saturating_add(value_size + tag_size);
+                    field.object_value_size = value_size;
+                    field.object_tag_size = tag_size;
+                    field.object_alignment = alignment;
+                    field.object_alignment_mask = alignment - 1;
                 }
-                _ => (),
+                decl.max_size = max_size;
+                let mut indices = (0..decl.fields.len()).collect::<Vec<_>>();
+                indices.sort_by(|&i, &j| {
+                    std::cmp::Ord::cmp(
+                        &decl.fields[i].object_alignment,
+                        &decl.fields[j].object_alignment,
+                    )
+                    .reverse()
+                });
+                decl.alignment_order = indices;
             }
         }
     }
 
     pub fn finish(mut self) -> Declarations {
         for (path, decl) in &self.ast_declarations {
-            let decl = self.translate_decl(&path.clone_pop(), &decl);
+            let decl = self.translate_decl(&path.clone_pop(), decl);
             if let DeclarationKind::Enum(decl) = &decl.kind {
                 self.descriptions[self.declarations.len()] = TypeDescription::Enum {
                     size: decl.type_.byte_size(),
@@ -790,10 +783,7 @@ impl<'a> Translator<'a> {
 
 impl AbsolutePath {
     pub fn from_ctx(ctx: &Ctx, parts: &[ast::RawIdentifier]) -> Self {
-        let path = parts
-            .iter()
-            .map(|&s| String::from(ctx.resolve_identifier(s)))
-            .collect();
+        let path = parts.iter().map(|&s| ctx.resolve_identifier(s)).collect();
         Self(path)
     }
 

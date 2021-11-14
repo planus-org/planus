@@ -39,6 +39,12 @@ pub struct Buffer {
     missing_bytes: usize,
 }
 
+impl Default for Buffer {
+    fn default() -> Self {
+        Self::with_capacity(0)
+    }
+}
+
 impl Buffer {
     pub fn new() -> Self {
         Self::with_capacity(0)
@@ -46,6 +52,10 @@ impl Buffer {
 
     pub fn len(&self) -> usize {
         self.inner.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
@@ -78,7 +88,7 @@ impl Buffer {
         let delayed_bytes = self.delayed_bytes.wrapping_sub(size) & self.alignment_mask;
         let needed_padding = delayed_bytes & alignment_mask;
         self.delayed_bytes = delayed_bytes.wrapping_sub(needed_padding);
-        self.alignment_mask = self.alignment_mask | alignment_mask;
+        self.alignment_mask |= alignment_mask;
         self.inner.reserve(size.wrapping_add(needed_padding));
         // TODO: investigate if it makes sense to use an extend_with_zeros_unchecked for performance, given
         // that we know we have enough space

@@ -132,7 +132,7 @@ impl PartialEq for UnionKey {
 impl Eq for UnionKey {}
 impl std::hash::Hash for UnionKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        std::hash::Hash::hash(&std::mem::discriminant(&self), state);
+        std::hash::Hash::hash(&std::mem::discriminant(self), state);
         match self {
             UnionKey::Identifier(i) => i.hash(state),
             UnionKey::Type(t) => t.hash_unspanned(state),
@@ -206,7 +206,7 @@ impl TypeKind {
     where
         H: std::hash::Hasher,
     {
-        std::hash::Hash::hash(&std::mem::discriminant(&self), state);
+        std::hash::Hash::hash(&std::mem::discriminant(self), state);
         match self {
             TypeKind::Builtin(t) => std::hash::Hash::hash(t, state),
             TypeKind::Vector { inner_type } => inner_type.hash_unspanned(state),

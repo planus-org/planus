@@ -10,6 +10,7 @@ impl planus::Primitive for {{ info.owned_type }} {
     const SIZE: usize = {{ decl.size }};
 }
 
+#[allow(clippy::identity_op)]
 unsafe impl planus::WriteAsPrimitive<{{ info.owned_type }}> for {{ info.owned_type }} {
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
         {% for (info, f) in field_infos.iter().zip(decl.fields.values()) -%}

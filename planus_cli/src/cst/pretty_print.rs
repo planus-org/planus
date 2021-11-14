@@ -102,7 +102,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
         let mut token_metas = token_metas.into_iter();
         if let Some(mut cur) = token_metas.next() {
             let do_new_paragraph = cur.token_begins_paragraph;
-            while let Some(next) = token_metas.next() {
+            for next in token_metas {
                 self.write_token_meta(indent, true, cur)?;
                 cur = next;
             }
@@ -458,10 +458,10 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                     self.begin_new_paragraph()?;
                     let (mut start, TokenWithMetadata(_token, token_metadata), _end) =
                         dropped_tokens.first().unwrap();
-                    'outer: for pre_comment_block in token_metadata.pre_comment_blocks.iter() {
-                        for pre_comment in pre_comment_block.0.iter() {
+                    for pre_comment_block in token_metadata.pre_comment_blocks.iter() {
+                        if let Some(pre_comment) = pre_comment_block.0.first() {
                             start = start.min(pre_comment.span.start());
-                            break 'outer;
+                            break;
                         }
                     }
 
@@ -614,7 +614,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 self.write_str("]")?;
             }
             crate::cst::TypeKind::Path(path) => {
-                self.write_namespace_path(&path)?;
+                self.write_namespace_path(path)?;
             }
         }
         Ok(())

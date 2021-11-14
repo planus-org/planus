@@ -155,7 +155,7 @@ impl Ctx {
         match error {
             ParseError::InvalidToken { location } => {
                 span = Span::new(*location, *location);
-                msg = format!("invalid token");
+                msg = "invalid token".to_string();
             }
             ParseError::UnrecognizedEOF { location, expected } => {
                 span = Span::new(*location, *location);
