@@ -212,7 +212,7 @@ impl Codegen {
 
 struct RustNameGenerator;
 
-const BINDING_KIND_TYPES: &'static str = "types";
+const BINDING_KIND_TYPES: &str = "types";
 
 #[derive(Debug)]
 struct RustDeclInfo {
