@@ -298,6 +298,7 @@ pub enum LiteralKind {
     Float { is_negative: bool, value: String },
     String(String),
     List(Vec<Literal>),
+    Null,
 }
 
 #[derive(Clone, Debug)]

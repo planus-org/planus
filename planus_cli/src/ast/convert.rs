@@ -75,6 +75,9 @@ impl<'ctx> CstConverter<'ctx> {
                     value: "nan".to_string(),
                     is_negative: false,
                 }),
+                "true" => Some(LiteralKind::Bool(true)),
+                "false" => Some(LiteralKind::Bool(false)),
+                "null" => Some(LiteralKind::Null),
                 _ => self.emit_simple_error(
                     ErrorKind::UNKNOWN_IDENTIFIER,
                     &format!("Unknown identifier {}", lit.ident),
@@ -119,6 +122,9 @@ impl<'ctx> CstConverter<'ctx> {
                 LiteralKind::List(_) => {
                     self.emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on lists")
                 }
+                LiteralKind::Null => {
+                    self.emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on null")
+                }
             },
         }
     }
@@ -137,6 +143,7 @@ impl<'ctx> CstConverter<'ctx> {
                 LiteralKind::Bool(_)
                 | LiteralKind::Float { .. }
                 | LiteralKind::String(_)
+                | LiteralKind::Null
                 | LiteralKind::List(_) => {
                     self_.emit_simple_error(ErrorKind::TYPE_ERROR, "expecting string literal")
                 }

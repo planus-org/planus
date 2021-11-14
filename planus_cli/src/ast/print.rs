@@ -213,6 +213,7 @@ impl PrettyPrint for Literal {
                 }
                 print!("]");
             }
+            LiteralKind::Null => print!("null"),
         }
     }
 }

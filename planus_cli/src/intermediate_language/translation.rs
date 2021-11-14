@@ -1,6 +1,6 @@
 use super::types::*;
 use crate::{
-    ast::{self, FloatType, NamespacePath},
+    ast::{self, FloatType, LiteralKind, NamespacePath},
     ctx::Ctx,
     error::ErrorKind,
     util::sorted_map::{SortedMap, SortedSet},
@@ -277,7 +277,6 @@ impl<'a> Translator<'a> {
         type_: &Type,
     ) -> Option<Literal> {
         use crate::intermediate_language::types::{SimpleType::*, TypeKind::*};
-        use ast::LiteralKind;
 
         match (&literal.kind, &type_.kind) {
             (LiteralKind::Bool(value), SimpleType(Bool)) => Some(Literal::Bool(*value)),
@@ -437,6 +436,121 @@ impl<'a> Translator<'a> {
         }
     }
 
+    fn translate_table_field(
+        &self,
+        current_namespace: &AbsolutePath,
+        current_file_id: FileId,
+        field: &ast::StructField,
+        next_vtable_index: &mut u32,
+        max_vtable_index: &mut u32,
+    ) -> Option<TableField> {
+        let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
+        let mut default_value = self.default_value_for_type(&type_);
+        let mut explicit_null = false;
+        if let Some(assignment) = field.assignment.as_ref() {
+            if matches!(assignment.kind, LiteralKind::Null) {
+                explicit_null = true;
+                default_value = None;
+            } else if type_.kind.is_scalar() {
+                default_value =
+                    self.translate_literal(current_namespace, current_file_id, assignment, &type_);
+            } else {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [
+                        Label::secondary(current_file_id, type_.span)
+                            .with_message("only scalar types support default value"),
+                        Label::primary(current_file_id, assignment.span)
+                            .with_message("default value was here"),
+                    ],
+                    Some("Unsupported default value"),
+                );
+            }
+        };
+        let mut required = false;
+        let mut deprecated = false;
+        let vtable_index = *next_vtable_index;
+
+        for m in &field.metadata {
+            match self.ctx.resolve_identifier(m.key.value).as_str() {
+                "required" => {
+                    if type_.kind.is_scalar() {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [
+                                Label::secondary(current_file_id, type_.span).with_message(
+                                    "only non-scalar types support the 'required' attribute",
+                                ),
+                                Label::primary(current_file_id, m.key.span)
+                                    .with_message("default value was here"),
+                            ],
+                            Some("Unsupported default value"),
+                        );
+                    } else if explicit_null {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [
+                                Label::secondary(current_file_id, m.key.span)
+                                    .with_message("field was declared required here"),
+                                Label::primary(
+                                    current_file_id,
+                                    field.assignment.as_ref().unwrap().span,
+                                )
+                                .with_message("field was declared optional here"),
+                            ],
+                            Some("Cannot setup field as both required and optional"),
+                        );
+                    } else {
+                        required = true;
+                    }
+                }
+                "deprecated" => deprecated = true,
+                // TODO: allow setting the vtable index here
+                // TODO: also remember to validate it
+                _ => (),
+            }
+        }
+
+        *max_vtable_index = (*max_vtable_index).max(vtable_index);
+
+        if matches!(&type_.kind, TypeKind::Union(_)) {
+            *next_vtable_index = vtable_index + 2;
+        } else {
+            *next_vtable_index = vtable_index + 1;
+        }
+
+        let assign_mode = match (
+            required,
+            explicit_null,
+            type_.kind.is_scalar(),
+            default_value,
+        ) {
+            (true, _, _, _) => AssignMode::Required,
+            (false, true, _, _) | (false, _, false, _) => AssignMode::Optional,
+            (false, false, true, Some(default_value)) => AssignMode::HasDefault(default_value),
+            (false, false, true, None) => {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::secondary(current_file_id, field.span)
+                        .with_message("scalar field was here")],
+                    Some("Scalar fields must either have a (possibly implicit) default value"),
+                );
+                AssignMode::Optional
+            }
+        };
+
+        Some(TableField {
+            type_,
+            assign_mode,
+            vtable_index,
+            object_value_size: u32::MAX,
+            object_tag_size: u32::MAX,
+            object_alignment_mask: u32::MAX,
+            object_alignment: u32::MAX,
+            deprecated,
+        })
+    }
+
     fn translate_table(
         &self,
         current_namespace: &AbsolutePath,
@@ -450,46 +564,15 @@ impl<'a> Translator<'a> {
             .fields
             .iter()
             .filter_map(|(ident, field)| {
-                let type_ =
-                    self.translate_type(current_namespace, current_file_id, &field.type_)?;
-                let assignment = field.assignment.as_ref().and_then(|assignment| {
-                    self.translate_literal(current_namespace, current_file_id, assignment, &type_)
-                });
-                let mut required = false;
-                let mut deprecated = false;
-                let vtable_index = next_vtable_index;
-
-                for m in &field.metadata {
-                    match self.ctx.resolve_identifier(m.key.value).as_str() {
-                        "required" => required = true,
-                        "deprecated" => deprecated = true,
-                        // TODO: allow setting the vtable index here
-                        // TODO: also remember to validate it
-                        _ => (),
-                    }
-                }
-
-                max_vtable_index = max_vtable_index.max(vtable_index);
-
-                if matches!(&type_.kind, TypeKind::Union(_)) {
-                    next_vtable_index = vtable_index + 2;
-                } else {
-                    next_vtable_index = vtable_index + 1;
-                }
-
                 Some((
                     self.ctx.resolve_identifier(*ident),
-                    TableField {
-                        type_,
-                        assignment,
-                        vtable_index,
-                        object_value_size: u32::MAX,
-                        object_tag_size: u32::MAX,
-                        object_alignment_mask: u32::MAX,
-                        object_alignment: u32::MAX,
-                        required,
-                        deprecated,
-                    },
+                    self.translate_table_field(
+                        current_namespace,
+                        current_file_id,
+                        field,
+                        &mut next_vtable_index,
+                        &mut max_vtable_index,
+                    )?,
                 ))
             })
             .collect();
@@ -780,6 +863,55 @@ impl<'a> Translator<'a> {
         self.resolve_table_sizes();
 
         Declarations::new(self.namespaces, self.declarations)
+    }
+
+    pub fn default_value_for_type(&self, type_: &Type) -> Option<Literal> {
+        match &type_.kind {
+            TypeKind::Table(_)
+            | TypeKind::Union(_)
+            | TypeKind::Vector(_)
+            | TypeKind::Array(_, _)
+            | TypeKind::String => None,
+            TypeKind::SimpleType(type_) => self.default_value_for_simple_type(type_),
+        }
+    }
+
+    pub fn default_value_for_simple_type(&self, type_: &SimpleType) -> Option<Literal> {
+        match type_ {
+            SimpleType::Struct(_) => None,
+            SimpleType::Enum(decl) => self.default_value_for_enum(*decl),
+            SimpleType::Bool => Some(Literal::Bool(false)),
+            SimpleType::Integer(type_) => Some(Literal::Int(match type_ {
+                ast::IntegerType::U8 => IntegerLiteral::U8(0),
+                ast::IntegerType::U16 => IntegerLiteral::U16(0),
+                ast::IntegerType::U32 => IntegerLiteral::U32(0),
+                ast::IntegerType::U64 => IntegerLiteral::U64(0),
+                ast::IntegerType::I8 => IntegerLiteral::I8(0),
+                ast::IntegerType::I16 => IntegerLiteral::I16(0),
+                ast::IntegerType::I32 => IntegerLiteral::I32(0),
+                ast::IntegerType::I64 => IntegerLiteral::I64(0),
+            })),
+            SimpleType::Float(type_) => Some(Literal::Float(match type_ {
+                ast::FloatType::F32 => FloatLiteral::F32(0.0),
+                ast::FloatType::F64 => FloatLiteral::F64(0.0),
+            })),
+        }
+    }
+
+    pub fn default_value_for_enum(&self, declaration_index: DeclarationIndex) -> Option<Literal> {
+        match &self.descriptions[declaration_index.0] {
+            TypeDescription::Enum(decl) => decl
+                .variants
+                .iter()
+                .filter_map(|(k, v)| {
+                    (k.is_zero()).then(|| Literal::EnumTag {
+                        name: v.clone(),
+                        value: *k,
+                    })
+                })
+                .next(),
+            _ => unreachable!(),
+        }
     }
 }
 

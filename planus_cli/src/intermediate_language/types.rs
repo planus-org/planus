@@ -173,13 +173,19 @@ pub struct TableField {
     /// into the IndexMap
     pub vtable_index: u32,
     pub type_: Type,
+    pub assign_mode: AssignMode,
     pub object_value_size: u32,
     pub object_tag_size: u32,
     pub object_alignment_mask: u32,
     pub object_alignment: u32,
-    pub assignment: Option<Literal>,
-    pub required: bool,
     pub deprecated: bool,
+}
+
+#[derive(Debug)]
+pub enum AssignMode {
+    Required,
+    Optional,
+    HasDefault(Literal),
 }
 
 #[derive(Debug)]
@@ -230,6 +236,19 @@ pub struct Type {
     pub kind: TypeKind,
 }
 
+impl TypeKind {
+    pub fn is_scalar(&self) -> bool {
+        match self {
+            TypeKind::Table(_)
+            | TypeKind::Union(_)
+            | TypeKind::Vector(_)
+            | TypeKind::Array(_, _)
+            | TypeKind::String => false,
+            TypeKind::SimpleType(type_) => type_.is_scalar(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum TypeKind {
     Table(DeclarationIndex),
@@ -249,6 +268,18 @@ pub enum SimpleType {
     Float(ast::FloatType),
 }
 
+impl SimpleType {
+    pub fn is_scalar(&self) -> bool {
+        match self {
+            SimpleType::Struct(_) => false,
+            SimpleType::Enum(_)
+            | SimpleType::Bool
+            | SimpleType::Integer(_)
+            | SimpleType::Float(_) => true,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Literal {
     Bool(bool),
@@ -257,6 +288,7 @@ pub enum Literal {
     Float(FloatLiteral),
     Array(Vec<Literal>),
     Vector(Vec<Literal>),
+    EnumTag { name: String, value: IntegerLiteral },
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -269,6 +301,21 @@ pub enum IntegerLiteral {
     I32(i32),
     U64(u64),
     I64(i64),
+}
+
+impl IntegerLiteral {
+    pub fn is_zero(&self) -> bool {
+        match self {
+            IntegerLiteral::U8(n) => *n == 0,
+            IntegerLiteral::I8(n) => *n == 0,
+            IntegerLiteral::U16(n) => *n == 0,
+            IntegerLiteral::I16(n) => *n == 0,
+            IntegerLiteral::U32(n) => *n == 0,
+            IntegerLiteral::I32(n) => *n == 0,
+            IntegerLiteral::U64(n) => *n == 0,
+            IntegerLiteral::I64(n) => *n == 0,
+        }
+    }
 }
 
 impl Display for IntegerLiteral {
