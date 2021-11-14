@@ -6,7 +6,7 @@ build="build.rs"
 
 [dependencies]
 planus = { path = "../../planus" }
-flatbuffers = "0.9.0"
+flatbuffers = "0.8.4"
 
 [build-dependencies]
 planus_cli = { path = "../../planus_cli" }
