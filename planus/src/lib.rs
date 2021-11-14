@@ -16,6 +16,8 @@ use std::marker::PhantomData;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+pub enum Void {}
+
 #[doc(hidden)]
 pub trait Primitive {
     const ALIGNMENT: usize;
@@ -24,13 +26,15 @@ pub trait Primitive {
 }
 
 pub trait WriteAs<P: Primitive> {
+    type Prepared: WriteAsPrimitive<P>;
     #[doc(hidden)]
-    fn prepare(&self, buffer: &mut Buffer) -> P;
+    fn prepare(&self, buffer: &mut Buffer) -> Self::Prepared;
 }
 
 pub trait WriteAsOptional<P: Primitive> {
+    type Prepared: WriteAsPrimitive<P>;
     #[doc(hidden)]
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P>;
+    fn prepare(&self, buffer: &mut Buffer) -> Option<Self::Prepared>;
 }
 
 pub trait WriteAsUnion<T: ?Sized> {
@@ -114,8 +118,15 @@ pub trait TableReadUnion<'buf>: Sized {
 }
 
 impl<P: Primitive> WriteAsOptional<P> for () {
-    fn prepare(&self, _buffer: &mut Buffer) -> Option<P> {
+    type Prepared = Void;
+    fn prepare(&self, _buffer: &mut Buffer) -> Option<Void> {
         None
+    }
+}
+
+unsafe impl<P: Primitive> WriteAsPrimitive<P> for Void {
+    unsafe fn write(&self, _buffer: *mut u8, _buffer_position: u32) {
+        match *self {}
     }
 }
 
@@ -126,7 +137,8 @@ impl<T: ?Sized> WriteAsOptionalUnion<T> for () {
 }
 
 impl<P: Primitive, T: WriteAsOptional<P>> WriteAsOptional<P> for Option<T> {
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P> {
+    type Prepared = T::Prepared;
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
         self.as_ref()?.prepare(buffer)
     }
 }
@@ -210,12 +222,14 @@ unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
 }
 
 impl<T: ?Sized> WriteAs<Offset<T>> for Offset<T> {
+    type Prepared = Self;
     fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
     }
 }
 
 impl<T: ?Sized> WriteAsOptional<Offset<T>> for Offset<T> {
+    type Prepared = Self;
     fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
         Some(*self)
     }
@@ -234,13 +248,15 @@ impl<T: ?Sized> WriteAsOptionalUnion<T> for UnionOffset<T> {
 }
 
 impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
-    fn prepare(&self, buffer: &mut Buffer) -> P {
+    type Prepared = T::Prepared;
+    fn prepare(&self, buffer: &mut Buffer) -> T::Prepared {
         T::prepare(self, buffer)
     }
 }
 
 impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'a T {
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P> {
+    type Prepared = T::Prepared;
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
         T::prepare(self, buffer)
     }
 }
@@ -252,6 +268,32 @@ impl<'a, T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for &'a T2 
 }
 
 impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for &'a T2 {
+    fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
+        T2::prepare(self, buffer)
+    }
+}
+
+impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for Box<T> {
+    type Prepared = T::Prepared;
+    fn prepare(&self, buffer: &mut Buffer) -> T::Prepared {
+        T::prepare(self, buffer)
+    }
+}
+
+impl<P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for Box<T> {
+    type Prepared = T::Prepared;
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
+        T::prepare(self, buffer)
+    }
+}
+
+impl<T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for Box<T2> {
+    fn prepare(&self, buffer: &mut Buffer) -> UnionOffset<T1> {
+        T2::prepare(self, buffer)
+    }
+}
+
+impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Box<T2> {
     fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
         T2::prepare(self, buffer)
     }
@@ -272,13 +314,15 @@ macro_rules! gen_primitive_types {
         }
 
         impl WriteAs<$ty> for $ty {
-            fn prepare(&self, _buffer: &mut Buffer) -> $ty {
+            type Prepared = Self;
+            fn prepare(&self, _buffer: &mut Buffer) -> Self {
                 *self
             }
         }
 
         impl WriteAsOptional<$ty> for $ty {
-            fn prepare(&self, _buffer: &mut Buffer) -> Option<$ty> {
+            type Prepared = Self;
+            fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
                 Some(*self)
             }
         }
@@ -354,13 +398,15 @@ unsafe impl WriteAsPrimitive<bool> for bool {
 }
 
 impl WriteAs<bool> for bool {
-    fn prepare(&self, _buffer: &mut Buffer) -> bool {
+    type Prepared = Self;
+    fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
     }
 }
 
 impl WriteAsOptional<bool> for bool {
-    fn prepare(&self, _buffer: &mut Buffer) -> Option<bool> {
+    type Prepared = Self;
+    fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
         Some(*self)
     }
 }
@@ -553,6 +599,8 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
         let mut tmp: Vec<T::Value> = Vec::with_capacity(self.len());
         for v in self.iter() {
@@ -585,6 +633,8 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
         Some(WriteAs::prepare(self, buffer))
     }
@@ -595,6 +645,8 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
         <[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer)
     }
@@ -605,12 +657,16 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
         Some(<[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer))
     }
 }
 
 impl WriteAs<Offset<str>> for str {
+    type Prepared = Offset<str>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
         let offset = <[u8] as WriteAs<Offset<[u8]>>>::prepare(self.as_bytes(), buffer);
         Offset {
@@ -621,18 +677,23 @@ impl WriteAs<Offset<str>> for str {
 }
 
 impl<'a> WriteAsOptional<Offset<str>> for &'a str {
+    type Prepared = Offset<str>;
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<str>> {
         Some(<str as WriteAs<Offset<str>>>::prepare(self, buffer))
     }
 }
 
 impl WriteAs<Offset<str>> for String {
+    type Prepared = Offset<str>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
         <str as WriteAs<Offset<str>>>::prepare(self.as_str(), buffer)
     }
 }
 
 impl WriteAsOptional<Offset<str>> for String {
+    type Prepared = Offset<str>;
+
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<str>> {
         Some(<str as WriteAs<Offset<str>>>::prepare(
             self.as_str(),

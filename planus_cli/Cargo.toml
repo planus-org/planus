@@ -26,6 +26,7 @@ regex = "1.5.4"
 string-interner = "0.12.2"
 structopt = { version = "0.3.21", features = ["paw"] }
 thiserror = "1.0.24"
+vec_map = "0.8.2"
 
 [build-dependencies]
 derive_more = "0.99.14"

@@ -628,6 +628,7 @@ impl<'a> Translator<'a> {
             alignment_order: Vec::new(),
             max_size: u32::MAX,
             max_vtable_index,
+            max_alignment: u32::MAX,
         }
     }
 
@@ -842,6 +843,7 @@ impl<'a> Translator<'a> {
     pub fn resolve_table_sizes(&mut self) {
         for decl in self.declarations.values_mut() {
             let mut max_size = 4u32;
+            let mut max_alignment = 0;
             if let DeclarationKind::Table(decl) = &mut decl.kind {
                 for field in decl.fields.values_mut() {
                     let (value_size, tag_size, alignment) = match &field.type_.kind {
@@ -877,12 +879,14 @@ impl<'a> Translator<'a> {
                         | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 0, 8),
                     };
                     max_size = max_size.saturating_add(value_size + tag_size);
+                    max_alignment = max_alignment.max(alignment);
                     field.object_value_size = value_size;
                     field.object_tag_size = tag_size;
                     field.object_alignment = alignment;
                     field.object_alignment_mask = alignment - 1;
                 }
                 decl.max_size = max_size;
+                decl.max_alignment = max_alignment;
                 let mut indices = (0..decl.fields.len()).collect::<Vec<_>>();
                 indices.sort_by(|&i, &j| {
                     std::cmp::Ord::cmp(
