@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "planus",
+    "planus_cli",
+    "test/rust_test",
+]

@@ -1,0 +1,17 @@
+{% if !info.name.is_empty() %}
+pub mod {{info.name}} {
+{% endif %}
+    {% for decl_id in declaration_ids.values() %}
+        {% let (name, decl) = ctx.get_declaration(decl_id) %}
+        {% match decl.kind %}
+            {% when DeclarationKind::Struct(inner) %}{{ RustStruct::new(decl_id, name, inner, ctx) }}
+            {% when DeclarationKind::Table(inner) %}{{ RustTable::new(decl_id, name, inner, ctx) }}
+            {% when DeclarationKind::Enum(inner) %}{{ RustEnum::new(decl_id, inner, ctx) }}
+            {% when DeclarationKind::Union(inner) %}{{ RustUnion::new(decl_id, ctx) }}
+            {% else %}
+        {% endmatch %}
+    {% endfor %}
+
+{% if !name.0.is_empty() %}
+}
+{% endif %}

@@ -1,0 +1,50 @@
+{% let size = type_.byte_size() %}
+#[derive(Copy, Clone, Debug)]
+#[repr({{info.repr_type}})]
+pub enum {{ info.owned_type }} {
+    {% for info in variant_infos -%}
+        {{ info.owned_field_name }} = {{ info.value }},
+    {% endfor %}
+}
+
+impl planus::ToOwned for {{ info.owned_type }} {
+    type Value = {{ info.owned_type }};
+    fn to_owned(&self) -> planus::Result<Self::Value> {
+       Ok(*self)
+    }
+}
+
+impl planus::Primitive for {{ info.owned_type }} {
+    const ALIGNMENT: usize = {{ size }};
+    const SIZE: usize = {{ size }};
+}
+
+unsafe impl planus::WriteAsPrimitive<{{ info.owned_type }}> for {{ info.owned_type }} {
+    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
+        (*self as {{ info.repr_type }}).write(buffer, buffer_position);
+    }
+}
+
+impl planus::WriteAs<{{ info.owned_type }}> for {{ info.owned_type }} {
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> {{ info.owned_type }} {
+        *self
+    }
+}
+
+impl planus::WriteAsOptional<{{ info.owned_type }}> for {{ info.owned_type }} {
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> Option<{{ info.owned_type }}> {
+        Some(*self)
+    }
+}
+
+impl<'buf> planus::TableRead<'buf> for {{ info.owned_type }} {
+    fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+        let n: {{ info.repr_type }} = planus::TableRead::from_buffer(buffer, offset)?;
+        match n {
+            {% for variant_info in variant_infos -%}
+                {{ variant_info.value }} => Ok({{info.owned_type}}::{{ variant_info.owned_field_name }}),
+            {% endfor %}
+            _ => Err(planus::errors::ErrorKind::UnknownEnumTag { tag: n as i128 }),
+        }
+    }
+}

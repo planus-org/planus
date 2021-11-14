@@ -1,0 +1,2 @@
+include "include2.fbs";
+include "subdir/include3.fbs";

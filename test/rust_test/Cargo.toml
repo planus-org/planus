@@ -1,0 +1,12 @@
+[package]
+name = "rust_test"
+version = "0.1.0"
+edition = "2021"
+build="build.rs"
+
+[dependencies]
+planus = { path = "../../planus" }
+flatbuffers = "2.0.0"
+
+[build-dependencies]
+planus_cli = { path = "../../planus_cli" }

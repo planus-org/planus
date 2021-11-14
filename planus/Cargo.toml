@@ -1,0 +1,12 @@
+[package]
+name = "planus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.41"
+flatbuffers = "2.0.0"
+hexdump = "0.1.1"
+memmap = "0.7.0"
+rand = "0.8.4"
+thiserror = "1.0.26"

@@ -1,0 +1,16 @@
+
+enum ABC: int { A, B, C }
+
+struct MoreDefaultsStruct {
+  foo: uint8;
+  bar: bool;
+}
+
+table MoreDefaults {
+  ints: [int] = [];
+  floats: [float] = [     ];
+  empty_string: string = "";
+  some_string: string = "some";
+  abcs: [ABC] = [];
+  bools: [bool] = [];
+}

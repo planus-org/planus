@@ -1,0 +1,64 @@
+#[derive(Clone, Debug)]
+pub enum {{ info.owned_type }}{
+    {% for info in variant_infos -%}
+        {{ info.owned_field_name }}({{ info.owned_field_type }}),
+    {% endfor %}
+}
+
+impl {{info.owned_type}} {
+    {% for info in variant_infos -%}
+    pub fn {{info.create_name}}(
+      buffer: &mut planus::Buffer,
+      value: impl planus::WriteAs<{{info.create_type}}>,
+    ) -> planus::UnionOffset<Self> {
+        planus::UnionOffset::new({{loop.index}}, value.prepare(buffer).downcast())
+    }
+    {% endfor %}
+}
+
+impl planus::WriteAsUnion<{{info.owned_type}}> for {{info.owned_type}} {
+    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::UnionOffset<Self> {
+        match self {
+            {% for info in variant_infos -%}
+                Self::{{ info.owned_field_name }}(value) => Self::{{info.create_name}}(buffer, value),
+            {% endfor %}
+        }
+    }
+}
+
+impl planus::WriteAsOptionalUnion<{{info.owned_type}}> for {{info.owned_type}} {
+    fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::UnionOffset<Self>> {
+        Some(planus::WriteAsUnion::prepare(self, buffer))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum {{ info.read_type }}{
+    {% for info in variant_infos -%}
+        {{ info.read_name }}({{ info.read_type }}),
+    {% endfor %}
+}
+
+impl<'buf> planus::ToOwned for {{info.read_type}} {
+    type Value = {{info.owned_type}};
+
+    fn to_owned(&self) -> planus::Result<Self::Value> {
+        Ok(match self {
+            {% for variant_info in variant_infos -%}
+                Self::{{ variant_info.read_name }}(value) => {{info.owned_type}}::{{variant_info.owned_field_name}}(planus::ToOwned::to_owned(value)?),
+            {% endfor %}
+        })
+    }
+}
+
+impl<'buf> planus::TableReadUnion<'buf> for {{info.read_type}} {
+    {# TODO: Result<EnumResult<Self>> #}
+    fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, field_offset: usize, tag: u8) -> Result<Self, planus::errors::ErrorKind> {
+        match tag {
+            {% for variant_info in variant_infos -%}
+                {{loop.index}} => Ok(Self::{{ variant_info.read_name }}(planus::TableRead::from_buffer(buffer, field_offset)?)),
+            {%- endfor -%}
+            _ => Err(planus::errors::ErrorKind::UnknownUnionTag { tag }),
+        }
+    }
+}

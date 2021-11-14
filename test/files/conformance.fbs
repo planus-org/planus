@@ -1,0 +1,39 @@
+enum MyEnumse: byte {
+  Apple,
+  Pear,
+  Banaaaaaaaan = 0x19,
+}
+
+struct MyStruct {
+  foo: uint8;
+  bar: bool;
+  baz: MyEnumse;
+}
+
+union HelloUnion {
+  MyTable2,
+  y: MyTable3,
+  MyTable3,
+}
+
+table MyTable {
+  x: int64;
+  y: bool;
+  numse: MyEnumse;
+  z: [MyTable3];
+  w: HelloUnion;
+}
+
+table MyTable2 {
+  x: int64;
+  y: MyStruct;
+  z: MyTable;
+}
+
+table MyTable3 {
+  x: int64;
+}
+
+table MyTable4 {
+  x: HelloUnion;
+}

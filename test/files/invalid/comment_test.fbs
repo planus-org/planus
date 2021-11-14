@@ -1,0 +1,103 @@
+// test1
+
+// test2
+/// test3
+include //test4
+"foo"; // test5
+
+// test6
+// test7
+
+// test8
+native_include "foo"; // test9
+
+namespace // test10
+foo. // test11
+bar.baz;
+
+// test12
+
+include "foo";
+
+include "foo";
+include "bar";
+
+attribute foo;
+attribute "bar";
+
+// test13
+table // test14
+
+// test15
+foo // test16
+
+// test17
+( //test18
+
+// test19
+x // test20
+
+// test21
+: // test22
+
+// test23
++ //test24
+
+// test25
+[ //test26
+
+  //test27
+  y //test28
+
+  //test29
+  , //test30
+
+  //test31
+  "z" //test32
+
+//test33
+] //test34
+
+//test35
+) //test36
+
+//test37
+{ //test38
+
+  //test39
+  x //test40
+
+  //test41
+  : //test42
+
+  //test43
+  hello //test44
+
+  //test45
+  . //test46
+
+  //test47
+  bool //test48
+
+  //test49
+  = //test50
+
+  //test51
+  0.1 //test52
+
+  //test53
+  ; //test54
+
+//test55
+} //test56
+
+
+
+//test57
+blabla //test58
+; //test59
+//test60
+
+//test61
+file_extension //test62
+"foo"; //test63

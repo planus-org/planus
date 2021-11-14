@@ -1,0 +1,30 @@
+struct Foo {}
+table Foo {}
+
+
+struct A0 {
+	x: uint32;
+	x: string;
+}
+
+table A1 {
+	x: uint32;
+	x: string;
+}
+
+enum A2: uint8 {
+ X = 0, X = 1
+}
+
+union A3 {
+ Foo, Foo
+}
+
+union A4 {
+ X: A0, X: A1
+}
+
+rpc_service A5 {
+  x(string): string;
+  x(uint32): uint32;
+}

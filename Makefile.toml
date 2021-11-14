@@ -1,0 +1,22 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[config]
+default_to_workspace = false
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+
+[tasks.generate]
+dependencies = ["build"]
+script = '''
+    mkdir -p build/rust
+    for f in test/files/valid/*; do
+        if [[ -f $f ]]; then
+            echo "Generating $f"
+            target/debug/codegen $f -o build/rust/$(basename -s .fbs $f).rs \
+                || echo "Failed to generate $(basename $f)"
+        fi
+    done
+'''
