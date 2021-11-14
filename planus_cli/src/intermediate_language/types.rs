@@ -56,15 +56,15 @@ impl DeclarationIndex {
     pub const INVALID: DeclarationIndex = DeclarationIndex(usize::MAX);
 }
 
-impl<'a> Into<DeclarationIndex> for &'a DeclarationIndex {
-    fn into(self) -> DeclarationIndex {
-        *self
+impl<'a> From<&'a DeclarationIndex> for DeclarationIndex {
+    fn from(decl: &'a DeclarationIndex) -> Self {
+        *decl
     }
 }
 
-impl<'a, 'b> Into<DeclarationIndex> for &'b &'a DeclarationIndex {
-    fn into(self) -> DeclarationIndex {
-        **self
+impl<'a, 'b> From<&'b &'a DeclarationIndex> for DeclarationIndex {
+    fn from(decl: &'b &'a DeclarationIndex) -> Self {
+        **decl
     }
 }
 
@@ -74,14 +74,14 @@ impl NamespaceIndex {
     pub const INVALID: NamespaceIndex = NamespaceIndex(usize::MAX);
 }
 
-impl<'a> Into<NamespaceIndex> for &'a NamespaceIndex {
-    fn into(self) -> NamespaceIndex {
-        *self
+impl<'a> From<&'a NamespaceIndex> for NamespaceIndex {
+    fn from(namespace: &'a NamespaceIndex) -> Self {
+        *namespace
     }
 }
 
 impl<'a, 'b> From<&'b &'a NamespaceIndex> for NamespaceIndex {
-    fn from(namespace: &'b &'a NamespaceIndex) -> NamespaceIndex {
+    fn from(namespace: &'b &'a NamespaceIndex) -> Self {
         **namespace
     }
 }

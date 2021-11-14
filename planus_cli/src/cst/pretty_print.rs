@@ -7,7 +7,7 @@ use crate::{
 };
 use codespan::Span;
 
-const INDENT_STRING: &'static str = "    ";
+const INDENT_STRING: &str = "    ";
 
 fn indent_string(do_indent: bool) -> &'static str {
     if do_indent {

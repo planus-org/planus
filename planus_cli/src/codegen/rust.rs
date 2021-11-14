@@ -35,15 +35,15 @@ impl<'a> Ctx<'a> {
     }
 }
 
-impl<'a, 'b> Into<Ctx<'a>> for &'b Ctx<'a> {
-    fn into(self) -> Ctx<'a> {
-        *self
+impl<'a, 'b> From<&'b Ctx<'a>> for Ctx<'a> {
+    fn from(ctx: &'b Ctx<'a>) -> Self {
+        *ctx
     }
 }
 
-impl<'a, 'b, 'c> Into<Ctx<'a>> for &'c &'b Ctx<'a> {
-    fn into(self) -> Ctx<'a> {
-        **self
+impl<'a, 'b, 'c> From<&'c &'b Ctx<'a>> for Ctx<'a> {
+    fn from(ctx: &'c &'b Ctx<'a>) -> Self {
+        **ctx
     }
 }
 
@@ -212,7 +212,7 @@ impl Codegen {
 
 struct RustNameGenerator;
 
-const BINDING_KIND_TYPES: &'static str = "types";
+const BINDING_KIND_TYPES: &str = "types";
 
 #[derive(Debug)]
 struct RustDeclInfo {

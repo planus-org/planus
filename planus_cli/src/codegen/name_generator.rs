@@ -156,6 +156,7 @@ pub trait NameGenerator {
     ) -> Self::EntryInfo;
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_namespace<G: NameGenerator>(
     g: &mut G,
     declarations: &Declarations,
@@ -234,7 +235,7 @@ fn run_declaration<G: NameGenerator>(
         }
     }
 }
-
+#[allow(clippy::type_complexity)]
 pub fn run_name_generator<G: NameGenerator>(
     g: &mut G,
     declarations: &Declarations,
