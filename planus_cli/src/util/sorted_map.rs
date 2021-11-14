@@ -99,6 +99,7 @@ impl<K: Ord, V> SortedMap<K, V> {
     }
 }
 
+#[allow(clippy::module_inception)]
 pub mod sorted_map {
     pub enum Entry<'a, K: 'a, V: 'a> {
         Occupied(OccupiedEntry<'a, K, V>),

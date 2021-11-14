@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lalrpop_util;
 
-lalrpop_mod!(pub grammar);
+lalrpop_mod!(#[allow(clippy::all, unused_imports)] pub grammar);
 
 // Multiple representations:
 //   * Concrete syntax tree (cst): As close a representation to the written

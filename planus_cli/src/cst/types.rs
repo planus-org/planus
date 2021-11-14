@@ -29,6 +29,7 @@ pub struct Declaration<'input> {
 }
 
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum DeclarationKind<'input> {
     Include(IncludeDeclaration<'input>),
     NativeInclude(NativeIncludeDeclaration<'input>),
@@ -214,6 +215,7 @@ pub struct Type<'input> {
 }
 
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum TypeKind<'input> {
     Vector(VectorType<'input>),
     Array(ArrayType<'input>),

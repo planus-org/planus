@@ -45,9 +45,6 @@ extern {
   }
 }
 
-// TODO: hack to remove unused import warnings (that are not actually unused)
-FixUnusedImportHack: (Token<'input>, Keyword, Symbol) = ! => todo!();
-
 // TODO: docstrings
 // TODO: error handling
 

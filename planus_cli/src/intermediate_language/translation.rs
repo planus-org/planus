@@ -506,6 +506,7 @@ impl<'a> Translator<'a> {
     ) -> Enum {
         let mut alignment = decl.type_.byte_size();
         for m in &decl.metadata {
+            #[allow(clippy::single_match)]
             match self.ctx.resolve_identifier(m.key.value).as_str() {
                 "force_align" => {
                     if let Some(meta_value) = &m.value {
