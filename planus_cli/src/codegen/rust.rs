@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     fs::File,
     io::{self, Write},
-    ops::Deref,
     path::Path,
     process::Command,
 };
@@ -166,38 +165,6 @@ impl<'a> RustEnum<'a> {
             variant_infos: &ctx.entry_infos[index.0],
             info: &ctx.decl_infos[index.0],
         }
-    }
-}
-
-impl<'a> Deref for RustNamespace<'a> {
-    type Target = Namespace;
-
-    fn deref(&self) -> &Self::Target {
-        &self.namespace
-    }
-}
-
-impl<'a> Deref for RustStruct<'a> {
-    type Target = il::Struct;
-
-    fn deref(&self) -> &Self::Target {
-        &self.decl
-    }
-}
-
-impl<'a> Deref for RustTable<'a> {
-    type Target = il::Table;
-
-    fn deref(&self) -> &Self::Target {
-        &self.decl
-    }
-}
-
-impl<'a> Deref for RustEnum<'a> {
-    type Target = il::Enum;
-
-    fn deref(&self) -> &Self::Target {
-        &self.decl
     }
 }
 

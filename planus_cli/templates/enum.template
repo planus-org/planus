@@ -1,4 +1,4 @@
-{% let size = type_.byte_size() %}
+{% let size = decl.type_.byte_size() %}
 #[derive(Copy, Clone, Debug)]
 #[repr({{info.repr_type}})]
 pub enum {{ info.owned_type }} {

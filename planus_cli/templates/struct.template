@@ -6,13 +6,13 @@ pub struct {{ info.owned_type }} {
 }
 
 impl planus::Primitive for {{ info.owned_type }} {
-    const ALIGNMENT: usize = {{ alignment }};
-    const SIZE: usize = {{ size }};
+    const ALIGNMENT: usize = {{ decl.alignment }};
+    const SIZE: usize = {{ decl.size }};
 }
 
 unsafe impl planus::WriteAsPrimitive<{{ info.owned_type }}> for {{ info.owned_type }} {
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
-        {% for (info, f) in field_infos.iter().zip(fields.values()) -%}
+        {% for (info, f) in field_infos.iter().zip(decl.fields.values()) -%}
             self.{{ info.owned_field_name }}.write(buffer.add({{ f.offset }}), buffer_position - {{ f.offset }});
         {% endfor %}
     }
@@ -31,9 +31,9 @@ impl planus::WriteAsOptional<{{ info.owned_type }}> for {{ info.owned_type }} {
 }
 
 #[derive(Copy, Clone)]
-pub struct {{ info.read_type }}(&'buf [u8; {{ size }}]);
+pub struct {{ info.read_type }}(&'buf [u8; {{ decl.size }}]);
 impl<'buf> {{ info.read_type }} {
-    {% for (info, f) in field_infos.iter().zip(fields.values()) %}
+    {% for (info, f) in field_infos.iter().zip(decl.fields.values()) %}
         pub fn {{ info.read_name }}(&self) -> {{ info.read_type }} {
             let buffer: &[u8; {{ f.size }}] = std::convert::TryInto::try_into(&self.0[{{ f.offset }}..{{ f.offset + f.size }}]).unwrap();
             {% match f.type_ %}
@@ -64,7 +64,7 @@ impl<'buf> {{ info.read_type }} {
 impl<'buf> std::fmt::Debug for {{ info.read_type }} {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("{{info.owned_type}}")
-        {% for (info, f) in field_infos.iter().zip(fields.values()) -%}
+        {% for info in field_infos.iter() -%}
             .field("{{info.read_name}}", &self.{{info.read_name}}())
         {% endfor %}
         .finish()
@@ -75,7 +75,7 @@ impl<'buf> planus::ToOwned for {{ info.read_type }} {
     type Value = {{ info.owned_type }};
     fn to_owned(&self) -> planus::Result<Self::Value> {
         Ok({{ info.owned_type }} {
-        {% for (info, f) in field_infos.iter().zip(fields.values()) -%}
+        {% for (info, f) in field_infos.iter().zip(decl.fields.values()) -%}
             {%- match f.type_ -%}
                 {%- when SimpleType::Struct with (path) -%}
                     {{ info.owned_field_name }}: planus::ToOwned::to_owned(&self.{{ info.read_name }}())?,
@@ -92,7 +92,7 @@ impl<'buf> planus::ToOwned for {{ info.read_type }} {
 
 impl<'buf> planus::TableRead<'buf> for {{ info.read_type }} {
     fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
-        let buffer = buffer.advance_as_array::<{{size}}>(offset)?;
+        let buffer = buffer.advance_as_array::<{{decl.size}}>(offset)?;
         Ok(Self(buffer))
     }
 }

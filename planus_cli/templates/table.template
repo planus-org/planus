@@ -21,7 +21,7 @@ impl {{info.owned_type}} {
             let prepared_{{info.create_name}} = {{info.create_name}}.prepare(buffer);
         {% endfor %}
 
-        let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(buffer);
+        let mut table_writer = planus::table_writer::TableWriter::<{{(decl.max_vtable_index+2)*2}}, {{decl.max_size-4}}>::new(buffer);
 
         {% for (f, info) in self.fields() %}
             if prepared_{{info.create_name}}.is_some() {
@@ -35,7 +35,7 @@ impl {{info.owned_type}} {
         {% endfor %}
         table_writer.finish_calculating();
 
-        {% if !self.fields.is_empty() %}
+        {% if !self.decl.fields.is_empty() %}
         unsafe {
             {% for (f, info) in self.fields_in_alignment_order() %}
                 if let Some(prepared_{{info.create_name}}) = prepared_{{info.create_name}} {
