@@ -2,7 +2,10 @@
 name = "rust_test"
 version = "0.1.0"
 edition = "2021"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/TethysSvensson/planus"
 build="build.rs"
+rust-version = "1.56"
 
 [dependencies]
 planus = { path = "../../planus" }

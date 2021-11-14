@@ -1,7 +1,13 @@
 [package]
 name = "planus"
 version = "0.1.0"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/TethysSvensson/planus"
 edition = "2021"
+readme = "README.md"
+keywords = ["flatbuffers", "serialization", "zero-copy"]
+categories = ["encoding", "data-structures", "memory-management"]
+rust-version = "1.56"
 
 [dependencies]
 anyhow = "1.0.41"
