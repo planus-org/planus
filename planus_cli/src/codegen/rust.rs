@@ -11,8 +11,8 @@ use crate::{
     codegen::name_generator::Scope,
     intermediate_language::types::{
         self as il, AbsolutePath, Declaration, DeclarationIndex, DeclarationKind, Declarations,
-        Enum, IntegerLiteral, Namespace, RpcMethod, SimpleType, StructField, TableField, Type,
-        TypeKind, Union, UnionVariant,
+        Enum, IntegerLiteral, Namespace, NamespaceIndex, RpcMethod, SimpleType, StructField,
+        TableField, Type, TypeKind, Union, UnionVariant,
     },
 };
 
@@ -24,7 +24,7 @@ use super::name_generator::{run_name_generator, NameGenerator, ReservedNames};
 #[derive(Copy, Clone)]
 struct Ctx<'a> {
     declarations: &'a Declarations,
-    _namespace_infos: &'a [RustNamespaceInfo],
+    namespace_infos: &'a [RustNamespaceInfo],
     decl_infos: &'a [RustDeclInfo],
     entry_infos: &'a [Vec<RustEntryInfo>],
 }
@@ -32,6 +32,10 @@ struct Ctx<'a> {
 impl<'a> Ctx<'a> {
     fn get_declaration(&self, index: &&DeclarationIndex) -> (&'a AbsolutePath, &'a Declaration) {
         self.declarations.get_declaration(**index)
+    }
+
+    fn get_namespace(&self, index: &&NamespaceIndex) -> (&'a AbsolutePath, &'a Namespace) {
+        self.declarations.get_namespace(**index)
     }
 }
 
@@ -54,6 +58,24 @@ struct RustNamespace<'a> {
     info: &'a RustNamespaceInfo,
     namespace: &'a Namespace,
     ctx: Ctx<'a>,
+}
+
+impl<'a> RustNamespace<'a> {
+    fn new(
+        index: impl Into<NamespaceIndex>,
+        name: &'a AbsolutePath,
+        namespace: &'a Namespace,
+        ctx: impl Into<Ctx<'a>>,
+    ) -> Self {
+        let ctx = ctx.into();
+        let index = index.into();
+        Self {
+            name,
+            namespace,
+            info: &ctx.namespace_infos[index.0],
+            ctx,
+        }
+    }
 }
 
 #[derive(Template)]
@@ -195,7 +217,7 @@ impl Codegen {
             namespace,
             ctx: Ctx {
                 declarations,
-                _namespace_infos: &namespace_infos,
+                namespace_infos: &namespace_infos,
                 decl_infos: &decl_infos,
                 entry_infos: &entry_infos,
             },

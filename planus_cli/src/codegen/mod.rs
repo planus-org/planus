@@ -1,6 +1,11 @@
-use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
-use anyhow::Result;
 use std::path::Path;
+
+use anyhow::Result;
+
+use crate::{
+    ast_map::AstMap, codegen::rust::Codegen, ctx::Ctx,
+    intermediate_language::translation::Translator,
+};
 
 pub mod name_generator;
 pub mod rust;
@@ -21,7 +26,7 @@ pub fn generate_code<P: AsRef<Path>>(input_files: &[P], output_file: String) -> 
     let namespace = translator.finish();
 
     if !ctx.has_errors() {
-        let mut codegen = crate::codegen::rust::Codegen::new(output_file)?;
+        let mut codegen = Codegen::new(output_file)?;
         codegen.generate_code(&namespace)?;
     }
 

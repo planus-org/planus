@@ -1,6 +1,10 @@
 {% if !info.name.is_empty() %}
 pub mod {{info.name}} {
 {% endif %}
+    {% for namespace_id in namespace.child_namespaces.values() %}
+        {% let (path, namespace) = ctx.get_namespace(namespace_id) %}
+        {{ RustNamespace::new(namespace_id, path, namespace, ctx) }}
+    {% endfor %}
     {% for decl_id in namespace.declaration_ids.values() %}
         {% let (name, decl) = ctx.get_declaration(decl_id) %}
         {% match decl.kind %}
