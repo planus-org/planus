@@ -56,8 +56,8 @@ mod tests {
             offset,
         );
         let slice = buffer.finish(offset, None);
-        let table = unsafe { flatbuffers::root_unchecked::<flatc::MyTable2>(slice) };
-        let table = MyTable2Ref::from_buffer(
+        let _table = unsafe { flatbuffers::root_unchecked::<flatc::MyTable2>(slice) };
+        let _table = MyTable2Ref::from_buffer(
             BufferWithStartOffset {
                 buffer: slice,
                 offset_from_start: 0,
@@ -65,7 +65,7 @@ mod tests {
             0,
         )
         .unwrap();
-        let table = MyTable2Ref::from_buffer(
+        let _table = MyTable2Ref::from_buffer(
             BufferWithStartOffset {
                 buffer: flatc_data,
                 offset_from_start: 0,
