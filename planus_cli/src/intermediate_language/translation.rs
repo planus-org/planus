@@ -18,11 +18,11 @@ pub struct Translator<'a> {
     descriptions: Vec<TypeDescription>,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 enum TypeDescription {
     Table,
     Struct { size: u32, alignment: u32 },
-    Enum { size: u32, alignment: u32 },
+    Enum(Enum),
     Union,
     RpcService,
 }
@@ -30,6 +30,8 @@ enum TypeDescription {
 // do not start translating any declarations, until all declarations have been collected
 // then:
 //  1) get names and type descriptions for all declarations
+//     - enums are translated immediately since they are self-contained and are needed
+//       to translate table fields
 //  2) do preliminary translation with wrong sizes which resolves
 //     what each ast::NamespacePath points to
 //  3) do topological sort of all structs to get sizes
@@ -84,16 +86,17 @@ impl<'a> Translator<'a> {
                     entry.insert(decl.clone());
                 }
             }
+        }
+        for decl in schema.type_declarations.values() {
             self.descriptions.push(match &decl.kind {
                 ast::TypeDeclarationKind::Table(_) => TypeDescription::Table,
                 ast::TypeDeclarationKind::Struct(_) => TypeDescription::Struct {
                     size: u32::MAX,
                     alignment: u32::MAX,
                 },
-                ast::TypeDeclarationKind::Enum(_) => TypeDescription::Enum {
-                    size: u32::MAX,
-                    alignment: u32::MAX,
-                },
+                ast::TypeDeclarationKind::Enum(decl) => {
+                    TypeDescription::Enum(self.translate_enum(decl))
+                }
                 ast::TypeDeclarationKind::Union(_) => TypeDescription::Union,
                 ast::TypeDeclarationKind::RpcService(_) => TypeDescription::RpcService,
             })
@@ -404,6 +407,7 @@ impl<'a> Translator<'a> {
 
     fn translate_decl(
         &self,
+        id: usize,
         current_namespace: &AbsolutePath,
         decl: &ast::Declaration,
     ) -> Declaration {
@@ -416,11 +420,10 @@ impl<'a> Translator<'a> {
                 ast::TypeDeclarationKind::Struct(decl) => DeclarationKind::Struct(
                     self.translate_struct(current_namespace, current_file_id, decl),
                 ),
-                ast::TypeDeclarationKind::Enum(decl) => DeclarationKind::Enum(self.translate_enum(
-                    current_namespace,
-                    current_file_id,
-                    decl,
-                )),
+                ast::TypeDeclarationKind::Enum(_) => match &self.descriptions[id] {
+                    TypeDescription::Enum(decl) => DeclarationKind::Enum(decl.clone()),
+                    _ => unreachable!(),
+                },
                 ast::TypeDeclarationKind::Union(decl) => DeclarationKind::Union(
                     self.translate_union(current_namespace, current_file_id, decl),
                 ),
@@ -498,12 +501,7 @@ impl<'a> Translator<'a> {
         }
     }
 
-    fn translate_enum(
-        &self,
-        _current_namespace: &AbsolutePath,
-        _current_file_id: FileId,
-        decl: &ast::Enum,
-    ) -> Enum {
+    fn translate_enum(&self, decl: &ast::Enum) -> Enum {
         let mut alignment = decl.type_.byte_size();
         for m in &decl.metadata {
             match self.ctx.resolve_identifier(m.key.value).as_str() {
@@ -605,7 +603,7 @@ impl<'a> Translator<'a> {
             TypeDescription::Table => return None,
             TypeDescription::Struct { size, .. } if size == &u32::MAX => (),
             TypeDescription::Struct { size, alignment } => return Some((*size, *alignment)),
-            TypeDescription::Enum { size, alignment } => return Some((*size, *alignment)),
+            TypeDescription::Enum(decl) => return Some((decl.type_.byte_size(), decl.alignment)),
             TypeDescription::Union => return None,
             TypeDescription::RpcService => return None,
         }
@@ -725,7 +723,9 @@ impl<'a> Translator<'a> {
                                 TypeDescription::Struct { size, alignment } => {
                                     (*size, 0, *alignment)
                                 }
-                                TypeDescription::Enum { size, alignment } => (*size, 0, *alignment),
+                                TypeDescription::Enum(decl) => {
+                                    (decl.type_.byte_size(), 0, decl.alignment)
+                                }
                                 _ => panic!("BUG"),
                             }
                         }
@@ -766,15 +766,11 @@ impl<'a> Translator<'a> {
     }
 
     pub fn finish(mut self) -> Declarations {
-        for (path, decl) in &self.ast_declarations {
-            let decl = self.translate_decl(&path.clone_pop(), decl);
-            if let DeclarationKind::Enum(decl) = &decl.kind {
-                self.descriptions[self.declarations.len()] = TypeDescription::Enum {
-                    size: decl.type_.byte_size(),
-                    alignment: decl.alignment,
-                };
-            }
-            self.declarations.insert(path.clone(), decl);
+        for (id, (path, decl)) in self.ast_declarations.iter().enumerate() {
+            self.declarations.insert(
+                path.clone(),
+                self.translate_decl(id, &path.clone_pop(), decl),
+            );
         }
         let mut parents = IndexMap::new();
         for i in 0..self.ast_declarations.len() {

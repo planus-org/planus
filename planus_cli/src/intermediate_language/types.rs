@@ -196,7 +196,7 @@ pub struct StructField {
     pub size: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Enum {
     pub type_: ast::IntegerType,
     pub variants: IndexMap<IntegerLiteral, String>,
