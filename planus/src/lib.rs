@@ -49,6 +49,9 @@ pub trait ToOwned {
 }
 
 #[doc(hidden)]
+#[allow(clippy::missing_safety_doc)]
+// TODO: only intended to be implemented by us, but we should write a safety
+//       comment anyway
 pub unsafe trait WriteAsPrimitive<P> {
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32);
 }

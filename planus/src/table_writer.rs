@@ -44,7 +44,9 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
         );
     }
 
-    /// Must be called with the most-aligned object first
+    /// # Safety
+    ///
+    /// Must be called in alignment order with the most-aligned object first
     #[inline(always)]
     pub unsafe fn write<P: Primitive, T: WriteAsPrimitive<P>>(
         &mut self,
