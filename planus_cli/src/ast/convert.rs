@@ -78,10 +78,7 @@ impl<'ctx> CstConverter<'ctx> {
                 "true" => Some(LiteralKind::Bool(true)),
                 "false" => Some(LiteralKind::Bool(false)),
                 "null" => Some(LiteralKind::Null),
-                _ => self.emit_simple_error(
-                    ErrorKind::UNKNOWN_IDENTIFIER,
-                    &format!("Unknown identifier {}", lit.ident),
-                ),
+                s => Some(LiteralKind::Constant(s.to_string())),
             },
             cst::ExprKind::Integer(lit) => Some(LiteralKind::Integer {
                 is_negative: false,
@@ -125,6 +122,10 @@ impl<'ctx> CstConverter<'ctx> {
                 LiteralKind::Null => {
                     self.emit_simple_error(ErrorKind::TYPE_ERROR, "Cannot use prefix sign on null")
                 }
+                LiteralKind::Constant(_) => self.emit_simple_error(
+                    ErrorKind::TYPE_ERROR,
+                    "Cannot use prefix sign on constants",
+                ),
             },
         }
     }
@@ -144,6 +145,7 @@ impl<'ctx> CstConverter<'ctx> {
                 | LiteralKind::Float { .. }
                 | LiteralKind::String(_)
                 | LiteralKind::Null
+                | LiteralKind::Constant(_)
                 | LiteralKind::List(_) => {
                     self_.emit_simple_error(ErrorKind::TYPE_ERROR, "expecting string literal")
                 }

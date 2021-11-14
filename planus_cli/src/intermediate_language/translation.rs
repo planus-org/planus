@@ -283,6 +283,32 @@ impl<'a> Translator<'a> {
             (LiteralKind::Integer { is_negative, value }, SimpleType(Integer(type_))) => self
                 .translate_integer(literal.span, *is_negative, value, type_)
                 .map(Literal::Int),
+            (LiteralKind::Integer { is_negative, value }, SimpleType(Enum(decl_index))) => {
+                match &self.descriptions[decl_index.0] {
+                    TypeDescription::Enum(decl) => {
+                        let int =
+                            self.translate_integer(literal.span, *is_negative, value, &decl.type_)?;
+                        if let Some(value) = decl.variants.get(&int) {
+                            Some(Literal::EnumTag {
+                                name: value.clone(),
+                                value: int,
+                            })
+                        } else {
+                            self.ctx.emit_error(
+                                ErrorKind::TYPE_ERROR,
+                                std::iter::once(
+                                    Label::primary(current_file_id, literal.span).with_message(
+                                        "Expression does not map to a valid enum variant",
+                                    ),
+                                ),
+                                None,
+                            );
+                            None
+                        }
+                    }
+                    _ => unreachable!(),
+                }
+            }
             (LiteralKind::Float { is_negative, value }, SimpleType(Float(type_))) => self
                 .translate_float(literal.span, *is_negative, value, type_)
                 .map(Literal::Float),
@@ -300,6 +326,27 @@ impl<'a> Translator<'a> {
                 Some(Literal::Vector(out))
             }
             (LiteralKind::List(_), Array(_type_, _size)) => todo!(),
+            (LiteralKind::Constant(s), _) => {
+                if let SimpleType(Enum(decl_index)) = &type_.kind {
+                    if let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0] {
+                        if let Some((key, value)) =
+                            decl.variants.iter().find(|(_key, value)| value == &s)
+                        {
+                            return Some(Literal::EnumTag {
+                                name: value.clone(),
+                                value: *key,
+                            });
+                        }
+                    }
+                }
+
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    std::iter::once(Label::primary(current_file_id, literal.span)),
+                    Some(&format!("Unknown constant {:?}", s)),
+                );
+                None
+            }
             _ => {
                 self.ctx.emit_error(
                     ErrorKind::TYPE_ERROR,

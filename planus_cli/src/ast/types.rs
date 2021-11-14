@@ -299,6 +299,7 @@ pub enum LiteralKind {
     String(String),
     List(Vec<Literal>),
     Null,
+    Constant(String),
 }
 
 #[derive(Clone, Debug)]

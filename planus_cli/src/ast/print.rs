@@ -214,6 +214,7 @@ impl PrettyPrint for Literal {
                 print!("]");
             }
             LiteralKind::Null => print!("null"),
+            LiteralKind::Constant(s) => print!("{}", s),
         }
     }
 }
