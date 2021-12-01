@@ -10,7 +10,7 @@ table TableB {
 }
 
 enum Enum : byte {
-    King,
+    self,
     Queen
 }
 
@@ -33,6 +33,8 @@ table Root {
     f:Struct;
     i:int = 1234;
     j:Union;
+    k:Enum = self;
+    l:Enum = Queen;
 }
 
 root_type Root;

@@ -4,31 +4,26 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-#[derive(Copy, Clone, Debug)]
-pub enum Scope {
-    Global = 0,
-    Namespace = 1,
-    Declaration = 2,
+pub type Keywords = HashSet<&'static str>;
+
+pub struct Names<'keywords> {
+    keywords: &'keywords Keywords,
+    names: BTreeMap<&'static str, HashSet<String>>,
 }
 
-pub struct ReservedNames {
-    keywords: HashSet<&'static str>,
-    names: [BTreeMap<&'static str, HashSet<String>>; 3],
-}
-
-impl ReservedNames {
-    pub fn new(keywords: &[&'static str]) -> Self {
+impl<'keywords> Names<'keywords> {
+    pub fn new(keywords: &'keywords Keywords) -> Self {
         Self {
-            keywords: keywords.iter().cloned().collect(),
+            keywords,
             names: Default::default(),
         }
     }
 
-    pub fn try_reserve(&mut self, scope: Scope, binding_kind: &'static str, value: &str) -> bool {
+    pub fn try_reserve(&mut self, binding_kind: &'static str, value: &str) -> bool {
         if self.keywords.contains(value) {
             false
         } else {
-            let names = self.names[scope as usize].entry(binding_kind).or_default();
+            let names = self.names.entry(binding_kind).or_default();
             if names.contains(value) {
                 false
             } else {
@@ -40,27 +35,20 @@ impl ReservedNames {
 
     pub fn try_reserve_repeat<'a>(
         &mut self,
-        scope: Scope,
         binding_kind: &'static str,
         value: Cow<'a, str>,
         padding: char,
     ) -> Cow<'a, str> {
-        if self.try_reserve(scope, binding_kind, &value) {
+        if self.try_reserve(binding_kind, &value) {
             return value.into();
         }
 
         let mut value = format!("{}{}", value, padding);
-        while !self.try_reserve(scope, binding_kind, &value) {
+        while !self.try_reserve(binding_kind, &value) {
             value.push(padding);
         }
 
         value.into()
-    }
-
-    pub fn clear(&mut self, scope: Scope) {
-        for bindings in self.names[scope as usize].values_mut() {
-            bindings.clear();
-        }
     }
 }
 
@@ -198,7 +186,12 @@ impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Displa
 pub enum ResolvedType<'a, B: ?Sized + Backend> {
     Struct(&'a Struct, &'a B::StructInfo, RelativeNamespace<'a, B>),
     Table(&'a Table, &'a B::TableInfo, RelativeNamespace<'a, B>),
-    Enum(&'a Enum, &'a B::EnumInfo, RelativeNamespace<'a, B>),
+    Enum(
+        &'a Enum,
+        &'a B::EnumInfo,
+        RelativeNamespace<'a, B>,
+        &'a [B::EnumVariantInfo],
+    ),
     Union(&'a Union, &'a B::UnionInfo, RelativeNamespace<'a, B>),
     Vector(Box<ResolvedType<'a, B>>),
     Array(Box<ResolvedType<'a, B>>, u32),
@@ -225,14 +218,17 @@ pub trait Backend {
 
     fn generate_namespace(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
         namespace_name: &AbsolutePath,
         namespace: &Namespace,
     ) -> Self::NamespaceInfo;
 
     fn generate_table(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Table,
@@ -240,7 +236,9 @@ pub trait Backend {
 
     fn generate_struct(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Struct,
@@ -248,7 +246,9 @@ pub trait Backend {
 
     fn generate_enum(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Enum,
@@ -256,7 +256,9 @@ pub trait Backend {
 
     fn generate_union(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Union,
@@ -264,7 +266,9 @@ pub trait Backend {
 
     fn generate_rpc_service(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &RpcService,
@@ -272,7 +276,9 @@ pub trait Backend {
 
     fn generate_table_field(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::TableInfo,
@@ -284,7 +290,9 @@ pub trait Backend {
 
     fn generate_struct_field(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::StructInfo,
@@ -296,7 +304,9 @@ pub trait Backend {
 
     fn generate_enum_variant(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::EnumInfo,
@@ -307,7 +317,9 @@ pub trait Backend {
 
     fn generate_union_variant(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::UnionInfo,
@@ -320,7 +332,9 @@ pub trait Backend {
 
     fn generate_rpc_method(
         &mut self,
-        reserved_names: &mut ReservedNames,
+        global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::RpcServiceInfo,

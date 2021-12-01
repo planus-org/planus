@@ -116,14 +116,6 @@ impl Declarations {
         self.declarations.get_index(index.0).unwrap()
     }
 
-    pub fn namespace_count(&self) -> usize {
-        self.namespaces.len()
-    }
-
-    pub fn declaration_count(&self) -> usize {
-        self.declarations.len()
-    }
-
     pub fn iter_declarations(
         &self,
     ) -> impl Iterator<Item = (DeclarationIndex, &AbsolutePath, &Declaration)> {
@@ -147,6 +139,7 @@ pub struct Namespace {
 pub struct Declaration {
     pub definition_span: Span,
     pub file_id: FileId,
+    pub namespace_id: NamespaceIndex,
     pub kind: DeclarationKind,
 }
 
@@ -289,7 +282,10 @@ pub enum Literal {
     Float(FloatLiteral),
     Array(Vec<Literal>),
     Vector(Vec<Literal>),
-    EnumTag { name: String, value: IntegerLiteral },
+    EnumTag {
+        variant_index: usize,
+        value: IntegerLiteral,
+    },
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]

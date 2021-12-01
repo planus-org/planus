@@ -1,4 +1,4 @@
-use super::backend::{Backend, RelativeNamespace, ReservedNames, ResolvedType, Scope};
+use super::backend::{Backend, Names, RelativeNamespace, ResolvedType};
 use crate::{
     ast::{FloatType, IntegerType},
     intermediate_language::types::{AbsolutePath, AssignMode, Literal},
@@ -86,39 +86,39 @@ pub struct RpcMethod {
 
 const BINDING_KIND_TYPES: &'static str = "types";
 
-fn reserve_module_name(path: &str, reserved_names: &mut ReservedNames) -> String {
+fn reserve_module_name(path: &str, namespace_names: &mut Names<'_>) -> String {
     let name = path.to_snake_case().into();
-    reserved_names
-        .try_reserve_repeat(Scope::Namespace, BINDING_KIND_TYPES, name, '_')
+    namespace_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
         .into()
 }
 
-fn reserve_type_name(path: &str, reserved_names: &mut ReservedNames) -> String {
+fn reserve_type_name(path: &str, namespace_names: &mut Names<'_>) -> String {
     let name = path.to_camel_case().into();
-    reserved_names
-        .try_reserve_repeat(Scope::Namespace, BINDING_KIND_TYPES, name, '_')
+    namespace_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
         .into()
 }
 
 fn reserve_field_name(
     path: &str,
     binding_kind: &'static str,
-    reserved_names: &mut ReservedNames,
+    declaration_names: &mut Names<'_>,
 ) -> String {
     let name = path.to_snake_case().into();
-    reserved_names
-        .try_reserve_repeat(Scope::Declaration, binding_kind, name, '_')
+    declaration_names
+        .try_reserve_repeat(binding_kind, name, '_')
         .into()
 }
 
 fn reserve_rust_enum_variant_name(
     path: &str,
     binding_kind: &'static str,
-    reserved_names: &mut ReservedNames,
+    declaration_names: &mut Names<'_>,
 ) -> String {
     let name = path.to_camel_case().into();
-    reserved_names
-        .try_reserve_repeat(Scope::Declaration, binding_kind, name, '_')
+    declaration_names
+        .try_reserve_repeat(binding_kind, name, '_')
         .into()
 }
 
@@ -152,75 +152,86 @@ impl Backend for RustBackend {
 
     fn generate_namespace(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
         namespace_name: &crate::intermediate_language::types::AbsolutePath,
         _namespace: &crate::intermediate_language::types::Namespace,
     ) -> Namespace {
         let name = namespace_name.0.last().map_or_else(String::new, |name| {
-            reserve_module_name(name, reserved_names)
+            reserve_module_name(name, namespace_names)
         });
         Namespace { name }
     }
 
     fn generate_table(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::Table,
     ) -> Table {
         let decl_name = decl_name.0.last().unwrap();
         Table {
-            owned_name: reserve_type_name(decl_name, reserved_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), reserved_names),
+            owned_name: reserve_type_name(decl_name, namespace_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), namespace_names),
         }
     }
 
     fn generate_struct(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::Struct,
     ) -> Struct {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
-            owned_name: reserve_type_name(decl_name, reserved_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), reserved_names),
+            owned_name: reserve_type_name(decl_name, namespace_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), namespace_names),
         }
     }
 
     fn generate_enum(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         decl: &crate::intermediate_language::types::Enum,
     ) -> Enum {
         let decl_name = decl_name.0.last().unwrap();
         Enum {
-            name: reserve_type_name(decl_name, reserved_names),
+            name: reserve_type_name(decl_name, namespace_names),
             repr_type: format!("{:?}", decl.type_).to_lowercase().into(),
         }
     }
 
     fn generate_union(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::Union,
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
         Union {
-            owned_name: reserve_type_name(decl_name, reserved_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), reserved_names),
+            owned_name: reserve_type_name(decl_name, namespace_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), namespace_names),
         }
     }
 
     fn generate_rpc_service(
         &mut self,
-        _reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::RpcService,
@@ -230,7 +241,9 @@ impl Backend for RustBackend {
 
     fn generate_table_field(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
         _parent_info: &Self::TableInfo,
@@ -239,8 +252,8 @@ impl Backend for RustBackend {
         field: &crate::intermediate_language::types::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
-        let name = reserve_field_name(field_name, "name", reserved_names);
-        let create_name = reserve_field_name(field_name, "create_name", reserved_names);
+        let name = reserve_field_name(field_name, "name", declaration_names);
+        let create_name = reserve_field_name(field_name, "create_name", declaration_names);
         let read_type;
         let owned_type;
         let create_trait;
@@ -345,14 +358,17 @@ impl Backend for RustBackend {
                     );
                 }
             }
-            ResolvedType::Enum(_, info, relative_namespace) => {
-                if let AssignMode::HasDefault(Literal::EnumTag { name, .. }) = &field.assign_mode {
-                    // TODO: get the renamed variant name
+            ResolvedType::Enum(_, info, relative_namespace, variants) => {
+                if let AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) =
+                    &field.assign_mode
+                {
                     read_type =
                         format_relative_namespace(&relative_namespace, &info.name).to_string();
                     owned_type = read_type.clone();
                     create_trait = format!("WriteAs<{}>", owned_type);
-                    code_for_default = format!("{}::{}", owned_type, name).into();
+
+                    code_for_default =
+                        format!("{}::{}", owned_type, variants[*variant_index].name).into();
                     none_replacement = Some(code_for_default.to_string());
                 } else {
                     read_type = format!(
@@ -433,7 +449,9 @@ impl Backend for RustBackend {
 
     fn generate_struct_field(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
         _parent_info: &Self::StructInfo,
@@ -442,7 +460,7 @@ impl Backend for RustBackend {
         _field: &crate::intermediate_language::types::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
-        let name = reserve_field_name(field_name, "name", reserved_names);
+        let name = reserve_field_name(field_name, "name", declaration_names);
         let owned_type;
         let read_type;
         let read_type_no_lifetime;
@@ -455,7 +473,7 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.ref_name).to_string();
                 read_type = format!("{}<'a>", read_type_no_lifetime);
             }
-            ResolvedType::Enum(_, info, relative_namespace) => {
+            ResolvedType::Enum(_, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
                 read_type_no_lifetime = owned_type.clone();
                 read_type = owned_type.clone();
@@ -487,7 +505,9 @@ impl Backend for RustBackend {
 
     fn generate_enum_variant(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
         _parent_info: &Self::EnumInfo,
@@ -495,7 +515,7 @@ impl Backend for RustBackend {
         key: &str,
         value: &crate::intermediate_language::types::IntegerLiteral,
     ) -> EnumVariant {
-        let name = reserve_rust_enum_variant_name(key, "name", reserved_names);
+        let name = reserve_rust_enum_variant_name(key, "name", declaration_names);
 
         EnumVariant {
             name,
@@ -505,7 +525,9 @@ impl Backend for RustBackend {
 
     fn generate_union_variant(
         &mut self,
-        reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
         _parent_info: &Self::UnionInfo,
@@ -518,9 +540,9 @@ impl Backend for RustBackend {
         let create_name = reserve_field_name(
             &format!("create_{}", key),
             "create_function",
-            reserved_names,
+            declaration_names,
         );
-        let enum_name = reserve_rust_enum_variant_name(key, "variant_name", reserved_names);
+        let enum_name = reserve_rust_enum_variant_name(key, "variant_name", declaration_names);
         let create_trait;
         let owned_type;
         let ref_type;
@@ -568,7 +590,9 @@ impl Backend for RustBackend {
 
     fn generate_rpc_method(
         &mut self,
-        _reserved_names: &mut super::backend::ReservedNames,
+        _global_names: &mut Names<'_>,
+        _namespace_names: &mut Names<'_>,
+        _declaration_names: &mut Names<'_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
         _parent_info: &Self::RpcServiceInfo,

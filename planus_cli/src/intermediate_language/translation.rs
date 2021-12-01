@@ -288,9 +288,9 @@ impl<'a> Translator<'a> {
                     TypeDescription::Enum(decl) => {
                         let int =
                             self.translate_integer(literal.span, *is_negative, value, &decl.type_)?;
-                        if let Some(value) = decl.variants.get(&int) {
+                        if let Some(variant_index) = decl.variants.get_index_of(&int) {
                             Some(Literal::EnumTag {
-                                name: value.clone(),
+                                variant_index,
                                 value: int,
                             })
                         } else {
@@ -329,11 +329,14 @@ impl<'a> Translator<'a> {
             (LiteralKind::Constant(s), _) => {
                 if let SimpleType(Enum(decl_index)) = &type_.kind {
                     if let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0] {
-                        if let Some((key, value)) =
-                            decl.variants.iter().find(|(_key, value)| value == &s)
+                        if let Some((variant_index, (key, _value))) = decl
+                            .variants
+                            .iter()
+                            .enumerate()
+                            .find(|(_variant_index, (_key, value))| value == &s)
                         {
                             return Some(Literal::EnumTag {
-                                name: value.clone(),
+                                variant_index,
                                 value: *key,
                             });
                         }
@@ -455,6 +458,7 @@ impl<'a> Translator<'a> {
         &self,
         id: usize,
         current_namespace: &AbsolutePath,
+        current_namespace_index: NamespaceIndex,
         decl: &ast::Declaration,
     ) -> Declaration {
         let current_file_id = decl.file_id;
@@ -477,6 +481,7 @@ impl<'a> Translator<'a> {
             };
 
         Declaration {
+            namespace_id: current_namespace_index,
             definition_span: decl.definition_span,
             file_id: current_file_id,
             kind,
@@ -902,9 +907,15 @@ impl<'a> Translator<'a> {
 
     pub fn finish(mut self) -> Declarations {
         for (id, (path, decl)) in self.ast_declarations.iter().enumerate() {
+            let current_namespace = path.clone_pop();
             self.declarations.insert(
                 path.clone(),
-                self.translate_decl(id, &path.clone_pop(), decl),
+                self.translate_decl(
+                    id,
+                    &current_namespace,
+                    NamespaceIndex(self.namespaces.get_index_of(&current_namespace).unwrap()),
+                    decl,
+                ),
             );
         }
         let mut parents = IndexMap::new();
@@ -955,9 +966,10 @@ impl<'a> Translator<'a> {
             TypeDescription::Enum(decl) => decl
                 .variants
                 .iter()
-                .filter_map(|(k, v)| {
+                .enumerate()
+                .filter_map(|(variant_index, (k, _v))| {
                     (k.is_zero()).then(|| Literal::EnumTag {
-                        name: v.clone(),
+                        variant_index,
                         value: *k,
                     })
                 })

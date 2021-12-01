@@ -244,10 +244,10 @@ pub fn run_name_generator<G: NameGenerator>(
     Vec<G::DeclInfo>,
     Vec<Vec<G::EntryInfo>>,
 ) {
-    let mut namespace_info = (0..declarations.namespace_count())
+    let mut namespace_info = (0..declarations.namespaces.len())
         .map(|_| None)
         .collect::<Vec<_>>();
-    let mut decl_info = (0..declarations.declaration_count())
+    let mut decl_info = (0..declarations.declarations.len())
         .map(|_| None)
         .collect::<Vec<_>>();
     let mut reserved_names = ReservedNames {
@@ -274,7 +274,7 @@ pub fn run_name_generator<G: NameGenerator>(
         .into_iter()
         .map(|info| info.unwrap())
         .collect::<Vec<_>>();
-    let mut entry_infos = Vec::with_capacity(declarations.declaration_count());
+    let mut entry_infos = Vec::with_capacity(declarations.declarations.len());
 
     for (_decl_id, decl_name, decl) in declarations.iter_declarations() {
         reserved_names.clear(Scope::Declaration);
