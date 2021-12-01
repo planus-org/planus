@@ -1,0 +1,84 @@
+#[derive(Copy, Clone, Debug)]
+pub struct {{ info.owned_name }} {
+    {% for field in fields -%}
+        pub {{ field.info.name }}: {{ field.info.owned_type }},
+    {% endfor %}
+}
+
+impl planus::Primitive for {{ info.owned_name }} {
+    const ALIGNMENT: usize = {{ alignment }};
+    const SIZE: usize = {{ size }};
+}
+
+unsafe impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
+    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
+        {% for field in fields -%}
+            self.{{ field.info.name }}.write(buffer.add({{ field.offset }}), buffer_position - {{ field.offset }});
+        {% endfor %}
+    }
+}
+
+impl<'a> planus::WriteAs<'a, {{ info.owned_name }}> for {{ info.owned_name }} {
+    type Prepared = &'a Self;
+    fn prepare(&'a self, _buffer: &mut planus::Buffer) -> &'a Self {
+        self
+    }
+}
+
+impl<'a> planus::WriteAsOptional<'a, {{ info.owned_name }}> for {{ info.owned_name }} {
+    type Prepared = &'a Self;
+    fn prepare(&'a self, _buffer: &mut planus::Buffer) -> Option<&'a Self> {
+        Some(self)
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct {{ info.ref_name }}<'buf>(&'buf [u8; {{ size }}]);
+
+impl<'buf> {{ info.ref_name }}<'buf> {
+    {% for field in fields %}
+        pub fn {{ field.info.name }}(&self) -> {{ field.info.getter_return_type }} {
+            let buffer: &[u8; {{ field.size }}] = std::convert::TryInto::try_into(&self.0[{{ field.offset }}..{{ field.offset + field.size }}]).unwrap();
+            {{ field.info.getter_code }}
+        }
+    {% endfor %}
+}
+
+impl<'buf> std::fmt::Debug for {{ info.ref_name }} {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut f = f.debug_struct("{{info.ref_name}}");
+        {% for field in fields -%}
+            {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
+                if let Ok(value) = self.{{field.info.name}}() {
+                    f.field("{{field.info.name}}", value);
+                }
+            {%- else -%}
+                f.field("{{field.info.name}}", &self.{{field.info.name}}());
+            {%- endif -%}
+        {%- endfor %}
+        f.finish()
+    }
+}
+
+impl<'buf> planus::ToOwned for {{ info.ref_name }} {
+    type Value = {{ info.owned_name }};
+    fn to_owned(&self) -> planus::Result<Self::Value> {
+        Ok({{ info.owned_name }} {
+        {% for field in fields -%}
+            {{ field.info.name }}:
+            {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
+                self.{{field.info.name}}()?,
+            {%- else -%}
+                self.{{field.info.name}}(),
+            {%- endif -%}
+        {%- endfor %}
+        })
+    }
+}
+
+impl<'buf> planus::TableRead<'buf> for {{ info.ref_name }} {
+    fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+        let buffer = buffer.advance_as_array::<{{size}}>(offset)?;
+        Ok(Self(buffer))
+    }
+}

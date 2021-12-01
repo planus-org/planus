@@ -11,18 +11,19 @@ pub struct RustBackend;
 
 #[derive(Clone, Debug)]
 pub struct Namespace {
-    name: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct Table {
-    owned_name: String,
-    ref_name: String,
+    pub owned_name: String,
+    pub ref_name: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct TableField {
     pub name: String,
+    pub vtable_type: String,
     pub owned_type: String,
     pub read_type: String,
     pub create_name: String,
@@ -34,8 +35,8 @@ pub struct TableField {
 
 #[derive(Clone, Debug)]
 pub struct Struct {
-    owned_name: String,
-    ref_name: String,
+    pub owned_name: String,
+    pub ref_name: String,
 }
 
 #[derive(Clone, Debug)]
@@ -44,6 +45,8 @@ pub struct StructField {
     pub owned_type: String,
     pub read_type: String,
     pub read_type_no_lifetime: String,
+    pub getter_return_type: String,
+    pub getter_code: String,
 }
 
 #[derive(Clone, Debug)]
@@ -256,6 +259,7 @@ impl Backend for RustBackend {
         let create_name = reserve_field_name(field_name, "create_name", declaration_names);
         let read_type;
         let owned_type;
+        let vtable_type;
         let create_trait;
         let mut code_for_default = Cow::Borrowed("Default::default()");
         let mut none_replacement: Option<String> = None;
@@ -268,24 +272,22 @@ impl Backend for RustBackend {
                 },
                 relative_namespace,
             ) => {
+                vtable_type =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = format!(
                         "{}<'a>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type =
-                        format_relative_namespace(&relative_namespace, owned_name).to_string();
+                    owned_type = vtable_type.clone();
                     create_trait = format!("WriteAs<{}>", owned_type);
                 } else {
                     read_type = format!(
                         "Option<{}<'a>>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type = format!(
-                        "Option<{}>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
-                    create_trait = format!("WriteAsOptional<{}>", owned_type);
+                    owned_type = format!("Option<{}>", vtable_type);
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
                 }
             }
             ResolvedType::Table(
@@ -296,32 +298,23 @@ impl Backend for RustBackend {
                 },
                 relative_namespace,
             ) => {
+                let owned_name =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
+                vtable_type = format!("Offset<{}>", owned_name);
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = format!(
                         "{}<'a>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type = format!(
-                        "Box<{}>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
-                    create_trait = format!(
-                        "WriteAs<Offset<{}>>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
+                    owned_type = format!("Box<{}>", owned_name);
+                    create_trait = format!("WriteAs<{}>", vtable_type);
                 } else {
                     read_type = format!(
                         "Option<{}<'a>>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type = format!(
-                        "Option<Box<{}>>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
-                    create_trait = format!(
-                        "WriteAsOptional<Offset<{}>>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
+                    owned_type = format!("Option<Box<{}>>", owned_name);
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
                 }
             }
             ResolvedType::Union(
@@ -332,59 +325,48 @@ impl Backend for RustBackend {
                 },
                 relative_namespace,
             ) => {
+                let owned_name =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
+                vtable_type = format!("Offset<{}>", owned_name);
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = format!(
                         "{}<'a>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type =
-                        format_relative_namespace(&relative_namespace, owned_name).to_string();
-                    create_trait = format!(
-                        "WriteAsUnion<{}>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
+                    owned_type = owned_name.clone();
+                    create_trait = format!("WriteAsUnion<{}>", owned_name);
                 } else {
                     read_type = format!(
                         "Option<{}<'a>>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
-                    owned_type = format!(
-                        "Option<{}>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
-                    create_trait = format!(
-                        "WriteAsOptionalUnion<{}>",
-                        format_relative_namespace(&relative_namespace, owned_name)
-                    );
+                    owned_type = format!("Option<{}>", owned_name);
+                    create_trait = format!("WriteAsOptionalUnion<{}>", owned_name);
                 }
             }
             ResolvedType::Enum(_, info, relative_namespace, variants) => {
+                vtable_type =
+                    format_relative_namespace(&relative_namespace, &info.name).to_string();
                 if let AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) =
                     &field.assign_mode
                 {
-                    read_type =
-                        format_relative_namespace(&relative_namespace, &info.name).to_string();
-                    owned_type = read_type.clone();
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
                     create_trait = format!("WriteAs<{}>", owned_type);
 
                     code_for_default =
                         format!("{}::{}", owned_type, variants[*variant_index].name).into();
                     none_replacement = Some(code_for_default.to_string());
                 } else {
-                    read_type = format!(
-                        "Option<{}>",
-                        format_relative_namespace(&relative_namespace, &info.name)
-                    );
+                    read_type = format!("Option<{}>", vtable_type);
                     owned_type = read_type.clone();
-                    create_trait = format!(
-                        "WriteAsOptional<{}>",
-                        format_relative_namespace(&relative_namespace, &info.name)
-                    );
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
                 }
             }
             ResolvedType::Vector(_) => todo!(),
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => {
+                vtable_type = "Offset<str>".to_string();
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = "&'a str".to_string();
                     owned_type = "String".to_string();
@@ -396,6 +378,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Bool => {
+                vtable_type = "bool".to_string();
                 if let AssignMode::HasDefault(Literal::Bool(lit)) = &field.assign_mode {
                     read_type = "bool".to_string();
                     owned_type = "bool".to_string();
@@ -409,27 +392,29 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Integer(typ) => {
+                vtable_type = integer_type(&typ).to_string();
                 if let AssignMode::HasDefault(Literal::Int(lit)) = &field.assign_mode {
-                    read_type = integer_type(&typ).to_string();
-                    owned_type = read_type.clone();
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
                     create_trait = format!("WriteAs<{}>", owned_type);
                     code_for_default = format!("{}", lit).into();
                     none_replacement = Some(code_for_default.to_string());
                 } else {
-                    read_type = format!("Option<{}>", integer_type(&typ));
+                    read_type = format!("Option<{}>", vtable_type);
                     owned_type = read_type.clone();
-                    create_trait = format!("WriteAsOptional<{}>", integer_type(&typ));
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
                 }
             }
             ResolvedType::Float(typ) => {
+                vtable_type = float_type(&typ).to_string();
                 if let AssignMode::HasDefault(Literal::Float(lit)) = &field.assign_mode {
-                    read_type = float_type(&typ).to_string();
-                    owned_type = read_type.clone();
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
                     create_trait = format!("WriteAs<{}>", owned_type);
                     code_for_default = format!("{}", lit).into();
                     none_replacement = Some(code_for_default.to_string());
                 } else {
-                    read_type = format!("Option<{}>", float_type(&typ));
+                    read_type = format!("Option<{}>", vtable_type);
                     owned_type = read_type.clone();
                     create_trait = format!("WriteAsOptional<{}>", float_type(&typ));
                 }
@@ -437,6 +422,7 @@ impl Backend for RustBackend {
         }
         TableField {
             name,
+            vtable_type,
             owned_type,
             read_type,
             create_name,
@@ -464,6 +450,8 @@ impl Backend for RustBackend {
         let owned_type;
         let read_type;
         let read_type_no_lifetime;
+        let getter_code;
+        let getter_return_type;
 
         match resolved_type {
             ResolvedType::Struct(_, info, relative_namespace) => {
@@ -472,26 +460,39 @@ impl Backend for RustBackend {
                 read_type_no_lifetime =
                     format_relative_namespace(&relative_namespace, &info.ref_name).to_string();
                 read_type = format!("{}<'a>", read_type_no_lifetime);
+                getter_return_type = read_type.clone();
+                getter_code = format!("{}(buffer)", read_type_no_lifetime);
             }
-            ResolvedType::Enum(_, info, relative_namespace, _) => {
+            ResolvedType::Enum(decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
                 read_type_no_lifetime = owned_type.clone();
                 read_type = owned_type.clone();
+                getter_return_type = format!("planus::Result<{}>", owned_type);
+                getter_code = format!(
+                    "{}::from_le_bytes(buffer).try_into()",
+                    integer_type(&decl.type_)
+                );
             }
             ResolvedType::Bool => {
                 owned_type = "bool".to_string();
                 read_type_no_lifetime = owned_type.clone();
                 read_type = owned_type.clone();
+                getter_return_type = read_type.clone();
+                getter_code = "buffer[0] != 0".to_string();
             }
             ResolvedType::Integer(typ) => {
                 owned_type = integer_type(&typ).to_string();
                 read_type_no_lifetime = owned_type.clone();
                 read_type = owned_type.clone();
+                getter_return_type = owned_type.clone();
+                getter_code = format!("{}::from_le_bytes(*buffer)", read_type_no_lifetime);
             }
             ResolvedType::Float(typ) => {
                 owned_type = float_type(&typ).to_string();
                 read_type_no_lifetime = owned_type.clone();
                 read_type = owned_type.clone();
+                getter_return_type = owned_type.clone();
+                getter_code = format!("{}::from_le_bytes(*buffer)", read_type_no_lifetime);
             }
             _ => unreachable!(),
         }
@@ -500,6 +501,8 @@ impl Backend for RustBackend {
             owned_type,
             read_type,
             read_type_no_lifetime,
+            getter_return_type,
+            getter_code,
         }
     }
 

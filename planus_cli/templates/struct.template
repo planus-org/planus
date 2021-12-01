@@ -90,7 +90,6 @@ impl<'buf> planus::ToOwned for {{ info.read_type }} {
     }
 }
 
-
 impl<'buf> planus::TableRead<'buf> for {{ info.read_type }} {
     fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
         let buffer = buffer.advance_as_array::<{{decl.size}}>(offset)?;

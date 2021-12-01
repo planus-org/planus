@@ -1,5 +1,5 @@
 use anyhow::Result;
-use planus_cli::codegen::{generate_code, generate_code2};
+use planus_cli::codegen::generate_code;
 
 #[derive(structopt::StructOpt)]
 struct Args {
@@ -13,7 +13,6 @@ struct Args {
 #[paw::main]
 fn main(args: Args) -> Result<()> {
     generate_code(&args.files, args.output_filename)?;
-    generate_code2(&args.files)?;
 
     Ok(())
 }

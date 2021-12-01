@@ -41,14 +41,28 @@ impl<'buf> Table<'buf> {
         Ok(Self { object, vtable })
     }
 
-    pub fn access<T: TableRead<'buf>>(&self, vtable_offset: usize) -> Result<Option<T>, ErrorKind> {
+    pub fn access<T: TableRead<'buf>>(
+        &self,
+        vtable_offset: usize,
+        type_: &'static str,
+        method: &'static str,
+    ) -> crate::Result<Option<T>> {
         let offset = self
             .vtable
             .get(2 * vtable_offset..2 * (vtable_offset + 1))
             .expect("IMPOSSIBLE: trying to access invalid vtable offset");
         let offset = u16::from_le_bytes(offset.try_into().unwrap()) as usize;
         if offset != 0 {
-            T::from_buffer(self.object, offset).map(Some)
+            T::from_buffer(self.object, offset)
+                .map(Some)
+                .map_err(|error_kind| crate::errors::Error {
+                    source_location: crate::errors::ErrorLocation {
+                        type_: type_.into(),
+                        method,
+                        byte_offset: self.object.offset_from_start,
+                    },
+                    error_kind,
+                })
         } else {
             Ok(None)
         }
@@ -57,16 +71,28 @@ impl<'buf> Table<'buf> {
     pub fn access_union<T: TableReadUnion<'buf>>(
         &self,
         vtable_offset: usize,
-    ) -> Result<Option<T>, ErrorKind> {
+        type_: &'static str,
+        method: &'static str,
+    ) -> crate::Result<Option<T>> {
         let offset = self
             .vtable
             .get(2 * vtable_offset..2 * (vtable_offset + 2))
             .expect("IMPOSSIBLE: trying to access invalid vtable offset for union");
         let tag_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
         let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
-        let tag = u8::from_buffer(self.object, tag_offset)?;
+        let make_error = |error_kind| crate::errors::Error {
+            source_location: crate::errors::ErrorLocation {
+                type_: type_.into(),
+                method,
+                byte_offset: self.object.offset_from_start,
+            },
+            error_kind,
+        };
+        let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
         if tag_offset != 0 && value_offset != 0 {
-            T::from_buffer(self.object, value_offset, tag).map(Some)
+            T::from_buffer(self.object, value_offset, tag)
+                .map(Some)
+                .map_err(make_error)
         } else {
             Ok(None)
         }

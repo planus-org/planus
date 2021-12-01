@@ -17,32 +17,47 @@ pub struct BackendNamespace<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub enum BackendDeclaration<B: ?Sized + Backend> {
-    Table {
-        max_vtable_index: u32,
-        max_size: u32,
-        max_alignment: u32,
-        info: B::TableInfo,
-        fields: BackendTableFields<B::TableFieldInfo>,
-    },
-    Struct {
-        size: u32,
-        alignment: u32,
-        info: B::StructInfo,
-        fields: Vec<BackendStructField<B::StructFieldInfo>>,
-    },
-    Enum {
-        size: u32,
-        info: B::EnumInfo,
-        variants: Vec<B::EnumVariantInfo>,
-    },
-    Union {
-        info: B::UnionInfo,
-        variants: Vec<B::UnionVariantInfo>,
-    },
-    RpcService {
-        info: B::RpcServiceInfo,
-        methods: Vec<B::RpcMethodInfo>,
-    },
+    Table(BackendTable<B>),
+    Struct(BackendStruct<B>),
+    Enum(BackendEnum<B>),
+    Union(BackendUnion<B>),
+    RpcService(BackendRpcService<B>),
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendTable<B: ?Sized + Backend> {
+    pub max_vtable_index: u32,
+    pub max_size: u32,
+    pub max_alignment: u32,
+    pub info: B::TableInfo,
+    pub fields: BackendTableFields<B::TableFieldInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendStruct<B: ?Sized + Backend> {
+    pub size: u32,
+    pub alignment: u32,
+    pub info: B::StructInfo,
+    pub fields: Vec<BackendStructField<B::StructFieldInfo>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendEnum<B: ?Sized + Backend> {
+    pub size: u32,
+    pub info: B::EnumInfo,
+    pub variants: Vec<B::EnumVariantInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendUnion<B: ?Sized + Backend> {
+    pub info: B::UnionInfo,
+    pub variants: Vec<B::UnionVariantInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendRpcService<B: ?Sized + Backend> {
+    pub info: B::RpcServiceInfo,
+    pub methods: Vec<B::RpcMethodInfo>,
 }
 
 #[derive(Debug, Clone)]
@@ -119,8 +134,13 @@ impl<F> BackendTableFields<F> {
         }
 
         let mut alignment_order = declaration_order.clone();
-        alignment_order
-            .sort_by_key(|(index, _, _)| std::cmp::Reverse(decl.fields[*index].object_alignment));
+        alignment_order.sort_by_key(|(index, _, field_type)| {
+            std::cmp::Reverse(if *field_type == BackendTableFieldType::UnionKey {
+                1
+            } else {
+                decl.fields[*index].object_alignment
+            })
+        });
 
         BackendTableFields {
             fields,
@@ -129,14 +149,29 @@ impl<F> BackendTableFields<F> {
         }
     }
 
-    pub fn declaration_order(&self) -> impl Iterator<Item = BackendTableField<'_, F>> {
+    pub fn declaration_order_with_union_keys(
+        &self,
+    ) -> impl Iterator<Item = BackendTableField<'_, F>> {
         self.declaration_order
             .iter()
             .map(
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    value: &self.fields[index],
+                    info: &self.fields[index],
+                },
+            )
+    }
+
+    pub fn declaration_order(&self) -> impl Iterator<Item = BackendTableField<'_, F>> {
+        self.declaration_order
+            .iter()
+            .filter(|(_, _, field_type)| *field_type != BackendTableFieldType::UnionKey)
+            .map(
+                move |&(index, vtable_index, field_type)| BackendTableField {
+                    field_type,
+                    vtable_index,
+                    info: &self.fields[index],
                 },
             )
     }
@@ -148,9 +183,13 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    value: &self.fields[index],
+                    info: &self.fields[index],
                 },
             )
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.declaration_order.is_empty()
     }
 }
 
@@ -167,7 +206,7 @@ impl<F> Default for BackendTableFields<F> {
 pub struct BackendTableField<'a, F> {
     pub field_type: BackendTableFieldType,
     pub vtable_index: u32,
-    pub value: &'a F,
+    pub info: &'a F,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -181,7 +220,7 @@ pub enum BackendTableFieldType {
 pub struct BackendStructField<F> {
     pub offset: u32,
     pub size: u32,
-    pub value: F,
+    pub info: F,
 }
 
 fn translate_type_index<'a, B: ?Sized + Backend>(
@@ -207,7 +246,7 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
             ResolvedType::Struct(decl, translated_decl, relative_path)
         }
         DeclInfo::Enum(translated_decl, decl) => {
-            if let BackendDeclaration::Enum { variants, .. } =
+            if let BackendDeclaration::Enum(BackendEnum { variants, .. }) =
                 full_translated_decls.get(index).unwrap()
             {
                 ResolvedType::Enum(decl, translated_decl, relative_path, variants)
@@ -434,7 +473,7 @@ pub fn run_backend<B: ?Sized + Backend>(
             let namespace_names = &mut namespace_names[orig_decl.1.namespace_id.0];
             full_translated_decls.insert(
                 i,
-                BackendDeclaration::Enum {
+                BackendDeclaration::Enum(BackendEnum {
                     size: decl.type_.byte_size(),
                     info: translated_decl.clone(),
                     variants: decl
@@ -454,7 +493,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             )
                         })
                         .collect(),
-                },
+                }),
             );
         }
     }
@@ -468,7 +507,7 @@ pub fn run_backend<B: ?Sized + Backend>(
         let namespace_names = &mut namespace_names[orig_decl.1.namespace_id.0];
         let decl = match decl {
             DeclInfo::Enum(..) => continue,
-            DeclInfo::Table(translated_decl, decl) => BackendDeclaration::Table {
+            DeclInfo::Table(translated_decl, decl) => BackendDeclaration::Table(BackendTable {
                 max_vtable_index: decl.max_vtable_index,
                 max_size: decl.max_size,
                 max_alignment: decl.max_alignment,
@@ -486,8 +525,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                     decl_path,
                     translated_decl,
                 ),
-            },
-            DeclInfo::Struct(translated_decl, decl) => BackendDeclaration::Struct {
+            }),
+            DeclInfo::Struct(translated_decl, decl) => BackendDeclaration::Struct(BackendStruct {
                 size: decl.size,
                 alignment: decl.alignment,
                 info: translated_decl.clone(),
@@ -495,7 +534,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .fields
                     .iter()
                     .map(|(field_name, field)| BackendStructField {
-                        value: backend.generate_struct_field(
+                        info: backend.generate_struct_field(
                             global_names,
                             namespace_names,
                             declaration_names,
@@ -518,8 +557,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                         size: field.size,
                     })
                     .collect(),
-            },
-            DeclInfo::Union(translated_decl, decl) => BackendDeclaration::Union {
+            }),
+            DeclInfo::Union(translated_decl, decl) => BackendDeclaration::Union(BackendUnion {
                 info: translated_decl.clone(),
                 variants: decl
                     .variants
@@ -548,7 +587,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                         )
                     })
                     .collect(),
-            },
+            }),
             DeclInfo::RpcService(_translated_decl, _decl) => todo!(),
         };
         full_translated_decls.insert(i, decl);

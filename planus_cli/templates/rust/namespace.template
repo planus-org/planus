@@ -1,0 +1,20 @@
+{%- if !info.name.is_empty() -%}
+pub mod {{info.name}} {
+{%- endif -%}
+    {%- for child in children -%}
+        {{- Namespace(child) -}}
+
+    {% endfor -%}
+    {%- for child in declarations -%}
+        {%- match child -%}
+            {%- when BackendDeclaration::Struct(inner) -%}{{- Struct(inner) }}
+            {%- when BackendDeclaration::Table(inner) -%}{{- Table(inner) }}
+            {%- when BackendDeclaration::Enum(inner) -%}{{- Enum(inner) }}
+            {%- when BackendDeclaration::Union(inner) -%}{{- Union(inner) }}
+            {%- when BackendDeclaration::RpcService(inner) -%}{{- RpcService(inner) }}
+        {% endmatch %}
+
+    {% endfor -%}
+{%- if !info.name.is_empty() -%}
+}
+{%- endif -%}

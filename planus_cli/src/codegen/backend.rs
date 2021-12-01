@@ -92,8 +92,6 @@ impl<'a, B: ?Sized + Backend> RelativeNamespace<'a, B> {
         translated_namespaces: &'a [B::NamespaceInfo],
         declarations: &'a Declarations,
     ) -> RelativeNamespace<'a, B> {
-        println!("{:#?}", current_namespace);
-        println!("{:#?}", other_namespace);
         let mut current_namespace = current_namespace.0.iter().peekable();
         let mut other_namespace = other_namespace.0.iter().peekable();
         let mut shared = AbsolutePath(Vec::new());
@@ -104,11 +102,6 @@ impl<'a, B: ?Sized + Backend> RelativeNamespace<'a, B> {
             shared.0.push(current_namespace.next().unwrap().clone());
             other_namespace.next();
         }
-        println!();
-        println!("{:#?}", current_namespace.clone().collect::<Vec<_>>());
-        println!("{:#?}", other_namespace.clone().collect::<Vec<_>>());
-        println!("{:#?}", shared);
-
         let index = declarations.namespaces.get_index_of(&shared).unwrap();
         let mut path = vec![&translated_namespaces[index]];
 

@@ -22,6 +22,7 @@ union Union {
 struct Struct {
     a:int;
     b:double;
+    c:Enum;
 }
 
 table Root {
@@ -32,9 +33,11 @@ table Root {
     e:TableA;
     f:Struct;
     i:int = 1234;
-    j:Union;
+    j:Union (required);
     k:Enum = self;
     l:Enum = Queen;
+    m:Enum = null;
+    n:Union;
 }
 
 root_type Root;
