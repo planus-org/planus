@@ -65,7 +65,7 @@ impl planus::WriteAsOptional<planus::Offset<{{info.owned_name}}>> for {{info.own
 #[derive(Copy, Clone)]
 pub struct {{info.ref_name}}<'buf>(planus::table_reader::Table<'buf>);
 
-impl<'buf> {{info.ref_name}} {
+impl<'buf> {{info.ref_name}}<'buf> {
     {% for field in fields.declaration_order() %}
         pub fn {{field.info.name}}(&self) -> planus::Result<{{field.info.read_type}}> {
             {% if field.info.none_replacement.is_some() %} Ok( {% endif %}
@@ -97,5 +97,63 @@ impl<'buf> std::fmt::Debug for {{info.ref_name}} {
             {%- endif -%}
         {%- endfor %}
         f.finish()
+    }
+}
+
+impl<'buf> planus::ToOwned for {{info.ref_name}}<'buf> {
+    type Value = {{info.owned_name}};
+
+    fn to_owned(&self) -> planus::Result<Self::Value> {
+        Ok({{info.owned_name}} {
+            {% for field in fields.declaration_order() -%}
+                {{field.info.name}}:
+                    {%- if field.info.owned_type.starts_with("Option<Box<") -%}
+                    if let Some({{field.info.name}}) = self.{{field.info.name}}()? {
+                        Some(Box::new(planus::ToOwned::to_owned({{field.info.name}})?))
+                    } else {
+                        None
+                    }
+                    {%- elseif field.info.owned_type.starts_with("Option<") -%}
+                    if let Some({{field.info.name}}) = self.{{field.info.name}}()? {
+                        Some(planus::ToOwned::to_owned({{field.info.name}})?)
+                    } else {
+                        None
+                    }
+                    {%- else -%}
+                    planus::ToOwned::to_owned(self.{{field.info.name}}()?)?
+                    {%- endif -%}
+                ,
+            {%- endfor %}
+        })
+    }
+}
+
+impl<'buf> planus::TableRead<'buf> for {{info.ref_name}}<'buf> {
+    fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+        Ok(Self(planus::table_reader::Table::from_buffer(buffer, offset)?))
+    }
+}
+
+impl<'buf> planus::VectorRead<'buf> for {{info.owned_name}} {
+    type Output = planus::Result<{{info.ref_name}}<'buf>>;
+    const STRIDE: usize = 4;
+
+    unsafe fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Self::Output {
+        planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| planus::Error {
+            source_location: planus::errors::ErrorLocation {
+                type_: "[{{info.ref_name}}]".into(),
+                method: "get",
+                byte_offset: usize::MAX,
+            },
+            error_kind
+        })
+    }
+}
+
+impl planus::VectorWrite<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Value = planus::Offset<{{info.owned_name}}>;
+    const STRIDE: usize = 4;
+    fn prepare(&self, buffer: &mut planus::Buffer) -> Self::Value {
+        planus::WriteAs::prepare(self, buffer)
     }
 }

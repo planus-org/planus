@@ -58,6 +58,9 @@ pub trait ToOwned {
 #[allow(clippy::missing_safety_doc)]
 // TODO: only intended to be implemented by us, but we should write a safety
 //       comment anyway
+// TODO: What *are* the safety requirements again? I think they are
+// that we need to never read the pointer and fill in all of the bytes,
+// but do we actually do that for structs?
 pub unsafe trait WriteAsPrimitive<P> {
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32);
 }
@@ -158,6 +161,7 @@ impl<T1, T2: WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Option<T2> {
 impl<'a, T: ?Sized + ToOwned> ToOwned for &'a T {
     type Value = T::Value;
 
+    #[inline]
     fn to_owned(&self) -> Result<Self::Value> {
         T::to_owned(*self)
     }
@@ -170,6 +174,7 @@ pub struct Offset<T: ?Sized> {
 
 impl<T: ?Sized> Copy for Offset<T> {}
 impl<T: ?Sized> Clone for Offset<T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -193,6 +198,7 @@ pub struct UnionOffset<T: ?Sized> {
 
 impl<T: ?Sized> UnionOffset<T> {
     #[doc(hidden)]
+    #[inline]
     pub fn new(tag: u8, offset: Offset<()>) -> UnionOffset<T> {
         Self {
             tag,
@@ -204,6 +210,7 @@ impl<T: ?Sized> UnionOffset<T> {
 
 impl<T: ?Sized> Copy for UnionOffset<T> {}
 impl<T: ?Sized> Clone for UnionOffset<T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -215,12 +222,14 @@ impl<T: ?Sized> Primitive for Offset<T> {
 }
 
 unsafe impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
         T::write(*self, buffer, buffer_position)
     }
 }
 
 unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
         let value = u32::to_le_bytes(buffer_position - self.offset);
         std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, 4);
@@ -325,6 +334,7 @@ macro_rules! gen_primitive_types {
         }
 
         unsafe impl WriteAsPrimitive<$ty> for $ty {
+            #[inline]
             unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
                 let value = self.to_le_bytes();
                 std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, $size);
@@ -350,12 +360,14 @@ macro_rules! gen_primitive_types {
         impl ToOwned for $ty {
             type Value = $ty;
 
+            #[inline]
             fn to_owned(&self) -> Result<$ty> {
                 Ok(*self)
             }
         }
 
         impl<'buf> TableRead<'buf> for $ty {
+            #[inline]
             fn from_buffer(
                 buffer: BufferWithStartOffset<'buf>,
                 offset: usize,
@@ -371,6 +383,7 @@ macro_rules! gen_primitive_types {
             #[doc(hidden)]
             const STRIDE: usize = $size;
             #[doc(hidden)]
+            #[inline]
             unsafe fn from_buffer(
                 buffer: BufferWithStartOffset<'buf>,
                 offset: usize,
@@ -413,6 +426,7 @@ impl Primitive for bool {
 }
 
 unsafe impl WriteAsPrimitive<bool> for bool {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
         *buffer = if *self { 1 } else { 0 };
     }
@@ -437,6 +451,7 @@ impl<'a> WriteAsOptional<'a, bool> for bool {
 impl ToOwned for bool {
     type Value = bool;
 
+    #[inline]
     fn to_owned(&self) -> Result<bool> {
         Ok(*self)
     }
@@ -445,12 +460,14 @@ impl ToOwned for bool {
 impl<T: ToOwned> ToOwned for Result<T> {
     type Value = T::Value;
 
+    #[inline]
     fn to_owned(&self) -> Result<Self::Value> {
         self.as_ref().map_err(|e| e.clone())?.to_owned()
     }
 }
 
 impl<'buf> TableRead<'buf> for bool {
+    #[inline]
     fn from_buffer(
         buffer: BufferWithStartOffset<'buf>,
         offset: usize,
@@ -463,6 +480,7 @@ impl<'buf> VectorRead<'buf> for bool {
     type Output = bool;
     const STRIDE: usize = 1;
 
+    #[inline]
     unsafe fn from_buffer(buffer: BufferWithStartOffset<'buf>, offset: usize) -> bool {
         *buffer.as_slice().get_unchecked(offset) != 0
     }
@@ -485,6 +503,7 @@ pub struct Vector<'buf, T: ?Sized> {
 
 impl<'buf, T: ?Sized> Copy for Vector<'buf, T> {}
 impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -499,6 +518,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
         self.len
     }
 
+    #[inline]
     pub fn get(self, index: usize) -> Option<T::Output> {
         if index < self.len {
             Some(unsafe { T::from_buffer(self.buffer, T::STRIDE * index) })
@@ -506,6 +526,8 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
             None
         }
     }
+
+    #[inline]
     pub fn iter(self) -> VectorIter<'buf, T> {
         VectorIter {
             buffer: self.buffer,
@@ -519,6 +541,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
     type Item = T::Output;
     type IntoIter = VectorIter<'buf, T>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -533,6 +556,7 @@ pub struct VectorIter<'buf, T: ?Sized> {
 impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
     type Item = T::Output;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.len > 0 {
             let result = unsafe { T::from_buffer(self.buffer, 0) };
@@ -659,6 +683,7 @@ where
 {
     type Prepared = Offset<[P]>;
 
+    #[inline]
     fn prepare(&'a self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
         Some(WriteAs::prepare(self, buffer))
     }

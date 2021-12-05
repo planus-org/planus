@@ -43,8 +43,6 @@ pub struct Struct {
 pub struct StructField {
     pub name: String,
     pub owned_type: String,
-    pub read_type: String,
-    pub read_type_no_lifetime: String,
     pub getter_return_type: String,
     pub getter_code: String,
 }
@@ -283,7 +281,7 @@ impl Backend for RustBackend {
                     create_trait = format!("WriteAs<{}>", owned_type);
                 } else {
                     read_type = format!(
-                        "Option<{}<'a>>",
+                        "{}<'a>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
                     owned_type = format!("Option<{}>", vtable_type);
@@ -448,8 +446,6 @@ impl Backend for RustBackend {
     ) -> StructField {
         let name = reserve_field_name(field_name, "name", declaration_names);
         let owned_type;
-        let read_type;
-        let read_type_no_lifetime;
         let getter_code;
         let getter_return_type;
 
@@ -457,16 +453,13 @@ impl Backend for RustBackend {
             ResolvedType::Struct(_, info, relative_namespace) => {
                 owned_type =
                     format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
-                read_type_no_lifetime =
-                    format_relative_namespace(&relative_namespace, &info.ref_name).to_string();
-                read_type = format!("{}<'a>", read_type_no_lifetime);
+                let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
+                let read_type = format!("{}<'a>", ref_name);
                 getter_return_type = read_type.clone();
-                getter_code = format!("{}(buffer)", read_type_no_lifetime);
+                getter_code = format!("{}(buffer)", ref_name);
             }
             ResolvedType::Enum(decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
-                read_type_no_lifetime = owned_type.clone();
-                read_type = owned_type.clone();
                 getter_return_type = format!("planus::Result<{}>", owned_type);
                 getter_code = format!(
                     "{}::from_le_bytes(buffer).try_into()",
@@ -475,32 +468,24 @@ impl Backend for RustBackend {
             }
             ResolvedType::Bool => {
                 owned_type = "bool".to_string();
-                read_type_no_lifetime = owned_type.clone();
-                read_type = owned_type.clone();
-                getter_return_type = read_type.clone();
+                getter_return_type = owned_type.clone();
                 getter_code = "buffer[0] != 0".to_string();
             }
             ResolvedType::Integer(typ) => {
                 owned_type = integer_type(&typ).to_string();
-                read_type_no_lifetime = owned_type.clone();
-                read_type = owned_type.clone();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer)", read_type_no_lifetime);
+                getter_code = format!("{}::from_le_bytes(*buffer)", owned_type);
             }
             ResolvedType::Float(typ) => {
                 owned_type = float_type(&typ).to_string();
-                read_type_no_lifetime = owned_type.clone();
-                read_type = owned_type.clone();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer)", read_type_no_lifetime);
+                getter_code = format!("{}::from_le_bytes(*buffer)", owned_type);
             }
             _ => unreachable!(),
         }
         StructField {
             name,
             owned_type,
-            read_type,
-            read_type_no_lifetime,
             getter_return_type,
             getter_code,
         }
