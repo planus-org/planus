@@ -46,7 +46,7 @@ mod tests {
             Abc::B(table_inner) => table_inner,
             _ => panic!(),
         };
-        assert_eq!(table_inner.val, true);
+        assert!(table_inner.val);
         buffer.clear();
 
         let table = TableC::create(&mut buffer, 1234567);
