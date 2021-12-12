@@ -1,5 +1,5 @@
 use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::path::Path;
 
 pub mod name_generator;
@@ -23,7 +23,8 @@ pub fn generate_code<P: AsRef<Path>>(input_files: &[P], output_file: String) -> 
     if !ctx.has_errors() {
         let mut codegen = crate::codegen::rust::Codegen::new(output_file)?;
         codegen.generate_code(&namespace)?;
+        Ok(())
+    } else {
+        Err(anyhow!("could not generate code"))
     }
-
-    Ok(())
 }

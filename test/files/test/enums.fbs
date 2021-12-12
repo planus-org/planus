@@ -1,0 +1,5 @@
+enum ABC: int { A = 1, B, C = 4 }
+
+table Wrap {
+    abc: ABC = A;
+}

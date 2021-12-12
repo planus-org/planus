@@ -1,5 +1,5 @@
 {% let size = decl.type_.byte_size() %}
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq)]
 #[repr({{info.repr_type}})]
 pub enum {{ info.owned_type }} {
     {% for info in variant_infos -%}
