@@ -8,6 +8,7 @@ keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
 readme = "README.md"
 rust-version = "1.56"
+include = ["templates"]
 
 [dependencies]
 anyhow = "1.0.40"

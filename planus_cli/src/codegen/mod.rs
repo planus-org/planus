@@ -1,4 +1,4 @@
-use self::{rust::format_file, rust2::RustBackend};
+use self::rust::RustBackend;
 use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
 use anyhow::{anyhow, Result};
 use askama::Template;
@@ -6,9 +6,7 @@ use std::{io::Write, path::Path};
 
 pub mod backend;
 pub mod backend_translation;
-pub mod name_generator;
 pub mod rust;
-pub mod rust2;
 pub mod templates;
 
 pub fn generate_code<P: AsRef<Path>>(input_files: &[P], output_filename: String) -> Result<()> {
@@ -34,7 +32,7 @@ pub fn generate_code<P: AsRef<Path>>(input_files: &[P], output_filename: String)
         file.write_all(res.as_bytes())?;
         file.flush()?;
 
-        format_file(&output_filename)?;
+        rust::format_file(&output_filename)?;
         Ok(())
     } else {
         Err(anyhow!("could not generate code"))

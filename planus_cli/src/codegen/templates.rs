@@ -33,7 +33,7 @@ macro_rules! template_module {
 
 template_module!(
     rust,
-    crate::codegen::rust2::RustBackend,
+    crate::codegen::rust::RustBackend,
     [
         "rust/namespace.template",
         "rust/struct.template",

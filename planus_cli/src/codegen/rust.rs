@@ -1,260 +1,565 @@
+use super::backend::{Backend, DeclarationNames, NamespaceNames, RelativeNamespace, ResolvedType};
 use crate::{
     ast::{FloatType, IntegerType},
-    codegen::name_generator::Scope,
-    intermediate_language::types::{
-        self as il, AbsolutePath, Declaration, DeclarationIndex, DeclarationKind, Declarations,
-        Enum, IntegerLiteral, Namespace, RpcMethod, SimpleType, StructField, TableField, Type,
-        TypeKind, Union, UnionVariant,
-    },
+    intermediate_language::types::{AbsolutePath, AssignMode, Literal},
 };
-use askama::Template;
 use heck::{CamelCase, SnakeCase};
-use std::{
-    borrow::Cow,
-    fs::File,
-    io::{self, Write},
-    path::Path,
-    process::Command,
-};
+use std::{borrow::Cow, path::Path, process::Command};
 
-use super::name_generator::{run_name_generator, NameGenerator, ReservedNames};
+#[derive(Debug, Clone)]
+pub struct RustBackend;
 
-#[derive(Copy, Clone)]
-struct Ctx<'a> {
-    declarations: &'a Declarations,
-    _namespace_infos: &'a [RustNamespaceInfo],
-    decl_infos: &'a [RustDeclInfo],
-    entry_infos: &'a [Vec<RustEntryInfo>],
+#[derive(Clone, Debug)]
+pub struct Namespace {
+    pub name: String,
 }
 
-impl<'a> Ctx<'a> {
-    fn get_declaration(&self, index: &&DeclarationIndex) -> (&'a AbsolutePath, &'a Declaration) {
-        self.declarations.get_declaration(**index)
-    }
+#[derive(Clone, Debug)]
+pub struct Table {
+    pub owned_name: String,
+    pub ref_name: String,
 }
 
-impl<'a, 'b> From<&'b Ctx<'a>> for Ctx<'a> {
-    fn from(ctx: &'b Ctx<'a>) -> Self {
-        *ctx
-    }
+#[derive(Clone, Debug)]
+pub struct TableField {
+    pub name: String,
+    pub vtable_type: String,
+    pub owned_type: String,
+    pub read_type: String,
+    pub create_name: String,
+    pub create_trait: String,
+    pub required: bool,
+    pub code_for_default: Cow<'static, str>,
+    pub none_replacement: Option<String>,
 }
 
-impl<'a, 'b, 'c> From<&'c &'b Ctx<'a>> for Ctx<'a> {
-    fn from(ctx: &'c &'b Ctx<'a>) -> Self {
-        **ctx
-    }
+#[derive(Clone, Debug)]
+pub struct Struct {
+    pub owned_name: String,
+    pub ref_name: String,
 }
 
-#[derive(Template)]
-#[template(path = "namespace.template", escape = "none")]
-struct RustNamespace<'a> {
-    name: &'a AbsolutePath,
-    info: &'a RustNamespaceInfo,
-    namespace: &'a Namespace,
-    ctx: Ctx<'a>,
+#[derive(Clone, Debug)]
+pub struct StructField {
+    pub name: String,
+    pub owned_type: String,
+    pub getter_return_type: String,
+    pub getter_code: String,
 }
 
-#[derive(Template)]
-#[template(path = "struct.template", escape = "none")]
-struct RustStruct<'a> {
-    name: &'a AbsolutePath,
-    decl: &'a il::Struct,
-    info: &'a RustDeclInfo,
-    field_infos: &'a [RustEntryInfo],
-    _ctx: Ctx<'a>,
+#[derive(Clone, Debug)]
+pub struct Enum {
+    pub name: String,
+    pub repr_type: String,
 }
 
-impl<'a> RustStruct<'a> {
-    fn new(
-        index: impl Into<DeclarationIndex>,
-        name: &'a AbsolutePath,
-        decl: &'a il::Struct,
-        ctx: impl Into<Ctx<'a>>,
-    ) -> Self {
-        let ctx = ctx.into();
-        let index = index.into();
-        Self {
-            name,
-            decl,
-            _ctx: ctx,
-            field_infos: &ctx.entry_infos[index.0],
-            info: &ctx.decl_infos[index.0],
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct EnumVariant {
+    pub name: String,
+    pub value: String,
 }
 
-#[derive(Template)]
-#[template(path = "table.template", escape = "none")]
-struct RustTable<'a> {
-    name: &'a AbsolutePath,
-    decl: &'a il::Table,
-    info: &'a RustDeclInfo,
-    field_infos: &'a [RustEntryInfo],
-    _ctx: Ctx<'a>,
+#[derive(Clone, Debug)]
+pub struct Union {
+    pub owned_name: String,
+    pub ref_name: String,
 }
 
-impl<'a> RustTable<'a> {
-    fn fields(&self) -> impl Iterator<Item = (&il::TableField, &RustEntryInfo)> {
-        self.decl.fields.values().zip(self.field_infos.iter())
-    }
-
-    fn fields_in_alignment_order(&self) -> impl Iterator<Item = (&il::TableField, &RustEntryInfo)> {
-        self.decl
-            .alignment_order
-            .iter()
-            .map(move |&i| (&self.decl.fields[i], &self.field_infos[i]))
-    }
-    fn new(
-        index: impl Into<DeclarationIndex>,
-        name: &'a AbsolutePath,
-        decl: &'a il::Table,
-        ctx: impl Into<Ctx<'a>>,
-    ) -> Self {
-        let ctx = ctx.into();
-        let index = index.into();
-        Self {
-            name,
-            decl,
-            _ctx: ctx,
-            field_infos: &ctx.entry_infos[index.0],
-            info: &ctx.decl_infos[index.0],
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct UnionVariant {
+    pub create_name: String,
+    pub create_trait: String,
+    pub enum_name: String,
+    pub owned_type: String,
+    pub ref_type: String,
 }
 
-#[derive(Template)]
-#[template(path = "union.template", escape = "none")]
-struct RustUnion<'a> {
-    info: &'a RustDeclInfo,
-    variant_infos: &'a [RustEntryInfo],
-    _ctx: Ctx<'a>,
+#[derive(Clone, Debug)]
+pub struct RpcService {
+    // TODO
 }
 
-impl<'a> RustUnion<'a> {
-    fn new(index: impl Into<DeclarationIndex>, ctx: impl Into<Ctx<'a>>) -> Self {
-        let ctx = ctx.into();
-        let index = index.into();
-        Self {
-            _ctx: ctx,
-            variant_infos: &ctx.entry_infos[index.0],
-            info: &ctx.decl_infos[index.0],
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct RpcMethod {
+    // TODO
 }
-
-#[derive(Template)]
-#[template(path = "enum.template", escape = "none")]
-struct RustEnum<'a> {
-    decl: &'a il::Enum,
-    info: &'a RustDeclInfo,
-    variant_infos: &'a [RustEntryInfo],
-}
-
-impl<'a> RustEnum<'a> {
-    fn new(
-        index: impl Into<DeclarationIndex>,
-        decl: &'a il::Enum,
-        ctx: impl Into<Ctx<'a>>,
-    ) -> Self {
-        let ctx = ctx.into();
-        let index = index.into();
-        Self {
-            decl,
-            variant_infos: &ctx.entry_infos[index.0],
-            info: &ctx.decl_infos[index.0],
-        }
-    }
-}
-
-pub struct Codegen {
-    output_filename: String,
-    file: File,
-}
-
-impl Codegen {
-    pub fn new(output_filename: String) -> io::Result<Self> {
-        let file = File::create(&output_filename)?;
-        Ok(Self {
-            file,
-            output_filename,
-        })
-    }
-}
-
-impl Codegen {
-    pub fn generate_code(&mut self, declarations: &Declarations) -> io::Result<()> {
-        // let mod_name: Option<String> = namespace.name.0.first().map(|s| to_snake_case(s));
-        let (namespace_infos, decl_infos, entry_infos) =
-            run_name_generator(&mut RustNameGenerator, declarations);
-        let (index, namespace) = declarations.get_root_namespace();
-        let res = RustNamespace {
-            name: &AbsolutePath::ROOT_PATH,
-            info: &namespace_infos[index.0],
-            namespace,
-            ctx: Ctx {
-                declarations,
-                _namespace_infos: &namespace_infos,
-                decl_infos: &decl_infos,
-                entry_infos: &entry_infos,
-            },
-        }
-        .render()
-        .unwrap();
-        self.file.write_all(res.as_bytes())?;
-        self.file.flush()?;
-
-        format_file(&self.output_filename)?;
-        Ok(())
-    }
-}
-
-struct RustNameGenerator;
 
 const BINDING_KIND_TYPES: &str = "types";
 
-#[derive(Debug)]
-struct RustDeclInfo {
-    owned_type: Cow<'static, str>,
-    read_type: Cow<'static, str>,
-    read_type_no_lifetime: Cow<'static, str>,
-    repr_type: Cow<'static, str>,
+fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>) -> String {
+    let name = path.to_snake_case().into();
+    namespace_names
+        .namespace_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
+        .into()
 }
 
-#[derive(Debug)]
-struct RustEntryInfo {
-    owned_field_name: Cow<'static, str>,
-    owned_field_type: Cow<'static, str>,
-    read_name: Cow<'static, str>,
-    read_type: Cow<'static, str>,
-    read_type_no_lifetime: Cow<'static, str>,
-    create_name: Cow<'static, str>,
-    create_type: Cow<'static, str>,
-    value: Cow<'static, str>,
-    is_union: bool,
-    is_string: bool,
+fn reserve_type_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
+    let name = path.to_camel_case().into();
+    declaration_names
+        .declaration_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
+        .into()
 }
 
-#[derive(Debug)]
-struct RustNamespaceInfo {
-    name: Cow<'static, str>,
+fn reserve_field_name(
+    path: &str,
+    binding_kind: &'static str,
+    declaration_names: &mut DeclarationNames<'_, '_>,
+) -> String {
+    let name = path.to_snake_case().into();
+    declaration_names
+        .declaration_names
+        .try_reserve_repeat(binding_kind, name, '_')
+        .into()
 }
 
-fn module_name<'a>(path: &'a AbsolutePath, reserved_names: &mut ReservedNames) -> Cow<'a, str> {
-    if path.0.is_empty() {
-        "".into()
-    } else {
-        let name = path.0.last().unwrap().to_snake_case().into();
-        reserved_names.try_reserve_repeat(Scope::Namespace, BINDING_KIND_TYPES, name, '_')
+fn reserve_rust_enum_variant_name(
+    path: &str,
+    binding_kind: &'static str,
+    declaration_names: &mut DeclarationNames<'_, '_>,
+) -> String {
+    let name = path.to_camel_case().into();
+    declaration_names
+        .declaration_names
+        .try_reserve_repeat(binding_kind, name, '_')
+        .into()
+}
+
+fn format_relative_namespace<'a>(
+    relative_namespace: &'a RelativeNamespace<'a, RustBackend>,
+    trailing_part: &'a str,
+) -> impl 'a + std::fmt::Display {
+    relative_namespace.format(false, "super", "::", |info| &info.name, trailing_part)
+}
+
+impl Backend for RustBackend {
+    type NamespaceInfo = Namespace;
+    type TableInfo = Table;
+    type TableFieldInfo = TableField;
+    type StructInfo = Struct;
+    type StructFieldInfo = StructField;
+    type EnumInfo = Enum;
+    type EnumVariantInfo = EnumVariant;
+    type UnionInfo = Union;
+    type UnionVariantInfo = UnionVariant;
+    type RpcServiceInfo = RpcService;
+    type RpcMethodInfo = RpcMethod;
+
+    const KEYWORDS: &'static [&'static str] = &[
+        "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum",
+        "extern", "false", "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move",
+        "mut", "pub", "ref", "return", "Self", "self", "static", "struct", "super", "trait",
+        "true", "type", "union", "unsafe", "use", "where", "while", "abstract", "become", "box",
+        "do", "final", "macro", "override", "priv", "try", "typeof", "unsized", "virtual", "yield",
+    ];
+
+    fn generate_namespace(
+        &mut self,
+        namespace_names: &mut NamespaceNames<'_, '_>,
+        namespace_name: &crate::intermediate_language::types::AbsolutePath,
+        _namespace: &crate::intermediate_language::types::Namespace,
+    ) -> Namespace {
+        let name = namespace_name.0.last().map_or_else(String::new, |name| {
+            reserve_module_name(name, namespace_names)
+        });
+        Namespace { name }
+    }
+
+    fn generate_table(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        decl_name: &crate::intermediate_language::types::AbsolutePath,
+        _decl: &crate::intermediate_language::types::Table,
+    ) -> Table {
+        let decl_name = decl_name.0.last().unwrap();
+        Table {
+            owned_name: reserve_type_name(decl_name, declaration_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+        }
+    }
+
+    fn generate_struct(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        decl_name: &crate::intermediate_language::types::AbsolutePath,
+        _decl: &crate::intermediate_language::types::Struct,
+    ) -> Struct {
+        let decl_name = decl_name.0.last().unwrap();
+        Struct {
+            owned_name: reserve_type_name(decl_name, declaration_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+        }
+    }
+
+    fn generate_enum(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        decl_name: &crate::intermediate_language::types::AbsolutePath,
+        decl: &crate::intermediate_language::types::Enum,
+    ) -> Enum {
+        let decl_name = decl_name.0.last().unwrap();
+        Enum {
+            name: reserve_type_name(decl_name, declaration_names),
+            repr_type: format!("{:?}", decl.type_).to_lowercase(),
+        }
+    }
+
+    fn generate_union(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        decl_name: &crate::intermediate_language::types::AbsolutePath,
+        _decl: &crate::intermediate_language::types::Union,
+    ) -> Union {
+        let decl_name = decl_name.0.last().unwrap();
+        Union {
+            owned_name: reserve_type_name(decl_name, declaration_names),
+            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+        }
+    }
+
+    fn generate_rpc_service(
+        &mut self,
+        _declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _decl_name: &crate::intermediate_language::types::AbsolutePath,
+        _decl: &crate::intermediate_language::types::RpcService,
+    ) -> RpcService {
+        RpcService {}
+    }
+
+    fn generate_table_field(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _parent_info: &Self::TableInfo,
+        _parent: &crate::intermediate_language::types::Table,
+        field_name: &str,
+        field: &crate::intermediate_language::types::TableField,
+        resolved_type: ResolvedType<'_, Self>,
+    ) -> TableField {
+        let name = reserve_field_name(field_name, "name", declaration_names);
+        let create_name = reserve_field_name(field_name, "create_name", declaration_names);
+        let read_type;
+        let owned_type;
+        let vtable_type;
+        let create_trait;
+        let mut code_for_default = Cow::Borrowed("Default::default()");
+        let mut none_replacement: Option<String> = None;
+        match resolved_type {
+            ResolvedType::Struct(
+                _,
+                Struct {
+                    owned_name,
+                    ref_name,
+                },
+                relative_namespace,
+            ) => {
+                vtable_type =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
+                if matches!(field.assign_mode, AssignMode::Required) {
+                    read_type = format!(
+                        "{}<'a>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = vtable_type.clone();
+                    create_trait = format!("WriteAs<{}>", owned_type);
+                } else {
+                    read_type = format!(
+                        "Option<{}<'a>>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = format!("Option<{}>", vtable_type);
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                }
+            }
+            ResolvedType::Table(
+                _,
+                Table {
+                    owned_name,
+                    ref_name,
+                },
+                relative_namespace,
+            ) => {
+                let owned_name =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
+                vtable_type = format!("planus::Offset<{}>", owned_name);
+                if matches!(field.assign_mode, AssignMode::Required) {
+                    read_type = format!(
+                        "{}<'a>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = format!("Box<{}>", owned_name);
+                    create_trait = format!("WriteAs<{}>", vtable_type);
+                } else {
+                    read_type = format!(
+                        "Option<{}<'a>>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = format!("Option<Box<{}>>", owned_name);
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                }
+            }
+            ResolvedType::Union(
+                _,
+                Union {
+                    owned_name,
+                    ref_name,
+                },
+                relative_namespace,
+            ) => {
+                let owned_name =
+                    format_relative_namespace(&relative_namespace, owned_name).to_string();
+                vtable_type = format!("planus::Offset<{}>", owned_name);
+                if matches!(field.assign_mode, AssignMode::Required) {
+                    read_type = format!(
+                        "{}<'a>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = owned_name.clone();
+                    create_trait = format!("WriteAsUnion<{}>", owned_name);
+                } else {
+                    read_type = format!(
+                        "Option<{}<'a>>",
+                        format_relative_namespace(&relative_namespace, ref_name)
+                    );
+                    owned_type = format!("Option<{}>", owned_name);
+                    create_trait = format!("WriteAsOptionalUnion<{}>", owned_name);
+                }
+            }
+            ResolvedType::Enum(_, info, relative_namespace, variants) => {
+                vtable_type =
+                    format_relative_namespace(&relative_namespace, &info.name).to_string();
+                if let AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) =
+                    &field.assign_mode
+                {
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
+                    create_trait = format!("WriteAs<{}>", owned_type);
+
+                    code_for_default =
+                        format!("{}::{}", owned_type, variants[*variant_index].name).into();
+                    none_replacement = Some(code_for_default.to_string());
+                } else {
+                    read_type = format!("Option<{}>", vtable_type);
+                    owned_type = read_type.clone();
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                }
+            }
+            ResolvedType::Vector(_) => todo!(),
+            ResolvedType::Array(_, _) => todo!(),
+            ResolvedType::String => {
+                vtable_type = "planus::Offset<str>".to_string();
+                if matches!(field.assign_mode, AssignMode::Required) {
+                    read_type = "&'a str".to_string();
+                    owned_type = "String".to_string();
+                    create_trait = "WriteAs<Offset<str>>".to_string();
+                } else {
+                    read_type = "Option<&'a str>".to_string();
+                    owned_type = "Option<String>".to_string();
+                    create_trait = "WriteAsOptional<Offset<str>>".to_string();
+                }
+            }
+            ResolvedType::Bool => {
+                vtable_type = "bool".to_string();
+                if let AssignMode::HasDefault(Literal::Bool(lit)) = &field.assign_mode {
+                    read_type = "bool".to_string();
+                    owned_type = "bool".to_string();
+                    create_trait = "WriteAs<bool>".to_string();
+                    code_for_default = format!("{}", lit).into();
+                    none_replacement = Some(code_for_default.to_string());
+                } else {
+                    read_type = "Option<bool>".to_string();
+                    owned_type = "Option<bool>".to_string();
+                    create_trait = "WriteAsOptional<bool>".to_string();
+                }
+            }
+            ResolvedType::Integer(typ) => {
+                vtable_type = integer_type(&typ).to_string();
+                if let AssignMode::HasDefault(Literal::Int(lit)) = &field.assign_mode {
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
+                    create_trait = format!("WriteAs<{}>", owned_type);
+                    code_for_default = format!("{}", lit).into();
+                    none_replacement = Some(code_for_default.to_string());
+                } else {
+                    read_type = format!("Option<{}>", vtable_type);
+                    owned_type = read_type.clone();
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                }
+            }
+            ResolvedType::Float(typ) => {
+                vtable_type = float_type(&typ).to_string();
+                if let AssignMode::HasDefault(Literal::Float(lit)) = &field.assign_mode {
+                    read_type = vtable_type.clone();
+                    owned_type = vtable_type.clone();
+                    create_trait = format!("WriteAs<{}>", owned_type);
+                    code_for_default = format!("{}", lit).into();
+                    none_replacement = Some(code_for_default.to_string());
+                } else {
+                    read_type = format!("Option<{}>", vtable_type);
+                    owned_type = read_type.clone();
+                    create_trait = format!("WriteAsOptional<{}>", float_type(&typ));
+                }
+            }
+        }
+        TableField {
+            name,
+            vtable_type,
+            owned_type,
+            read_type,
+            create_name,
+            create_trait,
+            required: matches!(field.assign_mode, AssignMode::Required),
+            code_for_default,
+            none_replacement,
+        }
+    }
+
+    fn generate_struct_field(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _parent_info: &Self::StructInfo,
+        _parent: &crate::intermediate_language::types::Struct,
+        field_name: &str,
+        _field: &crate::intermediate_language::types::StructField,
+        resolved_type: ResolvedType<'_, Self>,
+    ) -> StructField {
+        let name = reserve_field_name(field_name, "name", declaration_names);
+        let owned_type;
+        let getter_code;
+        let getter_return_type;
+
+        match resolved_type {
+            ResolvedType::Struct(_, info, relative_namespace) => {
+                owned_type =
+                    format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
+                let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
+                getter_return_type = format!("{}<'a>", ref_name);
+                getter_code = format!("{}(buffer)", ref_name);
+            }
+            ResolvedType::Enum(decl, info, relative_namespace, _) => {
+                owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
+                getter_return_type = format!("planus::Result<{}>", owned_type);
+                getter_code = format!(
+                    "{}::from_le_bytes(*buffer.as_array()).try_into()",
+                    integer_type(&decl.type_)
+                );
+            }
+            ResolvedType::Bool => {
+                owned_type = "bool".to_string();
+                getter_return_type = owned_type.clone();
+                getter_code = "buffer.as_array()[0] != 0".to_string();
+            }
+            ResolvedType::Integer(typ) => {
+                owned_type = integer_type(&typ).to_string();
+                getter_return_type = owned_type.clone();
+                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
+            }
+            ResolvedType::Float(typ) => {
+                owned_type = float_type(&typ).to_string();
+                getter_return_type = owned_type.clone();
+                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
+            }
+            _ => unreachable!(),
+        }
+        StructField {
+            name,
+            owned_type,
+            getter_return_type,
+            getter_code,
+        }
+    }
+
+    fn generate_enum_variant(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _parent_info: &Self::EnumInfo,
+        _parent: &crate::intermediate_language::types::Enum,
+        key: &str,
+        value: &crate::intermediate_language::types::IntegerLiteral,
+    ) -> EnumVariant {
+        let name = reserve_rust_enum_variant_name(key, "name", declaration_names);
+
+        EnumVariant {
+            name,
+            value: format!("{}", value),
+        }
+    }
+
+    fn generate_union_variant(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _parent_info: &Self::UnionInfo,
+        _parent: &crate::intermediate_language::types::Union,
+        key: &str,
+        _index: u8,
+        _value: &crate::intermediate_language::types::UnionVariant,
+        resolved_type: ResolvedType<'_, Self>,
+    ) -> UnionVariant {
+        let create_name = reserve_field_name(
+            &format!("create_{}", key),
+            "create_function",
+            declaration_names,
+        );
+        let enum_name = reserve_rust_enum_variant_name(key, "variant_name", declaration_names);
+        let create_trait;
+        let owned_type;
+        let ref_type;
+
+        match resolved_type {
+            ResolvedType::Table(_, info, relative_namespace) => {
+                owned_type = format!(
+                    "Box<{}>",
+                    format_relative_namespace(&relative_namespace, &info.owned_name)
+                );
+                ref_type = format!(
+                    "{}<'a>",
+                    format_relative_namespace(&relative_namespace, &info.ref_name)
+                );
+                create_trait = format!(
+                    "WriteAsOffset<{}>",
+                    format_relative_namespace(&relative_namespace, &info.owned_name)
+                );
+            }
+            _ => todo!(),
+        }
+        UnionVariant {
+            create_name,
+            enum_name,
+            create_trait,
+            owned_type,
+            ref_type,
+        }
+    }
+
+    fn generate_rpc_method(
+        &mut self,
+        _declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _parent_info: &Self::RpcServiceInfo,
+        _parent: &crate::intermediate_language::types::RpcService,
+        _method_name: &str,
+        _method: &crate::intermediate_language::types::RpcMethod,
+    ) -> RpcMethod {
+        todo!()
     }
 }
 
-fn type_name<'a>(path: &'a AbsolutePath, reserved_names: &mut ReservedNames) -> Cow<'a, str> {
-    let name = path.0.last().unwrap().to_camel_case().into();
-    reserved_names.try_reserve_repeat(Scope::Namespace, BINDING_KIND_TYPES, name, '_')
-}
-
-fn integer_type(ityp: &IntegerType) -> &'static str {
-    match &ityp {
+fn integer_type(type_: &IntegerType) -> &'static str {
+    match &type_ {
         IntegerType::U8 => "u8",
         IntegerType::I8 => "i8",
         IntegerType::U16 => "u16",
@@ -273,319 +578,7 @@ fn float_type(type_: &FloatType) -> &'static str {
     }
 }
 
-fn owned_type(decl_infos: &[RustDeclInfo], type_: &Type, box_it: bool) -> Cow<'static, str> {
-    match &type_.kind {
-        TypeKind::Table(index) | TypeKind::Union(index) => {
-            if box_it {
-                format!("Box<self::{}>", decl_infos[index.0].owned_type).into()
-            } else {
-                format!("self::{}", decl_infos[index.0].owned_type).into()
-            }
-        }
-        TypeKind::Vector(inner) => format!("Vec<{}>", owned_type(decl_infos, inner, false)).into(),
-        TypeKind::Array(inner, size) => {
-            format!("[{}; {}]", owned_type(decl_infos, inner, false), size).into()
-        }
-        TypeKind::SimpleType(typ) => owned_simple_type(decl_infos, typ),
-        TypeKind::String => "String".into(),
-    }
-}
-
-fn create_type(decl_infos: &[RustDeclInfo], type_: &Type) -> Cow<'static, str> {
-    match &type_.kind {
-        TypeKind::Table(index) => {
-            format!("planus::Offset<self::{}>", decl_infos[index.0].owned_type).into()
-        }
-        TypeKind::Union(index) => format!("self::{}", decl_infos[index.0].owned_type).into(),
-        TypeKind::Vector(typ) => {
-            format!("planus::Offset<[{}]>", create_type(decl_infos, typ)).into()
-        }
-        TypeKind::Array(_typ, _size) => todo!(),
-        TypeKind::SimpleType(styp) => owned_simple_type(decl_infos, styp),
-        TypeKind::String => "planus::Offset<str>".into(),
-    }
-}
-fn owned_simple_type(decl_infos: &[RustDeclInfo], type_: &SimpleType) -> Cow<'static, str> {
-    match type_ {
-        SimpleType::Struct(index) | SimpleType::Enum(index) => {
-            format!("self::{}", decl_infos[index.0].owned_type).into()
-        }
-        SimpleType::Bool => "bool".into(),
-        SimpleType::Integer(typ) => integer_type(typ).into(),
-        SimpleType::Float(typ) => float_type(typ).into(),
-    }
-}
-
-fn table_read_type(decl_infos: &[RustDeclInfo], type_: &Type) -> Cow<'static, str> {
-    match &type_.kind {
-        TypeKind::Table(index) | TypeKind::Union(index) => decl_infos[index.0].read_type.clone(),
-        TypeKind::Vector(typ) => {
-            format!("planus::Vector<'buf, {}>", table_read_type(decl_infos, typ)).into()
-        }
-        TypeKind::Array(_, _) => todo!(),
-        TypeKind::SimpleType(typ) => match typ {
-            SimpleType::Enum(index) => format!("self::{}", decl_infos[index.0].read_type).into(),
-            SimpleType::Struct(index) => format!("self::{}", decl_infos[index.0].read_type).into(),
-            SimpleType::Integer(typ) => integer_type(typ).into(),
-            SimpleType::Float(typ) => float_type(typ).into(),
-            SimpleType::Bool => "bool".into(),
-        },
-        TypeKind::String => "std::borrow::Cow<'buf, str>".into(),
-    }
-}
-
-fn struct_read_type(decl_infos: &[RustDeclInfo], type_: &SimpleType) -> Cow<'static, str> {
-    match type_ {
-        SimpleType::Enum(index) => {
-            format!("planus::Result<self::{}>", decl_infos[index.0].read_type).into()
-        }
-        SimpleType::Struct(index) => format!("self::{}", decl_infos[index.0].read_type).into(),
-        SimpleType::Integer(typ) => format!("{:?}", typ).to_lowercase().into(),
-        SimpleType::Float(typ) => format!("{:?}", typ).to_lowercase().into(),
-        SimpleType::Bool => "bool".into(),
-    }
-}
-
-impl NameGenerator for RustNameGenerator {
-    type NamespaceInfo = RustNamespaceInfo;
-    type DeclInfo = RustDeclInfo;
-    type EntryInfo = RustEntryInfo;
-
-    const KEYWORDS: &'static [&'static str] = &[
-        "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum",
-        "extern", "false", "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move",
-        "mut", "pub", "ref", "return", "Self", "self", "static", "struct", "super", "trait",
-        "true", "type", "union", "unsafe", "use", "where", "while", "abstract", "become", "box",
-        "do", "final", "macro", "override", "priv", "try", "typeof", "unsized", "virtual", "yield",
-    ];
-
-    fn generate_table(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_name: &AbsolutePath,
-        _decl: &il::Table,
-    ) -> Self::DeclInfo {
-        let name = type_name(decl_name, reserved_names);
-        RustDeclInfo {
-            owned_type: format!("{}", name).into(),
-            read_type: format!("{}Ref<'buf>", name).into(),
-            read_type_no_lifetime: format!("{}Ref", name).into(),
-            repr_type: "".into(),
-        }
-    }
-
-    fn generate_struct(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_name: &AbsolutePath,
-        _decl: &il::Struct,
-    ) -> Self::DeclInfo {
-        let name = type_name(decl_name, reserved_names);
-        RustDeclInfo {
-            owned_type: format!("{}", name).into(),
-            read_type: format!("{}Ref<'buf>", name).into(),
-            read_type_no_lifetime: format!("{}Ref", name).into(),
-            repr_type: "".into(),
-        }
-    }
-
-    fn generate_enum(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_name: &AbsolutePath,
-        decl: &Enum,
-    ) -> Self::DeclInfo {
-        let name = type_name(decl_name, reserved_names);
-        RustDeclInfo {
-            owned_type: format!("{}", name).into(),
-            read_type: format!("{}", name).into(),
-            read_type_no_lifetime: format!("{}", name).into(),
-            repr_type: format!("{:?}", decl.type_).to_lowercase().into(),
-        }
-    }
-
-    fn generate_union(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_name: &AbsolutePath,
-        _decl: &Union,
-    ) -> Self::DeclInfo {
-        let name = type_name(decl_name, reserved_names);
-        RustDeclInfo {
-            owned_type: format!("{}", name).into(),
-            read_type: format!("{}Ref<'buf>", name).into(),
-            read_type_no_lifetime: format!("{}Ref", name).into(),
-            repr_type: "".into(),
-        }
-    }
-
-    fn generate_rpc_service(
-        &mut self,
-        _reserved_names: &mut ReservedNames,
-        _decl_name: &AbsolutePath,
-        _decl: &il::RpcService,
-    ) -> Self::DeclInfo {
-        todo!()
-    }
-
-    fn generate_table_field(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_infos: &[Self::DeclInfo],
-        _decl_name: &AbsolutePath,
-        _decl: &il::Table,
-        field_name: &str,
-        field: &TableField,
-    ) -> Self::EntryInfo {
-        let snake_field_name = field_name.to_snake_case();
-        // Reserve the name buffer as we need it as an argument
-        reserved_names.try_reserve(Scope::Declaration, "create_name", "buffer");
-
-        let name = reserved_names.try_reserve_repeat(
-            Scope::Declaration,
-            "",
-            snake_field_name.clone().into(),
-            '_',
-        );
-        let create_name = reserved_names.try_reserve_repeat(
-            Scope::Declaration,
-            "create_name",
-            snake_field_name.into(),
-            '_',
-        );
-
-        RustEntryInfo {
-            owned_field_name: name.clone(),
-            owned_field_type: owned_type(decl_infos, &field.type_, true),
-            read_name: name.clone(),
-            read_type: table_read_type(decl_infos, &field.type_),
-            read_type_no_lifetime: "".into(),
-            create_name,
-            create_type: create_type(decl_infos, &field.type_),
-            value: "".into(),
-            is_union: matches!(field.type_.kind, il::TypeKind::Union(_)),
-            is_string: matches!(field.type_.kind, il::TypeKind::String),
-        }
-    }
-
-    fn generate_struct_field(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_infos: &[Self::DeclInfo],
-        _decl_name: &AbsolutePath,
-        _decl: &il::Struct,
-        field_name: &str,
-        field: &StructField,
-    ) -> Self::EntryInfo {
-        let field_name = field_name.to_snake_case();
-        let name =
-            reserved_names.try_reserve_repeat(Scope::Declaration, "", field_name.into(), '_');
-
-        RustEntryInfo {
-            owned_field_name: name.clone(),
-            owned_field_type: owned_simple_type(decl_infos, &field.type_),
-            read_name: name.clone(),
-            read_type: struct_read_type(decl_infos, &field.type_),
-            read_type_no_lifetime: if let SimpleType::Struct(index) = &field.type_ {
-                decl_infos[index.0].read_type_no_lifetime.clone()
-            } else {
-                "".into()
-            },
-            create_name: "".into(),
-            create_type: "".into(),
-            value: "".into(),
-            is_union: false,
-            is_string: false,
-        }
-    }
-
-    fn generate_enum_variant(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        _decl_infos: &[Self::DeclInfo],
-        _decl_name: &AbsolutePath,
-        _decl: &Enum,
-        key: &str,
-        value: &IntegerLiteral,
-    ) -> Self::EntryInfo {
-        let field_name = key.to_camel_case();
-        let name =
-            reserved_names.try_reserve_repeat(Scope::Declaration, "", field_name.into(), '_');
-        RustEntryInfo {
-            owned_field_name: name.clone(),
-            owned_field_type: "".into(),
-            read_name: name.clone(),
-            read_type: "".into(),
-            read_type_no_lifetime: "".into(),
-            create_name: "".into(),
-            create_type: "".into(),
-            value: format!("{}", value).into(),
-            is_union: false,
-            is_string: false,
-        }
-    }
-
-    fn generate_union_variant(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        decl_infos: &[Self::DeclInfo],
-        _decl_name: &AbsolutePath,
-        _decl: &il::Union,
-        key: &str,
-        variant: &UnionVariant,
-    ) -> Self::EntryInfo {
-        let name = key.to_camel_case();
-        let name = reserved_names.try_reserve_repeat(Scope::Declaration, "", name.into(), '_');
-
-        let create_name = format!("create_{}", key.to_snake_case());
-        let create_name = reserved_names.try_reserve_repeat(
-            Scope::Declaration,
-            "create",
-            create_name.into(),
-            '_',
-        );
-
-        RustEntryInfo {
-            owned_field_name: name.clone(),
-            owned_field_type: owned_type(decl_infos, &variant.type_, false),
-            read_name: name.clone(),
-            read_type: table_read_type(decl_infos, &variant.type_),
-            read_type_no_lifetime: "".into(),
-            create_name,
-            create_type: create_type(decl_infos, &variant.type_),
-            value: "".into(),
-            is_union: false,
-            is_string: false,
-        }
-    }
-
-    fn generate_rpc_method(
-        &mut self,
-        _reserved_names: &mut ReservedNames,
-        _decl_infos: &[Self::DeclInfo],
-        _decl_name: &AbsolutePath,
-        _decl: &il::RpcService,
-        _method_name: &str,
-        _method: &RpcMethod,
-    ) -> Self::EntryInfo {
-        todo!()
-    }
-
-    fn generate_namespace(
-        &mut self,
-        reserved_names: &mut ReservedNames,
-        namespace_name: &AbsolutePath,
-        _namespace: &Namespace,
-    ) -> Self::NamespaceInfo {
-        RustNamespaceInfo {
-            name: module_name(namespace_name, reserved_names)
-                .into_owned()
-                .into(),
-        }
-    }
-}
-
-pub fn format_file<P: AsRef<Path>>(path: P) -> io::Result<()> {
+pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     let output = Command::new("rustfmt")
         .args(&[path.as_ref().as_os_str()])
         .output()?;
