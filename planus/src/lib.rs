@@ -623,6 +623,17 @@ impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
 }
 
 impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
+    pub fn empty() -> Self {
+        Vector {
+            buffer: SliceWithStartOffset {
+                buffer: &[],
+                offset_from_start: 0,
+            },
+            len: 0,
+            _marker: PhantomData,
+        }
+    }
+
     pub fn is_empty(self) -> bool {
         self.len == 0
     }
