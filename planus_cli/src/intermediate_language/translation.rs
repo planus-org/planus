@@ -549,6 +549,8 @@ impl<'a> Translator<'a> {
         match type_.kind {
             TypeKind::Table(_) => (),
             TypeKind::Vector(_) => (),
+            TypeKind::SimpleType(_) => (),
+
             TypeKind::Union(_) => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
@@ -559,36 +561,6 @@ impl<'a> Translator<'a> {
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
                     .with_message("arrays in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::SimpleType(SimpleType::Bool) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("bools in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::SimpleType(SimpleType::Integer(_)) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("integers in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::SimpleType(SimpleType::Float(_)) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("floats in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::SimpleType(SimpleType::Struct(_)) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("structs in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::SimpleType(SimpleType::Enum(_)) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("structs in vectors are not currently supported")],
                 Some("Unsupported type"),
             ),
             TypeKind::String => self.ctx.emit_error(
