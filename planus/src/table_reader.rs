@@ -89,7 +89,7 @@ impl<'buf> Table<'buf> {
             error_kind,
         };
         let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
-        if tag_offset != 0 && value_offset != 0 {
+        if tag_offset != 0 && value_offset != 0 && tag != 0 {
             T::from_buffer(self.object, value_offset, tag)
                 .map(Some)
                 .map_err(make_error)

@@ -18,17 +18,17 @@ unsafe impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_na
     }
 }
 
-impl<'a> planus::WriteAs<'a, {{ info.owned_name }}> for {{ info.owned_name }} {
-    type Prepared = &'a Self;
-    fn prepare(&'a self, _buffer: &mut planus::Buffer) -> &'a Self {
-        self
+impl planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
+    type Prepared = Self;
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> Self {
+        *self
     }
 }
 
-impl<'a> planus::WriteAsOptional<'a, {{ info.owned_name }}> for {{ info.owned_name }} {
-    type Prepared = &'a Self;
-    fn prepare(&'a self, _buffer: &mut planus::Buffer) -> Option<&'a Self> {
-        Some(self)
+impl planus::WriteAsOptional<{{ info.owned_name }}> for {{ info.owned_name }} {
+    type Prepared = Self;
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> Option<Self> {
+        Some(*self)
     }
 }
 

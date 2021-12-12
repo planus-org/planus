@@ -67,7 +67,6 @@ pub struct Union {
 
 #[derive(Clone, Debug)]
 pub struct UnionVariant {
-    pub index: u8,
     pub create_name: String,
     pub create_trait: String,
     pub enum_name: String,
@@ -521,7 +520,7 @@ impl Backend for RustBackend {
         _parent_info: &Self::UnionInfo,
         _parent: &crate::intermediate_language::types::Union,
         key: &str,
-        index: u8,
+        _index: u8,
         _value: &crate::intermediate_language::types::UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
@@ -536,20 +535,6 @@ impl Backend for RustBackend {
         let ref_type;
 
         match resolved_type {
-            ResolvedType::Struct(_, info, relative_namespace) => {
-                owned_type = format!(
-                    "{}",
-                    format_relative_namespace(&relative_namespace, &info.owned_name)
-                );
-                ref_type = format!(
-                    "{}<'a>",
-                    format_relative_namespace(&relative_namespace, &info.ref_name)
-                );
-                create_trait = format!(
-                    "WriteAs<{}>",
-                    format_relative_namespace(&relative_namespace, &info.owned_name)
-                );
-            }
             ResolvedType::Table(_, info, relative_namespace) => {
                 owned_type = format!(
                     "Box<{}>",
@@ -560,14 +545,13 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.ref_name)
                 );
                 create_trait = format!(
-                    "WriteAs<Offset<{}>>",
+                    "WriteAsOffset<{}>",
                     format_relative_namespace(&relative_namespace, &info.owned_name)
                 );
             }
             _ => todo!(),
         }
         UnionVariant {
-            index,
             create_name,
             enum_name,
             create_trait,
