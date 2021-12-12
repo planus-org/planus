@@ -4,30 +4,6 @@ use crate::error::LexicalError;
 use codespan::{ByteIndex, Span};
 use logos::Logos;
 
-/*
-TODO: move somewhere else
-fn parse_number<'input>(lex: &mut Lexer<'input, Token<'input>>) -> Option<IntegerKind<'input>> {
-    let mut slice = lex.slice();
-    let mut is_hex = false;
-    if slice.starts_with("0x") {
-        is_hex = true;
-        slice = &slice[2..];
-    }
-    let result = if slice.contains('_') {
-        Cow::Owned(slice.chars().filter(|c| *c != '_').collect())
-    } else {
-        Cow::Borrowed(slice)
-    };
-    if result.is_empty() {
-        None
-    } else if is_hex {
-        Some(IntegerKind::Hex(result))
-    } else {
-        Some(IntegerKind::Decimal(result))
-    }
-}
-*/
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Comment<'input> {
     pub span: Span,

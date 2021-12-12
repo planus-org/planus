@@ -790,7 +790,8 @@ where
         for (t, v) in tmp.iter_mut().zip(self.iter()) {
             t.write(v.prepare(buffer));
         }
-        // TODO: When I tried using a transmute I got a compiler error. Investigate why
+        // TODO: replace with std::mem::MaybeUninit::array_assume_init when it becomes stable
+        //       https://github.com/rust-lang/rust/issues/80908
         let tmp =
             unsafe { (&tmp as *const [MaybeUninit<T::Value>; N] as *const [T::Value; N]).read() };
         unsafe {
