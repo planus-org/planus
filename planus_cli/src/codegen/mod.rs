@@ -24,9 +24,9 @@ pub fn generate_code<P: AsRef<Path>>(input_files: &[P], output_filename: String)
 
     let declarations = translator.finish();
 
-    let output = backend_translation::run_backend(&mut RustBackend, &declarations);
-
     if !ctx.has_errors() {
+        let output = backend_translation::run_backend(&mut RustBackend, &declarations);
+
         let res = templates::rust::Namespace(&output).render().unwrap();
         let mut file = std::fs::File::create(&output_filename)?;
         file.write_all(res.as_bytes())?;
