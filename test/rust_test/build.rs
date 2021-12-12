@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     // Generate planus files
     let planus_dir = format!("{}/planus", out_dir);
     fs::create_dir_all(&planus_dir)?;
-    for file in ["conformance", "enums", "structs", "unions"] {
+    for file in ["conformance", "enums", "structs", "unions", "vectors"] {
         let input_files = &[format!("../files/test/{}.fbs", file)];
         let output_file = format!("{}/{}_generated.rs", planus_dir, file);
         eprintln!("{:?} {:?}", input_files, output_file);

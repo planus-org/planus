@@ -1,0 +1,8 @@
+table TableA {
+    val1: int32;
+    val2: int32;
+}
+
+table Wrap {
+    table_a: [TableA];
+}
