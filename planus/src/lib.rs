@@ -518,7 +518,7 @@ impl<T: ToOwned> ToOwned for Result<T> {
 
     #[inline]
     fn to_owned(self) -> Result<Self::Value> {
-        self.map_err(|e| e.clone())?.to_owned()
+        self?.to_owned()
     }
 }
 

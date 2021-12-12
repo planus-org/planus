@@ -1,6 +1,6 @@
 use vec_map::VecMap;
 
-use super::backend::{Backend, ResolvedType};
+use super::backend::{Backend, DeclarationNames, NamespaceNames, ResolvedType};
 use crate::{
     codegen::backend::{DeclInfo, Keywords, Names, RelativeNamespace},
     intermediate_language::types::{
@@ -68,12 +68,11 @@ pub struct BackendTableFields<F> {
 }
 
 impl<F> BackendTableFields<F> {
+    #[allow(clippy::too_many_arguments)]
     fn new<B: ?Sized + Backend<TableFieldInfo = F>>(
         declarations: &Declarations,
         backend: &mut B,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[B::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<B>)],
         full_translated_decls: &VecMap<BackendDeclaration<B>>,
@@ -86,11 +85,9 @@ impl<F> BackendTableFields<F> {
             .iter()
             .map(|(field_name, field)| {
                 backend.generate_table_field(
-                    global_names,
-                    namespace_names,
                     declaration_names,
-                    &translated_namespaces,
-                    &translated_decls,
+                    translated_namespaces,
+                    translated_decls,
                     translated_decl,
                     decl,
                     field_name,
@@ -281,29 +278,29 @@ fn translate_type<'a, B: ?Sized + Backend>(
             index.0,
             current_namespace_path,
         ),
-        TypeKind::SimpleType(typ) => translate_simple_type(
+        TypeKind::SimpleType(type_) => translate_simple_type(
             declarations,
             translated_namespaces,
             translated_decls,
             full_translated_decls,
-            typ,
+            type_,
             current_namespace_path,
         ),
-        TypeKind::Vector(typ) => ResolvedType::Vector(Box::new(translate_type(
+        TypeKind::Vector(type_) => ResolvedType::Vector(Box::new(translate_type(
             declarations,
             translated_namespaces,
             translated_decls,
             full_translated_decls,
-            &typ,
+            type_,
             current_namespace_path,
         ))),
-        TypeKind::Array(typ, size) => ResolvedType::Array(
+        TypeKind::Array(type_, size) => ResolvedType::Array(
             Box::new(translate_type(
                 declarations,
                 translated_namespaces,
                 translated_decls,
                 full_translated_decls,
-                &typ,
+                type_,
                 current_namespace_path,
             )),
             *size,
@@ -384,13 +381,14 @@ pub fn run_backend<B: ?Sized + Backend>(
         .iter()
         .zip(&mut namespace_names)
         .map(|((namespace_name, namespace), namespace_names)| {
-            let translated = backend.generate_namespace(
-                global_names,
-                namespace_names,
+            backend.generate_namespace(
+                &mut NamespaceNames {
+                    global_names,
+                    namespace_names,
+                },
                 namespace_name,
                 namespace,
-            );
-            translated
+            )
         })
         .collect::<Vec<_>>();
     let translated_decls: Vec<(AbsolutePath, DeclInfo<B>)> = declarations
@@ -402,9 +400,11 @@ pub fn run_backend<B: ?Sized + Backend>(
             let decl: DeclInfo<B> = match &decl.kind {
                 DeclarationKind::Table(decl) => DeclInfo::Table(
                     backend.generate_table(
-                        global_names,
-                        namespace_names,
-                        declaration_names,
+                        &mut DeclarationNames {
+                            global_names,
+                            namespace_names,
+                            declaration_names,
+                        },
                         &translated_namespaces,
                         decl_name,
                         decl,
@@ -413,9 +413,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                 ),
                 DeclarationKind::Struct(decl) => DeclInfo::Struct(
                     backend.generate_struct(
-                        global_names,
-                        namespace_names,
-                        declaration_names,
+                        &mut DeclarationNames {
+                            global_names,
+                            namespace_names,
+                            declaration_names,
+                        },
                         &translated_namespaces,
                         decl_name,
                         decl,
@@ -424,9 +426,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                 ),
                 DeclarationKind::Enum(decl) => DeclInfo::Enum(
                     backend.generate_enum(
-                        global_names,
-                        namespace_names,
-                        declaration_names,
+                        &mut DeclarationNames {
+                            global_names,
+                            namespace_names,
+                            declaration_names,
+                        },
                         &translated_namespaces,
                         decl_name,
                         decl,
@@ -435,9 +439,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                 ),
                 DeclarationKind::Union(decl) => DeclInfo::Union(
                     backend.generate_union(
-                        global_names,
-                        namespace_names,
-                        declaration_names,
+                        &mut DeclarationNames {
+                            global_names,
+                            namespace_names,
+                            declaration_names,
+                        },
                         &translated_namespaces,
                         decl_name,
                         decl,
@@ -446,9 +452,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                 ),
                 DeclarationKind::RpcService(decl) => DeclInfo::RpcService(
                     backend.generate_rpc_service(
-                        global_names,
-                        namespace_names,
-                        declaration_names,
+                        &mut DeclarationNames {
+                            global_names,
+                            namespace_names,
+                            declaration_names,
+                        },
                         &translated_namespaces,
                         decl_name,
                         decl,
@@ -481,9 +489,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                         .iter()
                         .map(|(value, name)| {
                             backend.generate_enum_variant(
-                                global_names,
-                                namespace_names,
-                                declaration_names,
+                                &mut DeclarationNames {
+                                    global_names,
+                                    namespace_names,
+                                    declaration_names,
+                                },
                                 &translated_namespaces,
                                 &translated_decls,
                                 translated_decl,
@@ -515,9 +525,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                 fields: BackendTableFields::new(
                     declarations,
                     backend,
-                    global_names,
-                    namespace_names,
-                    declaration_names,
+                    &mut DeclarationNames {
+                        global_names,
+                        namespace_names,
+                        declaration_names,
+                    },
                     &translated_namespaces,
                     &translated_decls,
                     &full_translated_decls,
@@ -535,9 +547,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .iter()
                     .map(|(field_name, field)| BackendStructField {
                         info: backend.generate_struct_field(
-                            global_names,
-                            namespace_names,
-                            declaration_names,
+                            &mut DeclarationNames {
+                                global_names,
+                                namespace_names,
+                                declaration_names,
+                            },
                             &translated_namespaces,
                             &translated_decls,
                             translated_decl,
@@ -566,9 +580,11 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .enumerate()
                     .map(|(index, (name, variant))| {
                         backend.generate_union_variant(
-                            global_names,
-                            namespace_names,
-                            declaration_names,
+                            &mut DeclarationNames {
+                                global_names,
+                                namespace_names,
+                                declaration_names,
+                            },
                             &translated_namespaces,
                             &translated_decls,
                             translated_decl,

@@ -11,6 +11,17 @@ pub struct Names<'keywords> {
     names: BTreeMap<&'static str, HashSet<String>>,
 }
 
+pub struct NamespaceNames<'a, 'keywords> {
+    pub global_names: &'a mut Names<'keywords>,
+    pub namespace_names: &'a mut Names<'keywords>,
+}
+
+pub struct DeclarationNames<'a, 'keywords> {
+    pub global_names: &'a mut Names<'keywords>,
+    pub namespace_names: &'a mut Names<'keywords>,
+    pub declaration_names: &'a mut Names<'keywords>,
+}
+
 impl<'keywords> Names<'keywords> {
     pub fn new(keywords: &'keywords Keywords) -> Self {
         Self {
@@ -40,7 +51,7 @@ impl<'keywords> Names<'keywords> {
         padding: char,
     ) -> Cow<'a, str> {
         if self.try_reserve(binding_kind, &value) {
-            return value.into();
+            return value;
         }
 
         let mut value = format!("{}{}", value, padding);
@@ -63,18 +74,12 @@ pub enum DeclInfo<'a, B: ?Sized + Backend> {
 impl<'a, B: ?Sized + Backend> Clone for DeclInfo<'a, B> {
     fn clone(&self) -> Self {
         match self {
-            Self::Table(translated_decl, decl) => {
-                Self::Table(translated_decl.clone(), decl.clone())
-            }
-            Self::Struct(translated_decl, decl) => {
-                Self::Struct(translated_decl.clone(), decl.clone())
-            }
-            Self::Enum(translated_decl, decl) => Self::Enum(translated_decl.clone(), decl.clone()),
-            Self::Union(translated_decl, decl) => {
-                Self::Union(translated_decl.clone(), decl.clone())
-            }
+            Self::Table(translated_decl, decl) => Self::Table(translated_decl.clone(), decl),
+            Self::Struct(translated_decl, decl) => Self::Struct(translated_decl.clone(), decl),
+            Self::Enum(translated_decl, decl) => Self::Enum(translated_decl.clone(), decl),
+            Self::Union(translated_decl, decl) => Self::Union(translated_decl.clone(), decl),
             Self::RpcService(translated_decl, decl) => {
-                Self::RpcService(translated_decl.clone(), decl.clone())
+                Self::RpcService(translated_decl.clone(), decl)
             }
         }
     }
@@ -211,17 +216,14 @@ pub trait Backend {
 
     fn generate_namespace(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
+        namespace_names: &mut NamespaceNames<'_, '_>,
         namespace_name: &AbsolutePath,
         namespace: &Namespace,
     ) -> Self::NamespaceInfo;
 
     fn generate_table(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Table,
@@ -229,9 +231,7 @@ pub trait Backend {
 
     fn generate_struct(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Struct,
@@ -239,9 +239,7 @@ pub trait Backend {
 
     fn generate_enum(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Enum,
@@ -249,9 +247,7 @@ pub trait Backend {
 
     fn generate_union(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &Union,
@@ -259,19 +255,16 @@ pub trait Backend {
 
     fn generate_rpc_service(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &AbsolutePath,
         decl: &RpcService,
     ) -> Self::RpcServiceInfo;
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_table_field(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::TableInfo,
@@ -281,11 +274,10 @@ pub trait Backend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::TableFieldInfo;
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_struct_field(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::StructInfo,
@@ -295,11 +287,10 @@ pub trait Backend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::StructFieldInfo;
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_enum_variant(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::EnumInfo,
@@ -308,11 +299,10 @@ pub trait Backend {
         value: &IntegerLiteral,
     ) -> Self::EnumVariantInfo;
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_union_variant(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::UnionInfo,
@@ -323,11 +313,10 @@ pub trait Backend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::UnionVariantInfo;
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_rpc_method(
         &mut self,
-        global_names: &mut Names<'_>,
-        namespace_names: &mut Names<'_>,
-        declaration_names: &mut Names<'_>,
+        declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
         translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
         parent_info: &Self::RpcServiceInfo,
