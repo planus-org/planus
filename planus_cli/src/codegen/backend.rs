@@ -199,6 +199,12 @@ pub enum ResolvedType<'a, B: ?Sized + Backend> {
     Float(ast::FloatType),
 }
 
+pub struct DeclarationTranslationContext<'a, 'keywords, B: ?Sized + Backend> {
+    pub declaration_names: DeclarationNames<'a, 'keywords>,
+    pub translated_namespaces: &'a [B::NamespaceInfo],
+    pub translated_decls: &'a [(AbsolutePath, DeclInfo<'a, B>)],
+}
+
 pub trait Backend {
     type NamespaceInfo: std::fmt::Debug + Clone;
     type TableInfo: std::fmt::Debug + Clone;
@@ -261,12 +267,9 @@ pub trait Backend {
         decl: &RpcService,
     ) -> Self::RpcServiceInfo;
 
-    #[allow(clippy::too_many_arguments)]
     fn generate_table_field(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::TableInfo,
         parent: &Table,
         field_name: &str,
@@ -274,12 +277,9 @@ pub trait Backend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::TableFieldInfo;
 
-    #[allow(clippy::too_many_arguments)]
     fn generate_struct_field(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::StructInfo,
         parent: &Struct,
         field_name: &str,
@@ -287,12 +287,9 @@ pub trait Backend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::StructFieldInfo;
 
-    #[allow(clippy::too_many_arguments)]
     fn generate_enum_variant(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::EnumInfo,
         parent: &Enum,
         key: &str,
@@ -302,9 +299,7 @@ pub trait Backend {
     #[allow(clippy::too_many_arguments)]
     fn generate_union_variant(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::UnionInfo,
         parent: &Union,
         key: &str,
@@ -316,9 +311,7 @@ pub trait Backend {
     #[allow(clippy::too_many_arguments)]
     fn generate_rpc_method(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::RpcServiceInfo,
         parent: &RpcService,
         method_name: &str,

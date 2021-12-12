@@ -1,6 +1,8 @@
 use vec_map::VecMap;
 
-use super::backend::{Backend, DeclarationNames, NamespaceNames, ResolvedType};
+use super::backend::{
+    Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, ResolvedType,
+};
 use crate::{
     codegen::backend::{DeclInfo, Keywords, Names, RelativeNamespace},
     intermediate_language::types::{
@@ -69,14 +71,12 @@ pub struct BackendTableFields<F> {
 
 impl<F> BackendTableFields<F> {
     #[allow(clippy::too_many_arguments)]
-    fn new<B: ?Sized + Backend<TableFieldInfo = F>>(
-        declarations: &Declarations,
+    fn new<'a, B: ?Sized + Backend<TableFieldInfo = F>>(
+        declarations: &'a Declarations,
         backend: &mut B,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[B::NamespaceInfo],
-        translated_decls: &[(AbsolutePath, DeclInfo<B>)],
-        full_translated_decls: &VecMap<BackendDeclaration<B>>,
-        decl: &crate::intermediate_language::types::Table,
+        translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
+        full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
+        decl: &'a crate::intermediate_language::types::Table,
         decl_path: &AbsolutePath,
         translated_decl: &B::TableInfo,
     ) -> BackendTableFields<<B as Backend>::TableFieldInfo> {
@@ -84,22 +84,20 @@ impl<F> BackendTableFields<F> {
             .fields
             .iter()
             .map(|(field_name, field)| {
+                let translated_type = translate_type(
+                    translation_context,
+                    declarations,
+                    full_translated_decls,
+                    &field.type_,
+                    &decl_path.clone_pop(),
+                );
                 backend.generate_table_field(
-                    declaration_names,
-                    translated_namespaces,
-                    translated_decls,
+                    translation_context,
                     translated_decl,
                     decl,
                     field_name,
                     field,
-                    translate_type(
-                        declarations,
-                        translated_namespaces,
-                        translated_decls,
-                        full_translated_decls,
-                        &field.type_,
-                        &decl_path.clone_pop(),
-                    ),
+                    translated_type,
                 )
             })
             .collect();
@@ -221,18 +219,17 @@ pub struct BackendStructField<F> {
 }
 
 fn translate_type_index<'a, B: ?Sized + Backend>(
+    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
-    translated_namespaces: &'a [B::NamespaceInfo],
-    translated_decls: &'a [(AbsolutePath, DeclInfo<B>)],
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     index: usize,
-    current_namespace_path: &'a AbsolutePath,
+    current_namespace_path: &AbsolutePath,
 ) -> ResolvedType<'a, B> {
-    let (path, decl) = &translated_decls[index];
+    let (path, decl) = &translation_context.translated_decls[index];
     let relative_path: RelativeNamespace<B> = RelativeNamespace::new(
         current_namespace_path,
         &path.clone_pop(),
-        translated_namespaces,
+        translation_context.translated_namespaces,
         declarations,
     );
     match decl {
@@ -259,46 +256,41 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
 }
 
 fn translate_type<'a, B: ?Sized + Backend>(
+    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
-    translated_namespaces: &'a [B::NamespaceInfo],
-    translated_decls: &'a [(AbsolutePath, DeclInfo<B>)],
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     type_: &'a Type,
-    current_namespace_path: &'a AbsolutePath,
+    current_namespace_path: &AbsolutePath,
 ) -> ResolvedType<'a, B> {
     match &type_.kind {
         TypeKind::Table(index)
         | TypeKind::Union(index)
         | TypeKind::SimpleType(SimpleType::Struct(index))
         | TypeKind::SimpleType(SimpleType::Enum(index)) => translate_type_index(
+            translation_context,
             declarations,
-            translated_namespaces,
-            translated_decls,
             full_translated_decls,
             index.0,
             current_namespace_path,
         ),
         TypeKind::SimpleType(type_) => translate_simple_type(
+            translation_context,
             declarations,
-            translated_namespaces,
-            translated_decls,
             full_translated_decls,
             type_,
             current_namespace_path,
         ),
         TypeKind::Vector(type_) => ResolvedType::Vector(Box::new(translate_type(
+            translation_context,
             declarations,
-            translated_namespaces,
-            translated_decls,
             full_translated_decls,
             type_,
             current_namespace_path,
         ))),
         TypeKind::Array(type_, size) => ResolvedType::Array(
             Box::new(translate_type(
+                translation_context,
                 declarations,
-                translated_namespaces,
-                translated_decls,
                 full_translated_decls,
                 type_,
                 current_namespace_path,
@@ -310,18 +302,16 @@ fn translate_type<'a, B: ?Sized + Backend>(
 }
 
 fn translate_simple_type<'a, B: ?Sized + Backend>(
+    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
-    translated_namespaces: &'a [B::NamespaceInfo],
-    translated_decls: &'a [(AbsolutePath, DeclInfo<B>)],
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     type_: &'a SimpleType,
-    current_namespace_path: &'a AbsolutePath,
+    current_namespace_path: &AbsolutePath,
 ) -> ResolvedType<'a, B> {
     match type_ {
         SimpleType::Struct(index) | SimpleType::Enum(index) => translate_type_index(
+            translation_context,
             declarations,
-            translated_namespaces,
-            translated_decls,
             full_translated_decls,
             index.0,
             current_namespace_path,
@@ -489,13 +479,15 @@ pub fn run_backend<B: ?Sized + Backend>(
                         .iter()
                         .map(|(value, name)| {
                             backend.generate_enum_variant(
-                                &mut DeclarationNames {
-                                    global_names,
-                                    namespace_names,
-                                    declaration_names,
+                                &mut DeclarationTranslationContext {
+                                    declaration_names: DeclarationNames {
+                                        global_names,
+                                        namespace_names,
+                                        declaration_names,
+                                    },
+                                    translated_namespaces: &translated_namespaces,
+                                    translated_decls: &translated_decls,
                                 },
-                                &translated_namespaces,
-                                &translated_decls,
                                 translated_decl,
                                 decl,
                                 name,
@@ -515,6 +507,15 @@ pub fn run_backend<B: ?Sized + Backend>(
         .enumerate()
     {
         let namespace_names = &mut namespace_names[orig_decl.1.namespace_id.0];
+        let mut translation_context = DeclarationTranslationContext {
+            declaration_names: DeclarationNames {
+                global_names,
+                namespace_names,
+                declaration_names,
+            },
+            translated_namespaces: &translated_namespaces,
+            translated_decls: &translated_decls,
+        };
         let decl = match decl {
             DeclInfo::Enum(..) => continue,
             DeclInfo::Table(translated_decl, decl) => BackendDeclaration::Table(BackendTable {
@@ -525,13 +526,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                 fields: BackendTableFields::new(
                     declarations,
                     backend,
-                    &mut DeclarationNames {
-                        global_names,
-                        namespace_names,
-                        declaration_names,
-                    },
-                    &translated_namespaces,
-                    &translated_decls,
+                    &mut translation_context,
                     &full_translated_decls,
                     decl,
                     decl_path,
@@ -545,30 +540,26 @@ pub fn run_backend<B: ?Sized + Backend>(
                 fields: decl
                     .fields
                     .iter()
-                    .map(|(field_name, field)| BackendStructField {
-                        info: backend.generate_struct_field(
-                            &mut DeclarationNames {
-                                global_names,
-                                namespace_names,
-                                declaration_names,
-                            },
-                            &translated_namespaces,
-                            &translated_decls,
-                            translated_decl,
-                            decl,
-                            field_name,
-                            field,
-                            translate_simple_type(
-                                declarations,
-                                &translated_namespaces,
-                                &translated_decls,
-                                &full_translated_decls,
-                                &field.type_,
-                                &decl_path.clone_pop(),
+                    .map(|(field_name, field)| {
+                        let translated_type = translate_simple_type(
+                            &mut translation_context,
+                            declarations,
+                            &full_translated_decls,
+                            &field.type_,
+                            &decl_path.clone_pop(),
+                        );
+                        BackendStructField {
+                            info: backend.generate_struct_field(
+                                &mut translation_context,
+                                translated_decl,
+                                decl,
+                                field_name,
+                                field,
+                                translated_type,
                             ),
-                        ),
-                        offset: field.offset,
-                        size: field.size,
+                            offset: field.offset,
+                            size: field.size,
+                        }
                     })
                     .collect(),
             }),
@@ -579,27 +570,21 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .iter()
                     .enumerate()
                     .map(|(index, (name, variant))| {
+                        let translated_type = translate_type(
+                            &mut translation_context,
+                            declarations,
+                            &full_translated_decls,
+                            &variant.type_,
+                            &decl_path.clone_pop(),
+                        );
                         backend.generate_union_variant(
-                            &mut DeclarationNames {
-                                global_names,
-                                namespace_names,
-                                declaration_names,
-                            },
-                            &translated_namespaces,
-                            &translated_decls,
+                            &mut translation_context,
                             translated_decl,
                             decl,
                             name,
                             index as u8,
                             variant,
-                            translate_type(
-                                declarations,
-                                &translated_namespaces,
-                                &translated_decls,
-                                &full_translated_decls,
-                                &variant.type_,
-                                &decl_path.clone_pop(),
-                            ),
+                            translated_type,
                         )
                     })
                     .collect(),

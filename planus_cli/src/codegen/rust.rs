@@ -1,7 +1,10 @@
-use super::backend::{Backend, DeclarationNames, NamespaceNames, RelativeNamespace, ResolvedType};
+use super::backend::{
+    Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, RelativeNamespace,
+    ResolvedType,
+};
 use crate::{
     ast::{FloatType, IntegerType},
-    intermediate_language::types::{AbsolutePath, AssignMode, Literal},
+    intermediate_language::types::{AssignMode, Literal},
 };
 use heck::{CamelCase, SnakeCase};
 use std::{borrow::Cow, path::Path, process::Command};
@@ -234,17 +237,23 @@ impl Backend for RustBackend {
 
     fn generate_table_field(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::TableInfo,
         _parent: &crate::intermediate_language::types::Table,
         field_name: &str,
         field: &crate::intermediate_language::types::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
-        let name = reserve_field_name(field_name, "name", declaration_names);
-        let create_name = reserve_field_name(field_name, "create_name", declaration_names);
+        let name = reserve_field_name(
+            field_name,
+            "name",
+            &mut translation_context.declaration_names,
+        );
+        let create_name = reserve_field_name(
+            field_name,
+            "create_name",
+            &mut translation_context.declaration_names,
+        );
         let read_type;
         let owned_type;
         let vtable_type;
@@ -423,16 +432,18 @@ impl Backend for RustBackend {
 
     fn generate_struct_field(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::StructInfo,
         _parent: &crate::intermediate_language::types::Struct,
         field_name: &str,
         _field: &crate::intermediate_language::types::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
-        let name = reserve_field_name(field_name, "name", declaration_names);
+        let name = reserve_field_name(
+            field_name,
+            "name",
+            &mut translation_context.declaration_names,
+        );
         let owned_type;
         let getter_code;
         let getter_return_type;
@@ -480,15 +491,14 @@ impl Backend for RustBackend {
 
     fn generate_enum_variant(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::EnumInfo,
         _parent: &crate::intermediate_language::types::Enum,
         key: &str,
         value: &crate::intermediate_language::types::IntegerLiteral,
     ) -> EnumVariant {
-        let name = reserve_rust_enum_variant_name(key, "name", declaration_names);
+        let name =
+            reserve_rust_enum_variant_name(key, "name", &mut translation_context.declaration_names);
 
         EnumVariant {
             name,
@@ -498,9 +508,7 @@ impl Backend for RustBackend {
 
     fn generate_union_variant(
         &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::UnionInfo,
         _parent: &crate::intermediate_language::types::Union,
         key: &str,
@@ -511,9 +519,13 @@ impl Backend for RustBackend {
         let create_name = reserve_field_name(
             &format!("create_{}", key),
             "create_function",
-            declaration_names,
+            &mut translation_context.declaration_names,
         );
-        let enum_name = reserve_rust_enum_variant_name(key, "variant_name", declaration_names);
+        let enum_name = reserve_rust_enum_variant_name(
+            key,
+            "variant_name",
+            &mut translation_context.declaration_names,
+        );
         let create_trait;
         let owned_type;
         let ref_type;
@@ -546,9 +558,7 @@ impl Backend for RustBackend {
 
     fn generate_rpc_method(
         &mut self,
-        _declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _translated_decls: &[(AbsolutePath, super::backend::DeclInfo<Self>)],
+        _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::RpcServiceInfo,
         _parent: &crate::intermediate_language::types::RpcService,
         _method_name: &str,
