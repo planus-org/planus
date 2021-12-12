@@ -83,7 +83,7 @@ pub struct Struct {
     pub fields: IndexMap<RawIdentifier, StructField>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StructField {
     pub span: Span,
     pub ident: Identifier,
@@ -161,7 +161,7 @@ pub struct RpcMethod {
     pub metadata: Vec<MetadataValue>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MetadataValue {
     pub key: Identifier,
     pub value: Option<Literal>,

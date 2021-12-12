@@ -488,6 +488,35 @@ impl<'a> Translator<'a> {
         }
     }
 
+    fn check_valid_default_literal(
+        &self,
+        current_file_id: FileId,
+        default_value: &Literal,
+        assignment_span: Span,
+    ) {
+        match default_value {
+            Literal::Bool(_)
+            | Literal::String(_)
+            | Literal::Int(_)
+            | Literal::Float(_)
+            | Literal::EnumTag { .. } => (),
+            Literal::Array(_) => todo!(),
+            Literal::Vector(l) => {
+                if !l.is_empty() {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [
+                            Label::primary(current_file_id, assignment_span).with_message(
+                                "vectors only support default values of null or the empty list",
+                            ),
+                        ],
+                        Some("Unsupported default value"),
+                    );
+                }
+            }
+        }
+    }
+
     fn translate_table_field(
         &self,
         current_namespace: &AbsolutePath,
@@ -503,20 +532,16 @@ impl<'a> Translator<'a> {
             if matches!(assignment.kind, LiteralKind::Null) {
                 explicit_null = true;
                 default_value = None;
-            } else if type_.kind.is_scalar() {
+            } else {
                 default_value =
                     self.translate_literal(current_namespace, current_file_id, assignment, &type_);
-            } else {
-                self.ctx.emit_error(
-                    ErrorKind::MISC_SEMANTIC_ERROR,
-                    [
-                        Label::secondary(current_file_id, type_.span)
-                            .with_message("only scalar types support default value"),
-                        Label::primary(current_file_id, assignment.span)
-                            .with_message("default value was here"),
-                    ],
-                    Some("Unsupported default value"),
-                );
+                if let Some(default_value) = &default_value {
+                    self.check_valid_default_literal(
+                        current_file_id,
+                        default_value,
+                        assignment.span,
+                    );
+                }
             }
         };
         let mut required = false;
@@ -571,24 +596,19 @@ impl<'a> Translator<'a> {
             *next_vtable_index = vtable_index + 1;
         }
 
-        let assign_mode = match (
-            required,
-            explicit_null,
-            type_.kind.is_scalar(),
-            default_value,
-        ) {
-            (true, _, _, _) => AssignMode::Required,
-            (false, true, _, _) | (false, _, false, _) => AssignMode::Optional,
-            (false, false, true, Some(default_value)) => AssignMode::HasDefault(default_value),
-            (false, false, true, None) => {
+        let assign_mode = match (required, explicit_null, default_value) {
+            (true, false, None) => AssignMode::Required,
+            (false, _, None) => AssignMode::Optional,
+            (false, false, Some(default_value)) => AssignMode::HasDefault(default_value),
+            (true, true, _) | (true, _, Some(_)) => {
                 self.ctx.emit_error(
                     ErrorKind::MISC_SEMANTIC_ERROR,
-                    [Label::secondary(current_file_id, field.span)
-                        .with_message("scalar field was here")],
-                    Some("Scalar fields must either have a (possibly implicit) default value"),
+                    [Label::primary(current_file_id, field.span)],
+                    Some("Fields cannot set field as required while having a default value"),
                 );
                 AssignMode::Optional
             }
+            (_, true, Some(_)) => unreachable!(),
         };
 
         Some(TableField {

@@ -32,6 +32,13 @@ pub trait WriteAs<P: Primitive> {
     fn prepare(&self, buffer: &mut Buffer) -> Self::Prepared;
 }
 
+pub trait WriteAsDefault<P: Primitive, D: ?Sized> {
+    #[doc(hidden)]
+    type Prepared: WriteAsPrimitive<P>;
+    #[doc(hidden)]
+    fn prepare(&self, buffer: &mut Buffer, default: &D) -> Option<Self::Prepared>;
+}
+
 pub trait WriteAsOptional<P: Primitive> {
     #[doc(hidden)]
     type Prepared: WriteAsPrimitive<P>;
@@ -307,6 +314,14 @@ impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
     }
 }
 
+impl<'a, P: Primitive, D, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for &'a T {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer, default: &D) -> Option<T::Prepared> {
+        T::prepare(self, buffer, default)
+    }
+}
+
 impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'a T {
     type Prepared = T::Prepared;
     #[inline]
@@ -363,6 +378,14 @@ impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for Box<T> {
     }
 }
 
+impl<P: Primitive, D, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for Box<T> {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer, default: &D) -> Option<T::Prepared> {
+        T::prepare(self, buffer, default)
+    }
+}
+
 impl<P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for Box<T> {
     type Prepared = T::Prepared;
     #[inline]
@@ -412,6 +435,18 @@ macro_rules! gen_primitive_types {
             #[inline]
             fn prepare(&self, _buffer: &mut Buffer) -> Self {
                 *self
+            }
+        }
+
+        impl WriteAsDefault<$ty, $ty> for $ty {
+            type Prepared = Self;
+            #[inline]
+            fn prepare(&self, _buffer: &mut Buffer, default: &$ty) -> Option<Self> {
+                if self == default {
+                    None
+                } else {
+                    Some(*self)
+                }
             }
         }
 
@@ -503,6 +538,18 @@ impl WriteAs<bool> for bool {
     #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
+    }
+}
+
+impl WriteAsDefault<bool, bool> for bool {
+    type Prepared = Self;
+    #[inline]
+    fn prepare(&self, _buffer: &mut Buffer, default: &bool) -> Option<bool> {
+        if self == default {
+            None
+        } else {
+            Some(*self)
+        }
     }
 }
 
@@ -720,6 +767,22 @@ where
     }
 }
 
+impl<T, P> WriteAsDefault<Offset<[P]>, ()> for [T]
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    type Prepared = Offset<[P]>;
+
+    fn prepare(&self, buffer: &mut Buffer, _default: &()) -> Option<Offset<[P]>> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(WriteAsOffset::prepare(&self, buffer))
+        }
+    }
+}
+
 impl<T, P> WriteAsOptional<Offset<[P]>> for [T]
 where
     P: Primitive,
@@ -839,6 +902,23 @@ where
     }
 }
 
+impl<T, P> WriteAsDefault<Offset<[P]>, ()> for Vec<T>
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    type Prepared = Offset<[P]>;
+
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer, _default: &()) -> Option<Offset<[P]>> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(WriteAsOffset::prepare(self.as_slice(), buffer))
+        }
+    }
+}
+
 impl<T, P> WriteAsOptional<Offset<[P]>> for Vec<T>
 where
     P: Primitive,
@@ -872,6 +952,19 @@ impl WriteAs<Offset<str>> for str {
     }
 }
 
+impl WriteAsDefault<Offset<str>, str> for str {
+    type Prepared = Offset<str>;
+
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer, default: &str) -> Option<Offset<str>> {
+        if self == default {
+            None
+        } else {
+            Some(WriteAsOffset::prepare(self, buffer))
+        }
+    }
+}
+
 impl WriteAsOptional<Offset<str>> for str {
     type Prepared = Offset<str>;
     #[inline]
@@ -897,6 +990,19 @@ impl WriteAs<Offset<str>> for String {
     #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
         WriteAsOffset::prepare(self.as_str(), buffer)
+    }
+}
+
+impl WriteAsDefault<Offset<str>, str> for String {
+    type Prepared = Offset<str>;
+
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer, default: &str) -> Option<Offset<str>> {
+        if self == default {
+            None
+        } else {
+            Some(WriteAsOffset::prepare(self.as_str(), buffer))
+        }
     }
 }
 
