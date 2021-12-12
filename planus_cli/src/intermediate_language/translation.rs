@@ -325,7 +325,27 @@ impl<'a> Translator<'a> {
                 }
                 Some(Literal::Vector(out))
             }
-            (LiteralKind::List(_), Array(_type_, _size)) => todo!(),
+            (LiteralKind::List(literals), Array(_type_, size)) => {
+                if literals.len() == *size as usize {
+                    let mut out = Vec::new();
+                    for literal in literals.iter() {
+                        out.push(self.translate_literal(
+                            current_namespace,
+                            current_file_id,
+                            literal,
+                            &*type_,
+                        )?);
+                    }
+                    Some(Literal::Array(out))
+                } else {
+                    self.ctx.emit_error(
+                        ErrorKind::TYPE_ERROR,
+                        std::iter::once(Label::primary(current_file_id, literal.span)),
+                        Some("Array literal does not have the correct length"),
+                    );
+                    None
+                }
+            }
             (LiteralKind::Constant(s), _) => {
                 if let SimpleType(Enum(decl_index)) = &type_.kind {
                     if let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0] {
@@ -414,6 +434,7 @@ impl<'a> Translator<'a> {
             .filter_map(|(ident, field)| {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &field.type_)?;
+                self.check_valid_struct_field_type(current_file_id, &type_);
                 if let Some(assignment) = &field.assignment {
                     self.ctx.emit_error(
                         ErrorKind::MISC_SEMANTIC_ERROR,
@@ -500,7 +521,14 @@ impl<'a> Translator<'a> {
             | Literal::Int(_)
             | Literal::Float(_)
             | Literal::EnumTag { .. } => (),
-            Literal::Array(_) => todo!(),
+            Literal::Array(_) => {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(current_file_id, assignment_span)
+                        .with_message("Default values for arrays are not supported")],
+                    Some("Unsupported default value"),
+                );
+            }
             Literal::Vector(l) => {
                 if !l.is_empty() {
                     self.ctx.emit_error(
@@ -517,6 +545,168 @@ impl<'a> Translator<'a> {
         }
     }
 
+    fn check_valid_vector_type(&self, current_file_id: FileId, type_: &Type) {
+        match type_.kind {
+            TypeKind::Table(_) => (),
+            TypeKind::Vector(_) => (),
+            TypeKind::Union(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("unions in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::Array(_, _) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("arrays in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Bool) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("bools in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Integer(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("integers in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Float(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("floats in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Struct(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("structs in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Enum(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("structs in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::String => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("strings in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
+        }
+    }
+
+    fn check_valid_table_field_type(&self, current_file_id: FileId, type_: &Type) {
+        match &type_.kind {
+            TypeKind::Table(_)
+            | TypeKind::Union(_)
+            | TypeKind::SimpleType(_)
+            | TypeKind::String => (),
+            TypeKind::Vector(type_) => self.check_valid_vector_type(current_file_id, type_),
+            TypeKind::Array(_, _) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("arrays in tables are not currently supported")],
+                Some("Unsupported type"),
+            ),
+        }
+    }
+
+    fn check_valid_union_variant_type(&self, current_file_id: FileId, type_: &Type) {
+        match type_.kind {
+            TypeKind::Table(_) => (),
+            TypeKind::Union(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("unions in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::Vector(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("vectors in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::Array(_, _) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("arrays in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Bool) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("bools in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Integer(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("integers in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Float(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("floats in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Struct(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("structs in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(SimpleType::Enum(_)) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("structs in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::String => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("strings in unions are not currently supported")],
+                Some("Unsupported type"),
+            ),
+        }
+    }
+
+    fn check_valid_struct_field_type(&self, current_file_id: FileId, type_: &Type) {
+        match &type_.kind {
+            TypeKind::Table(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("tables in structs are not supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::Union(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("unions in structs are not supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::String => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("strings in structs are not supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::Vector(..) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("vectors in structs are not supported")],
+                Some("Unsupported type"),
+            ),
+            TypeKind::SimpleType(_) => (),
+            TypeKind::Array(type_, _) => self.check_valid_struct_field_type(current_file_id, type_),
+        }
+    }
+
     fn translate_table_field(
         &self,
         current_namespace: &AbsolutePath,
@@ -526,6 +716,7 @@ impl<'a> Translator<'a> {
         max_vtable_index: &mut u32,
     ) -> Option<TableField> {
         let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
+        self.check_valid_table_field_type(current_file_id, &type_);
         let mut default_value = self.default_value_for_type(&type_);
         let mut explicit_null = false;
         if let Some(assignment) = field.assignment.as_ref() {
@@ -730,8 +921,7 @@ impl<'a> Translator<'a> {
             .filter_map(|variant| {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &variant.type_)?;
-
-                // TODO: check that this type is valid in a union context
+                self.check_valid_union_variant_type(current_file_id, &type_);
 
                 let name = if let Some(ident) = variant.ident {
                     self.ctx.resolve_identifier(ident.value)
