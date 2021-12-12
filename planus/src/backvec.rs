@@ -132,7 +132,7 @@ mod tests {
         let mut vec = BackVec::with_capacity(rng.gen::<usize>() % 64);
         let mut slice = [0; 50];
         let mut saved = Vec::new();
-        for _ in 0..1_000_000 {
+        for _ in 0..100_000 {
             assert!(vec.len() <= vec.capacity);
             assert_eq!(vec.as_slice().len(), vec.len());
 

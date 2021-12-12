@@ -10,6 +10,7 @@ mod tests {
         for var in [Abc::A, Abc::B, Abc::C] {
             let root = Wrap::create(&mut buffer, var);
             let slice = buffer.finish(root, None);
+            println!("{:?} {:?}", slice, var);
 
             let table = WrapRef::from_buffer(
                 BufferWithStartOffset {
@@ -21,6 +22,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(table.abc().unwrap().unwrap(), var);
+            buffer.clear();
         }
     }
 }
