@@ -14,6 +14,7 @@ pub struct TableWriter<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYT
 impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
     TableWriter<'buf, VTABLE_MAX_BYTES, OBJECT_MAX_BYTES>
 {
+    #[inline]
     pub fn new(buffer: &'buf mut Buffer) -> Self {
         Self {
             buffer,
@@ -28,6 +29,7 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
     }
 
     /// Must be called in the field order
+    #[inline]
     pub fn calculate_size<P: Primitive>(&mut self, vtable_offset_end: usize) {
         self.object_alignment_mask = self.object_alignment_mask.max(P::ALIGNMENT_MASK);
         self.object_size += P::SIZE;
@@ -36,6 +38,7 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
         self.vtable_size = vtable_offset_end;
     }
 
+    #[inline]
     pub fn finish_calculating(&mut self) {
         self.buffer_position = self.buffer.get_buffer_position_and_prepare_write(
             self.vtable_size,

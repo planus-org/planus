@@ -1,11 +1,3 @@
-use std::{
-    borrow::Cow,
-    fs::File,
-    io::{self, Write},
-    path::Path,
-    process::Command,
-};
-
 use crate::{
     ast::{FloatType, IntegerType},
     codegen::name_generator::Scope,
@@ -15,9 +7,15 @@ use crate::{
         TypeKind, Union, UnionVariant,
     },
 };
-
 use askama::Template;
 use heck::{CamelCase, SnakeCase};
+use std::{
+    borrow::Cow,
+    fs::File,
+    io::{self, Write},
+    path::Path,
+    process::Command,
+};
 
 use super::name_generator::{run_name_generator, NameGenerator, ReservedNames};
 

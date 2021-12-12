@@ -288,9 +288,9 @@ impl<'a> Translator<'a> {
                     TypeDescription::Enum(decl) => {
                         let int =
                             self.translate_integer(literal.span, *is_negative, value, &decl.type_)?;
-                        if let Some(value) = decl.variants.get(&int) {
+                        if let Some(variant_index) = decl.variants.get_index_of(&int) {
                             Some(Literal::EnumTag {
-                                name: value.clone(),
+                                variant_index,
                                 value: int,
                             })
                         } else {
@@ -329,11 +329,14 @@ impl<'a> Translator<'a> {
             (LiteralKind::Constant(s), _) => {
                 if let SimpleType(Enum(decl_index)) = &type_.kind {
                     if let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0] {
-                        if let Some((key, value)) =
-                            decl.variants.iter().find(|(_key, value)| value == &s)
+                        if let Some((variant_index, (key, _value))) = decl
+                            .variants
+                            .iter()
+                            .enumerate()
+                            .find(|(_variant_index, (_key, value))| value == &s)
                         {
                             return Some(Literal::EnumTag {
-                                name: value.clone(),
+                                variant_index,
                                 value: *key,
                             });
                         }
@@ -455,6 +458,7 @@ impl<'a> Translator<'a> {
         &self,
         id: usize,
         current_namespace: &AbsolutePath,
+        current_namespace_index: NamespaceIndex,
         decl: &ast::Declaration,
     ) -> Declaration {
         let current_file_id = decl.file_id;
@@ -477,6 +481,7 @@ impl<'a> Translator<'a> {
             };
 
         Declaration {
+            namespace_id: current_namespace_index,
             definition_span: decl.definition_span,
             file_id: current_file_id,
             kind,
@@ -628,6 +633,7 @@ impl<'a> Translator<'a> {
             alignment_order: Vec::new(),
             max_size: u32::MAX,
             max_vtable_index,
+            max_alignment: u32::MAX,
         }
     }
 
@@ -842,6 +848,7 @@ impl<'a> Translator<'a> {
     pub fn resolve_table_sizes(&mut self) {
         for decl in self.declarations.values_mut() {
             let mut max_size = 4u32;
+            let mut max_alignment = 0;
             if let DeclarationKind::Table(decl) = &mut decl.kind {
                 for field in decl.fields.values_mut() {
                     let (value_size, tag_size, alignment) = match &field.type_.kind {
@@ -877,12 +884,14 @@ impl<'a> Translator<'a> {
                         | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 0, 8),
                     };
                     max_size = max_size.saturating_add(value_size + tag_size);
+                    max_alignment = max_alignment.max(alignment);
                     field.object_value_size = value_size;
                     field.object_tag_size = tag_size;
                     field.object_alignment = alignment;
                     field.object_alignment_mask = alignment - 1;
                 }
                 decl.max_size = max_size;
+                decl.max_alignment = max_alignment;
                 let mut indices = (0..decl.fields.len()).collect::<Vec<_>>();
                 indices.sort_by(|&i, &j| {
                     std::cmp::Ord::cmp(
@@ -898,9 +907,15 @@ impl<'a> Translator<'a> {
 
     pub fn finish(mut self) -> Declarations {
         for (id, (path, decl)) in self.ast_declarations.iter().enumerate() {
+            let current_namespace = path.clone_pop();
             self.declarations.insert(
                 path.clone(),
-                self.translate_decl(id, &path.clone_pop(), decl),
+                self.translate_decl(
+                    id,
+                    &current_namespace,
+                    NamespaceIndex(self.namespaces.get_index_of(&current_namespace).unwrap()),
+                    decl,
+                ),
             );
         }
         let mut parents = IndexMap::new();
@@ -951,9 +966,10 @@ impl<'a> Translator<'a> {
             TypeDescription::Enum(decl) => decl
                 .variants
                 .iter()
-                .filter_map(|(k, v)| {
+                .enumerate()
+                .filter_map(|(variant_index, (k, _v))| {
                     (k.is_zero()).then(|| Literal::EnumTag {
-                        name: v.clone(),
+                        variant_index,
                         value: *k,
                     })
                 })

@@ -88,8 +88,8 @@ impl<'a, 'b> From<&'b &'a NamespaceIndex> for NamespaceIndex {
 
 #[derive(Debug)]
 pub struct Declarations {
-    namespaces: IndexMap<AbsolutePath, Namespace>,
-    declarations: IndexMap<AbsolutePath, Declaration>,
+    pub namespaces: IndexMap<AbsolutePath, Namespace>,
+    pub declarations: IndexMap<AbsolutePath, Declaration>,
 }
 
 impl Declarations {
@@ -116,14 +116,6 @@ impl Declarations {
         self.declarations.get_index(index.0).unwrap()
     }
 
-    pub fn namespace_count(&self) -> usize {
-        self.namespaces.len()
-    }
-
-    pub fn declaration_count(&self) -> usize {
-        self.declarations.len()
-    }
-
     pub fn iter_declarations(
         &self,
     ) -> impl Iterator<Item = (DeclarationIndex, &AbsolutePath, &Declaration)> {
@@ -147,6 +139,7 @@ pub struct Namespace {
 pub struct Declaration {
     pub definition_span: Span,
     pub file_id: FileId,
+    pub namespace_id: NamespaceIndex,
     pub kind: DeclarationKind,
 }
 
@@ -165,6 +158,7 @@ pub struct Table {
     pub alignment_order: Vec<usize>,
     pub max_size: u32,
     pub max_vtable_index: u32,
+    pub max_alignment: u32,
 }
 
 #[derive(Debug)]
@@ -181,7 +175,7 @@ pub struct TableField {
     pub deprecated: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum AssignMode {
     Required,
     Optional,
@@ -280,7 +274,7 @@ impl SimpleType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Literal {
     Bool(bool),
     String(String),
@@ -288,7 +282,10 @@ pub enum Literal {
     Float(FloatLiteral),
     Array(Vec<Literal>),
     Vector(Vec<Literal>),
-    EnumTag { name: String, value: IntegerLiteral },
+    EnumTag {
+        variant_index: usize,
+        value: IntegerLiteral,
+    },
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -333,8 +330,17 @@ impl Display for IntegerLiteral {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum FloatLiteral {
     F32(f32),
     F64(f64),
+}
+
+impl Display for FloatLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FloatLiteral::F32(v) => write!(f, "{}", v),
+            FloatLiteral::F64(v) => write!(f, "{}", v),
+        }
+    }
 }

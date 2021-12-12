@@ -16,6 +16,8 @@ use std::marker::PhantomData;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+pub enum Void {}
+
 #[doc(hidden)]
 pub trait Primitive {
     const ALIGNMENT: usize;
@@ -25,12 +27,21 @@ pub trait Primitive {
 
 pub trait WriteAs<P: Primitive> {
     #[doc(hidden)]
-    fn prepare(&self, buffer: &mut Buffer) -> P;
+    type Prepared: WriteAsPrimitive<P>;
+    #[doc(hidden)]
+    fn prepare(&self, buffer: &mut Buffer) -> Self::Prepared;
 }
 
 pub trait WriteAsOptional<P: Primitive> {
     #[doc(hidden)]
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P>;
+    type Prepared: WriteAsPrimitive<P>;
+    #[doc(hidden)]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<Self::Prepared>;
+}
+
+pub trait WriteAsOffset<T: ?Sized> {
+    #[doc(hidden)]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<T>;
 }
 
 pub trait WriteAsUnion<T: ?Sized> {
@@ -45,25 +56,28 @@ pub trait WriteAsOptionalUnion<T: ?Sized> {
 
 pub trait ToOwned {
     type Value;
-    fn to_owned(&self) -> Result<Self::Value>;
+    fn to_owned(self) -> Result<Self::Value>;
 }
 
 #[doc(hidden)]
 #[allow(clippy::missing_safety_doc)]
 // TODO: only intended to be implemented by us, but we should write a safety
 //       comment anyway
+// TODO: What *are* the safety requirements again? I think they are
+// that we need to never read the pointer and fill in all of the bytes,
+// but do we actually do that for structs?
 pub unsafe trait WriteAsPrimitive<P> {
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32);
 }
 
 #[doc(hidden)]
 #[derive(Copy, Clone, Debug)]
-pub struct BufferWithStartOffset<'buf> {
+pub struct SliceWithStartOffset<'buf> {
     pub buffer: &'buf [u8],
     pub offset_from_start: usize,
 }
 
-impl<'buf> BufferWithStartOffset<'buf> {
+impl<'buf> SliceWithStartOffset<'buf> {
     pub fn len(&self) -> usize {
         self.buffer.len()
     }
@@ -87,60 +101,104 @@ impl<'buf> BufferWithStartOffset<'buf> {
     pub fn advance_as_array<const N: usize>(
         &self,
         amount: usize,
-    ) -> std::result::Result<&'buf [u8; N], errors::ErrorKind> {
+    ) -> std::result::Result<ArrayWithStartOffset<'buf, N>, errors::ErrorKind> {
         let buffer = self
             .buffer
             .get(amount..amount + N)
             .ok_or(ErrorKind::InvalidOffset)?;
-        Ok(buffer.try_into().unwrap())
+        Ok(ArrayWithStartOffset {
+            buffer: buffer.try_into().unwrap(),
+            offset_from_start: self.offset_from_start + amount,
+        })
     }
 }
 
 #[doc(hidden)]
+#[derive(Copy, Clone, Debug)]
+pub struct ArrayWithStartOffset<'buf, const N: usize> {
+    pub buffer: &'buf [u8; N],
+    pub offset_from_start: usize,
+}
+
+impl<'buf, const N: usize> ArrayWithStartOffset<'buf, N> {
+    pub fn as_array(&self) -> &'buf [u8; N] {
+        self.buffer
+    }
+
+    pub fn advance_as_array<const K: usize>(
+        &self,
+        amount: usize,
+    ) -> std::result::Result<ArrayWithStartOffset<'buf, K>, errors::ErrorKind> {
+        let buffer = self
+            .buffer
+            .get(amount..amount + K)
+            .ok_or(ErrorKind::InvalidOffset)?;
+        Ok(ArrayWithStartOffset {
+            buffer: buffer.try_into().unwrap(),
+            offset_from_start: self.offset_from_start + amount,
+        })
+    }
+}
+#[doc(hidden)]
 pub trait TableRead<'buf>: Sized {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind>;
 }
 
 #[doc(hidden)]
 pub trait TableReadUnion<'buf>: Sized {
+    // TODO: Double-wrap the result: once for generic errors and one for unknown variants
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
         tag: u8,
     ) -> std::result::Result<Self, ErrorKind>;
 }
 
 impl<P: Primitive> WriteAsOptional<P> for () {
-    fn prepare(&self, _buffer: &mut Buffer) -> Option<P> {
+    type Prepared = Void;
+    #[inline]
+    fn prepare(&self, _buffer: &mut Buffer) -> Option<Void> {
         None
     }
 }
 
+unsafe impl<P: Primitive> WriteAsPrimitive<P> for Void {
+    #[inline]
+    unsafe fn write(&self, _buffer: *mut u8, _buffer_position: u32) {
+        match *self {}
+    }
+}
+
 impl<T: ?Sized> WriteAsOptionalUnion<T> for () {
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Option<UnionOffset<T>> {
         None
     }
 }
 
 impl<P: Primitive, T: WriteAsOptional<P>> WriteAsOptional<P> for Option<T> {
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P> {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
         self.as_ref()?.prepare(buffer)
     }
 }
 
 impl<T1, T2: WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Option<T2> {
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
         self.as_ref()?.prepare(buffer)
     }
 }
 
-impl<'a, T: ?Sized + ToOwned> ToOwned for &'a T {
+impl<'a, T: ?Sized + ToOwned + Copy> ToOwned for &'a T {
     type Value = T::Value;
 
-    fn to_owned(&self) -> Result<Self::Value> {
+    #[inline]
+    fn to_owned(self) -> Result<Self::Value> {
         T::to_owned(*self)
     }
 }
@@ -152,6 +210,7 @@ pub struct Offset<T: ?Sized> {
 
 impl<T: ?Sized> Copy for Offset<T> {}
 impl<T: ?Sized> Clone for Offset<T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -175,6 +234,7 @@ pub struct UnionOffset<T: ?Sized> {
 
 impl<T: ?Sized> UnionOffset<T> {
     #[doc(hidden)]
+    #[inline]
     pub fn new(tag: u8, offset: Offset<()>) -> UnionOffset<T> {
         Self {
             tag,
@@ -186,6 +246,7 @@ impl<T: ?Sized> UnionOffset<T> {
 
 impl<T: ?Sized> Copy for UnionOffset<T> {}
 impl<T: ?Sized> Clone for UnionOffset<T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -197,12 +258,14 @@ impl<T: ?Sized> Primitive for Offset<T> {
 }
 
 unsafe impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
         T::write(*self, buffer, buffer_position)
     }
 }
 
 unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
         let value = u32::to_le_bytes(buffer_position - self.offset);
         std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, 4);
@@ -210,48 +273,110 @@ unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
 }
 
 impl<T: ?Sized> WriteAs<Offset<T>> for Offset<T> {
+    type Prepared = Self;
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
     }
 }
 
 impl<T: ?Sized> WriteAsOptional<Offset<T>> for Offset<T> {
+    type Prepared = Self;
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
         Some(*self)
     }
 }
 
+impl<T: ?Sized> WriteAsOffset<T> for Offset<T> {
+    fn prepare(&self, _buffer: &mut Buffer) -> Offset<T> {
+        *self
+    }
+}
+
 impl<T: ?Sized> WriteAsUnion<T> for UnionOffset<T> {
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
     }
 }
 
 impl<T: ?Sized> WriteAsOptionalUnion<T> for UnionOffset<T> {
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
         Some(*self)
     }
 }
 
 impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
-    fn prepare(&self, buffer: &mut Buffer) -> P {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> T::Prepared {
         T::prepare(self, buffer)
     }
 }
 
 impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'a T {
-    fn prepare(&self, buffer: &mut Buffer) -> Option<P> {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
         T::prepare(self, buffer)
     }
 }
 
+impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOffset<T1>> WriteAsOffset<T1> for &'a T2 {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<T1> {
+        T2::prepare(self, buffer)
+    }
+}
+
 impl<'a, T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for &'a T2 {
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> UnionOffset<T1> {
         T2::prepare(self, buffer)
     }
 }
 
 impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for &'a T2 {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
+        T2::prepare(self, buffer)
+    }
+}
+
+impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for Box<T> {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> T::Prepared {
+        T::prepare(self, buffer)
+    }
+}
+
+impl<P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for Box<T> {
+    type Prepared = T::Prepared;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<T::Prepared> {
+        T::prepare(self, buffer)
+    }
+}
+
+impl<P, T: ?Sized + WriteAsOffset<P>> WriteAsOffset<P> for Box<T> {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<P> {
+        T::prepare(self, buffer)
+    }
+}
+
+impl<T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for Box<T2> {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> UnionOffset<T1> {
+        T2::prepare(self, buffer)
+    }
+}
+
+impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Box<T2> {
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
         T2::prepare(self, buffer)
     }
@@ -265,6 +390,7 @@ macro_rules! gen_primitive_types {
         }
 
         unsafe impl WriteAsPrimitive<$ty> for $ty {
+            #[inline]
             unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
                 let value = self.to_le_bytes();
                 std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, $size);
@@ -272,13 +398,17 @@ macro_rules! gen_primitive_types {
         }
 
         impl WriteAs<$ty> for $ty {
-            fn prepare(&self, _buffer: &mut Buffer) -> $ty {
+            type Prepared = Self;
+            #[inline]
+            fn prepare(&self, _buffer: &mut Buffer) -> Self {
                 *self
             }
         }
 
         impl WriteAsOptional<$ty> for $ty {
-            fn prepare(&self, _buffer: &mut Buffer) -> Option<$ty> {
+            type Prepared = Self;
+            #[inline]
+            fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
                 Some(*self)
             }
         }
@@ -286,17 +416,19 @@ macro_rules! gen_primitive_types {
         impl ToOwned for $ty {
             type Value = $ty;
 
-            fn to_owned(&self) -> Result<$ty> {
-                Ok(*self)
+            #[inline]
+            fn to_owned(self) -> Result<$ty> {
+                Ok(self)
             }
         }
 
         impl<'buf> TableRead<'buf> for $ty {
+            #[inline]
             fn from_buffer(
-                buffer: BufferWithStartOffset<'buf>,
+                buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
             ) -> std::result::Result<$ty, ErrorKind> {
-                let buffer = buffer.advance_as_array(offset)?;
+                let buffer = buffer.advance_as_array(offset)?.as_array();
                 Ok(<$ty>::from_le_bytes(*buffer))
             }
         }
@@ -307,8 +439,9 @@ macro_rules! gen_primitive_types {
             #[doc(hidden)]
             const STRIDE: usize = $size;
             #[doc(hidden)]
+            #[inline]
             unsafe fn from_buffer(
-                buffer: BufferWithStartOffset<'buf>,
+                buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
             ) -> Self::Output {
                 <$ty>::from_le_bytes(
@@ -324,6 +457,7 @@ macro_rules! gen_primitive_types {
         impl VectorWrite<$ty> for $ty {
             const STRIDE: usize = $size;
             type Value = $ty;
+            #[inline]
             fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
                 *self
             }
@@ -348,19 +482,24 @@ impl Primitive for bool {
 }
 
 unsafe impl WriteAsPrimitive<bool> for bool {
+    #[inline]
     unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
         *buffer = if *self { 1 } else { 0 };
     }
 }
 
 impl WriteAs<bool> for bool {
-    fn prepare(&self, _buffer: &mut Buffer) -> bool {
+    type Prepared = Self;
+    #[inline]
+    fn prepare(&self, _buffer: &mut Buffer) -> Self {
         *self
     }
 }
 
 impl WriteAsOptional<bool> for bool {
-    fn prepare(&self, _buffer: &mut Buffer) -> Option<bool> {
+    type Prepared = Self;
+    #[inline]
+    fn prepare(&self, _buffer: &mut Buffer) -> Option<Self> {
         Some(*self)
     }
 }
@@ -368,25 +507,28 @@ impl WriteAsOptional<bool> for bool {
 impl ToOwned for bool {
     type Value = bool;
 
-    fn to_owned(&self) -> Result<bool> {
-        Ok(*self)
+    #[inline]
+    fn to_owned(self) -> Result<bool> {
+        Ok(self)
     }
 }
 
 impl<T: ToOwned> ToOwned for Result<T> {
     type Value = T::Value;
 
-    fn to_owned(&self) -> Result<Self::Value> {
-        self.as_ref().map_err(|e| e.clone())?.to_owned()
+    #[inline]
+    fn to_owned(self) -> Result<Self::Value> {
+        self?.to_owned()
     }
 }
 
 impl<'buf> TableRead<'buf> for bool {
+    #[inline]
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<bool, ErrorKind> {
-        Ok(buffer.advance_as_array::<1>(offset)?[0] != 0)
+        Ok(buffer.advance_as_array::<1>(offset)?.as_array()[0] != 0)
     }
 }
 
@@ -394,7 +536,8 @@ impl<'buf> VectorRead<'buf> for bool {
     type Output = bool;
     const STRIDE: usize = 1;
 
-    unsafe fn from_buffer(buffer: BufferWithStartOffset<'buf>, offset: usize) -> bool {
+    #[inline]
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> bool {
         *buffer.as_slice().get_unchecked(offset) != 0
     }
 }
@@ -405,17 +548,18 @@ pub trait VectorRead<'buf> {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
-    unsafe fn from_buffer(buffer: BufferWithStartOffset<'buf>, offset: usize) -> Self::Output;
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self::Output;
 }
 
 pub struct Vector<'buf, T: ?Sized> {
-    buffer: BufferWithStartOffset<'buf>,
+    buffer: SliceWithStartOffset<'buf>,
     len: usize,
     _marker: PhantomData<&'buf T>,
 }
 
 impl<'buf, T: ?Sized> Copy for Vector<'buf, T> {}
 impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         *self
     }
@@ -430,6 +574,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
         self.len
     }
 
+    #[inline]
     pub fn get(self, index: usize) -> Option<T::Output> {
         if index < self.len {
             Some(unsafe { T::from_buffer(self.buffer, T::STRIDE * index) })
@@ -437,6 +582,8 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
             None
         }
     }
+
+    #[inline]
     pub fn iter(self) -> VectorIter<'buf, T> {
         VectorIter {
             buffer: self.buffer,
@@ -450,13 +597,14 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
     type Item = T::Output;
     type IntoIter = VectorIter<'buf, T>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
 pub struct VectorIter<'buf, T: ?Sized> {
-    buffer: BufferWithStartOffset<'buf>,
+    buffer: SliceWithStartOffset<'buf>,
     len: usize,
     _marker: PhantomData<&'buf T>,
 }
@@ -464,6 +612,7 @@ pub struct VectorIter<'buf, T: ?Sized> {
 impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
     type Item = T::Output;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.len > 0 {
             let result = unsafe { T::from_buffer(self.buffer, 0) };
@@ -480,9 +629,9 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
 }
 
 fn array_from_buffer(
-    buffer: BufferWithStartOffset<'_>,
+    buffer: SliceWithStartOffset<'_>,
     offset: usize,
-) -> std::result::Result<(BufferWithStartOffset<'_>, usize), ErrorKind> {
+) -> std::result::Result<(SliceWithStartOffset<'_>, usize), ErrorKind> {
     let value: u32 = TableRead::from_buffer(buffer, offset)?;
     let vector_offset = offset
         .checked_add(value as usize)
@@ -494,7 +643,7 @@ fn array_from_buffer(
 
 impl<'buf, T: ?Sized + VectorRead<'buf>> TableRead<'buf> for Vector<'buf, T> {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
@@ -516,7 +665,7 @@ where
 {
     type Value = Vec<<T::Output as ToOwned>::Value>;
 
-    fn to_owned(&self) -> std::result::Result<Self::Value, Error> {
+    fn to_owned(self) -> std::result::Result<Self::Value, Error> {
         self.iter().map(|v| v.to_owned()).collect()
     }
 }
@@ -534,7 +683,7 @@ pub trait VectorWrite<P> {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
-    type Value: WriteAsPrimitive<P>;
+    type Value: WriteAsPrimitive<P> + Sized;
     #[doc(hidden)]
     fn prepare(&self, buffer: &mut Buffer) -> Self::Value;
 }
@@ -543,6 +692,7 @@ impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
     const STRIDE: usize = 4;
     type Value = Offset<T>;
 
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
         *self
     }
@@ -551,6 +701,30 @@ impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
 impl<T, P> WriteAs<Offset<[P]>> for [T]
 where
     P: Primitive,
+    T: VectorWrite<P>,
+{
+    type Prepared = Offset<[P]>;
+
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
+        WriteAsOffset::prepare(&self, buffer)
+    }
+}
+
+impl<T, P> WriteAsOptional<Offset<[P]>> for [T]
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    type Prepared = Offset<[P]>;
+
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
+        Some(WriteAsOffset::prepare(self, buffer))
+    }
+}
+
+impl<T, P: Primitive> WriteAsOffset<[P]> for [T]
+where
     T: VectorWrite<P>,
 {
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
@@ -580,13 +754,64 @@ where
     }
 }
 
-impl<T, P> WriteAsOptional<Offset<[P]>> for [T]
+impl<T, P, const N: usize> WriteAs<Offset<[P]>> for [T; N]
 where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
+        WriteAsOffset::prepare(self, buffer)
+    }
+}
+
+impl<T, P, const N: usize> WriteAsOptional<Offset<[P]>> for [T; N]
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    type Prepared = Offset<[P]>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
-        Some(WriteAs::prepare(self, buffer))
+        Some(WriteAsOffset::prepare(self, buffer))
+    }
+}
+
+impl<T, P, const N: usize> WriteAsOffset<[P]> for [T; N]
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
+        use std::mem::MaybeUninit;
+        let mut tmp: [MaybeUninit<T::Value>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+        for (t, v) in tmp.iter_mut().zip(self.iter()) {
+            t.write(v.prepare(buffer));
+        }
+        // TODO: When I tried using a transmute I got a compiler error. Investigate why
+        let tmp =
+            unsafe { (&tmp as *const [MaybeUninit<T::Value>; N] as *const [T::Value; N]).read() };
+        unsafe {
+            buffer.write_with(
+                4 + T::STRIDE.checked_mul(self.len()).unwrap(),
+                P::ALIGNMENT_MASK.max(3),
+                |buffer_position, bytes| {
+                    let bytes: *mut u8 = bytes.as_mut_ptr() as *mut u8;
+
+                    (self.len() as u32).write(bytes, buffer_position);
+
+                    for (i, v) in tmp.iter().enumerate() {
+                        v.write(
+                            bytes.add(4 + T::STRIDE * i),
+                            buffer_position - (4 + T::STRIDE * i) as u32,
+                        );
+                    }
+                },
+            )
+        };
+        buffer.current_offset()
     }
 }
 
@@ -595,8 +820,11 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
-        <[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer)
+        WriteAsOffset::prepare(self.as_slice(), buffer)
     }
 }
 
@@ -605,14 +833,46 @@ where
     P: Primitive,
     T: VectorWrite<P>,
 {
+    type Prepared = Offset<[P]>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<[P]>> {
-        Some(<[T] as WriteAs<Offset<[P]>>>::prepare(self, buffer))
+        Some(WriteAsOffset::prepare(self.as_slice(), buffer))
+    }
+}
+
+impl<T, P> WriteAsOffset<[P]> for Vec<T>
+where
+    P: Primitive,
+    T: VectorWrite<P>,
+{
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
+        WriteAsOffset::prepare(self.as_slice(), buffer)
     }
 }
 
 impl WriteAs<Offset<str>> for str {
+    type Prepared = Offset<str>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
-        let offset = <[u8] as WriteAs<Offset<[u8]>>>::prepare(self.as_bytes(), buffer);
+        WriteAsOffset::prepare(self, buffer)
+    }
+}
+
+impl WriteAsOptional<Offset<str>> for str {
+    type Prepared = Offset<str>;
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<str>> {
+        Some(WriteAsOffset::prepare(self, buffer))
+    }
+}
+
+impl WriteAsOffset<str> for str {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
+        let offset = <[u8] as WriteAsOffset<[u8]>>::prepare(self.as_bytes(), buffer);
         Offset {
             offset: offset.offset,
             phantom: PhantomData,
@@ -620,30 +880,33 @@ impl WriteAs<Offset<str>> for str {
     }
 }
 
-impl<'a> WriteAsOptional<Offset<str>> for &'a str {
-    fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<str>> {
-        Some(<str as WriteAs<Offset<str>>>::prepare(self, buffer))
-    }
-}
-
 impl WriteAs<Offset<str>> for String {
+    type Prepared = Offset<str>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
-        <str as WriteAs<Offset<str>>>::prepare(self.as_str(), buffer)
+        WriteAsOffset::prepare(self.as_str(), buffer)
     }
 }
 
 impl WriteAsOptional<Offset<str>> for String {
+    type Prepared = Offset<str>;
+
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<Offset<str>> {
-        Some(<str as WriteAs<Offset<str>>>::prepare(
-            self.as_str(),
-            buffer,
-        ))
+        Some(WriteAsOffset::prepare(self.as_str(), buffer))
     }
 }
 
+impl WriteAsOffset<str> for String {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<str> {
+        WriteAsOffset::prepare(self.as_str(), buffer)
+    }
+}
 impl<'buf> TableRead<'buf> for &'buf [u8] {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
@@ -653,7 +916,7 @@ impl<'buf> TableRead<'buf> for &'buf [u8] {
 
 impl<'buf> TableRead<'buf> for Cow<'buf, str> {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let bytes = <&'buf [u8] as TableRead<'buf>>::from_buffer(buffer, offset)?;

@@ -11,7 +11,6 @@ pub mod {{info.name}} {
             {% else %}
         {% endmatch %}
     {% endfor %}
-
 {% if !name.0.is_empty() %}
 }
 {% endif %}

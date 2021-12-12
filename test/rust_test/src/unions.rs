@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::planus::unions::*;
-    use planus::{Buffer, BufferWithStartOffset, TableRead};
+    use planus::{Buffer, SliceWithStartOffset, TableRead};
 
     #[test]
     fn test_roundtrip() {
@@ -12,7 +12,7 @@ mod tests {
         let root = Wrap::create(&mut buffer, &abc);
         let slice = buffer.finish(root, None);
         let table = WrapRef::from_buffer(
-            BufferWithStartOffset {
+            SliceWithStartOffset {
                 buffer: slice,
                 offset_from_start: 0,
             },
@@ -20,12 +20,12 @@ mod tests {
         )
         .unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
-        let variant = &*table_owned.unwrap().abc.unwrap();
+        let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {
             Abc::A(table_inner) => table_inner,
             _ => panic!(),
         };
-        assert_eq!(table_inner.val, Some(-32));
+        assert_eq!(table_inner.val, -32);
         buffer.clear();
 
         let table = TableB::create(&mut buffer, true);
@@ -33,7 +33,7 @@ mod tests {
         let root = Wrap::create(&mut buffer, &abc);
         let slice = buffer.finish(root, None);
         let table = WrapRef::from_buffer(
-            BufferWithStartOffset {
+            SliceWithStartOffset {
                 buffer: slice,
                 offset_from_start: 0,
             },
@@ -41,12 +41,12 @@ mod tests {
         )
         .unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
-        let variant = &*table_owned.unwrap().abc.unwrap();
+        let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {
             Abc::B(table_inner) => table_inner,
             _ => panic!(),
         };
-        assert_eq!(table_inner.val, Some(true));
+        assert!(table_inner.val);
         buffer.clear();
 
         let table = TableC::create(&mut buffer, 1234567);
@@ -54,7 +54,7 @@ mod tests {
         let root = Wrap::create(&mut buffer, &abc);
         let slice = buffer.finish(root, None);
         let table = WrapRef::from_buffer(
-            BufferWithStartOffset {
+            SliceWithStartOffset {
                 buffer: slice,
                 offset_from_start: 0,
             },
@@ -62,12 +62,12 @@ mod tests {
         )
         .unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
-        let variant = &*table_owned.unwrap().abc.unwrap();
+        let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {
             Abc::C(table_inner) => table_inner,
             _ => panic!(),
         };
-        assert_eq!(table_inner.val, Some(1234567));
+        assert_eq!(table_inner.val, 1234567);
         buffer.clear();
     }
 }

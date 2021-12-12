@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::planus::enums::*;
-    use planus::{Buffer, BufferWithStartOffset, TableRead};
+    use planus::{Buffer, SliceWithStartOffset, TableRead};
 
     #[test]
     fn test_roundtrip() {
@@ -10,18 +10,18 @@ mod tests {
         for var in [Abc::A, Abc::B, Abc::C] {
             let root = Wrap::create(&mut buffer, var);
             let slice = buffer.finish(root, None);
-            println!("{:?} {:?}", slice, var);
 
             let table = WrapRef::from_buffer(
-                BufferWithStartOffset {
+                SliceWithStartOffset {
                     buffer: slice,
                     offset_from_start: 0,
                 },
                 0,
             )
             .unwrap();
+            println!("{:?}", table);
 
-            assert_eq!(table.abc().unwrap().unwrap(), var);
+            assert_eq!(table.abc().unwrap(), var);
             buffer.clear();
         }
     }

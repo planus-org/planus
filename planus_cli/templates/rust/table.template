@@ -1,0 +1,179 @@
+#[derive(Clone, Debug)]
+pub struct {{ info.owned_name }}{
+    {% for field in fields.declaration_order() -%}
+        pub {{ field.info.name }}: {{ field.info.owned_type }},
+    {%- endfor -%}
+}
+
+impl {{info.owned_name}} {
+    pub fn create(
+        buffer: &mut planus::Buffer,
+        {% for field in fields.declaration_order() -%}
+            {{ field.info.create_name }}: impl planus::{{ field.info.create_trait }},
+        {% endfor %}
+    ) -> planus::Offset<Self> {
+        {% for field in fields.declaration_order() -%}
+            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(buffer);
+        {% endfor %}
+
+        let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(buffer);
+
+        {% for field in fields.declaration_order() %}
+            {%- if field.info.read_type.starts_with("Option<") -%}
+            if prepared_{{field.info.create_name}}.is_some() {
+            {%- endif -%}
+                {%- if field.field_type == BackendTableFieldType::UnionValue -%}
+                table_writer.calculate_size::<u8>({{2 * (field.vtable_index)}});
+                {%- endif -%}
+                table_writer.calculate_size::<{{field.info.vtable_type}}>({{2 * (field.vtable_index + 1)}});
+            {%- if field.info.read_type.starts_with("Option<") -%}
+            }
+            {%- endif -%}
+        {% endfor %}
+
+        table_writer.finish_calculating();
+
+        {% if !fields.is_empty() %}
+        unsafe {
+            {% for field in fields.alignment_order() %}
+                {%- if field.info.read_type.starts_with("Option<") -%}
+                if let Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
+                {%- endif -%}
+                    {%- match field.field_type -%}
+                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag);
+                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset);
+                    {%- when BackendTableFieldType::Other -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}});
+                    {%- endmatch -%}
+                {%- if field.info.read_type.starts_with("Option<") -%}
+                }
+                {%- endif -%}
+            {% endfor %}
+        }
+        {% endif %}
+
+        table_writer.finish()
+    }
+}
+
+impl planus::WriteAs<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Prepared = planus::Offset<Self>;
+
+    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
+        planus::WriteAsOffset::prepare(self, buffer)
+    }
+}
+
+impl planus::WriteAsOptional<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Prepared = planus::Offset<Self>;
+
+    fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::Offset<{{info.owned_name}}>> {
+        Some(planus::WriteAsOffset::prepare(self, buffer))
+    }
+}
+
+impl planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
+    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
+        {{info.owned_name}}::create(
+            buffer,
+        {% for field in fields.declaration_order() %}
+            &self.{{field.info.name}},
+        {% endfor %}
+        )
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct {{info.ref_name}}<'a>(planus::table_reader::Table<'a>);
+
+impl<'a> {{info.ref_name}}<'a> {
+    {% for field in fields.declaration_order() %}
+        pub fn {{field.info.name}}(&self) -> planus::Result<{{field.info.read_type}}> {
+            {% if field.info.none_replacement.is_some() %} Ok( {% endif %}
+            {% if field.field_type == BackendTableFieldType::UnionValue %}
+            self.0.access_union({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
+            {% else %}
+            self.0.access({{field.vtable_index}}, "{{info.owned_name}}", "{{field.info.name}}")
+            {% endif %}
+            {% match field.info.none_replacement %}
+            {% when Some with (none_replacement) %}?.unwrap_or({{none_replacement}}))
+            {% when None %}
+            {% endmatch %}
+        }
+    {% endfor %}
+}
+
+impl<'a> std::fmt::Debug for {{info.ref_name}}<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut f = f.debug_struct("{{info.ref_name}}");
+        {% for field in fields.declaration_order() -%}
+            {%- if field.info.read_type.starts_with("Option<") -%}
+            if let Ok(Some({{field.info.name}})) = self.{{field.info.name}}() {
+                f.field("{{field.info.name}}", &{{field.info.name}});
+            }
+            {%- else -%}
+            if let Ok({{field.info.name}}) = self.{{field.info.name}}() {
+                f.field("{{field.info.name}}", &{{field.info.name}});
+            }
+            {%- endif -%}
+        {%- endfor %}
+        f.finish()
+    }
+}
+
+impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
+    type Value = {{info.owned_name}};
+
+    fn to_owned(self) -> planus::Result<Self::Value> {
+        Ok({{info.owned_name}} {
+            {% for field in fields.declaration_order() -%}
+                {{field.info.name}}:
+                    {%- if field.info.owned_type.starts_with("Option<Box<") -%}
+                    if let Some({{field.info.name}}) = self.{{field.info.name}}()? {
+                        Some(Box::new(planus::ToOwned::to_owned({{field.info.name}})?))
+                    } else {
+                        None
+                    }
+                    {%- elseif field.info.owned_type.starts_with("Option<") -%}
+                    if let Some({{field.info.name}}) = self.{{field.info.name}}()? {
+                        Some(planus::ToOwned::to_owned({{field.info.name}})?)
+                    } else {
+                        None
+                    }
+                    {%- else -%}
+                    planus::ToOwned::to_owned(self.{{field.info.name}}()?)?
+                    {%- endif -%}
+                ,
+            {%- endfor %}
+        })
+    }
+}
+
+impl<'a> planus::TableRead<'a> for {{info.ref_name}}<'a> {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+        Ok(Self(planus::table_reader::Table::from_buffer(buffer, offset)?))
+    }
+}
+
+impl<'a> planus::VectorRead<'a> for {{info.owned_name}} {
+    type Output = planus::Result<{{info.ref_name}}<'a>>;
+    const STRIDE: usize = 4;
+
+    unsafe fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Self::Output {
+        planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| planus::Error {
+            source_location: planus::errors::ErrorLocation {
+                type_: "[{{info.ref_name}}]".into(),
+                method: "get",
+                byte_offset: usize::MAX,
+            },
+            error_kind
+        })
+    }
+}
+
+impl planus::VectorWrite<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Value = planus::Offset<{{info.owned_name}}>;
+    const STRIDE: usize = 4;
+    fn prepare(&self, buffer: &mut planus::Buffer) -> Self::Value {
+        planus::WriteAs::prepare(self, buffer)
+    }
+}

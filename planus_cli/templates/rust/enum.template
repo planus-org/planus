@@ -1,0 +1,65 @@
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr({{info.repr_type}})]
+pub enum {{ info.name }} {
+    {% for variant in variants -%}
+        {{ variant.name }} = {{ variant.value }},
+    {% endfor %}
+}
+
+impl TryFrom<{{info.repr_type}}> for {{info.name}} {
+    type Error = planus::errors::ErrorKind;
+    fn try_from(value: {{info.repr_type}}) -> Result<Self, planus::errors::ErrorKind> {
+        match value {
+            {% for variant in variants -%}
+                {{ variant.value }} => Ok({{info.name}}::{{ variant.name }}),
+            {% endfor %}
+
+            _ => Err(planus::errors::ErrorKind::UnknownEnumTag { tag: value as i128 }),
+        }
+    }
+}
+
+impl planus::ToOwned for {{ info.name }} {
+    type Value = {{ info.name }};
+    #[inline]
+    fn to_owned(self) -> planus::Result<Self::Value> {
+       Ok(self)
+    }
+}
+
+impl planus::Primitive for {{ info.name }} {
+    const ALIGNMENT: usize = {{ size }};
+    const SIZE: usize = {{ size }};
+}
+
+unsafe impl planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
+    #[inline]
+    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
+        (*self as {{ info.repr_type }}).write(buffer, buffer_position);
+    }
+}
+
+impl planus::WriteAs<{{ info.name }}> for {{ info.name }} {
+    type Prepared = Self;
+
+    #[inline]
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> {{ info.name }} {
+        *self
+    }
+}
+
+impl planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
+    type Prepared = Self;
+
+    #[inline]
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> Option<{{ info.name }}> {
+        Some(*self)
+    }
+}
+
+impl<'buf> planus::TableRead<'buf> for {{ info.name }} {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+        let n: {{ info.repr_type }} = planus::TableRead::from_buffer(buffer, offset)?;
+        n.try_into()
+    }
+}
