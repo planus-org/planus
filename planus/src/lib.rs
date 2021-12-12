@@ -166,6 +166,7 @@ impl<P: Primitive> WriteAsOptional<P> for () {
 }
 
 unsafe impl<P: Primitive> WriteAsPrimitive<P> for Void {
+    #[inline]
     unsafe fn write(&self, _buffer: *mut u8, _buffer_position: u32) {
         match *self {}
     }

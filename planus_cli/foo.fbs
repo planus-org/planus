@@ -1,1 +1,0 @@
-struct Hello { foo: uint8; }
