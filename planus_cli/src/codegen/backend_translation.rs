@@ -219,7 +219,7 @@ pub struct BackendStructField<F> {
 }
 
 fn translate_type_index<'a, B: ?Sized + Backend>(
-    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
+    translation_context: &DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     index: usize,
@@ -256,7 +256,7 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
 }
 
 fn translate_type<'a, B: ?Sized + Backend>(
-    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
+    translation_context: &DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     type_: &'a Type,
@@ -302,7 +302,7 @@ fn translate_type<'a, B: ?Sized + Backend>(
 }
 
 fn translate_simple_type<'a, B: ?Sized + Backend>(
-    translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
+    translation_context: &DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
     type_: &'a SimpleType,
@@ -542,7 +542,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .iter()
                     .map(|(field_name, field)| {
                         let translated_type = translate_simple_type(
-                            &mut translation_context,
+                            &translation_context,
                             declarations,
                             &full_translated_decls,
                             &field.type_,
@@ -571,7 +571,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .enumerate()
                     .map(|(index, (name, variant))| {
                         let translated_type = translate_type(
-                            &mut translation_context,
+                            &translation_context,
                             declarations,
                             &full_translated_decls,
                             &variant.type_,

@@ -20,7 +20,7 @@ table MyTable {
   x: int64;
   y: bool;
   numse: MyEnumse;
-//  z: [MyTable3];
+  z: [MyTable3];
   w: HelloUnion;
 }
 

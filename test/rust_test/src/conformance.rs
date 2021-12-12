@@ -8,7 +8,7 @@ mod tests {
     fn test_simple() {
         let mut builder = flatbuffers::FlatBufferBuilder::new();
         let offset = flatc::MyTable3::create(&mut builder, &flatc::MyTable3Args { x: 4 });
-        let _offset = builder.create_vector(&[offset]);
+        let offset = builder.create_vector(&[offset]);
         let w_offset = flatc::MyTable3::create(&mut builder, &flatc::MyTable3Args { x: 1337 })
             .as_union_value();
         let offset = flatc::MyTable::create(
@@ -16,7 +16,7 @@ mod tests {
             &flatc::MyTableArgs {
                 x: 3,
                 y: true,
-                // z: Some(offset),
+                z: Some(offset),
                 numse: flatc::MyEnumse::Banaaaaaaaan,
                 w_type: flatc::HelloUnion::y,
                 w: Some(w_offset),
@@ -34,11 +34,10 @@ mod tests {
         let flatc_data = builder.finished_data();
 
         let mut buffer = Buffer::new();
-        let _foo: &[Offset<MyTable3>] = &[MyTable3::create(&mut buffer, 4)];
+        let foo: &[Offset<MyTable3>] = &[MyTable3::create(&mut buffer, 4)];
         let w = MyTable3::create(&mut buffer, 1337);
         let w = HelloUnion::create_y(&mut buffer, w);
-        let offset = MyTable::create(&mut buffer, 3, true, MyEnumse::Banaaaaaaaan, Some(w));
-        // let offset = MyTable::create(&mut buffer, 3, true, MyEnumse::Banaaaaaaaan, foo, Some(w));
+        let offset = MyTable::create(&mut buffer, 3, true, MyEnumse::Banaaaaaaaan, foo, Some(w));
         let offset = MyTable2::create(
             &mut buffer,
             1,

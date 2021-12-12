@@ -125,9 +125,10 @@ impl<'a, B: ?Sized + Backend> RelativeNamespace<'a, B> {
 
 struct FormattedRelativeNamespace<'a, B: ?Sized + Backend, F> {
     super_name: &'a str,
+    self_name: Option<&'a str>,
     separator: &'a str,
     value: &'a RelativeNamespace<'a, B>,
-    output_first: bool,
+    output_shared_ancestor: bool,
     name: F,
     trailing_part: &'a str,
 }
@@ -135,16 +136,18 @@ struct FormattedRelativeNamespace<'a, B: ?Sized + Backend, F> {
 impl<'a, B: ?Sized + Backend> RelativeNamespace<'a, B> {
     pub fn format(
         &'a self,
-        output_first: bool,
+        output_shared_ancestor: bool,
         super_name: &'a str,
+        self_name: Option<&'a str>,
         separator: &'a str,
         name: impl 'a + Fn(&B::NamespaceInfo) -> &str,
         trailing_part: &'a str,
     ) -> impl 'a + std::fmt::Display {
         FormattedRelativeNamespace {
             super_name,
+            self_name,
             separator,
-            output_first,
+            output_shared_ancestor,
             value: self,
             name,
             trailing_part,
@@ -159,7 +162,12 @@ impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Displa
         for _ in 0..self.value.ascend_count {
             write!(f, "{}{}", self.super_name, self.separator)?;
         }
-        let skip = if self.output_first { 0 } else { 1 };
+        if self.value.ascend_count == 0 {
+            if let Some(self_name) = self.self_name {
+                write!(f, "{}", self_name)?;
+            }
+        }
+        let skip = if self.output_shared_ancestor { 0 } else { 1 };
         let mut has_output = false;
         for (i, info) in self.value.path.iter().skip(skip).enumerate() {
             if i > 0 {

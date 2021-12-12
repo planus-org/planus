@@ -133,7 +133,14 @@ fn format_relative_namespace<'a>(
     relative_namespace: &'a RelativeNamespace<'a, RustBackend>,
     trailing_part: &'a str,
 ) -> impl 'a + std::fmt::Display {
-    relative_namespace.format(false, "super", "::", |info| &info.name, trailing_part)
+    relative_namespace.format(
+        false,
+        "super",
+        Some("self::"),
+        "::",
+        |info| &info.name,
+        trailing_part,
+    )
 }
 
 impl Backend for RustBackend {
@@ -360,7 +367,111 @@ impl Backend for RustBackend {
                     create_trait = format!("WriteAsOptional<{}>", vtable_type);
                 }
             }
-            ResolvedType::Vector(_) => todo!(),
+            ResolvedType::Vector(type_) => {
+                fn vector_offset_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
+                    match type_ {
+                        ResolvedType::Struct(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Table(_, info, relative_namespace) => format!(
+                            "planus::Offset<{}>",
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                        )
+                        .into(),
+                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                            format_relative_namespace(relative_namespace, &info.name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Union(_, _, _) => todo!(),
+                        ResolvedType::Vector(type_) => {
+                            format!("[{}]", vector_offset_type(type_)).into()
+                        }
+                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::String => "str".into(),
+                        ResolvedType::Bool => "bool".into(),
+                        ResolvedType::Integer(type_) => integer_type(type_).into(),
+                        ResolvedType::Float(type_) => float_type(type_).into(),
+                    }
+                }
+                fn vector_owned_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
+                    match type_ {
+                        ResolvedType::Table(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Struct(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+
+                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                            format_relative_namespace(relative_namespace, &info.name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Union(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Vector(type_) => {
+                            format!("Vec<{}>", vector_owned_type(type_)).into()
+                        }
+                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::String => "String".into(),
+                        ResolvedType::Bool => "bool".into(),
+                        ResolvedType::Integer(type_) => integer_type(type_).into(),
+                        ResolvedType::Float(type_) => float_type(type_).into(),
+                    }
+                }
+                fn vector_ref_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
+                    match type_ {
+                        ResolvedType::Struct(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Table(_, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                            format_relative_namespace(relative_namespace, &info.name)
+                                .to_string()
+                                .into()
+                        }
+                        ResolvedType::Union(_, _, _) => todo!(),
+                        ResolvedType::Vector(type_) => {
+                            format!("[{}]", vector_offset_type(type_)).into()
+                        }
+                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::String => "str".into(),
+                        ResolvedType::Bool => "bool".into(),
+                        ResolvedType::Integer(type_) => integer_type(type_).into(),
+                        ResolvedType::Float(type_) => float_type(type_).into(),
+                    }
+                }
+
+                let offset_name = vector_offset_type(&*type_);
+                let ref_name = vector_ref_type(&*type_);
+                let owned_name = vector_owned_type(&*type_);
+                vtable_type = format!("planus::Offset<[{}]>", offset_name);
+                if matches!(field.assign_mode, AssignMode::Required) {
+                    read_type = format!("planus::Vector<'a, {}>", ref_name);
+                    owned_type = format!("Vec<{}>", owned_name);
+                    create_trait = format!("WriteAs<{}>", vtable_type);
+                } else {
+                    read_type = format!("Option<planus::Vector<'a, {}>>", ref_name);
+                    owned_type = format!("Option<Vec<{}>>", owned_name);
+                    create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                }
+            }
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => {
                 vtable_type = "planus::Offset<str>".to_string();

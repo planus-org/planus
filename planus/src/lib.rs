@@ -194,15 +194,6 @@ impl<T1, T2: WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Option<T2> {
     }
 }
 
-impl<'a, T: ?Sized + ToOwned + Copy> ToOwned for &'a T {
-    type Value = T::Value;
-
-    #[inline]
-    fn to_owned(self) -> Result<Self::Value> {
-        T::to_owned(*self)
-    }
-}
-
 pub struct Offset<T: ?Sized> {
     offset: u32,
     phantom: PhantomData<T>,
@@ -257,13 +248,6 @@ impl<T: ?Sized> Primitive for Offset<T> {
     const SIZE: usize = 4;
 }
 
-unsafe impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
-    #[inline]
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
-        T::write(*self, buffer, buffer_position)
-    }
-}
-
 unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
     #[inline]
     unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
@@ -308,6 +292,13 @@ impl<T: ?Sized> WriteAsOptionalUnion<T> for UnionOffset<T> {
     }
 }
 
+unsafe impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
+    #[inline]
+    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
+        T::write(*self, buffer, buffer_position)
+    }
+}
+
 impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
     type Prepared = T::Prepared;
     #[inline]
@@ -342,6 +333,25 @@ impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion
     #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Option<UnionOffset<T1>> {
         T2::prepare(self, buffer)
+    }
+}
+
+impl<'a, T: ?Sized + ToOwned + Copy> ToOwned for &'a T {
+    type Value = T::Value;
+
+    #[inline]
+    fn to_owned(self) -> Result<Self::Value> {
+        T::to_owned(*self)
+    }
+}
+
+impl<'a, P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &'a T {
+    const STRIDE: usize = T::STRIDE;
+    type Value = T::Value;
+
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
+        T::prepare(self, buffer)
     }
 }
 
