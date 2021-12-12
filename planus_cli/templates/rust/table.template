@@ -9,7 +9,7 @@ impl {{info.owned_name}} {
     pub fn create(
         buffer: &mut planus::Buffer,
         {% for field in fields.declaration_order() -%}
-            {{ field.info.create_name }}: impl {{ field.info.create_trait }},
+            {{ field.info.create_name }}: impl planus::{{ field.info.create_trait }},
         {% endfor %}
     ) -> planus::Offset<Self> {
         {% for field in fields.declaration_order() -%}
@@ -19,33 +19,59 @@ impl {{info.owned_name}} {
         let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(buffer);
 
         {% for field in fields.declaration_order() %}
+            {%- if field.info.read_type.starts_with("Option<") -%}
             if prepared_{{field.info.create_name}}.is_some() {
+            {%- endif -%}
                 {%- if field.field_type == BackendTableFieldType::UnionValue -%}
                 table_writer.calculate_size::<u8>({{2 * (field.vtable_index)}});
                 {%- endif -%}
                 table_writer.calculate_size::<{{field.info.vtable_type}}>({{2 * (field.vtable_index + 1)}});
+            {%- if field.info.read_type.starts_with("Option<") -%}
             }
+            {%- endif -%}
         {% endfor %}
+
+        table_writer.finish_calculating();
 
         {% if !fields.is_empty() %}
         unsafe {
             {% for field in fields.alignment_order() %}
+                {%- if field.info.read_type.starts_with("Option<") -%}
                 if let Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
+                {%- endif -%}
                     {%- match field.field_type -%}
-                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write({{field.vtable_index+1}}, &prepared_{{field.info.create_name}}.tag);
-                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write({{field.vtable_index+1}}, &prepared_{{field.info.create_name}}.offset);
-                    {%- when BackendTableFieldType::Other -%} table_writer.write({{field.vtable_index+1}}, &prepared_{{field.info.create_name}});
+                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag);
+                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset);
+                    {%- when BackendTableFieldType::Other -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}});
                     {%- endmatch -%}
+                {%- if field.info.read_type.starts_with("Option<") -%}
                 }
+                {%- endif -%}
             {% endfor %}
         }
         {% endif %}
 
-        table_writer.finish_calculating();
+        table_writer.finish()
     }
 }
 
 impl planus::WriteAs<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Prepared = planus::Offset<Self>;
+
+    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
+        planus::WriteAsOffset::prepare(self, buffer)
+    }
+}
+
+impl planus::WriteAsOptional<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+    type Prepared = planus::Offset<Self>;
+
+    fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::Offset<{{info.owned_name}}>> {
+        Some(planus::WriteAsOffset::prepare(self, buffer))
+    }
+}
+
+impl planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
     fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
         {{info.owned_name}}::create(
             buffer,
@@ -56,16 +82,10 @@ impl planus::WriteAs<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}
     }
 }
 
-impl planus::WriteAsOptional<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
-    fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::Offset<{{info.owned_name}}>> {
-        Some(planus::WriteAs::prepare(self, buffer))
-    }
-}
-
 #[derive(Copy, Clone)]
-pub struct {{info.ref_name}}<'buf>(planus::table_reader::Table<'buf>);
+pub struct {{info.ref_name}}<'a>(planus::table_reader::Table<'a>);
 
-impl<'buf> {{info.ref_name}}<'buf> {
+impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
         pub fn {{field.info.name}}(&self) -> planus::Result<{{field.info.read_type}}> {
             {% if field.info.none_replacement.is_some() %} Ok( {% endif %}
@@ -82,7 +102,7 @@ impl<'buf> {{info.ref_name}}<'buf> {
     {% endfor %}
 }
 
-impl<'buf> std::fmt::Debug for {{info.ref_name}} {
+impl<'a> std::fmt::Debug for {{info.ref_name}}<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields.declaration_order() -%}
@@ -100,10 +120,10 @@ impl<'buf> std::fmt::Debug for {{info.ref_name}} {
     }
 }
 
-impl<'buf> planus::ToOwned for {{info.ref_name}}<'buf> {
+impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
     type Value = {{info.owned_name}};
 
-    fn to_owned(&self) -> planus::Result<Self::Value> {
+    fn to_owned(self) -> planus::Result<Self::Value> {
         Ok({{info.owned_name}} {
             {% for field in fields.declaration_order() -%}
                 {{field.info.name}}:
@@ -128,17 +148,17 @@ impl<'buf> planus::ToOwned for {{info.ref_name}}<'buf> {
     }
 }
 
-impl<'buf> planus::TableRead<'buf> for {{info.ref_name}}<'buf> {
-    fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+impl<'a> planus::TableRead<'a> for {{info.ref_name}}<'a> {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
         Ok(Self(planus::table_reader::Table::from_buffer(buffer, offset)?))
     }
 }
 
-impl<'buf> planus::VectorRead<'buf> for {{info.owned_name}} {
-    type Output = planus::Result<{{info.ref_name}}<'buf>>;
+impl<'a> planus::VectorRead<'a> for {{info.owned_name}} {
+    type Output = planus::Result<{{info.ref_name}}<'a>>;
     const STRIDE: usize = 4;
 
-    unsafe fn from_buffer(buffer: planus::BufferWithStartOffset<'buf>, offset: usize) -> Self::Output {
+    unsafe fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Self::Output {
         planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| planus::Error {
             source_location: planus::errors::ErrorLocation {
                 type_: "[{{info.ref_name}}]".into(),

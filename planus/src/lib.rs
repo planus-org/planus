@@ -56,7 +56,7 @@ pub trait WriteAsOptionalUnion<T: ?Sized> {
 
 pub trait ToOwned {
     type Value;
-    fn to_owned(&self) -> Result<Self::Value>;
+    fn to_owned(self) -> Result<Self::Value>;
 }
 
 #[doc(hidden)]
@@ -72,12 +72,12 @@ pub unsafe trait WriteAsPrimitive<P> {
 
 #[doc(hidden)]
 #[derive(Copy, Clone, Debug)]
-pub struct BufferWithStartOffset<'buf> {
+pub struct SliceWithStartOffset<'buf> {
     pub buffer: &'buf [u8],
     pub offset_from_start: usize,
 }
 
-impl<'buf> BufferWithStartOffset<'buf> {
+impl<'buf> SliceWithStartOffset<'buf> {
     pub fn len(&self) -> usize {
         self.buffer.len()
     }
@@ -101,19 +101,48 @@ impl<'buf> BufferWithStartOffset<'buf> {
     pub fn advance_as_array<const N: usize>(
         &self,
         amount: usize,
-    ) -> std::result::Result<&'buf [u8; N], errors::ErrorKind> {
+    ) -> std::result::Result<ArrayWithStartOffset<'buf, N>, errors::ErrorKind> {
         let buffer = self
             .buffer
             .get(amount..amount + N)
             .ok_or(ErrorKind::InvalidOffset)?;
-        Ok(buffer.try_into().unwrap())
+        Ok(ArrayWithStartOffset {
+            buffer: buffer.try_into().unwrap(),
+            offset_from_start: self.offset_from_start + amount,
+        })
     }
 }
 
 #[doc(hidden)]
+#[derive(Copy, Clone, Debug)]
+pub struct ArrayWithStartOffset<'buf, const N: usize> {
+    pub buffer: &'buf [u8; N],
+    pub offset_from_start: usize,
+}
+
+impl<'buf, const N: usize> ArrayWithStartOffset<'buf, N> {
+    pub fn as_array(&self) -> &'buf [u8; N] {
+        self.buffer
+    }
+
+    pub fn advance_as_array<const K: usize>(
+        &self,
+        amount: usize,
+    ) -> std::result::Result<ArrayWithStartOffset<'buf, K>, errors::ErrorKind> {
+        let buffer = self
+            .buffer
+            .get(amount..amount + K)
+            .ok_or(ErrorKind::InvalidOffset)?;
+        Ok(ArrayWithStartOffset {
+            buffer: buffer.try_into().unwrap(),
+            offset_from_start: self.offset_from_start + amount,
+        })
+    }
+}
+#[doc(hidden)]
 pub trait TableRead<'buf>: Sized {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind>;
 }
@@ -122,7 +151,7 @@ pub trait TableRead<'buf>: Sized {
 pub trait TableReadUnion<'buf>: Sized {
     // TODO: Double-wrap the result: once for generic errors and one for unknown variants
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
         tag: u8,
     ) -> std::result::Result<Self, ErrorKind>;
@@ -164,11 +193,11 @@ impl<T1, T2: WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for Option<T2> {
     }
 }
 
-impl<'a, T: ?Sized + ToOwned> ToOwned for &'a T {
+impl<'a, T: ?Sized + ToOwned + Copy> ToOwned for &'a T {
     type Value = T::Value;
 
     #[inline]
-    fn to_owned(&self) -> Result<Self::Value> {
+    fn to_owned(self) -> Result<Self::Value> {
         T::to_owned(*self)
     }
 }
@@ -331,6 +360,13 @@ impl<P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for Box<T>
     }
 }
 
+impl<P, T: ?Sized + WriteAsOffset<P>> WriteAsOffset<P> for Box<T> {
+    #[inline]
+    fn prepare(&self, buffer: &mut Buffer) -> Offset<P> {
+        T::prepare(self, buffer)
+    }
+}
+
 impl<T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for Box<T2> {
     #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> UnionOffset<T1> {
@@ -380,18 +416,18 @@ macro_rules! gen_primitive_types {
             type Value = $ty;
 
             #[inline]
-            fn to_owned(&self) -> Result<$ty> {
-                Ok(*self)
+            fn to_owned(self) -> Result<$ty> {
+                Ok(self)
             }
         }
 
         impl<'buf> TableRead<'buf> for $ty {
             #[inline]
             fn from_buffer(
-                buffer: BufferWithStartOffset<'buf>,
+                buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
             ) -> std::result::Result<$ty, ErrorKind> {
-                let buffer = buffer.advance_as_array(offset)?;
+                let buffer = buffer.advance_as_array(offset)?.as_array();
                 Ok(<$ty>::from_le_bytes(*buffer))
             }
         }
@@ -404,7 +440,7 @@ macro_rules! gen_primitive_types {
             #[doc(hidden)]
             #[inline]
             unsafe fn from_buffer(
-                buffer: BufferWithStartOffset<'buf>,
+                buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
             ) -> Self::Output {
                 <$ty>::from_le_bytes(
@@ -471,8 +507,8 @@ impl ToOwned for bool {
     type Value = bool;
 
     #[inline]
-    fn to_owned(&self) -> Result<bool> {
-        Ok(*self)
+    fn to_owned(self) -> Result<bool> {
+        Ok(self)
     }
 }
 
@@ -480,18 +516,18 @@ impl<T: ToOwned> ToOwned for Result<T> {
     type Value = T::Value;
 
     #[inline]
-    fn to_owned(&self) -> Result<Self::Value> {
-        self.as_ref().map_err(|e| e.clone())?.to_owned()
+    fn to_owned(self) -> Result<Self::Value> {
+        self.map_err(|e| e.clone())?.to_owned()
     }
 }
 
 impl<'buf> TableRead<'buf> for bool {
     #[inline]
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<bool, ErrorKind> {
-        Ok(buffer.advance_as_array::<1>(offset)?[0] != 0)
+        Ok(buffer.advance_as_array::<1>(offset)?.as_array()[0] != 0)
     }
 }
 
@@ -500,7 +536,7 @@ impl<'buf> VectorRead<'buf> for bool {
     const STRIDE: usize = 1;
 
     #[inline]
-    unsafe fn from_buffer(buffer: BufferWithStartOffset<'buf>, offset: usize) -> bool {
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> bool {
         *buffer.as_slice().get_unchecked(offset) != 0
     }
 }
@@ -511,11 +547,11 @@ pub trait VectorRead<'buf> {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
-    unsafe fn from_buffer(buffer: BufferWithStartOffset<'buf>, offset: usize) -> Self::Output;
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self::Output;
 }
 
 pub struct Vector<'buf, T: ?Sized> {
-    buffer: BufferWithStartOffset<'buf>,
+    buffer: SliceWithStartOffset<'buf>,
     len: usize,
     _marker: PhantomData<&'buf T>,
 }
@@ -567,7 +603,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
 }
 
 pub struct VectorIter<'buf, T: ?Sized> {
-    buffer: BufferWithStartOffset<'buf>,
+    buffer: SliceWithStartOffset<'buf>,
     len: usize,
     _marker: PhantomData<&'buf T>,
 }
@@ -592,9 +628,9 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
 }
 
 fn array_from_buffer(
-    buffer: BufferWithStartOffset<'_>,
+    buffer: SliceWithStartOffset<'_>,
     offset: usize,
-) -> std::result::Result<(BufferWithStartOffset<'_>, usize), ErrorKind> {
+) -> std::result::Result<(SliceWithStartOffset<'_>, usize), ErrorKind> {
     let value: u32 = TableRead::from_buffer(buffer, offset)?;
     let vector_offset = offset
         .checked_add(value as usize)
@@ -606,7 +642,7 @@ fn array_from_buffer(
 
 impl<'buf, T: ?Sized + VectorRead<'buf>> TableRead<'buf> for Vector<'buf, T> {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
@@ -628,7 +664,7 @@ where
 {
     type Value = Vec<<T::Output as ToOwned>::Value>;
 
-    fn to_owned(&self) -> std::result::Result<Self::Value, Error> {
+    fn to_owned(self) -> std::result::Result<Self::Value, Error> {
         self.iter().map(|v| v.to_owned()).collect()
     }
 }
@@ -869,7 +905,7 @@ impl WriteAsOffset<str> for String {
 }
 impl<'buf> TableRead<'buf> for &'buf [u8] {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
@@ -879,7 +915,7 @@ impl<'buf> TableRead<'buf> for &'buf [u8] {
 
 impl<'buf> TableRead<'buf> for Cow<'buf, str> {
     fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> std::result::Result<Self, ErrorKind> {
         let bytes = <&'buf [u8] as TableRead<'buf>>::from_buffer(buffer, offset)?;

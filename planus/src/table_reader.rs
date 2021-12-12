@@ -1,15 +1,15 @@
-use crate::{errors::ErrorKind, BufferWithStartOffset, TableRead, TableReadUnion};
+use crate::{errors::ErrorKind, SliceWithStartOffset, TableRead, TableReadUnion};
 use std::convert::TryInto;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Table<'buf> {
-    object: BufferWithStartOffset<'buf>,
+    object: SliceWithStartOffset<'buf>,
     vtable: &'buf [u8],
 }
 
 impl<'buf> Table<'buf> {
     pub fn from_buffer(
-        buffer: BufferWithStartOffset<'buf>,
+        buffer: SliceWithStartOffset<'buf>,
         field_offset: usize,
     ) -> Result<Self, ErrorKind> {
         let field_value = u32::from_buffer(buffer, field_offset)?;

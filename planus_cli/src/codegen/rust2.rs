@@ -280,7 +280,7 @@ impl Backend for RustBackend {
                     create_trait = format!("WriteAs<{}>", owned_type);
                 } else {
                     read_type = format!(
-                        "{}<'a>",
+                        "Option<{}<'a>>",
                         format_relative_namespace(&relative_namespace, ref_name)
                     );
                     owned_type = format!("Option<{}>", vtable_type);
@@ -297,7 +297,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
-                vtable_type = format!("Offset<{}>", owned_name);
+                vtable_type = format!("planus::Offset<{}>", owned_name);
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = format!(
                         "{}<'a>",
@@ -324,7 +324,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
-                vtable_type = format!("Offset<{}>", owned_name);
+                vtable_type = format!("planus::Offset<{}>", owned_name);
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = format!(
                         "{}<'a>",
@@ -363,7 +363,7 @@ impl Backend for RustBackend {
             ResolvedType::Vector(_) => todo!(),
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => {
-                vtable_type = "Offset<str>".to_string();
+                vtable_type = "planus::Offset<str>".to_string();
                 if matches!(field.assign_mode, AssignMode::Required) {
                     read_type = "&'a str".to_string();
                     owned_type = "String".to_string();
@@ -461,24 +461,24 @@ impl Backend for RustBackend {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
                 getter_return_type = format!("planus::Result<{}>", owned_type);
                 getter_code = format!(
-                    "{}::from_le_bytes(buffer).try_into()",
+                    "{}::from_le_bytes(*buffer.as_array()).try_into()",
                     integer_type(&decl.type_)
                 );
             }
             ResolvedType::Bool => {
                 owned_type = "bool".to_string();
                 getter_return_type = owned_type.clone();
-                getter_code = "buffer[0] != 0".to_string();
+                getter_code = "buffer.as_array()[0] != 0".to_string();
             }
             ResolvedType::Integer(typ) => {
                 owned_type = integer_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer)", owned_type);
+                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
             }
             ResolvedType::Float(typ) => {
                 owned_type = float_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer)", owned_type);
+                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
             }
             _ => unreachable!(),
         }

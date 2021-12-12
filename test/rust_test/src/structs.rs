@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::planus::structs::*;
-    use planus::{Buffer, BufferWithStartOffset, TableRead};
+    use planus::{Buffer, SliceWithStartOffset, TableRead};
 
     #[test]
     fn test_roundtrip() {
@@ -15,7 +15,7 @@ mod tests {
         let slice = buffer.finish(root, None);
 
         let table = WrapRef::from_buffer(
-            BufferWithStartOffset {
+            SliceWithStartOffset {
                 buffer: slice,
                 offset_from_start: 0,
             },
