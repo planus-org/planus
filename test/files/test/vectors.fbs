@@ -5,4 +5,5 @@ table TableA {
 
 table Wrap {
     table_a: [TableA];
+    table_a_default: [TableA] = [];
 }

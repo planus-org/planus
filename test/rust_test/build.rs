@@ -15,7 +15,6 @@ fn main() -> Result<()> {
     for file in ["conformance", "enums", "structs", "unions", "vectors"] {
         let input_files = &[format!("../files/test/{}.fbs", file)];
         let output_file = format!("{}/{}_generated.rs", planus_dir, file);
-        eprintln!("{:?} {:?}", input_files, output_file);
         planus_cli::codegen::generate_code(input_files, output_file).unwrap();
         println!("cargo:rerun-if-changed=../files/{}.fbs", file);
     }

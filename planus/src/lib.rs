@@ -442,6 +442,7 @@ macro_rules! gen_primitive_types {
             type Prepared = Self;
             #[inline]
             fn prepare(&self, _buffer: &mut Buffer, default: &$ty) -> Option<Self> {
+                #[allow(clippy::float_cmp)]
                 if self == default {
                     None
                 } else {
@@ -622,18 +623,18 @@ impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
     }
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
-    pub fn empty() -> Self {
-        Vector {
-            buffer: SliceWithStartOffset {
-                buffer: &[],
-                offset_from_start: 0,
-            },
-            len: 0,
-            _marker: PhantomData,
-        }
-    }
+impl<T: ?Sized + 'static> Vector<'static, T> {
+    pub const EMPTY: Self = Self {
+        buffer: SliceWithStartOffset {
+            buffer: &[],
+            offset_from_start: 0,
+        },
+        len: 0,
+        _marker: PhantomData,
+    };
+}
 
+impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
     pub fn is_empty(self) -> bool {
         self.len == 0
     }
