@@ -50,7 +50,7 @@ impl<'buf> Table<'buf> {
         let offset = self
             .vtable
             .get(2 * vtable_offset..2 * (vtable_offset + 1))
-            .expect("IMPOSSIBLE: trying to access invalid vtable offset");
+            .unwrap_or(&[0, 0]);
         let offset = u16::from_le_bytes(offset.try_into().unwrap()) as usize;
         if offset != 0 {
             T::from_buffer(self.object, offset)

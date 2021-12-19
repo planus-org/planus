@@ -174,7 +174,7 @@ impl<'a> planus::VectorRead<'a> for {{info.owned_name}} {
             source_location: planus::errors::ErrorLocation {
                 type_: "[{{info.ref_name}}]".into(),
                 method: "get",
-                byte_offset: usize::MAX,
+                byte_offset: buffer.offset_from_start,
             },
             error_kind
         })
