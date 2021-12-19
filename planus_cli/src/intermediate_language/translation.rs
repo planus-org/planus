@@ -722,9 +722,9 @@ impl<'a> Translator<'a> {
                                     "only non-scalar types support the 'required' attribute",
                                 ),
                                 Label::primary(current_file_id, m.key.span)
-                                    .with_message("default value was here"),
+                                    .with_message("required attribute was here"),
                             ],
-                            Some("Unsupported default value"),
+                            Some("Unsupported required attribute"),
                         );
                     } else if explicit_null {
                         self.ctx.emit_error(
