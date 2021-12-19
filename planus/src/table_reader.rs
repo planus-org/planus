@@ -114,4 +114,21 @@ impl<'buf> Table<'buf> {
             Ok(None)
         }
     }
+
+    pub fn access_union_required<T: TableReadUnion<'buf>>(
+        &self,
+        vtable_offset: usize,
+        type_: &'static str,
+        method: &'static str,
+    ) -> crate::Result<T> {
+        self.access_union(vtable_offset, type_, method)?
+            .ok_or_else(|| crate::errors::Error {
+                source_location: crate::errors::ErrorLocation {
+                    type_: type_.into(),
+                    method,
+                    byte_offset: self.object.offset_from_start,
+                },
+                error_kind: ErrorKind::MissingRequired,
+            })
+    }
 }

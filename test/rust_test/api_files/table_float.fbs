@@ -1,0 +1,6 @@
+table Example {
+  value: float32;
+  value_null: float32 = null;
+  value_default_zero: float32 = 0.0;
+  value_default_one: float32 = 1.0;
+}

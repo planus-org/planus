@@ -1,0 +1,6 @@
+table Example {
+  value: [uint32];
+  value_null: [uint32] = null;
+  value_default_empty: [uint32] = [];
+  value_required: [uint32] (required);
+}

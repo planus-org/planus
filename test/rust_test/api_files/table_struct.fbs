@@ -1,0 +1,7 @@
+struct Inner { x: uint32; }
+
+table Example {
+  value: Inner;
+  value_null: Inner = null;
+  value_required: Inner (required);
+}

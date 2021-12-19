@@ -91,11 +91,17 @@ impl<'a> {{info.ref_name}}<'a> {
         pub fn {{field.info.name}}(&self) -> planus::Result<{{field.info.read_type}}> {
             {% if field.info.deserialize_default.is_some() %} Ok( {% endif %}
             {% if field.field_type == BackendTableFieldType::UnionValue %}
-            self.0.access_union({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
-            {% elseif field.info.required %}
-            self.0.access_required({{field.vtable_index}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% if field.info.required %}
+              self.0.access_union_required({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% else %}
+              self.0.access_union({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% endif %}
             {% else %}
-            self.0.access({{field.vtable_index}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% if field.info.required %}
+              self.0.access_required({{field.vtable_index}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% else %}
+              self.0.access({{field.vtable_index}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% endif %}
             {% endif %}
             {% match field.info.deserialize_default %}
             {% when Some with (deserialize_default) %}?.unwrap_or({{deserialize_default}}))

@@ -5,6 +5,7 @@ pub enum {{ info.owned_name }}{
     {% endfor %}
 }
 
+{% if !variants.is_empty() %}
 impl {{info.owned_name}} {
     {% for variant in variants -%}
     pub fn {{variant.create_name}}(
@@ -16,7 +17,15 @@ impl {{info.owned_name}} {
 
     {% endfor %}
 }
+{% endif %}
 
+{% if variants.is_empty() %}
+impl planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> planus::UnionOffset<Self> {
+        match *self {}
+    }
+}
+{% else %}
 impl planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
     fn prepare(&self, buffer: &mut planus::Buffer) -> planus::UnionOffset<Self> {
         match self {
@@ -26,6 +35,7 @@ impl planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
         }
     }
 }
+{% endif %}
 
 impl planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}} {
     fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::UnionOffset<Self>> {
@@ -33,13 +43,22 @@ impl planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}} {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum {{ info.ref_name }}<'a>{
+#[derive(Copy, Clone, Debug)]
+pub enum {{ info.ref_name_with_lifetime }}{
     {% for variant in variants -%}
         {{ variant.enum_name }}({{ variant.ref_type }}),
     {% endfor %}
 }
 
+{% if variants.is_empty() %}
+impl planus::ToOwned for {{info.ref_name}} {
+    type Value = {{info.owned_name}};
+
+    fn to_owned(self) -> planus::Result<{{info.owned_name}}> {
+        match self {}
+    }
+}
+{% else %}
 impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
     type Value = {{info.owned_name}};
 
@@ -55,7 +74,15 @@ impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
         })
     }
 }
+{% endif %}
 
+{% if variants.is_empty() %}
+impl<'a> planus::TableReadUnion<'a> for {{info.ref_name}} {
+    fn from_buffer(_buffer: planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> Result<Self, planus::errors::ErrorKind> {
+        Err(planus::errors::ErrorKind::UnknownUnionTag { tag })
+    }
+}
+{% else %}
 impl<'a> planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
     fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, field_offset: usize, tag: u8) -> Result<Self, planus::errors::ErrorKind> {
         match tag {
@@ -66,3 +93,4 @@ impl<'a> planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
         }
     }
 }
+{% endif %}

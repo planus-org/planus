@@ -1,0 +1,15 @@
+enum Inner: uint8 { X = 0, Y = 1 }
+
+table Example {
+  value: Inner;
+  value_null: Inner = null;
+  value_default_x: Inner = X;
+  value_default_y: Inner = Y;
+}
+
+enum Inner2: uint8 { X = 1, Y = 2 }
+table Example2 {
+  value_null: Inner2 = null;
+  value_default_x: Inner2 = X;
+  value_default_y: Inner2 = Y;
+}

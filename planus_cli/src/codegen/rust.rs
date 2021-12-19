@@ -66,6 +66,7 @@ pub struct EnumVariant {
 pub struct Union {
     pub owned_name: String,
     pub ref_name: String,
+    pub ref_name_with_lifetime: String,
 }
 
 #[derive(Clone, Debug)]
@@ -223,12 +224,18 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Union,
+        decl: &crate::intermediate_language::types::Union,
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
+        let ref_name = reserve_type_name(&format!("{}Ref", decl_name), declaration_names);
         Union {
             owned_name: reserve_type_name(decl_name, declaration_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            ref_name_with_lifetime: if decl.variants.is_empty() {
+                ref_name.clone()
+            } else {
+                format!("{}<'a>", ref_name)
+            },
+            ref_name,
         }
     }
 
@@ -333,7 +340,8 @@ impl Backend for RustBackend {
                 _,
                 Union {
                     owned_name,
-                    ref_name,
+                    ref_name_with_lifetime,
+                    ..
                 },
                 relative_namespace,
             ) => {
@@ -342,17 +350,16 @@ impl Backend for RustBackend {
                 vtable_type = format!("planus::Offset<{}>", owned_name);
                 match &field.assign_mode {
                     AssignMode::Required => {
-                        read_type = format!(
-                            "{}<'a>",
-                            format_relative_namespace(&relative_namespace, ref_name)
-                        );
+                        read_type =
+                            format_relative_namespace(&relative_namespace, ref_name_with_lifetime)
+                                .to_string();
                         owned_type = owned_name.clone();
                         create_trait = format!("WriteAsUnion<{}>", owned_name);
                     }
                     AssignMode::Optional => {
                         read_type = format!(
-                            "Option<{}<'a>>",
-                            format_relative_namespace(&relative_namespace, ref_name)
+                            "Option<{}>",
+                            format_relative_namespace(&relative_namespace, ref_name_with_lifetime)
                         );
                         owned_type = format!("Option<{}>", owned_name);
                         create_trait = format!("WriteAsOptionalUnion<{}>", owned_name);
