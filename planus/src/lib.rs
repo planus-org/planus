@@ -600,6 +600,16 @@ impl<'buf> VectorRead<'buf> for bool {
     }
 }
 
+impl VectorWrite<bool> for bool {
+    const STRIDE: usize = 1;
+
+    type Value = bool;
+
+    fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
+        *self
+    }
+}
+
 pub trait VectorRead<'buf> {
     type Output;
 

@@ -1,0 +1,6 @@
+table Example {
+  value: [float32];
+  value_null: [float32] = null;
+  value_default_empty: [float32] = [];
+  value_required: [float32] (required);
+}

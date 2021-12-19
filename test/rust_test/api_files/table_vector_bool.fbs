@@ -1,0 +1,6 @@
+table Example {
+  value: [bool];
+  value_null: [bool] = null;
+  value_default_empty: [bool] = [];
+  value_required: [bool] (required);
+}
