@@ -1,7 +1,7 @@
 #[allow(unused_macros)] // rust-analyzer is being weird
 macro_rules! check_type {
     ($(+[ $($l:lifetime),* ])? $obj:ty => &self.$method:ident ($($arg:ty),* $(,)?) : $return:ty) => {
-        check_type!($(+[ $($l)* ])? $obj => $method(&$obj, $($arg),*) : $return);
+        check_type!($(+[ $($l),* ])? $obj => $method(&$obj, $($arg),*) : $return);
         #[allow(unused_unsafe)]
         const _: for<'a> fn(&'a $obj) = |obj| unsafe {
             let _ = obj.$method(
@@ -12,7 +12,7 @@ macro_rules! check_type {
         };
     };
     ($(+[ $($l:lifetime),* ])? $obj:ty => &mut self.$method:ident ($($arg:ty),* $(,)?) : $return:ty) => {
-        check_type!($(+[ $($l)* ])? $obj => $method(&mut $obj, $($arg),*) : $return);
+        check_type!($(+[ $($l),* ])? $obj => $method(&mut $obj, $($arg),*) : $return);
         #[allow(unused_unsafe)]
         const _: for<'a> fn(&'a mut $obj) = |obj| unsafe {
             obj.$method(
@@ -23,7 +23,7 @@ macro_rules! check_type {
         };
     };
     ($(+[ $($l:lifetime),* ])? $obj:ty => self.$method:ident ($($arg:ty),* $(,)?) : $return:ty) => {
-        check_type!($(+[ $($l)* ])? $obj => $method($obj, $($arg),*) : $return);
+        check_type!($(+[ $($l),* ])? $obj => $method($obj, $($arg),*) : $return);
         #[allow(unused_unsafe)]
         const _: fn($obj) = |obj| unsafe {
             obj.$method(
@@ -35,10 +35,10 @@ macro_rules! check_type {
     };
     ($(+[ $($l:lifetime),* ])? $obj:ty => $method:ident($($arg:ty),* $(,)?) : $return:ty) => {
         const _: () = {
-            trait HasMethod$(< $($l)* > )? {
+            trait HasMethod$(< $($l),* > )? {
                 const METHOD: fn( $($arg),* ) -> $return;
             }
-            impl$(< $($l)* > )? HasMethod$(< $($l)* > )? for $obj {
+            impl$(< $($l),* > )? HasMethod$(< $($l),* > )? for $obj {
                 const METHOD: fn( $($arg),* ) -> $return = Self::$method;
             }
         };

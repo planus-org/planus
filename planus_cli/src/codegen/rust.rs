@@ -507,20 +507,20 @@ impl Backend for RustBackend {
                     AssignMode::Required => {
                         read_type = "&'a str".to_string();
                         owned_type = "String".to_string();
-                        create_trait = "WriteAs<Offset<str>>".to_string();
+                        create_trait = "WriteAs<planus::Offset<str>>".to_string();
                     }
                     AssignMode::Optional => {
                         read_type = "Option<&'a str>".to_string();
                         owned_type = "Option<String>".to_string();
-                        create_trait = "WriteAsOptional<Offset<str>>".to_string();
+                        create_trait = "WriteAsOptional<planus::Offset<str>>".to_string();
                     }
                     AssignMode::HasDefault(Literal::String(s)) => {
                         read_type = "&'a str".to_string();
                         owned_type = "String".to_string();
-                        create_trait = "WriteAs<Offset<str>>".to_string();
+                        create_trait = "WriteAs<planus::Offset<str>>".to_string();
 
                         serialize_default = Some(format!("{:?}", s).into());
-                        deserialize_default = Some(format!("{:?}.to_string()", s).into());
+                        deserialize_default = Some(format!("{:?}", s).into());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }

@@ -25,6 +25,13 @@ pub enum ErrorKind {
     UnknownUnionTag { tag: u8 },
     #[error("Invalid vtable length (length = {length})")]
     InvalidVtableLength { length: u16 },
+    #[error("Invalid utf-8")]
+    InvalidUtf8 {
+        #[from]
+        source: std::str::Utf8Error,
+    },
+    #[error("Missing required field")]
+    MissingRequired,
 }
 
 #[derive(Clone, Debug)]

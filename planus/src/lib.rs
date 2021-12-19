@@ -996,6 +996,24 @@ impl WriteAsOffset<str> for str {
     }
 }
 
+impl<'a> ToOwned for &'a str {
+    type Value = String;
+
+    fn to_owned(self) -> Result<Self::Value> {
+        Ok(self.to_string())
+    }
+}
+
+impl<'buf> TableRead<'buf> for &'buf str {
+    fn from_buffer(
+        buffer: SliceWithStartOffset<'buf>,
+        offset: usize,
+    ) -> std::result::Result<Self, ErrorKind> {
+        let slice: &[u8] = TableRead::from_buffer(buffer, offset)?;
+        Ok(std::str::from_utf8(slice)?)
+    }
+}
+
 impl WriteAs<Offset<str>> for String {
     type Prepared = Offset<str>;
 
@@ -1033,6 +1051,15 @@ impl WriteAsOffset<str> for String {
         WriteAsOffset::prepare(self.as_str(), buffer)
     }
 }
+
+impl<'a> ToOwned for String {
+    type Value = String;
+
+    fn to_owned(self) -> Result<Self::Value> {
+        Ok(self)
+    }
+}
+
 impl<'buf> TableRead<'buf> for &'buf [u8] {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,

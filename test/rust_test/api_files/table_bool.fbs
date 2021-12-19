@@ -1,0 +1,6 @@
+table Example {
+  value: bool;
+  value_null: bool = null;
+  value_default_false: bool = false;
+  value_default_true: bool = true;
+}
