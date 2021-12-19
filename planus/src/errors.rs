@@ -1,16 +1,11 @@
 use std::borrow::Cow;
 
 #[derive(Clone, thiserror::Error, Debug)]
+#[error("In {source_location}: {error_kind}")]
 pub struct Error {
     pub source_location: ErrorLocation,
     #[source]
     pub error_kind: ErrorKind,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "In {}: {}", self.source_location, self.error_kind)
-    }
 }
 
 #[derive(Clone, thiserror::Error, Debug)]
@@ -19,8 +14,11 @@ pub enum ErrorKind {
     InvalidOffset,
     #[error("Invalid length")]
     InvalidLength,
-    #[error("Unknown enum (tag = {tag})")]
-    UnknownEnumTag { tag: i128 },
+    #[error(transparent)]
+    UnknownEnumTag {
+        #[from]
+        source: UnknownEnumTagKind,
+    },
     #[error("Unknown union (tag = {tag})")]
     UnknownUnionTag { tag: u8 },
     #[error("Invalid vtable length (length = {length})")]
@@ -32,6 +30,20 @@ pub enum ErrorKind {
     },
     #[error("Missing required field")]
     MissingRequired,
+}
+
+#[derive(Clone, thiserror::Error, Debug)]
+#[error("In {source_location}: {error_kind}")]
+pub struct UnknownEnumTag {
+    pub source_location: ErrorLocation,
+    #[source]
+    pub error_kind: UnknownEnumTagKind,
+}
+
+#[derive(Clone, thiserror::Error, Debug)]
+#[error("Unknown enum (tag = {tag})")]
+pub struct UnknownEnumTagKind {
+    pub tag: i128,
 }
 
 #[derive(Clone, Debug)]
@@ -51,6 +63,51 @@ impl std::fmt::Display for ErrorLocation {
             )
         } else {
             write!(f, "<{}>::{}()", self.type_, self.method,)
+        }
+    }
+}
+
+impl From<UnknownEnumTag> for Error {
+    fn from(error: UnknownEnumTag) -> Self {
+        Self {
+            source_location: error.source_location,
+            error_kind: error.error_kind.into(),
+        }
+    }
+}
+
+impl UnknownEnumTagKind {
+    pub fn with_error_location(
+        self,
+        type_: impl Into<Cow<'static, str>>,
+        method: &'static str,
+        byte_offset: usize,
+    ) -> UnknownEnumTag {
+        UnknownEnumTag {
+            source_location: ErrorLocation {
+                type_: type_.into(),
+                method,
+                byte_offset,
+            },
+            error_kind: self,
+        }
+    }
+}
+
+impl ErrorKind {
+    pub fn with_error_location(
+        self,
+        type_: impl Into<Cow<'static, str>>,
+        method: &'static str,
+        byte_offset: usize,
+    ) -> Error {
+        Error {
+            source_location: ErrorLocation {
+                type_: type_.into(),
+                method,
+                byte_offset,
+            },
+            error_kind: self,
         }
     }
 }

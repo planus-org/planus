@@ -78,13 +78,13 @@ impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
 
 {% if variants.is_empty() %}
 impl<'a> planus::TableReadUnion<'a> for {{info.ref_name}} {
-    fn from_buffer(_buffer: planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> Result<Self, planus::errors::ErrorKind> {
+    fn from_buffer(_buffer: planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> std::result::Result<Self, planus::errors::ErrorKind> {
         Err(planus::errors::ErrorKind::UnknownUnionTag { tag })
     }
 }
 {% else %}
 impl<'a> planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
-    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, field_offset: usize, tag: u8) -> Result<Self, planus::errors::ErrorKind> {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, field_offset: usize, tag: u8) -> std::result::Result<Self, planus::errors::ErrorKind> {
         match tag {
             {% for variant in variants -%}
                 {{loop.index}} => Ok(Self::{{ variant.enum_name }}(planus::TableRead::from_buffer(buffer, field_offset)?)),

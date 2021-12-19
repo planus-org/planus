@@ -41,14 +41,11 @@ impl<'a> {{ info.ref_name }}<'a> {
         pub fn {{ field.info.name }}(&self) -> {{ field.info.getter_return_type }} {
             let buffer = self.0.advance_as_array::<{{field.size}}>({{field.offset}}).unwrap();
             {% if field.info.getter_return_type.starts_with("planus::Result<") %}
-            {{ field.info.getter_code }}.map_err(|error_kind| planus::errors::Error {
-                error_kind,
-                source_location: planus::errors::ErrorLocation {
-                    type_: "{{info.ref_name}}".into(),
-                    method: "{{field.info.name}}",
-                    byte_offset: self.0.offset_from_start,
-                }
-            })
+            {{ field.info.getter_code }}.map_err(|error_kind| error_kind.with_error_location(
+                "{{info.ref_name}}",
+                "{{field.info.name}}",
+                self.0.offset_from_start,
+            ))
             {% else %}
             {{ field.info.getter_code }}
             {% endif %}
@@ -78,7 +75,7 @@ impl<'a> planus::ToOwned for {{ info.ref_name }}<'a> {
         Ok({{ info.owned_name }} {
         {% for field in fields -%}
             {{ field.info.name }}:
-            {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
+            {%- if field.info.getter_return_type.starts_with("std::result::Result<") -%}
                 self.{{field.info.name}}()?,
             {%- else -%}
                 self.{{field.info.name}}(),
@@ -89,7 +86,7 @@ impl<'a> planus::ToOwned for {{ info.ref_name }}<'a> {
 }
 
 impl<'a> planus::TableRead<'a> for {{ info.ref_name }}<'a> {
-    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> std::result::Result<Self, planus::errors::ErrorKind> {
         let buffer = buffer.advance_as_array::<{{size}}>(offset)?;
         Ok(Self(buffer))
     }

@@ -606,7 +606,7 @@ impl Backend for RustBackend {
     fn generate_struct_field(
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
-        _parent_info: &Self::StructInfo,
+        parent_info: &Self::StructInfo,
         _parent: &crate::intermediate_language::types::Struct,
         field_name: &str,
         _field: &crate::intermediate_language::types::StructField,
@@ -631,10 +631,21 @@ impl Backend for RustBackend {
             }
             ResolvedType::Enum(decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
-                getter_return_type = format!("planus::Result<{}>", owned_type);
+                getter_return_type = format!(
+                    "std::result::Result<{}, planus::errors::UnknownEnumTag>",
+                    owned_type
+                );
                 getter_code = format!(
-                    "{}::from_le_bytes(*buffer.as_array()).try_into()",
-                    integer_type(&decl.type_)
+                    r#"let value: std::result::Result<{}, _> = {}::from_le_bytes(*buffer.as_array()).try_into();
+                    value.map_err(|e| e.with_error_location(
+                        {:?},
+                        {:?},
+                        buffer.offset_from_start,
+                    ))"#,
+                    owned_type,
+                    integer_type(&decl.type_),
+                    parent_info.ref_name,
+                    name
                 );
             }
             ResolvedType::Bool => {

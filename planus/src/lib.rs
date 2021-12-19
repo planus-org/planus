@@ -571,7 +571,10 @@ impl ToOwned for bool {
     }
 }
 
-impl<T: ToOwned> ToOwned for Result<T> {
+impl<T: ToOwned, E> ToOwned for std::result::Result<T, E>
+where
+    errors::Error: From<E>,
+{
     type Value = T::Value;
 
     #[inline]

@@ -160,7 +160,7 @@ impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
 }
 
 impl<'a> planus::TableRead<'a> for {{info.ref_name}}<'a> {
-    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Result<Self, planus::errors::ErrorKind> {
+    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> std::result::Result<Self, planus::errors::ErrorKind> {
         Ok(Self(planus::table_reader::Table::from_buffer(buffer, offset)?))
     }
 }
@@ -170,14 +170,11 @@ impl<'a> planus::VectorRead<'a> for {{info.owned_name}} {
     const STRIDE: usize = 4;
 
     unsafe fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> Self::Output {
-        planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| planus::Error {
-            source_location: planus::errors::ErrorLocation {
-                type_: "[{{info.ref_name}}]".into(),
-                method: "get",
-                byte_offset: buffer.offset_from_start,
-            },
-            error_kind
-        })
+        planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| error_kind.with_error_location(
+            "[{{info.ref_name}}]",
+            "get",
+            buffer.offset_from_start,
+        ))
     }
 }
 
