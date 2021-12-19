@@ -142,6 +142,8 @@ impl<'a> planus::ToOwned for {{info.ref_name}}<'a> {
                     } else {
                         None
                     }
+                    {%- elseif field.info.owned_type.starts_with("Box<") -%}
+                        Box::new(planus::ToOwned::to_owned(self.{{field.info.name}}()?)?)
                     {%- else -%}
                     planus::ToOwned::to_owned(self.{{field.info.name}}()?)?
                     {%- endif -%}
