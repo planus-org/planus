@@ -39,6 +39,7 @@ pub struct BackendTable<B: ?Sized + Backend> {
 pub struct BackendStruct<B: ?Sized + Backend> {
     pub size: u32,
     pub alignment: u32,
+    pub vector_stride: u32,
     pub info: B::StructInfo,
     pub fields: Vec<BackendStructField<B::StructFieldInfo>>,
 }
@@ -535,6 +536,7 @@ pub fn run_backend<B: ?Sized + Backend>(
             }),
             DeclInfo::Struct(translated_decl, decl) => BackendDeclaration::Struct(BackendStruct {
                 size: decl.size,
+                vector_stride: decl.vector_stride,
                 alignment: decl.alignment,
                 info: translated_decl.clone(),
                 fields: decl

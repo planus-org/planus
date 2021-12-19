@@ -16,6 +16,7 @@ impl {{info.owned_name}} {
             let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(buffer);
         {% endfor %}
 
+        {# TODO: Make a helper function to cause slightly less code explosion because of generics #}
         {# TODO: Do not write out values if they are equal to the default value for the field #}
         let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(buffer);
 

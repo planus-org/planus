@@ -118,6 +118,17 @@ impl<'buf> SliceWithStartOffset<'buf> {
             offset_from_start: self.offset_from_start + amount,
         })
     }
+
+    pub unsafe fn unchecked_advance_as_array<const N: usize>(
+        &self,
+        amount: usize,
+    ) -> ArrayWithStartOffset<'buf, N> {
+        let buffer = self.buffer.get_unchecked(amount..amount + N);
+        ArrayWithStartOffset {
+            buffer: buffer.try_into().unwrap(),
+            offset_from_start: self.offset_from_start + amount,
+        }
+    }
 }
 
 #[doc(hidden)]
@@ -490,13 +501,8 @@ macro_rules! gen_primitive_types {
                 buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
             ) -> Self::Output {
-                <$ty>::from_le_bytes(
-                    buffer
-                        .as_slice()
-                        .get_unchecked(offset..offset + $size)
-                        .try_into()
-                        .unwrap(),
-                )
+                let buffer = buffer.unchecked_advance_as_array(offset).as_array();
+                <$ty>::from_le_bytes(*buffer)
             }
         }
 

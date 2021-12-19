@@ -187,6 +187,7 @@ pub struct Struct {
     pub fields: IndexMap<String, StructField>,
     pub size: u32,
     pub alignment: u32,
+    pub vector_stride: u32,
 }
 
 #[derive(Debug)]
@@ -240,6 +241,10 @@ impl TypeKind {
             | TypeKind::String => false,
             TypeKind::SimpleType(type_) => type_.is_scalar(),
         }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        matches!(self, &TypeKind::SimpleType(SimpleType::Enum(..)))
     }
 }
 

@@ -91,3 +91,22 @@ impl<'a> planus::TableRead<'a> for {{ info.ref_name }}<'a> {
         Ok(Self(buffer))
     }
 }
+
+impl<'a> planus::VectorRead<'a> for {{ info.owned_name }} {
+    const STRIDE: usize = {{ vector_stride }};
+
+    type Output = {{ info.ref_name}}<'a>;
+    unsafe fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> {{ info.ref_name }}<'a> {
+        {{ info.ref_name}}(buffer.unchecked_advance_as_array(offset))
+    }
+}
+
+impl planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
+    const STRIDE: usize = {{ vector_stride }};
+
+    type Value = {{ info.owned_name }};
+
+    fn prepare(&self, _buffer: &mut planus::Buffer) -> Self::Value {
+        *self
+    }
+}

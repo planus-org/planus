@@ -3,7 +3,10 @@ use crate::{
     ast::{self, FloatType, LiteralKind, NamespacePath},
     ctx::Ctx,
     error::ErrorKind,
-    util::sorted_map::{SortedMap, SortedSet},
+    util::{
+        align_up,
+        sorted_map::{SortedMap, SortedSet},
+    },
 };
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
@@ -472,6 +475,7 @@ impl<'a> Translator<'a> {
             fields,
             size: u32::MAX,
             alignment: u32::MAX,
+            vector_stride: u32::MAX,
         }
     }
 
@@ -756,6 +760,14 @@ impl<'a> Translator<'a> {
 
         let assign_mode = match (required, explicit_null, default_value) {
             (true, false, None) => AssignMode::Required,
+            (false, false, None) if type_.kind.is_enum() => {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(current_file_id, field.span)],
+                    Some("Enums must either be required, have an explicit default value or contain 0 as a variant"),
+                );
+                AssignMode::Optional
+            }
             (false, _, None) => AssignMode::Optional,
             (false, false, Some(default_value)) => AssignMode::HasDefault(default_value),
             (true, true, _) | (true, _, Some(_)) => {
@@ -1011,6 +1023,7 @@ impl<'a> Translator<'a> {
         offset = round_up(offset, max_alignment);
         get_field!().alignment = max_alignment;
         get_field!().size = offset;
+        get_field!().vector_stride = align_up(offset, max_alignment);
 
         self.descriptions[index] = TypeDescription::Struct {
             size: offset,
