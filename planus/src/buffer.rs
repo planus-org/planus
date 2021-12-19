@@ -83,6 +83,7 @@ impl Buffer {
     #[doc(hidden)]
     pub fn prepare_write(&mut self, size: usize, alignment_mask: usize) {
         debug_assert!((alignment_mask + 1) & alignment_mask == 0); // Check that the alignment is a power of two
+        #[cfg(debug_assertions)]
         debug_assert_eq!(self.missing_bytes, 0);
 
         let delayed_bytes = self.delayed_bytes.wrapping_sub(size) & self.alignment_mask;
