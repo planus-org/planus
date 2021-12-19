@@ -413,7 +413,7 @@ impl Backend for RustBackend {
                             format!("[{}]", vector_offset_type(type_)).into()
                         }
                         ResolvedType::Array(_, _) => todo!(),
-                        ResolvedType::String => "str".into(),
+                        ResolvedType::String => "planus::Offset<str>".into(),
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
                         ResolvedType::Float(type_) => float_type(type_).into(),

@@ -1017,6 +1017,38 @@ impl<'a> ToOwned for &'a str {
     }
 }
 
+impl<'buf> VectorRead<'buf> for str {
+    type Output = Result<&'buf str>;
+
+    #[doc(hidden)]
+    const STRIDE: usize = 4;
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self::Output {
+        let add_context =
+            |e: ErrorKind| e.with_error_location("[str]", "get", buffer.offset_from_start);
+        let (slice, len) = array_from_buffer(buffer, offset).map_err(add_context)?;
+        let slice = slice
+            .as_slice()
+            .get(..len)
+            .ok_or(ErrorKind::InvalidLength)
+            .map_err(add_context)?;
+        let str = std::str::from_utf8(slice)
+            .map_err(|source| ErrorKind::InvalidUtf8 { source })
+            .map_err(add_context)?;
+        Ok(str)
+    }
+}
+
+impl VectorWrite<Offset<str>> for str {
+    type Value = Offset<str>;
+
+    const STRIDE: usize = 4;
+    fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
+        WriteAs::prepare(self, buffer)
+    }
+}
+
 impl<'buf> TableRead<'buf> for &'buf str {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
@@ -1070,6 +1102,15 @@ impl<'a> ToOwned for String {
 
     fn to_owned(self) -> Result<Self::Value> {
         Ok(self)
+    }
+}
+
+impl VectorWrite<Offset<str>> for String {
+    type Value = Offset<str>;
+
+    const STRIDE: usize = 4;
+    fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
+        WriteAs::prepare(self, buffer)
     }
 }
 

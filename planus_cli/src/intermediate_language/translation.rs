@@ -550,6 +550,7 @@ impl<'a> Translator<'a> {
             TypeKind::Table(_) => (),
             TypeKind::Vector(_) => (),
             TypeKind::SimpleType(_) => (),
+            TypeKind::String => (),
 
             TypeKind::Union(_) => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
@@ -561,12 +562,6 @@ impl<'a> Translator<'a> {
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
                     .with_message("arrays in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::String => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("strings in vectors are not currently supported")],
                 Some("Unsupported type"),
             ),
         }
