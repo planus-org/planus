@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-
-#[derive(Clone, thiserror::Error, Debug)]
+#[derive(Copy, Clone, thiserror::Error, Debug)]
 #[error("In {source_location}: {error_kind}")]
 pub struct Error {
     pub source_location: ErrorLocation,
@@ -8,7 +6,7 @@ pub struct Error {
     pub error_kind: ErrorKind,
 }
 
-#[derive(Clone, thiserror::Error, Debug)]
+#[derive(Copy, Clone, thiserror::Error, Debug)]
 pub enum ErrorKind {
     #[error("Invalid offset")]
     InvalidOffset,
@@ -40,15 +38,15 @@ pub struct UnknownEnumTag {
     pub error_kind: UnknownEnumTagKind,
 }
 
-#[derive(Clone, thiserror::Error, Debug)]
+#[derive(Copy, Clone, thiserror::Error, Debug)]
 #[error("Unknown enum (tag = {tag})")]
 pub struct UnknownEnumTagKind {
     pub tag: i128,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct ErrorLocation {
-    pub type_: Cow<'static, str>,
+    pub type_: &'static str,
     pub method: &'static str,
     pub byte_offset: usize,
 }
@@ -79,13 +77,13 @@ impl From<UnknownEnumTag> for Error {
 impl UnknownEnumTagKind {
     pub fn with_error_location(
         self,
-        type_: impl Into<Cow<'static, str>>,
+        type_: &'static str,
         method: &'static str,
         byte_offset: usize,
     ) -> UnknownEnumTag {
         UnknownEnumTag {
             source_location: ErrorLocation {
-                type_: type_.into(),
+                type_,
                 method,
                 byte_offset,
             },
@@ -97,13 +95,13 @@ impl UnknownEnumTagKind {
 impl ErrorKind {
     pub fn with_error_location(
         self,
-        type_: impl Into<Cow<'static, str>>,
+        type_: &'static str,
         method: &'static str,
         byte_offset: usize,
     ) -> Error {
         Error {
             source_location: ErrorLocation {
-                type_: type_.into(),
+                type_: type_,
                 method,
                 byte_offset,
             },
