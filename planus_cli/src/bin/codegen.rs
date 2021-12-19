@@ -5,7 +5,7 @@ use planus_cli::codegen::generate_code;
 struct Args {
     files: Vec<String>,
 
-    /// Output file, stdout if not present
+    /// Output file
     #[structopt(short = "o")]
     output_filename: String,
 }
