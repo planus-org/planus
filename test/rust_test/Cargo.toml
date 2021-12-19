@@ -12,4 +12,5 @@ planus = { path = "../../planus" }
 flatbuffers = "0.8.4"
 
 [build-dependencies]
+anyhow = "1.0.51"
 planus_cli = { path = "../../planus_cli" }
