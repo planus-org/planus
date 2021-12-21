@@ -101,7 +101,7 @@ impl ErrorKind {
     ) -> Error {
         Error {
             source_location: ErrorLocation {
-                type_: type_,
+                type_,
                 method,
                 byte_offset,
             },

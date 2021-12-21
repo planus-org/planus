@@ -119,6 +119,8 @@ impl<'buf> SliceWithStartOffset<'buf> {
         })
     }
 
+    /// # Safety
+    /// TODO
     pub unsafe fn unchecked_advance_as_array<const N: usize>(
         &self,
         amount: usize,

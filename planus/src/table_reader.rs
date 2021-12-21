@@ -57,7 +57,7 @@ impl<'buf> Table<'buf> {
                 .map(Some)
                 .map_err(|error_kind| crate::errors::Error {
                     source_location: crate::errors::ErrorLocation {
-                        type_: type_.into(),
+                        type_,
                         method,
                         byte_offset: self.object.offset_from_start,
                     },
@@ -75,9 +75,9 @@ impl<'buf> Table<'buf> {
         method: &'static str,
     ) -> crate::Result<T> {
         self.access(vtable_offset, type_, method)?
-            .ok_or_else(|| crate::errors::Error {
+            .ok_or(crate::errors::Error {
                 source_location: crate::errors::ErrorLocation {
-                    type_: type_.into(),
+                    type_,
                     method,
                     byte_offset: self.object.offset_from_start,
                 },
@@ -99,7 +99,7 @@ impl<'buf> Table<'buf> {
         let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
         let make_error = |error_kind| crate::errors::Error {
             source_location: crate::errors::ErrorLocation {
-                type_: type_.into(),
+                type_,
                 method,
                 byte_offset: self.object.offset_from_start,
             },
@@ -122,9 +122,9 @@ impl<'buf> Table<'buf> {
         method: &'static str,
     ) -> crate::Result<T> {
         self.access_union(vtable_offset, type_, method)?
-            .ok_or_else(|| crate::errors::Error {
+            .ok_or(crate::errors::Error {
                 source_location: crate::errors::ErrorLocation {
-                    type_: type_.into(),
+                    type_,
                     method,
                     byte_offset: self.object.offset_from_start,
                 },
