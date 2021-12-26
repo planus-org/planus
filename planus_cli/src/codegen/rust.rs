@@ -1,5 +1,6 @@
-use std::{borrow::Cow, path::Path, process::Command};
+use std::{borrow::Cow, io::Write, path::Path, process::Command};
 
+use askama::Template;
 use heck::{CamelCase, SnakeCase};
 
 use super::backend::{
@@ -8,6 +9,7 @@ use super::backend::{
 };
 use crate::{
     ast::{FloatType, IntegerType},
+    ctx::Ctx,
     intermediate_language::types::{AssignMode, Literal},
 };
 
@@ -783,5 +785,27 @@ pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
         println!("{}", String::from_utf8(output.stderr).unwrap());
     }
 
+    Ok(())
+}
+
+pub fn generate_code<P: AsRef<Path>>(
+    input_files: &[P],
+    output_filename: String,
+) -> anyhow::Result<()> {
+    let mut ctx = Ctx::default();
+    let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
+
+    if ctx.has_errors() {
+        anyhow::bail!("Bailing because of errors")
+    }
+
+    let output = super::backend_translation::run_backend(&mut RustBackend, &declarations);
+
+    let res = super::templates::rust::Namespace(&output).render().unwrap();
+    let mut file = std::fs::File::create(&output_filename)?;
+    file.write_all(res.as_bytes())?;
+    file.flush()?;
+
+    format_file(&output_filename)?;
     Ok(())
 }

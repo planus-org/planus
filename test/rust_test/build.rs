@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     for file in ["conformance", "enums", "structs", "unions", "vectors"] {
         let input_files = &[format!("../files/test/{}.fbs", file)];
         let output_file = format!("{}/{}_generated.rs", planus_dir, file);
-        planus_cli::codegen::generate_code(input_files, output_file)
+        planus_cli::codegen::rust::generate_code(input_files, output_file)
             .with_context(|| anyhow::format_err!("Cannot generate code for {}", file))?;
         println!("cargo:rerun-if-changed=../files/{}.fbs", file);
     }
@@ -42,9 +42,10 @@ fn main() -> Result<()> {
                 entry.path().file_stem().unwrap().to_str().unwrap()
             );
             let generated_full_path = format!("{}/{}", planus_api_dir, generated);
-            planus_cli::codegen::generate_code(&[entry.path()], generated_full_path).with_context(
-                || anyhow::format_err!("Cannot generate code for {}", entry.path().display()),
-            )?;
+            planus_cli::codegen::rust::generate_code(&[entry.path()], generated_full_path)
+                .with_context(|| {
+                    anyhow::format_err!("Cannot generate code for {}", entry.path().display())
+                })?;
             let api_mod = format!(
                 "{}_api",
                 entry.path().file_stem().unwrap().to_str().unwrap()

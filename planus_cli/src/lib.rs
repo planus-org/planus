@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lalrpop_util;
 
+mod grammar_helper;
 lalrpop_mod!(#[allow(clippy::all, unused_imports)] pub grammar);
 
 // Multiple representations:
@@ -13,14 +14,13 @@ lalrpop_mod!(#[allow(clippy::all, unused_imports)] pub grammar);
 //     representation. This means that things like order in the original file
 //     no longer matters.
 
+pub mod app;
 pub mod ast;
+pub mod ast_map;
 pub mod codegen;
 pub mod cst;
-pub mod error;
-// pub mod example;
-pub mod ast_map;
 pub mod ctx;
-mod grammar_helper;
+pub mod error;
 pub mod intermediate_language;
 pub mod lexer;
 pub mod util;

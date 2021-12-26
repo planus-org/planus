@@ -34,12 +34,8 @@ derive_more = "0.99.14"
 lalrpop = "0.19.5"
 
 [[bin]]
-name = "parse_file"
-path = "src/bin/parse_file.rs"
-
-[[bin]]
-name = "codegen"
-path = "src/bin/codegen.rs"
+name = "planus"
+path = "bin/planus.rs"
 
 [dev-dependencies]
 rand = "0.8.4"

@@ -15,7 +15,7 @@ script = '''
     for f in test/files/valid/*; do
         if [[ -f $f ]]; then
             echo "Generating $f"
-            target/debug/codegen $f -o build/rust/$(basename -s .fbs $f).rs \
+            target/debug/planus rust $f -o build/rust/$(basename -s .fbs $f).rs \
                 || echo "Failed to generate $(basename $f)"
         fi
     done
@@ -23,7 +23,7 @@ script = '''
     for f in test/files/invalid/*; do
         if [[ -f $f ]]; then
             echo -n "Testing $f: "
-            target/debug/codegen $f -o build/rust/$(basename -s .fbs $f).rs 2>/dev/null && true
+            target/debug/planus rust $f -o build/rust/$(basename -s .fbs $f).rs 2>/dev/null && true
             res=$?
             if [[ $res -eq 0 ]]; then
                 echo -e "\e[0;31mcompiled\e[0m"
