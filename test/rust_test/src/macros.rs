@@ -49,3 +49,28 @@ macro_rules! check_type {
         };
     }
 }
+
+#[allow(unused_macros)] // rust-analyzer is being weird
+macro_rules! check_enum_variants {
+    ($obj:ty : $typ:ty {
+        $($name:ident = $value:expr),* $(,)?
+    }) => {
+        const _: fn($typ) -> Result<$obj, planus::errors::UnknownEnumTagKind> = std::convert::TryFrom::try_from;
+        const _: fn($obj) -> $typ = std::convert::From::from;
+        const _: fn($obj) -> ! = |obj| match obj {
+            $(
+                <$obj>::$name => todo!()
+            ),*
+        };
+        const _: () = {
+            $(
+                assert!(<$obj>::$name as $typ == $value);
+                assert!(unsafe { std::mem::transmute::<$obj, $typ>(<$obj>::$name) } == $value);
+            )*
+        };
+        $(
+            assert_eq!(<$typ>::from(<$obj>::$name), $value);
+            assert_eq!(<$obj>::try_from($value).unwrap(), <$obj>::$name);
+        )*
+    }
+}

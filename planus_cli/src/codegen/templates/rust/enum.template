@@ -1,5 +1,7 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+{% if !variants.is_empty() %}
 #[repr({{info.repr_type}})]
+{%- endif -%}
 pub enum {{ info.name }} {
     {% for variant in variants -%}
         {{ variant.name }} = {{ variant.value }},
@@ -16,6 +18,12 @@ impl TryFrom<{{info.repr_type}}> for {{info.name}} {
 
             _ => Err(planus::errors::UnknownEnumTagKind { tag: value as i128 }),
         }
+    }
+}
+
+impl From<{{info.name}}> for {{info.repr_type}} {
+    fn from(value: {{info.name}}) -> Self {
+        value as {{info.repr_type}}
     }
 }
 

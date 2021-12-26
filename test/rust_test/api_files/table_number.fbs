@@ -1,6 +1,55 @@
-table Example {
+table ExampleU8 {
+  value: uint8;
+  value_null: uint8 = null;
+  value_default_zero: uint8 = 0;
+  value_default_one: uint8 = 1;
+}
+
+table ExampleU16 {
+  value: uint16;
+  value_null: uint16 = null;
+  value_default_zero: uint16 = 0;
+  value_default_one: uint16 = 1;
+}
+
+table ExampleU32 {
   value: uint32;
   value_null: uint32 = null;
   value_default_zero: uint32 = 0;
   value_default_one: uint32 = 1;
+}
+
+table ExampleU64 {
+  value: uint64;
+  value_null: uint64 = null;
+  value_default_zero: uint64 = 0;
+  value_default_one: uint64 = 1;
+}
+
+table ExampleI8 {
+  value: int8;
+  value_null: int8 = null;
+  value_default_zero: int8 = 0;
+  value_default_one: int8 = 1;
+}
+
+table ExampleI16 {
+  value: int16;
+  value_null: int16 = null;
+  value_default_zero: int16 = 0;
+  value_default_one: int16 = 1;
+}
+
+table ExampleI32 {
+  value: int32;
+  value_null: int32 = null;
+  value_default_zero: int32 = 0;
+  value_default_one: int32 = 1;
+}
+
+table ExampleI64 {
+  value: int64;
+  value_null: int64 = null;
+  value_default_zero: int64 = 0;
+  value_default_one: int64 = 1;
 }

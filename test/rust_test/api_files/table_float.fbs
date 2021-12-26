@@ -1,6 +1,13 @@
-table Example {
+table Example32 {
   value: float32;
   value_null: float32 = null;
   value_default_zero: float32 = 0.0;
   value_default_one: float32 = 1.0;
+}
+
+table Example64 {
+  value: float64;
+  value_null: float64 = null;
+  value_default_zero: float64 = 0.0;
+  value_default_one: float64 = 1.0;
 }

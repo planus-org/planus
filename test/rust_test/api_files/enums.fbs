@@ -1,0 +1,35 @@
+enum EnumUint1: ubyte { X }
+enum EnumUint2: ushort { X }
+enum EnumUint3: uint { X }
+enum EnumUint4: ulong { X }
+enum EnumUint5: uint8 { X }
+enum EnumUint6: uint16 { X }
+enum EnumUint7: uint32 { X }
+enum EnumUint8: uint64 { X }
+
+enum EnumUint9: uint8 { }
+enum EnumUint10: uint8 { X = 0 }
+enum EnumUint11: uint8 { Y = 1 }
+enum EnumUint12: uint8 { Z = 255 }
+enum EnumUint13: uint8 { X = 0, Y = 1 }
+enum EnumUint14: uint8 { X = 0, Z = 255 }
+enum EnumUint15: uint8 { Y = 1, Z = 255 }
+enum EnumUint16: uint8 { X = 0, Y = 1, Z = 255 }
+
+enum EnumInt1: byte { X = 0 }
+enum EnumInt2: short { X = 0 }
+enum EnumInt3: int { X = 0 }
+enum EnumInt4: long { X = 0 }
+enum EnumInt5: int8 { X = 0 }
+enum EnumInt6: int16 { X = 0 }
+enum EnumInt7: int32 { X = 0 }
+enum EnumInt8: int64 { X = 0 }
+
+enum EnumInt9: int8 { }
+enum EnumInt10: int8 { X = 0 }
+enum EnumInt11: int8 { Y = 1 }
+enum EnumInt12: int8 { Z = -1 }
+enum EnumInt13: int8 { X = 0, Y = 1 }
+enum EnumInt14: int8 { X = 0, Z = -1 }
+enum EnumInt15: int8 { Y = 1, Z = -1 }
+enum EnumInt16: int8 { X = 0, Y = 1, Z = -1 }

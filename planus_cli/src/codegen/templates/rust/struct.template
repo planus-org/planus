@@ -77,6 +77,8 @@ impl<'a> planus::ToOwned for {{ info.ref_name }}<'a> {
             {{ field.info.name }}:
             {%- if field.info.getter_return_type.starts_with("std::result::Result<") -%}
                 self.{{field.info.name}}()?,
+            {%- elseif field.info.getter_return_type.ends_with("<'a>") -%}
+                self.{{field.info.name}}().to_owned()?,
             {%- else -%}
                 self.{{field.info.name}}(),
             {%- endif -%}
