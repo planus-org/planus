@@ -1,9 +1,10 @@
+use codespan::FileId;
+
 use crate::{
     ast::Schema,
     ctx::Ctx,
     util::sorted_map::{sorted_map, SortedMap, SortedSet},
 };
-use codespan::FileId;
 
 #[derive(Default)]
 pub struct AstMap {

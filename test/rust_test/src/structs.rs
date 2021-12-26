@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::planus::structs::*;
     use planus::{Buffer, SliceWithStartOffset, TableRead};
+
+    use crate::planus::structs::*;
 
     #[test]
     fn test_roundtrip() {

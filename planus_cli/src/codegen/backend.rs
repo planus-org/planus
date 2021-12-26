@@ -1,8 +1,9 @@
-use crate::{ast, intermediate_language::types::*};
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
 };
+
+use crate::{ast, intermediate_language::types::*};
 
 pub type Keywords = HashSet<&'static str>;
 

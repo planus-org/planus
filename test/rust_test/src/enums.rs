@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::planus::enums::*;
     use planus::{Buffer, SliceWithStartOffset, TableRead};
+
+    use crate::planus::enums::*;
 
     #[test]
     fn test_roundtrip() {

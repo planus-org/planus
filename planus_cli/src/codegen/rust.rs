@@ -1,3 +1,7 @@
+use std::{borrow::Cow, path::Path, process::Command};
+
+use heck::{CamelCase, SnakeCase};
+
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, RelativeNamespace,
     ResolvedType,
@@ -6,8 +10,6 @@ use crate::{
     ast::{FloatType, IntegerType},
     intermediate_language::types::{AssignMode, Literal},
 };
-use heck::{CamelCase, SnakeCase};
-use std::{borrow::Cow, path::Path, process::Command};
 
 #[derive(Debug, Clone)]
 pub struct RustBackend;

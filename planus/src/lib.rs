@@ -7,12 +7,12 @@ pub mod table_reader;
 #[doc(hidden)]
 pub mod table_writer;
 
-pub use crate::buffer::Buffer;
+use std::{borrow::Cow, convert::TryInto, marker::PhantomData};
+
 pub use errors::Error;
 use errors::ErrorKind;
-use std::borrow::Cow;
-use std::convert::TryInto;
-use std::marker::PhantomData;
+
+pub use crate::buffer::Buffer;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

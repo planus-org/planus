@@ -1,9 +1,10 @@
+use codespan::{ByteIndex, Span};
+use lalrpop_util::ErrorRecovery;
+
 use crate::{
     error::LexicalError,
     lexer::{self, TokenMetadata, TokenWithMetadata},
 };
-use codespan::{ByteIndex, Span};
-use lalrpop_util::ErrorRecovery;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ParseError<'input> {

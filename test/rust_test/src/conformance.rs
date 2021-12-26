@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::flatc::conformance as flatc;
-    use crate::planus::conformance::*;
     use planus::{Buffer, Offset, SliceWithStartOffset, TableRead};
+
+    use crate::{flatc::conformance as flatc, planus::conformance::*};
 
     #[test]
     fn test_simple() {

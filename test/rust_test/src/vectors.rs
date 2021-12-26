@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::planus::vectors::*;
     use planus::{Buffer, SliceWithStartOffset, TableRead, ToOwned};
+
+    use crate::planus::vectors::*;
 
     #[test]
     fn test_roundtrip() {

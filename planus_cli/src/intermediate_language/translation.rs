@@ -1,3 +1,7 @@
+use codespan::{FileId, Span};
+use codespan_reporting::diagnostic::Label;
+use indexmap::{map::Entry, IndexMap};
+
 use super::types::*;
 use crate::{
     ast::{self, FloatType, LiteralKind, NamespacePath},
@@ -8,9 +12,6 @@ use crate::{
         sorted_map::{SortedMap, SortedSet},
     },
 };
-use codespan::{FileId, Span};
-use codespan_reporting::diagnostic::Label;
-use indexmap::{map::Entry, IndexMap};
 
 pub struct Translator<'a> {
     ctx: &'a Ctx,

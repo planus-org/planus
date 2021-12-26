@@ -1,7 +1,8 @@
-use crate::{ast::*, cst, ctx::Ctx, error::ErrorKind};
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
 use indexmap::{map::Entry, IndexMap};
+
+use crate::{ast::*, cst, ctx::Ctx, error::ErrorKind};
 
 struct CstConverter<'ctx> {
     pub schema: Schema,

@@ -1,8 +1,9 @@
 use std::cell::Cell;
 
-use crate::{ctx::Ctx, error::ErrorKind};
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
+
+use crate::{ctx::Ctx, error::ErrorKind};
 
 pub type RawIdentifier = string_interner::DefaultSymbol;
 pub type Interner = string_interner::StringInterner<RawIdentifier>;

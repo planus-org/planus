@@ -1,8 +1,11 @@
-use super::raw_lexer::{CommentKind, Token};
-use super::text_lexer::Text;
-use crate::error::LexicalError;
 use codespan::{ByteIndex, Span};
 use logos::Logos;
+
+use super::{
+    raw_lexer::{CommentKind, Token},
+    text_lexer::Text,
+};
+use crate::error::LexicalError;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Comment<'input> {

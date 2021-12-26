@@ -1,8 +1,9 @@
-use crate::{
-    ast::{Interner, RawIdentifier},
-    error::{ErrorKind, LexicalError},
-    lexer::TokenWithMetadata,
+use std::{
+    cell::{Cell, RefCell},
+    path::{Path, PathBuf},
+    sync::RwLock,
 };
+
 use codespan::{ByteIndex, FileId, Files, Span};
 use codespan_reporting::{
     diagnostic::{Diagnostic, Label, Severity},
@@ -14,10 +15,11 @@ use codespan_reporting::{
 };
 use indexmap::IndexMap;
 use lalrpop_util::ParseError;
-use std::{
-    cell::{Cell, RefCell},
-    path::{Path, PathBuf},
-    sync::RwLock,
+
+use crate::{
+    ast::{Interner, RawIdentifier},
+    error::{ErrorKind, LexicalError},
+    lexer::TokenWithMetadata,
 };
 
 pub struct FullSpan {

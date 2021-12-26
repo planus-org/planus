@@ -1,5 +1,6 @@
-use crate::{errors::ErrorKind, SliceWithStartOffset, TableRead, TableReadUnion};
 use std::convert::TryInto;
+
+use crate::{errors::ErrorKind, SliceWithStartOffset, TableRead, TableReadUnion};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Table<'buf> {

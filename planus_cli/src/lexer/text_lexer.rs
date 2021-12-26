@@ -1,7 +1,9 @@
-use crate::error::LexicalError;
+use std::convert::TryInto;
+
 use codespan::Span;
 use logos::Logos;
-use std::convert::TryInto;
+
+use crate::error::LexicalError;
 
 #[derive(Logos, Debug, PartialEq)]
 pub(crate) enum Text {

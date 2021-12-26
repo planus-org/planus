@@ -1,3 +1,5 @@
+use codespan::Span;
+
 use crate::{
     cst::{
         AttributeKind, Declaration, DeclarationKind, EnumValDeclaration, Expr, FieldDeclaration,
@@ -5,7 +7,6 @@ use crate::{
     },
     lexer::{Comment, CommentBlock, TokenMetadata, TokenWithMetadata},
 };
-use codespan::Span;
 
 const INDENT_STRING: &str = "    ";
 

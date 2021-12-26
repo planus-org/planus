@@ -1,5 +1,6 @@
-use crate::{backvec::BackVec, Offset, Primitive};
 use std::{marker::PhantomData, mem::MaybeUninit};
+
+use crate::{backvec::BackVec, Offset, Primitive};
 
 #[derive(Debug)]
 pub struct Buffer {
@@ -180,8 +181,9 @@ impl Buffer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rand::{thread_rng, Rng};
+
+    use super::*;
 
     #[test]
     fn test_buffer_random() {

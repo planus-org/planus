@@ -1,8 +1,10 @@
-use self::rust::RustBackend;
-use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
+use std::{io::Write, path::Path};
+
 use anyhow::{anyhow, Result};
 use askama::Template;
-use std::{io::Write, path::Path};
+
+use self::rust::RustBackend;
+use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
 
 pub mod backend;
 pub mod backend_translation;

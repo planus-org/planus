@@ -1,6 +1,6 @@
+use std::{env, fmt::Write, fs, process::Command};
+
 use anyhow::{Context, Result};
-use std::fmt::Write;
-use std::{env, fs, process::Command};
 
 fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR").unwrap();
