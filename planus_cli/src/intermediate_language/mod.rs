@@ -11,7 +11,7 @@ pub fn translate_files<P: AsRef<std::path::Path>>(
         ast_map.add_files_recursively(ctx, file_id);
     }
 
-    let mut translator = translation::Translator::new(&ctx, ast_map.reachability());
+    let mut translator = translation::Translator::new(ctx, ast_map.reachability());
     for schema in ast_map.iter() {
         translator.add_schema(schema);
     }
