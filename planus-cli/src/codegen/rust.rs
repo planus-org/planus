@@ -30,6 +30,7 @@ pub struct Table {
 #[derive(Clone, Debug)]
 pub struct TableField {
     pub name: String,
+    pub primitive_size: u32,
     pub vtable_type: String,
     pub owned_type: String,
     pub read_type: String,
@@ -276,11 +277,12 @@ impl Backend for RustBackend {
         let owned_type;
         let vtable_type;
         let create_trait;
+        let primitive_size;
         let mut serialize_default: Option<Cow<'static, str>> = None;
         let mut deserialize_default: Option<Cow<'static, str>> = None;
         match resolved_type {
             ResolvedType::Struct(
-                _,
+                decl,
                 Struct {
                     owned_name,
                     ref_name,
@@ -289,6 +291,7 @@ impl Backend for RustBackend {
             ) => {
                 vtable_type =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                primitive_size = decl.size;
                 match &field.assign_mode {
                     AssignMode::Required => {
                         read_type = format!(
@@ -319,6 +322,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                primitive_size = 4;
                 vtable_type = format!("planus::Offset<{}>", owned_name);
                 match &field.assign_mode {
                     AssignMode::Required => {
@@ -351,6 +355,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                primitive_size = 4;
                 vtable_type = format!("planus::Offset<{}>", owned_name);
                 match &field.assign_mode {
                     AssignMode::Required => {
@@ -371,9 +376,10 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
             }
-            ResolvedType::Enum(_, info, relative_namespace, variants) => {
+            ResolvedType::Enum(decl, info, relative_namespace, variants) => {
                 vtable_type =
                     format_relative_namespace(&relative_namespace, &info.name).to_string();
+                primitive_size = decl.type_.byte_size();
                 match &field.assign_mode {
                     AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) => {
                         read_type = vtable_type.clone();
@@ -488,6 +494,7 @@ impl Backend for RustBackend {
                 let offset_name = vector_offset_type(&*type_);
                 let ref_name = vector_ref_type(&*type_);
                 let owned_name = vector_owned_type(&*type_);
+                primitive_size = 4;
                 vtable_type = format!("planus::Offset<[{}]>", offset_name);
                 match &field.assign_mode {
                     AssignMode::Required => {
@@ -513,6 +520,7 @@ impl Backend for RustBackend {
             }
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => {
+                primitive_size = 4;
                 vtable_type = "planus::Offset<str>".to_string();
                 match &field.assign_mode {
                     AssignMode::Required => {
@@ -537,6 +545,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Bool => {
+                primitive_size = 1;
                 vtable_type = "bool".to_string();
                 match &field.assign_mode {
                     AssignMode::HasDefault(Literal::Bool(lit)) => {
@@ -556,6 +565,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Integer(typ) => {
+                primitive_size = typ.byte_size();
                 vtable_type = integer_type(&typ).to_string();
                 match &field.assign_mode {
                     AssignMode::HasDefault(Literal::Int(lit)) => {
@@ -575,6 +585,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Float(typ) => {
+                primitive_size = typ.byte_size();
                 vtable_type = float_type(&typ).to_string();
                 match &field.assign_mode {
                     AssignMode::HasDefault(Literal::Float(lit)) => {
@@ -596,6 +607,7 @@ impl Backend for RustBackend {
         }
         TableField {
             name,
+            primitive_size,
             vtable_type,
             owned_type,
             read_type,

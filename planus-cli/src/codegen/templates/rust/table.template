@@ -42,9 +42,9 @@ impl {{info.owned_name}} {
                 if let Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
                 {%- endif -%}
                     {%- match field.field_type -%}
-                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag);
-                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset);
-                    {%- when BackendTableFieldType::Other -%} table_writer.write({{field.vtable_index}}, &prepared_{{field.info.create_name}});
+                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write::<_, _, 1>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag);
+                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write::<_, _, {{field.info.primitive_size}}>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset);
+                    {%- when BackendTableFieldType::Other -%} table_writer.write::<_, _, {{field.info.primitive_size}}>({{field.vtable_index}}, &prepared_{{field.info.create_name}});
                     {%- endmatch -%}
                 {%- if field.info.read_type.starts_with("Option<") -%}
                 }
@@ -184,5 +184,21 @@ impl planus::VectorWrite<planus::Offset<{{info.owned_name}}>> for {{info.owned_n
     const STRIDE: usize = 4;
     fn prepare(&self, buffer: &mut planus::Buffer) -> Self::Value {
         planus::WriteAs::prepare(self, buffer)
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[planus::Offset<{{info.owned_name}}>],
+        bytes: *mut std::mem::MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [std::mem::MaybeUninit<u8>; 4];
+        for (i, v) in values.iter().enumerate() {
+            planus::WriteAsPrimitive::write(
+                v,
+                planus::Cursor::new(&mut *bytes.add(i)),
+                buffer_position - (Self::STRIDE * i) as u32,
+            );
+        }
     }
 }

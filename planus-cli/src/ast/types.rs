@@ -286,6 +286,14 @@ pub enum FloatType {
     F64,
 }
 
+impl FloatType {
+    pub fn byte_size(&self) -> u32 {
+        match self {
+            FloatType::F32 => 4,
+            FloatType::F64 => 8,
+        }
+    }
+}
 #[derive(Clone, Debug)]
 pub struct Literal {
     pub span: Span,

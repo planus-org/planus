@@ -456,6 +456,7 @@ impl<'a> Translator<'a> {
                             type_,
                             offset: u32::MAX,
                             size: u32::MAX,
+                            padding_after_field: u32::MAX,
                         },
                     )),
                     _ => {
@@ -974,7 +975,7 @@ impl<'a> Translator<'a> {
             }
         }
 
-        macro_rules! get_field {
+        macro_rules! get_struct_decl {
             () => {
                 if let DeclarationKind::Struct(decl) = &mut self.declarations[index].kind {
                     decl
@@ -990,8 +991,8 @@ impl<'a> Translator<'a> {
 
         let mut offset = 0;
         let mut max_alignment = 1;
-        for field_id in 0..get_field!().fields.len() {
-            let (cur_size, cur_alignment) = match &get_field!().fields[field_id].type_ {
+        for field_id in 0..get_struct_decl!().fields.len() {
+            let (cur_size, cur_alignment) = match &get_struct_decl!().fields[field_id].type_ {
                 SimpleType::Struct(index) | SimpleType::Enum(index) => {
                     let index = index.0;
                     match self.resolve_struct_sizes(parents, index) {
@@ -1016,15 +1017,24 @@ impl<'a> Translator<'a> {
             };
 
             offset = round_up(offset, cur_alignment);
-            get_field!().fields[field_id].offset = offset;
-            get_field!().fields[field_id].size = cur_size;
+            let decl = get_struct_decl!();
+            decl.fields[field_id].offset = offset;
+            decl.fields[field_id].size = cur_size;
+            if field_id > 0 {
+                decl.fields[field_id - 1].padding_after_field =
+                    offset - decl.fields[field_id - 1].offset - decl.fields[field_id - 1].size;
+            }
             offset += cur_size;
             max_alignment = max_alignment.max(cur_alignment);
         }
         offset = round_up(offset, max_alignment);
-        get_field!().alignment = max_alignment;
-        get_field!().size = offset;
-        get_field!().vector_stride = align_up(offset, max_alignment);
+        let decl = get_struct_decl!();
+        if let Some((_, last_field)) = decl.fields.last_mut() {
+            last_field.padding_after_field = offset - last_field.offset - last_field.size;
+        }
+        decl.alignment = max_alignment;
+        decl.size = offset;
+        decl.vector_stride = align_up(offset, max_alignment);
 
         self.descriptions[index] = TypeDescription::Struct {
             size: offset,

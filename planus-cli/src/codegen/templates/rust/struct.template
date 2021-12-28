@@ -11,11 +11,16 @@ impl planus::Primitive for {{ info.owned_name }} {
 }
 
 #[allow(clippy::identity_op)]
-unsafe impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
+impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
+    fn write<const N: usize>(&self, cursor: planus::Cursor<'_, N>, buffer_position: u32) {
         {% for field in fields -%}
-            self.{{ field.info.name }}.write(buffer.add({{ field.offset }}), buffer_position - {{ field.offset }});
+            let (cur, cursor) = cursor.split::<{{ field.size }} , {{ size - field.offset - field.size }}>();
+            self.{{ field.info.name }}.write(cur, buffer_position - {{ field.offset }});
+            {%- if field.padding_after_field != 0 -%}
+            let cursor = cursor.write::<{{ field.padding_after_field }}, {{ size - field.offset - field.size - field.padding_after_field }}>([0; {{ field.padding_after_field }}]);
+            {%- endif -%}
         {% endfor %}
+        cursor.finish([]);
     }
 }
 
@@ -110,5 +115,32 @@ impl planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
 
     fn prepare(&self, _buffer: &mut planus::Buffer) -> Self::Value {
         *self
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[{{info.owned_name}}],
+        bytes: *mut std::mem::MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [std::mem::MaybeUninit<u8>; {{ vector_stride }}];
+        for (i, v) in values.iter().enumerate() {
+            {% if vector_stride == size %}
+            planus::WriteAsPrimitive::write(
+                v,
+                planus::Cursor::new(&mut *bytes.add(i)),
+                buffer_position - ({{ size }} * i) as u32,
+            );
+            {% else %}
+            let cursor = planus::Cursor::new(&mut *bytes.add(i));
+            let (value_cursor, padding_cursor) = cursor.split::<{{ size }}, {{ vector_stride - size }}>();
+            planus::WriteAsPrimitive::write(
+                v,
+                value_cursor,
+                buffer_position - ({{ size }} * i) as u32,
+            );
+            padding_cursor.finish([0; {{ vector_stride - size }}]);
+            {% endif %}
+        }
     }
 }

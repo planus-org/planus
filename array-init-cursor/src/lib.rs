@@ -8,11 +8,11 @@ mod util;
 /// A fixed-size cursor for initializing [`MaybeUninit`] arrays
 ///
 /// The cursor will panic on drop unless all bytes have been initialized.
-pub struct ArrayCursor<'a, T, const N: usize> {
+pub struct Cursor<'a, T, const N: usize> {
     slice: &'a mut [MaybeUninit<T>; N],
 }
 
-impl<'a, T, const N: usize> ArrayCursor<'a, T, N> {
+impl<'a, T, const N: usize> Cursor<'a, T, N> {
     /// Creates a new cursor.
     ///
     /// The cursor will guarantee that all values have been
@@ -49,7 +49,7 @@ impl<'a, T, const N: usize> ArrayCursor<'a, T, N> {
     /// This function cannot compile unless `L + R == N`, however it will be able to pass through
     /// `cargo check`, since the error is not discovered by `rustc` until it tries to instantiate
     /// the code.
-    pub fn write<const L: usize, const R: usize>(self, value: [T; L]) -> ArrayCursor<'a, T, R> {
+    pub fn write<const L: usize, const R: usize>(self, value: [T; L]) -> Cursor<'a, T, R> {
         let (l, r) = self.split::<L, R>();
         l.finish(value);
         r
@@ -64,12 +64,10 @@ impl<'a, T, const N: usize> ArrayCursor<'a, T, N> {
     /// This function cannot compile unless `L + R == N`, however it will be able to pass through
     /// `cargo check`, since the error is not discovered by `rustc` until it tries to instantiate
     /// the code.
-    pub fn split<const L: usize, const R: usize>(
-        self,
-    ) -> (ArrayCursor<'a, T, L>, ArrayCursor<'a, T, R>) {
+    pub fn split<const L: usize, const R: usize>(self) -> (Cursor<'a, T, L>, Cursor<'a, T, R>) {
         let buf = unsafe { self.into_buf() };
         let (l, r) = crate::util::split_mut::<_, N, L, R>(buf);
-        (ArrayCursor { slice: l }, ArrayCursor { slice: r })
+        (Cursor { slice: l }, Cursor { slice: r })
     }
 
     /// Compile-time assertion that `N == M` to work-around limitations in rust generics.
@@ -84,13 +82,13 @@ impl<'a, T, const N: usize> ArrayCursor<'a, T, N> {
     ///     let cursor: array_init_cursor::Cursor<u8, 10> = cursor.assert_size();
     /// }
     /// ```
-    pub fn assert_size<const M: usize>(self) -> ArrayCursor<'a, T, M> {
+    pub fn assert_size<const M: usize>(self) -> Cursor<'a, T, M> {
         let (l, _) = self.split::<M, 0>();
         l
     }
 }
 
-impl<'a, T, const N: usize> Drop for ArrayCursor<'a, T, N> {
+impl<'a, T, const N: usize> Drop for Cursor<'a, T, N> {
     /// Will panic unless cursor has been completely initialized
     fn drop(&mut self) {
         if N > 0 {

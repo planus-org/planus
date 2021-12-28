@@ -1,3 +1,5 @@
+use std::mem::MaybeUninit;
+
 use crate::{Buffer, Offset, Primitive, WriteAsPrimitive};
 
 pub struct TableWriter<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize> {
@@ -51,16 +53,20 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
     ///
     /// Must be called in alignment order with the most-aligned object first
     #[inline(always)]
-    pub unsafe fn write<P: Primitive, T: WriteAsPrimitive<P>>(
+    pub unsafe fn write<P: Primitive, T: WriteAsPrimitive<P>, const SIZE: usize>(
         &mut self,
         vtable_index: usize,
         value: &T,
     ) {
+        assert_eq!(P::SIZE, SIZE);
         debug_assert!(self.position + P::SIZE <= OBJECT_MAX_BYTES + 4);
         self.vtable[vtable_index_to_offset(vtable_index)..][..2]
             .copy_from_slice(&(self.position as u16).to_le_bytes());
         let slice = self.object.as_mut_ptr().cast::<u8>().add(self.position - 4);
-        value.write(slice, (self.buffer_position - self.position) as u32);
+        value.write(
+            array_init_cursor::Cursor::new(&mut *(slice as *mut [MaybeUninit<u8>; SIZE])),
+            (self.buffer_position - self.position) as u32,
+        );
         self.position += P::SIZE;
     }
 

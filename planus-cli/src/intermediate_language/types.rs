@@ -195,6 +195,7 @@ pub struct StructField {
     pub type_: SimpleType,
     pub offset: u32,
     pub size: u32,
+    pub padding_after_field: u32,
 }
 
 #[derive(Debug, Clone)]

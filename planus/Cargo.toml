@@ -11,6 +11,7 @@ rust-version = "1.56"
 
 [dependencies]
 thiserror = "1.0.26"
+array-init-cursor = { version = "0.1", path = "../array-init-cursor" }
 
 [dev-dependencies]
 rand = "0.8.4"

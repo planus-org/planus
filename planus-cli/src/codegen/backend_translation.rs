@@ -216,6 +216,7 @@ pub enum BackendTableFieldType {
 pub struct BackendStructField<F> {
     pub offset: u32,
     pub size: u32,
+    pub padding_after_field: u32,
     pub info: F,
 }
 
@@ -560,6 +561,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                                 translated_type,
                             ),
                             offset: field.offset,
+                            padding_after_field: field.padding_after_field,
                             size: field.size,
                         }
                     })

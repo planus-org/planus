@@ -41,10 +41,10 @@ impl planus::Primitive for {{ info.name }} {
     const SIZE: usize = {{ size }};
 }
 
-unsafe impl planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
+impl planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
     #[inline]
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
-        (*self as {{ info.repr_type }}).write(buffer, buffer_position);
+    fn write<const N: usize>(&self, cursor: planus::Cursor<'_, N>, buffer_position: u32) {
+        (*self as {{ info.repr_type }}).write(cursor, buffer_position);
     }
 }
 
@@ -106,11 +106,27 @@ impl<'buf> planus::VectorRead<'buf> for {{ info.name }} {
 }
 
 impl<'buf> planus::VectorWrite<{{info.name}}> for {{ info.name }} {
-    const STRIDE: usize = 1;
+    const STRIDE: usize = {{ size }};
 
     type Value = Self;
 
     fn prepare(&self, _buffer: &mut planus::Buffer) -> Self::Value {
         *self
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Self],
+        bytes: *mut std::mem::MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [std::mem::MaybeUninit<u8>; {{ size }}];
+        for (i, v) in values.iter().enumerate() {
+            planus::WriteAsPrimitive::write(
+                v,
+                planus::Cursor::new(&mut *bytes.add(i)),
+                buffer_position - ({{ size }} * i) as u32,
+            );
+        }
     }
 }

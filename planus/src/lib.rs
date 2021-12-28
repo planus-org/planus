@@ -7,7 +7,7 @@ pub mod table_reader;
 #[doc(hidden)]
 pub mod table_writer;
 
-use std::{borrow::Cow, convert::TryInto, marker::PhantomData};
+use std::{borrow::Cow, convert::TryInto, marker::PhantomData, mem::MaybeUninit};
 
 pub use errors::Error;
 use errors::ErrorKind;
@@ -15,6 +15,8 @@ use errors::ErrorKind;
 pub use crate::buffer::Buffer;
 
 pub type Result<T> = std::result::Result<T, Error>;
+#[doc(hidden)]
+pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 
 pub enum Void {}
 
@@ -73,8 +75,8 @@ pub trait ToOwned {
 // TODO: What *are* the safety requirements again? I think they are
 // that we need to never read the pointer and fill in all of the bytes,
 // but do we actually do that for structs?
-pub unsafe trait WriteAsPrimitive<P> {
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32);
+pub trait WriteAsPrimitive<P> {
+    fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32);
 }
 
 #[doc(hidden)]
@@ -185,9 +187,9 @@ impl<P: Primitive> WriteAsOptional<P> for () {
     }
 }
 
-unsafe impl<P: Primitive> WriteAsPrimitive<P> for Void {
+impl<P: Primitive> WriteAsPrimitive<P> for Void {
     #[inline]
-    unsafe fn write(&self, _buffer: *mut u8, _buffer_position: u32) {
+    fn write<const N: usize>(&self, _cursor: Cursor<'_, N>, _buffer_position: u32) {
         match *self {}
     }
 }
@@ -268,11 +270,12 @@ impl<T: ?Sized> Primitive for Offset<T> {
     const SIZE: usize = 4;
 }
 
-unsafe impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
+impl<T: ?Sized> WriteAsPrimitive<Offset<T>> for Offset<T> {
     #[inline]
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
-        let value = u32::to_le_bytes(buffer_position - self.offset);
-        std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, 4);
+    fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32) {
+        cursor
+            .assert_size()
+            .finish(u32::to_le_bytes(buffer_position - self.offset));
     }
 }
 
@@ -312,10 +315,10 @@ impl<T: ?Sized> WriteAsOptionalUnion<T> for UnionOffset<T> {
     }
 }
 
-unsafe impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
+impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
     #[inline]
-    unsafe fn write(&self, buffer: *mut u8, buffer_position: u32) {
-        T::write(*self, buffer, buffer_position)
+    fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32) {
+        T::write(*self, cursor, buffer_position)
     }
 }
 
@@ -381,6 +384,15 @@ impl<'a, P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &'a T {
     fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
         T::prepare(self, buffer)
     }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Self::Value],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        T::write_values(values, bytes, buffer_position);
+    }
 }
 
 impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for Box<T> {
@@ -435,11 +447,10 @@ macro_rules! gen_primitive_types {
             const SIZE: usize = $size;
         }
 
-        unsafe impl WriteAsPrimitive<$ty> for $ty {
+        impl WriteAsPrimitive<$ty> for $ty {
             #[inline]
-            unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
-                let value = self.to_le_bytes();
-                std::ptr::copy_nonoverlapping(value.as_ptr(), buffer, $size);
+            fn write<const N: usize>(&self, cursor: Cursor<'_, N>, _buffer_position: u32) {
+                cursor.assert_size().finish(self.to_le_bytes());
             }
         }
 
@@ -515,6 +526,21 @@ macro_rules! gen_primitive_types {
             fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
                 *self
             }
+
+            #[inline]
+            unsafe fn write_values(
+                values: &[$ty],
+                bytes: *mut MaybeUninit<u8>,
+                buffer_position: u32,
+            ) {
+                let bytes = bytes as *mut [MaybeUninit<u8>; $size];
+                for (i, v) in values.iter().enumerate() {
+                    v.write(
+                        Cursor::new(&mut *bytes.add(i)),
+                        buffer_position - ($size * i) as u32,
+                    );
+                }
+            }
         }
     };
 }
@@ -535,10 +561,10 @@ impl Primitive for bool {
     const SIZE: usize = 1;
 }
 
-unsafe impl WriteAsPrimitive<bool> for bool {
+impl WriteAsPrimitive<bool> for bool {
     #[inline]
-    unsafe fn write(&self, buffer: *mut u8, _buffer_position: u32) {
-        *buffer = if *self { 1 } else { 0 };
+    fn write<const N: usize>(&self, cursor: Cursor<'_, N>, _buffer_position: u32) {
+        cursor.assert_size().finish([if *self { 1 } else { 0 }]);
     }
 }
 
@@ -616,8 +642,21 @@ impl VectorWrite<bool> for bool {
 
     type Value = bool;
 
+    #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
         *self
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Self::Value],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [MaybeUninit<u8>; 1];
+        for (i, v) in values.iter().enumerate() {
+            v.write(Cursor::new(&mut *bytes.add(i)), buffer_position - i as u32);
+        }
     }
 }
 
@@ -776,6 +815,12 @@ pub trait VectorWrite<P> {
     type Value: WriteAsPrimitive<P> + Sized;
     #[doc(hidden)]
     fn prepare(&self, buffer: &mut Buffer) -> Self::Value;
+    #[doc(hidden)]
+    unsafe fn write_values(
+        values: &[Self::Value],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    );
 }
 
 impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
@@ -785,6 +830,21 @@ impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
     #[inline]
     fn prepare(&self, _buffer: &mut Buffer) -> Self::Value {
         *self
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Offset<T>],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [MaybeUninit<u8>; 4];
+        for (i, v) in values.iter().enumerate() {
+            v.write(
+                Cursor::new(&mut *bytes.add(i)),
+                buffer_position - (Self::STRIDE * i) as u32,
+            );
+        }
     }
 }
 
@@ -843,16 +903,14 @@ where
                 4 + T::STRIDE.checked_mul(self.len()).unwrap(),
                 P::ALIGNMENT_MASK.max(3),
                 |buffer_position, bytes| {
-                    let bytes: *mut u8 = bytes.as_mut_ptr() as *mut u8;
+                    let bytes = bytes.as_mut_ptr();
 
-                    (self.len() as u32).write(bytes, buffer_position);
+                    (self.len() as u32).write(
+                        Cursor::new(&mut *(bytes as *mut [MaybeUninit<u8>; 4])),
+                        buffer_position,
+                    );
 
-                    for (i, v) in tmp.iter().enumerate() {
-                        v.write(
-                            bytes.add(4 + T::STRIDE * i),
-                            buffer_position - (4 + T::STRIDE * i) as u32,
-                        );
-                    }
+                    T::write_values(&tmp, bytes.add(4), buffer_position - 4);
                 },
             )
         };
@@ -891,7 +949,6 @@ where
     T: VectorWrite<P>,
 {
     fn prepare(&self, buffer: &mut Buffer) -> Offset<[P]> {
-        use std::mem::MaybeUninit;
         let mut tmp: [MaybeUninit<T::Value>; N] = unsafe { MaybeUninit::uninit().assume_init() };
         for (t, v) in tmp.iter_mut().zip(self.iter()) {
             t.write(v.prepare(buffer));
@@ -905,16 +962,14 @@ where
                 4 + T::STRIDE.checked_mul(self.len()).unwrap(),
                 P::ALIGNMENT_MASK.max(3),
                 |buffer_position, bytes| {
-                    let bytes: *mut u8 = bytes.as_mut_ptr() as *mut u8;
+                    let bytes = bytes.as_mut_ptr();
 
-                    (self.len() as u32).write(bytes, buffer_position);
+                    (self.len() as u32).write(
+                        Cursor::new(&mut *(bytes as *mut [MaybeUninit<u8>; 4])),
+                        buffer_position,
+                    );
 
-                    for (i, v) in tmp.iter().enumerate() {
-                        v.write(
-                            bytes.add(4 + T::STRIDE * i),
-                            buffer_position - (4 + T::STRIDE * i) as u32,
-                        );
-                    }
+                    T::write_values(&tmp, bytes.add(4), buffer_position - 4);
                 },
             )
         };
@@ -1052,8 +1107,24 @@ impl VectorWrite<Offset<str>> for str {
     type Value = Offset<str>;
 
     const STRIDE: usize = 4;
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
         WriteAs::prepare(self, buffer)
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Offset<str>],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [MaybeUninit<u8>; 4];
+        for (i, v) in values.iter().enumerate() {
+            v.write(
+                Cursor::new(&mut *bytes.add(i)),
+                buffer_position - (4 * i) as u32,
+            );
+        }
     }
 }
 
@@ -1117,8 +1188,24 @@ impl VectorWrite<Offset<str>> for String {
     type Value = Offset<str>;
 
     const STRIDE: usize = 4;
+    #[inline]
     fn prepare(&self, buffer: &mut Buffer) -> Self::Value {
         WriteAs::prepare(self, buffer)
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Offset<str>],
+        bytes: *mut MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [MaybeUninit<u8>; 4];
+        for (i, v) in values.iter().enumerate() {
+            v.write(
+                Cursor::new(&mut *bytes.add(i)),
+                buffer_position - (4 * i) as u32,
+            );
+        }
     }
 }
 
