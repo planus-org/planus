@@ -58,7 +58,7 @@ impl<'a> std::fmt::Debug for {{ info.ref_name }}<'a> {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields -%}
             {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
-                if let Ok(value) = self.{{field.info.name}}() {
+                if let Some(value) = self.{{field.info.name}}().transpose() {
                     f.field("{{field.info.name}}", &value);
                 }
             {%- else -%}

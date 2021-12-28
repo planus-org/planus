@@ -13,7 +13,7 @@ flatbuffers = "0.8.4"
 
 [build-dependencies]
 anyhow = "1.0.51"
-planus_cli = { path = "../../planus_cli" }
+planus-cli = { path = "../../planus-cli" }
 
 [dev-dependencies]
 criterion = "0.3"

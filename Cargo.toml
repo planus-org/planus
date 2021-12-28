@@ -1,7 +1,3 @@
 [workspace]
 
-members = [
-    "planus",
-    "planus_cli",
-    "test/rust_test",
-]
+members = ["planus", "planus-cli", "test/rust_test"]
