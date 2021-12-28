@@ -49,42 +49,6 @@ impl Default for Ctx {
     }
 }
 
-pub trait Labels {
-    type Iter: Iterator<Item = Label<FileId>>;
-    fn into_labels(self) -> Self::Iter;
-}
-
-impl Labels for Label<FileId> {
-    type Iter = std::iter::Once<Label<FileId>>;
-    fn into_labels(self) -> Self::Iter {
-        std::iter::once(self)
-    }
-}
-
-impl<T> Labels for Option<T>
-where
-    T: Labels,
-{
-    type Iter = std::iter::Flatten<std::option::IntoIter<T::Iter>>;
-    fn into_labels(self) -> Self::Iter {
-        self.map(|v| v.into_labels()).into_iter().flatten()
-    }
-}
-
-impl Labels for FullSpan {
-    type Iter = std::iter::Once<Label<FileId>>;
-    fn into_labels(self) -> Self::Iter {
-        std::iter::once(Label::primary(self.file_id, self.span))
-    }
-}
-
-impl<'a> Labels for (FullSpan, &'a str) {
-    type Iter = std::iter::Once<Label<FileId>>;
-    fn into_labels(self) -> Self::Iter {
-        std::iter::once(Label::primary(self.0.file_id, self.0.span).with_message(self.1))
-    }
-}
-
 impl Ctx {
     pub fn intern(&self, s: &str) -> RawIdentifier {
         self.interner.borrow_mut().get_or_intern(s)
@@ -140,11 +104,7 @@ impl Ctx {
     }
 
     pub fn emit_simple_error(&self, error_type: ErrorKind, file_id: FileId, span: Span, msg: &str) {
-        self.emit_error(
-            error_type,
-            FullSpan { file_id, span }.into_labels(),
-            Some(msg),
-        )
+        self.emit_error(error_type, [Label::primary(file_id, span)], Some(msg))
     }
 
     pub fn emit_parse_error(
@@ -187,7 +147,7 @@ impl Ctx {
         }
         self.emit_error(
             ErrorKind::DECLARATION_PARSE_ERROR,
-            FullSpan { file_id, span }.into_labels(),
+            [Label::primary(file_id, span)],
             Some(msg.as_str()),
         );
     }

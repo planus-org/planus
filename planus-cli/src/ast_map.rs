@@ -1,8 +1,9 @@
 use codespan::FileId;
+use codespan_reporting::diagnostic::Label;
 
 use crate::{
     ast::Schema,
-    ctx::{Ctx, FullSpan, Labels},
+    ctx::Ctx,
     util::sorted_map::{sorted_map, SortedMap, SortedSet},
 };
 
@@ -32,11 +33,7 @@ impl AstMap {
                                 ctx.add_relative_path(
                                     file_id,
                                     &literal.value,
-                                    FullSpan {
-                                        file_id,
-                                        span: literal.span,
-                                    }
-                                    .into_labels(),
+                                    [Label::primary(file_id, literal.span)],
                                 )
                             })
                             .collect::<Vec<_>>();
