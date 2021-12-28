@@ -57,6 +57,7 @@ macro_rules! check_enum_variants {
     }) => {
         const _: fn($typ) -> Result<$obj, planus::errors::UnknownEnumTagKind> = std::convert::TryFrom::try_from;
         const _: fn($obj) -> $typ = std::convert::From::from;
+        #[allow(clippy::match_single_binding)]
         const _: fn($obj) -> ! = |obj| match obj {
             $(
                 <$obj>::$name => todo!()

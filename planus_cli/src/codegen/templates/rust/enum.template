@@ -11,6 +11,7 @@ pub enum {{ info.name }} {
 impl TryFrom<{{info.repr_type}}> for {{info.name}} {
     type Error = planus::errors::UnknownEnumTagKind;
     fn try_from(value: {{info.repr_type}}) -> std::result::Result<Self, planus::errors::UnknownEnumTagKind> {
+        #[allow(clippy::match_single_binding)]
         match value {
             {% for variant in variants -%}
                 {{ variant.value }} => Ok({{info.name}}::{{ variant.name }}),

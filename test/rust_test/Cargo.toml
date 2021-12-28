@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/TethysSvensson/planus"
 build="build.rs"
-rust-version = "1.56"
+rust-version = "1.57"
 
 [dependencies]
 planus = { path = "../../planus" }
@@ -14,3 +14,10 @@ flatbuffers = "0.8.4"
 [build-dependencies]
 anyhow = "1.0.51"
 planus_cli = { path = "../../planus_cli" }
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark"
+harness = false
