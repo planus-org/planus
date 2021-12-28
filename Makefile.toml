@@ -11,29 +11,67 @@ args = ["build"]
 [tasks.generate]
 dependencies = ["build"]
 script = '''
+    tmpdir=$(mktemp -d "/tmp/planus-generate-XXXXX")
     mkdir -p build/rust
-    for f in test/files/valid/*; do
+    rm -f build/rust/*.rs
+    for f in test/files/valid/*.fbs; do
         if [[ -f $f ]]; then
-            echo "Generating $f"
-            target/debug/planus rust $f -o build/rust/$(basename -s .fbs $f).rs \
-                || echo "Failed to generate $(basename $f)"
-        fi
-    done
+            file_stem=$(basename -s .fbs $f)
+            echo -n "Checking $f: "
+            target/debug/planus check $f && true
 
-    for f in test/files/invalid/*; do
-        if [[ -f $f ]]; then
-            echo -n "Testing $f: "
-            target/debug/planus rust $f -o build/rust/$(basename -s .fbs $f).rs 2>/dev/null && true
-            res=$?
-            if [[ $res -eq 0 ]]; then
-                echo -e "\e[0;31mcompiled\e[0m"
-            elif [[ $res -eq 101 ]]; then
-                echo -e "\e[0;31mpanic\e[0m"
-            else
+            if [[ $? -eq 0 ]]; then
                 echo -e "\e[0;32msuccess\e[0m"
+            else
+                echo -e "\e[0;31mCheck failed\e[0m"
+                failed=1
             fi
         fi
     done
+
+    for f in test/files/invalid/*.fbs; do
+        if [[ -f $f  ]]; then
+            file_stem=$(basename -s .fbs $f)
+            echo -n "Checking $f: "
+            target/debug/planus check $f 2> $tmpdir/$file_stem.stderr && true
+            res=$?
+            if [[ $res -eq 0 ]]; then
+                echo -e "\e[0;31mcompiled\e[0m"
+                continue
+            elif [[ $res -eq 101 ]]; then
+                echo -e "\e[0;31mpanic\e[0m"
+                continue
+            fi
+
+            if [[ -f test/files/invalid/$file_stem.stderr ]]; then
+                diff -q test/files/invalid/$file_stem.stderr $tmpdir/$file_stem.stderr >/dev/null && true
+                if [[ $? -eq 0 ]]; then
+                    echo -e "\e[0;32msuccess\e[0m"
+                else
+                    if [[ $1 = "regenerate" ]]; then
+                        echo -e "\e[0;33moverwriting\e[0m"
+                        cp $tmpdir/$file_stem.stderr test/files/invalid/$file_stem.stderr
+                    else
+                        echo -e "\e[0;31mdiff changed\e[0m"
+                        diff test/files/invalid/$file_stem.stderr $tmpdir/$file_stem.stderr && true
+                        failed=1
+                    fi
+                fi
+            else
+                echo "Creating new test/files/invalid/$file_stem.stderr"
+                cp $tmpdir/$file_stem.stderr test/files/invalid/$file_stem.stderr
+            fi
+
+
+        fi
+    done
+
+    if [[ $failed -eq 1 ]]; then
+        echo "cargo make generate failed: $tmpdir"
+        exit 1
+    else
+        rm -rf $tmpdir
+    fi
 '''
 
 [tasks.commit-check]

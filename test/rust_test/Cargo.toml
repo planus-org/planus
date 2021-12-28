@@ -8,6 +8,7 @@ build="build.rs"
 rust-version = "1.57"
 
 [dependencies]
+anyhow = "1.0.51"
 planus = { path = "../../planus" }
 flatbuffers = "0.8.4"
 

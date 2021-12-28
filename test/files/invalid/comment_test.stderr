@@ -1,0 +1,72 @@
+[0m[1m[38;5;9merror[0m[1m: [0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:97:1
+   [0m[34m│[0m
+[0m[34m97[0m [0m[34m│[0m [0m[31mblabla[0m //test58
+   [0m[34m│[0m [0m[31m^^^^^^[0m [0m[31munrecognized token `identifier "blabla"`, expected one of "attribute", "enum", "file_extension", "file_identifier", "include", "namespace", "native_include", "root_type", "rpc_service", "struct", "table", "union", end_of_stream[0m
+
+[0m[1m[38;5;9merror[0m[1m: Cannot have includes after the namespace has been set[0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:14:1
+   [0m[34m│[0m  
+[0m[34m14[0m [0m[34m│[0m [0m[34m╭[0m namespace // test10
+[0m[34m15[0m [0m[34m│[0m [0m[34m│[0m foo. // test11
+[0m[34m16[0m [0m[34m│[0m [0m[34m│[0m bar.baz;
+   [0m[34m│[0m [0m[34m╰[0m[0m[34m────────' namespace was here[0m
+   [0m[34m·[0m [0m[34m│[0m
+[0m[34m20[0m [0m[34m│[0m   include "foo";
+   [0m[34m│[0m   [0m[34m--------------[0m [0m[34minclude was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: Cannot have includes after the namespace has been set[0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:14:1
+   [0m[34m│[0m  
+[0m[34m14[0m [0m[34m│[0m [0m[34m╭[0m namespace // test10
+[0m[34m15[0m [0m[34m│[0m [0m[34m│[0m foo. // test11
+[0m[34m16[0m [0m[34m│[0m [0m[34m│[0m bar.baz;
+   [0m[34m│[0m [0m[34m╰[0m[0m[34m────────' namespace was here[0m
+   [0m[34m·[0m [0m[34m│[0m
+[0m[34m22[0m [0m[34m│[0m   include "foo";
+   [0m[34m│[0m   [0m[34m--------------[0m [0m[34minclude was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: Cannot have includes after the namespace has been set[0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:14:1
+   [0m[34m│[0m  
+[0m[34m14[0m [0m[34m│[0m [0m[34m╭[0m namespace // test10
+[0m[34m15[0m [0m[34m│[0m [0m[34m│[0m foo. // test11
+[0m[34m16[0m [0m[34m│[0m [0m[34m│[0m bar.baz;
+   [0m[34m│[0m [0m[34m╰[0m[0m[34m────────' namespace was here[0m
+   [0m[34m·[0m [0m[34m│[0m
+[0m[34m23[0m [0m[34m│[0m   include "bar";
+   [0m[34m│[0m   [0m[34m--------------[0m [0m[34minclude was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: Cannot use prefix sign on lists[0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:44:1
+   [0m[34m│[0m  
+[0m[34m44[0m [0m[34m│[0m [0m[31m╭[0m [0m[31m+ //test24[0m
+[0m[34m45[0m [0m[34m│[0m [0m[31m│[0m 
+[0m[34m46[0m [0m[34m│[0m [0m[31m│[0m [0m[31m// test25[0m
+[0m[34m47[0m [0m[34m│[0m [0m[31m│[0m [0m[31m[ //test26[0m
+   [0m[34m·[0m [0m[31m│[0m
+[0m[34m58[0m [0m[34m│[0m [0m[31m│[0m [0m[31m//test33[0m
+[0m[34m59[0m [0m[34m│[0m [0m[31m│[0m [0m[31m][0m //test34
+   [0m[34m│[0m [0m[31m╰[0m[0m[31m─^[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/foo": Os { code: 2, kind: NotFound, message: "No such file or directory" }[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/foo": Os { code: 2, kind: NotFound, message: "No such file or directory" }[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/foo": Os { code: 2, kind: NotFound, message: "No such file or directory" }[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/bar": Os { code: 2, kind: NotFound, message: "No such file or directory" }[0m
+
+[0m[1m[38;5;9merror[0m[1m: [0m
+   [0m[34m┌─[0m test/files/invalid/comment_test.fbs:74:3
+   [0m[34m│[0m  
+[0m[34m74[0m [0m[34m│[0m [0m[31m╭[0m   [0m[31mhello //test44[0m
+[0m[34m75[0m [0m[34m│[0m [0m[31m│[0m 
+[0m[34m76[0m [0m[34m│[0m [0m[31m│[0m [0m[31m  //test45[0m
+[0m[34m77[0m [0m[34m│[0m [0m[31m│[0m [0m[31m  . //test46[0m
+[0m[34m78[0m [0m[34m│[0m [0m[31m│[0m 
+[0m[34m79[0m [0m[34m│[0m [0m[31m│[0m [0m[31m  //test47[0m
+[0m[34m80[0m [0m[34m│[0m [0m[31m│[0m [0m[31m  bool[0m //test48
+   [0m[34m│[0m [0m[31m╰[0m[0m[31m──────^ Unknown type[0m
+
+Error: Bailing because of errors

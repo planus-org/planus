@@ -12,7 +12,7 @@ fn main() -> Result<()> {
         .output()
         .context("Cannot run flatc")?;
 
-    // Generate planus files
+    // Planus files for unit tests
     let planus_dir = format!("{}/planus", out_dir);
     fs::create_dir_all(&planus_dir).context("Cannot create planus out dir")?;
     for file in ["conformance", "enums", "structs", "unions", "vectors"] {
@@ -75,6 +75,18 @@ fn main() -> Result<()> {
 
     std::fs::write(format!("{}/mod.rs", planus_api_dir), api_code)
         .context("Cannot write the api glue code")?;
+
+    // for entry in std::fs::read_dir("test_files").context("Cannot read test_files")? {
+    //     let entry = entry.context("Error doing readdir for test_files")?;
+    //     let path = entry.path();
+    //     if !path.is_dir()
+    //         && path
+    //             .extension()
+    //             .map_or(false, |extension| extension == "fbs")
+    //     {
+
+    //     }
+    // }
 
     Ok(())
 }
