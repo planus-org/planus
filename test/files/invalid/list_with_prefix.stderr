@@ -1,0 +1,7 @@
+[0m[1m[38;5;9merror[0m[1m: Cannot use prefix sign on lists[0m
+  [0m[34m┌─[0m test/files/invalid/list_with_prefix.fbs:1:14
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m table foo(x: [0m[31m+[][0m) {}
+  [0m[34m│[0m              [0m[31m^^^[0m
+
+Error: Bailing because of errors

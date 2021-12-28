@@ -69,12 +69,6 @@ pub trait ToOwned {
 }
 
 #[doc(hidden)]
-#[allow(clippy::missing_safety_doc)]
-// TODO: only intended to be implemented by us, but we should write a safety
-//       comment anyway
-// TODO: What *are* the safety requirements again? I think they are
-// that we need to never read the pointer and fill in all of the bytes,
-// but do we actually do that for structs?
 pub trait WriteAsPrimitive<P> {
     fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32);
 }

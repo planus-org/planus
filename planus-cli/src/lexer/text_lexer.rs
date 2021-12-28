@@ -81,5 +81,3 @@ impl Text {
         out
     }
 }
-
-// TODO: tests

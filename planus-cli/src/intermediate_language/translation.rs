@@ -7,6 +7,7 @@ use crate::{
     ast::{self, FloatType, LiteralKind, NamespacePath},
     ctx::Ctx,
     error::ErrorKind,
+    intermediate_language::checks::compatibility,
     util::{
         align_up,
         sorted_map::{SortedMap, SortedSet},
@@ -54,6 +55,7 @@ impl<'a> Translator<'a> {
     }
 
     pub fn add_schema(&mut self, schema: &ast::Schema) {
+        compatibility::check_ast(self.ctx, schema);
         let mut namespace_path = if let Some((_span, path)) = &schema.namespace {
             AbsolutePath::from_ctx(self.ctx, &path.parts)
         } else {
@@ -177,11 +179,8 @@ impl<'a> Translator<'a> {
         }
         self.ctx.emit_error(
             ErrorKind::UNKNOWN_IDENTIFIER,
-            std::iter::once(
-                Label::primary(current_file_id, namespace_path.span).with_message("Unknown type"),
-            )
-            .chain(hints),
-            None,
+            std::iter::once(Label::primary(current_file_id, namespace_path.span)).chain(hints),
+            Some("Unknown type"),
         );
         None
     }
@@ -313,7 +312,11 @@ impl<'a> Translator<'a> {
                     _ => unreachable!(),
                 }
             }
-            (LiteralKind::Float { is_negative, value }, SimpleType(Float(type_))) => self
+            (
+                LiteralKind::Float { is_negative, value }
+                | LiteralKind::Integer { is_negative, value },
+                SimpleType(Float(type_)),
+            ) => self
                 .translate_float(literal.span, *is_negative, value, type_)
                 .map(Literal::Float),
             (LiteralKind::String(s), String) => Some(Literal::String(s.clone())),
@@ -459,6 +462,14 @@ impl<'a> Translator<'a> {
                             padding_after_field: u32::MAX,
                         },
                     )),
+                    TypeKind::Array(_, _) => {
+                        self.ctx.emit_error(
+                            ErrorKind::TYPE_ERROR,
+                            std::iter::once(Label::primary(current_file_id, field.type_.span)),
+                            Some("Arrays are not currently supported"),
+                        );
+                        None
+                    }
                     _ => {
                         self.ctx.emit_error(
                             ErrorKind::TYPE_ERROR,
@@ -504,7 +515,9 @@ impl<'a> Translator<'a> {
                 ast::TypeDeclarationKind::Union(decl) => DeclarationKind::Union(
                     self.translate_union(current_namespace, current_file_id, decl),
                 ),
-                ast::TypeDeclarationKind::RpcService(_decl) => todo!(),
+                ast::TypeDeclarationKind::RpcService(decl) => DeclarationKind::RpcService(
+                    self.translate_rpc_service(current_namespace, current_file_id, decl),
+                ),
             };
 
         Declaration {
@@ -793,6 +806,17 @@ impl<'a> Translator<'a> {
             object_alignment: u32::MAX,
             deprecated,
         })
+    }
+
+    fn translate_rpc_service(
+        &self,
+        _current_namespace: &AbsolutePath,
+        _current_file_id: FileId,
+        _decl: &ast::RpcService,
+    ) -> RpcService {
+        RpcService {
+            methods: Default::default(),
+        }
     }
 
     fn translate_table(

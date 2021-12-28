@@ -35,5 +35,6 @@ bitflags::bitflags! {
         const TYPE_DEFINED_TWICE = 0x40;
         const FIELD_DEFINED_TWICE = 0x80;
         const FILE_ORDER = 0x100;
+        const NOT_SUPPORTED = 0x200;
     }
 }

@@ -1,27 +1,28 @@
-struct Foo {}
 table Foo {}
+union Foo {}
 
+table Bar {}
 
 struct A0 {
-	x: uint32;
-	x: string;
+  x: uint32;
+  x: string;
 }
 
 table A1 {
-	x: uint32;
-	x: string;
+  x: uint32;
+  x: string;
 }
 
 enum A2: uint8 {
- X = 0, X = 1
+  X = 0, X = 1
 }
 
 union A3 {
- Foo, Foo
+  Foo, Foo
 }
 
 union A4 {
- X: A0, X: A1
+  X: Foo, X: Bar
 }
 
 rpc_service A5 {

@@ -1,0 +1,2 @@
+namespace A;
+namespace B;

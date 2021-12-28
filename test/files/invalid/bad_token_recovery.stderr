@@ -1,0 +1,13 @@
+[0m[1m[38;5;9merror[0m[1m: unrecognized token `identifier "blabla"`, expected one of "attribute", "enum", "file_extension", "file_identifier", "include", "namespace", "native_include", "root_type", "rpc_service", "struct", "table", "union", end_of_stream[0m
+  [0m[34m┌─[0m test/files/invalid/bad_token_recovery.fbs:1:1
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m [0m[31mblabla[0m "foo";
+  [0m[34m│[0m [0m[31m^^^^^^[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/foo": No such file or directory (os error 2)[0m
+  [0m[34m┌─[0m test/files/invalid/bad_token_recovery.fbs:3:9
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m include [0m[31m"foo"[0m;
+  [0m[34m│[0m         [0m[31m^^^^^[0m
+
+Error: Bailing because of errors

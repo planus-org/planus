@@ -1,8 +1,5 @@
 //! Concrete syntax tree (aka syntax tree including every token with a span)
 
-// TODO: Use bumpalo
-
-// mod comments;
 mod pretty_print;
 mod types;
 

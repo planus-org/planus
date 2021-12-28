@@ -1,0 +1,63 @@
+[0m[1m[38;5;9merror[0m[1m: cannot define type Foo twice[0m
+  [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:1:1
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m table Foo {}
+  [0m[34m│[0m [0m[34m------------[0m [0m[34mfirst definition was here[0m
+[0m[34m2[0m [0m[34m│[0m union Foo {}
+  [0m[34m│[0m [0m[34m------------[0m [0m[34msecond definition was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define field x twice[0m
+  [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:7:3
+  [0m[34m│[0m
+[0m[34m7[0m [0m[34m│[0m   x: uint32;
+  [0m[34m│[0m   [0m[34m----------[0m [0m[34mfirst field was here[0m
+[0m[34m8[0m [0m[34m│[0m   x: string;
+  [0m[34m│[0m   [0m[34m----------[0m [0m[34msecond field was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define field x twice[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:12:3
+   [0m[34m│[0m
+[0m[34m12[0m [0m[34m│[0m   x: uint32;
+   [0m[34m│[0m   [0m[34m----------[0m [0m[34mfirst field was here[0m
+[0m[34m13[0m [0m[34m│[0m   x: string;
+   [0m[34m│[0m   [0m[34m----------[0m [0m[34msecond field was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define variant X twice[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:17:3
+   [0m[34m│[0m
+[0m[34m17[0m [0m[34m│[0m   X = 0, X = 1
+   [0m[34m│[0m   [0m[34m------[0m [0m[34m-----[0m [0m[34msecond variant was here[0m
+   [0m[34m│[0m   [0m[34m│[0m       
+   [0m[34m│[0m   [0m[34mfirst variant was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define union variant with type Foo twice[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:21:3
+   [0m[34m│[0m
+[0m[34m21[0m [0m[34m│[0m   Foo, Foo
+   [0m[34m│[0m   [0m[34m----[0m [0m[34m---[0m [0m[34msecond variant was here[0m
+   [0m[34m│[0m   [0m[34m│[0m     
+   [0m[34m│[0m   [0m[34mfirst variant was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define union variant with name X twice[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:25:3
+   [0m[34m│[0m
+[0m[34m25[0m [0m[34m│[0m   X: Foo, X: Bar
+   [0m[34m│[0m   [0m[34m-------[0m [0m[34m------[0m [0m[34msecond variant was here[0m
+   [0m[34m│[0m   [0m[34m│[0m        
+   [0m[34m│[0m   [0m[34mfirst variant was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot define rpc method x twice[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:29:3
+   [0m[34m│[0m
+[0m[34m29[0m [0m[34m│[0m   x(string): string;
+   [0m[34m│[0m   [0m[34m------------------[0m [0m[34mfirst method was here[0m
+[0m[34m30[0m [0m[34m│[0m   x(uint32): uint32;
+   [0m[34m│[0m   [0m[34m------------------[0m [0m[34msecond method was here[0m
+
+[0m[1m[38;5;9merror[0m[1m: Rpc services are not currently supported[0m
+   [0m[34m┌─[0m test/files/invalid/defined_twice.fbs:28:1
+   [0m[34m│[0m
+[0m[34m28[0m [0m[34m│[0m [0m[31mrpc_service A5[0m {
+   [0m[34m│[0m [0m[31m^^^^^^^^^^^^^^[0m
+
+Error: Bailing because of errors

@@ -15,7 +15,7 @@ pub struct Command {
 impl Command {
     pub fn run(self, _options: super::AppOptions) -> Result<()> {
         let mut ctx = Ctx::default();
-        let file_id = ctx.add_file(&self.file).unwrap();
+        let file_id = ctx.add_file(&self.file, []).unwrap();
         if let Some(parsed) = ctx.parse_file(file_id) {
             if ctx.has_errors() && !self.ignore_errors {
                 anyhow::bail!("Bailing because of errors");

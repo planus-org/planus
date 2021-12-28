@@ -45,9 +45,6 @@ extern {
   }
 }
 
-// TODO: docstrings
-// TODO: error handling
-
 pub Schema: Schema<'input> =
   <l: @L>
     <declarations: Declaration*>

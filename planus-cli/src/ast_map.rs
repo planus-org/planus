@@ -2,7 +2,7 @@ use codespan::FileId;
 
 use crate::{
     ast::Schema,
-    ctx::Ctx,
+    ctx::{Ctx, FullSpan, Labels},
     util::sorted_map::{sorted_map, SortedMap, SortedSet},
 };
 
@@ -17,9 +17,9 @@ impl AstMap {
     }
 
     pub fn add_files_recursively(&mut self, ctx: &mut Ctx, file_id: FileId) {
-        let mut todo = vec![file_id];
+        let mut queue = vec![file_id];
 
-        while let Some(file_id) = todo.pop() {
+        while let Some(file_id) = queue.pop() {
             match self.asts.entry(file_id) {
                 sorted_map::Entry::Occupied(_) => continue,
                 sorted_map::Entry::Vacant(entry) => {
@@ -28,9 +28,19 @@ impl AstMap {
                         let dependencies = ast
                             .includes
                             .iter()
-                            .filter_map(|literal| ctx.add_relative_path(file_id, &literal.value))
+                            .filter_map(|literal| {
+                                ctx.add_relative_path(
+                                    file_id,
+                                    &literal.value,
+                                    FullSpan {
+                                        file_id,
+                                        span: literal.span,
+                                    }
+                                    .into_labels(),
+                                )
+                            })
                             .collect::<Vec<_>>();
-                        todo.extend_from_slice(&dependencies);
+                        queue.extend_from_slice(&dependencies);
                         entry.insert((ast, dependencies));
                     }
                 }

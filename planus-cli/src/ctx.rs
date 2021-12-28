@@ -187,12 +187,16 @@ impl Ctx {
         }
         self.emit_error(
             ErrorKind::DECLARATION_PARSE_ERROR,
-            (FullSpan { file_id, span }, msg.as_str()).into_labels(),
-            None,
+            FullSpan { file_id, span }.into_labels(),
+            Some(msg.as_str()),
         );
     }
 
-    pub fn add_file<P: AsRef<Path>>(&mut self, path: P) -> Option<FileId> {
+    pub fn add_file<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        labels: impl IntoIterator<Item = Label<FileId>>,
+    ) -> Option<FileId> {
         let normalized_path = crate::util::normalize_path(path.as_ref());
         match self.file_map.entry(normalized_path) {
             indexmap::map::Entry::Occupied(entry) => Some(*entry.into_mut()),
@@ -207,8 +211,8 @@ impl Ctx {
                     Err(e) => {
                         self.emit_error(
                             ErrorKind::DECLARATION_PARSE_ERROR,
-                            std::iter::empty(),
-                            Some(&format!("Could not read file {:?}: {:?}", path, e)),
+                            labels,
+                            Some(&format!("Could not read file {:?}: {}", path, e)),
                         );
                         None
                     }
@@ -230,12 +234,17 @@ impl Ctx {
         }
     }
 
-    pub fn add_relative_path(&mut self, file_id: FileId, relative: &str) -> Option<FileId> {
+    pub fn add_relative_path(
+        &mut self,
+        file_id: FileId,
+        relative: &str,
+        labels: impl IntoIterator<Item = Label<FileId>>,
+    ) -> Option<FileId> {
         let path = self.get_filename(file_id);
         let mut path = PathBuf::from(path);
         path.push("..");
         path.push(&relative);
-        self.add_file(crate::util::normalize_path(&path))
+        self.add_file(crate::util::normalize_path(&path), labels)
     }
 
     pub fn errors_seen(&self) -> ErrorKind {

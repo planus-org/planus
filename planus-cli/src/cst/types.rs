@@ -365,13 +365,13 @@ mod token_metadata_iterator {
     }
 
     pub(super) struct Iter<'a, 'input> {
-        todo: Vec<Node<'a, 'input>>,
+        queue: Vec<Node<'a, 'input>>,
     }
 
     impl<'a, 'input> Iter<'a, 'input> {
         pub(super) fn new(initial: Node<'a, 'input>) -> Self {
             Self {
-                todo: vec![initial],
+                queue: vec![initial],
             }
         }
     }
@@ -380,46 +380,47 @@ mod token_metadata_iterator {
         type Item = &'a TokenMetadata<'input>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            Some(match self.todo.pop()? {
+            Some(match self.queue.pop()? {
                 Node::Direct(token_metadata) => token_metadata,
                 Node::Expr(ExprKind::Ident(tok)) => &tok.token_metadata,
                 Node::Expr(ExprKind::Integer(tok)) => &tok.token_metadata,
                 Node::Expr(ExprKind::Float(tok)) => &tok.token_metadata,
                 Node::Expr(ExprKind::String(tok)) => &tok.token_metadata,
                 Node::Expr(ExprKind::List(literal)) => {
-                    self.todo
+                    self.queue
                         .push(Node::Direct(&literal.end_bracket.token_metadata));
                     for value in literal.values.iter().rev() {
                         if let Some(comma) = &value.comma {
-                            self.todo.push(Node::Direct(&comma.token_metadata));
+                            self.queue.push(Node::Direct(&comma.token_metadata));
                         }
-                        self.todo.push(Node::Expr(&value.expr.kind));
+                        self.queue.push(Node::Expr(&value.expr.kind));
                     }
                     &literal.start_bracket.token_metadata
                 }
                 Node::Expr(ExprKind::Signed { sign, inner }) => {
-                    self.todo.push(Node::Expr(&inner.kind));
+                    self.queue.push(Node::Expr(&inner.kind));
                     &sign.token.token_metadata
                 }
                 Node::Type(TypeKind::Vector(typ)) => {
-                    self.todo
+                    self.queue
                         .push(Node::Direct(&typ.end_bracket.token_metadata));
-                    self.todo.push(Node::Type(&typ.inner_type.kind));
+                    self.queue.push(Node::Type(&typ.inner_type.kind));
                     &typ.start_bracket.token_metadata
                 }
                 Node::Type(TypeKind::Array(typ)) => {
-                    self.todo
+                    self.queue
                         .push(Node::Direct(&typ.end_bracket.token_metadata));
-                    self.todo.push(Node::Expr(&typ.size.kind));
-                    self.todo.push(Node::Direct(&typ.colon.token_metadata));
-                    self.todo.push(Node::Type(&typ.inner_type.kind));
+                    self.queue.push(Node::Expr(&typ.size.kind));
+                    self.queue.push(Node::Direct(&typ.colon.token_metadata));
+                    self.queue.push(Node::Type(&typ.inner_type.kind));
                     &typ.start_bracket.token_metadata
                 }
                 Node::Type(TypeKind::Path(typ)) => {
                     let mut result = &typ.final_segment.token_metadata;
                     for segment in typ.initial_segments.iter().rev() {
-                        self.todo.push(Node::Direct(result));
-                        self.todo.push(Node::Direct(&segment.period.token_metadata));
+                        self.queue.push(Node::Direct(result));
+                        self.queue
+                            .push(Node::Direct(&segment.period.token_metadata));
                         result = &segment.ident.token_metadata;
                     }
                     result
