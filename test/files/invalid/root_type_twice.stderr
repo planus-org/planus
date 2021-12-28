@@ -1,9 +1,9 @@
 [0m[1m[38;5;9merror[0m[1m: Cannot set root_type twice[0m
-  [0m[34m┌─[0m test/files/invalid/root_type_twice.fbs:2:1
+  [0m[34m┌─[0m test/files/invalid/root_type_twice.fbs:5:1
   [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m [0m[31mroot_type X;[0m
+[0m[34m5[0m [0m[34m│[0m [0m[31mroot_type X;[0m
   [0m[34m│[0m [0m[31m^^^^^^^^^^^^[0m [0m[31mfirst declaration was here[0m
-[0m[34m3[0m [0m[34m│[0m [0m[31mroot_type Y;[0m
+[0m[34m6[0m [0m[34m│[0m [0m[31mroot_type Y;[0m
   [0m[34m│[0m [0m[31m^^^^^^^^^^^^[0m [0m[31madditional declaration was here[0m
 
 Error: Bailing because of errors

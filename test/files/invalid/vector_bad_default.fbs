@@ -1,3 +1,0 @@
-table Foo {
-  x: [bool] = [true];
-}

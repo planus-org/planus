@@ -1,7 +1,7 @@
 [0m[1m[38;5;9merror[0m[1m: Rpc services are not currently supported[0m
   [0m[34m┌─[0m test/files/invalid/rpc_service_as_type.fbs:5:1
   [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m [0m[31mrpc_service Bar[0m {}
+[0m[34m5[0m [0m[34m│[0m [0m[31mrpc_service Bar[0m {
   [0m[34m│[0m [0m[31m^^^^^^^^^^^^^^^[0m
 
 [0m[1m[38;5;9merror[0m[1m: Cannot use the RpcService Bar in a type context[0m
@@ -10,7 +10,7 @@
 [0m[34m2[0m [0m[34m│[0m   x: [0m[31mBar[0m;
   [0m[34m│[0m      [0m[31m^^^[0m [0m[31mRpc services cannot be used as types[0m
   [0m[34m·[0m
-[0m[34m5[0m [0m[34m│[0m rpc_service Bar {}
+[0m[34m5[0m [0m[34m│[0m rpc_service Bar {
   [0m[34m│[0m [0m[34m---------------[0m [0m[34mService was defined here[0m
 
 Error: Bailing because of errors

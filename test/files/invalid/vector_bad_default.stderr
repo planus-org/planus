@@ -1,7 +1,0 @@
-[0m[1m[38;5;9merror[0m[1m: Unsupported default value[0m
-  [0m[34m┌─[0m test/files/invalid/vector_bad_default.fbs:2:15
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   x: [bool] = [0m[31m[true][0m;
-  [0m[34m│[0m               [0m[31m^^^^^^[0m [0m[31mVectors only support default values of null or the empty list[0m
-
-Error: Bailing because of errors

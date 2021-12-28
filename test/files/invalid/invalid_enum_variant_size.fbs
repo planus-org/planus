@@ -1,0 +1,11 @@
+enum Foo: uint8 {
+  X = -1
+}
+
+enum Bar: uint8 {
+  X = 256
+}
+
+enum Baz: int8 {
+  X = 128
+}

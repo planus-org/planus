@@ -5,7 +5,7 @@ table Bar {}
 
 struct A0 {
   x: uint32;
-  x: string;
+  x: uint8;
 }
 
 table A1 {

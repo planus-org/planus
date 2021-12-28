@@ -103,7 +103,7 @@ impl<'a> Translator<'a> {
                     alignment: u32::MAX,
                 },
                 ast::TypeDeclarationKind::Enum(decl) => {
-                    TypeDescription::Enum(self.translate_enum(decl))
+                    TypeDescription::Enum(self.translate_enum(schema.file_id, decl))
                 }
                 ast::TypeDeclarationKind::Union(_) => TypeDescription::Union,
                 ast::TypeDeclarationKind::RpcService(_) => TypeDescription::RpcService,
@@ -193,6 +193,7 @@ impl<'a> Translator<'a> {
 
     fn translate_integer(
         &self,
+        file_id: FileId,
         span: Span,
         is_negative: bool,
         v: &str,
@@ -201,14 +202,30 @@ impl<'a> Translator<'a> {
         use IntegerLiteral::*;
 
         Some(match type_ {
-            ast::IntegerType::U8 => U8(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::U16 => U16(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::U32 => U32(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::U64 => U64(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::I8 => I8(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::I16 => I16(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::I32 => I32(self.translate_integer_generic(span, is_negative, v)?),
-            ast::IntegerType::I64 => I64(self.translate_integer_generic(span, is_negative, v)?),
+            ast::IntegerType::U8 => {
+                U8(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::U16 => {
+                U16(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::U32 => {
+                U32(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::U64 => {
+                U64(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::I8 => {
+                I8(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::I16 => {
+                I16(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::I32 => {
+                I32(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
+            ast::IntegerType::I64 => {
+                I64(self.translate_integer_generic(file_id, span, is_negative, v)?)
+            }
         })
     }
 
@@ -217,10 +234,13 @@ impl<'a> Translator<'a> {
             + num_traits::CheckedSub
             + num_traits::CheckedMul
             + num_traits::CheckedNeg
-            + num_traits::NumCast,
+            + num_traits::NumCast
+            + num_traits::Bounded
+            + std::fmt::Display,
     >(
         &self,
-        _span: Span,
+        file_id: FileId,
+        span: Span,
         is_negative: bool,
         v: &str,
     ) -> Option<T> {
@@ -239,6 +259,7 @@ impl<'a> Translator<'a> {
                 b'A'..=b'F' if base == 16 => c - b'A' + 0xa,
                 _ => {
                     // TODO error message
+                    // Can it even happen?
                     return None;
                 }
             };
@@ -252,7 +273,16 @@ impl<'a> Translator<'a> {
             }) {
                 Some(r) => result = r,
                 None => {
-                    // TODO error message
+                    self.ctx.emit_error(
+                        ErrorKind::NUMERICAL_RANGE_ERROR,
+                        [Label::primary(file_id, span)],
+                        Some(&format!(
+                            "Integer is out of range for type {} (range is [{}; {}])",
+                            std::any::type_name::<T>(),
+                            T::min_value(),
+                            T::max_value(),
+                        )),
+                    );
                     return None;
                 }
             }
@@ -290,13 +320,18 @@ impl<'a> Translator<'a> {
         match (&literal.kind, &type_.kind) {
             (LiteralKind::Bool(value), SimpleType(Bool)) => Some(Literal::Bool(*value)),
             (LiteralKind::Integer { is_negative, value }, SimpleType(Integer(type_))) => self
-                .translate_integer(literal.span, *is_negative, value, type_)
+                .translate_integer(current_file_id, literal.span, *is_negative, value, type_)
                 .map(Literal::Int),
             (LiteralKind::Integer { is_negative, value }, SimpleType(Enum(decl_index))) => {
                 match &self.descriptions[decl_index.0] {
                     TypeDescription::Enum(decl) => {
-                        let int =
-                            self.translate_integer(literal.span, *is_negative, value, &decl.type_)?;
+                        let int = self.translate_integer(
+                            current_file_id,
+                            literal.span,
+                            *is_negative,
+                            value,
+                            &decl.type_,
+                        )?;
                         if let Some(variant_index) = decl.variants.get_index_of(&int) {
                             Some(Literal::EnumTag {
                                 variant_index,
@@ -858,7 +893,7 @@ impl<'a> Translator<'a> {
         }
     }
 
-    fn translate_enum(&self, decl: &ast::Enum) -> Enum {
+    fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
         let mut alignment = decl.type_.byte_size();
         for m in &decl.metadata {
             #[allow(clippy::single_match)]
@@ -868,6 +903,7 @@ impl<'a> Translator<'a> {
                         match &meta_value.kind {
                             ast::LiteralKind::Integer { is_negative, value } => {
                                 if let Some(value) = self.translate_integer_generic::<u32>(
+                                    current_file_id,
                                     meta_value.span,
                                     *is_negative,
                                     value,
@@ -894,6 +930,7 @@ impl<'a> Translator<'a> {
             let name = self.ctx.resolve_identifier(*ident);
             if let Some(assignment) = &variant.value {
                 if let Some(v) = self.translate_integer(
+                    current_file_id,
                     assignment.span,
                     assignment.is_negative,
                     &assignment.value,

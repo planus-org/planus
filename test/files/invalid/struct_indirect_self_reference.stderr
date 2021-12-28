@@ -1,0 +1,13 @@
+[0m[1m[38;5;9merror[0m[1m: Structs are not allowed to contain themselves, as it implies infinite size[0m
+  [0m[34m┌─[0m test/files/invalid/struct_indirect_self_reference.fbs:1:1
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m struct Foo {
+  [0m[34m│[0m [0m[34m----------[0m [0m[34mFoo contains itself through Bar[0m
+
+[0m[1m[38;5;9merror[0m[1m: Structs are not allowed to contain themselves, as it implies infinite size[0m
+  [0m[34m┌─[0m test/files/invalid/struct_indirect_self_reference.fbs:6:1
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m struct Bar {
+  [0m[34m│[0m [0m[34m----------[0m [0m[34mBar contains itself through Foo[0m
+
+Error: Bailing because of errors

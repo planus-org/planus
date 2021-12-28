@@ -1,0 +1,9 @@
+struct Foo {
+  x: uint64;
+  y: Bar;
+}
+
+struct Bar {
+  x: uint64;
+  y: Foo;
+}

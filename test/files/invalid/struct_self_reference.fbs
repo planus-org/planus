@@ -1,7 +1,4 @@
 struct Foo {
-  x: Bar;
-}
-
-struct Bar {
+  x: uint64;
   y: Foo;
 }

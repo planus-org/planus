@@ -1,3 +1,6 @@
 // We do not currently use root types for anything... :(
+table X {}
+table Y {}
+
 root_type X;
 root_type Y;
