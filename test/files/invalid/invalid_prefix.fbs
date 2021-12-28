@@ -1,0 +1,7 @@
+table Foo {
+  x0: [bool] = +[];
+  x1: bool = +true;
+  x2: uint8 = +null;
+  x3: string = +"hello";
+  x4: float = +Hello;
+}

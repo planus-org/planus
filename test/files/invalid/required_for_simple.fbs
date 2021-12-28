@@ -1,0 +1,3 @@
+table Foo {
+  x: uint8 (required);
+}

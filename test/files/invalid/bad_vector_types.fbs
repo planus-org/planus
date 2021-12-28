@@ -1,0 +1,6 @@
+table Foo {
+  x: [Bar];
+  y: [[Foo: 1]];
+}
+
+union Bar {}

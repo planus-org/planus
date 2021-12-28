@@ -1,0 +1,9 @@
+[0m[1m[38;5;9merror[0m[1m: Cannot set file_identifier twice[0m
+  [0m[34m┌─[0m test/files/invalid/file_identifier_twice.fbs:2:1
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m file_identifier "FOO";
+  [0m[34m│[0m [0m[34m----------------------[0m [0m[34mfirst declaration was here[0m
+[0m[34m2[0m [0m[34m│[0m [0m[31mfile_identifier "BAR";[0m
+  [0m[34m│[0m [0m[31m^^^^^^^^^^^^^^^^^^^^^^[0m [0m[31madditional declaration was here[0m
+
+Error: Bailing because of errors

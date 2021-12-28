@@ -13,8 +13,9 @@ impl Command {
         let mut ctx = Ctx::default();
         let mut ast_map = AstMap::default();
         for file in self.files {
-            let file_id = ctx.add_file(&file, []).unwrap();
-            ast_map.add_files_recursively(&mut ctx, file_id);
+            if let Some(file_id) = ctx.add_file(&file, []) {
+                ast_map.add_files_recursively(&mut ctx, file_id);
+            }
         }
 
         let mut translator = Translator::new(&ctx, ast_map.reachability());

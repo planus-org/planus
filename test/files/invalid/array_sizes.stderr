@@ -1,0 +1,25 @@
+[0m[1m[38;5;9merror[0m[1m: size cannot be negative[0m
+  [0m[34m┌─[0m test/files/invalid/array_sizes.fbs:2:13
+  [0m[34m│[0m
+[0m[34m2[0m [0m[34m│[0m   x: [bool: [0m[31m-1[0m];
+  [0m[34m│[0m             [0m[31m^^[0m
+
+[0m[1m[38;5;9merror[0m[1m: size is too large[0m
+  [0m[34m┌─[0m test/files/invalid/array_sizes.fbs:3:13
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m   y: [bool: [0m[31m99999999999999999[0m];
+  [0m[34m│[0m             [0m[31m^^^^^^^^^^^^^^^^^[0m
+
+[0m[1m[38;5;9merror[0m[1m: Arrays are not currently supported in planus[0m
+  [0m[34m┌─[0m test/files/invalid/array_sizes.fbs:2:6
+  [0m[34m│[0m
+[0m[34m2[0m [0m[34m│[0m   x: [0m[31m[bool: -1][0m;
+  [0m[34m│[0m      [0m[31m^^^^^^^^^^[0m
+
+[0m[1m[38;5;9merror[0m[1m: Arrays are not currently supported in planus[0m
+  [0m[34m┌─[0m test/files/invalid/array_sizes.fbs:3:6
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m   y: [0m[31m[bool: 99999999999999999][0m;
+  [0m[34m│[0m      [0m[31m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+Error: Bailing because of errors

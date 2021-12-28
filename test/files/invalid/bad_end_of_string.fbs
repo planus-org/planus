@@ -1,0 +1,3 @@
+table Foo {
+  x: string = "hello;
+}

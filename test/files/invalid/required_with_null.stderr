@@ -1,0 +1,9 @@
+[0m[1m[38;5;9merror[0m[1m: Cannot setup field as both required and optional[0m
+  [0m[34m┌─[0m test/files/invalid/required_with_null.fbs:2:15
+  [0m[34m│[0m
+[0m[34m2[0m [0m[34m│[0m   x: string = [0m[31mnull[0m (required);
+  [0m[34m│[0m               [0m[31m^^^^[0m  [0m[34m--------[0m [0m[34mfield was declared required here[0m
+  [0m[34m│[0m               [0m[31m│[0m      
+  [0m[34m│[0m               [0m[31mfield was declared optional here[0m
+
+Error: Bailing because of errors

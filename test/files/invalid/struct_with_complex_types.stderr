@@ -1,0 +1,31 @@
+[0m[1m[38;5;9merror[0m[1m: Only simple types are permitted in structs[0m
+  [0m[34m┌─[0m test/files/invalid/struct_with_complex_types.fbs:2:7
+  [0m[34m│[0m
+[0m[34m2[0m [0m[34m│[0m   x0: [0m[31mstring[0m;
+  [0m[34m│[0m       [0m[31m^^^^^^[0m [0m[31mStrings in structs are not supported[0m
+
+[0m[1m[38;5;9merror[0m[1m: Only simple types are permitted in structs[0m
+  [0m[34m┌─[0m test/files/invalid/struct_with_complex_types.fbs:3:7
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m   x1: [0m[31mBar[0m;
+  [0m[34m│[0m       [0m[31m^^^[0m [0m[31mTables in structs are not supported[0m
+
+[0m[1m[38;5;9merror[0m[1m: Only simple types are permitted in structs[0m
+  [0m[34m┌─[0m test/files/invalid/struct_with_complex_types.fbs:4:7
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m   x2: [0m[31mBaz[0m;
+  [0m[34m│[0m       [0m[31m^^^[0m [0m[31mUnions in structs are not supported[0m
+
+[0m[1m[38;5;9merror[0m[1m: Only simple types are permitted in structs[0m
+  [0m[34m┌─[0m test/files/invalid/struct_with_complex_types.fbs:5:7
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m   x3: [0m[31m[bool][0m;
+  [0m[34m│[0m       [0m[31m^^^^^^[0m [0m[31mVectors in structs are not supported[0m
+
+[0m[1m[38;5;9merror[0m[1m: Arrays are not currently supported in planus[0m
+  [0m[34m┌─[0m test/files/invalid/struct_with_complex_types.fbs:6:7
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m   x4: [0m[31m[bool: 4][0m;
+  [0m[34m│[0m       [0m[31m^^^^^^^^^[0m
+
+Error: Bailing because of errors

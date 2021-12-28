@@ -1,5 +1,5 @@
-[0m[1m[38;5;9merror[0m[1m: Arrays are not currently supported[0m
-  [0m[34m┌─[0m test/files/invalid/array.fbs:2:6
+[0m[1m[38;5;9merror[0m[1m: Arrays are not currently supported in planus[0m
+  [0m[34m┌─[0m test/files/invalid/array_support.fbs:2:6
   [0m[34m│[0m
 [0m[34m2[0m [0m[34m│[0m   x: [0m[31m[uint8: 1][0m;
   [0m[34m│[0m      [0m[31m^^^^^^^^^^[0m

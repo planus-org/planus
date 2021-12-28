@@ -1,0 +1,4 @@
+table Foo {
+  x: float32 = NaN;
+  y: float32 = hello;
+}

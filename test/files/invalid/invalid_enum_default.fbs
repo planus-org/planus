@@ -1,0 +1,5 @@
+enum Foo: uint8 { X = 17 }
+
+table Bar {
+  x: Foo = 18;
+}

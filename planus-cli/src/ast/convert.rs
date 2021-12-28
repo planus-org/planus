@@ -148,7 +148,7 @@ impl<'ctx> CstConverter<'ctx> {
                 | LiteralKind::Null
                 | LiteralKind::Constant(_)
                 | LiteralKind::List(_) => {
-                    self_.emit_simple_error(ErrorKind::TYPE_ERROR, "expecting string literal")
+                    self_.emit_simple_error(ErrorKind::TYPE_ERROR, "expecting integer literal")
                 }
             }
         })
@@ -313,9 +313,9 @@ impl<'ctx> CstConverter<'ctx> {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
                 [
-                    Label::secondary(self.schema.file_id, root_type_span)
+                    Label::primary(self.schema.file_id, root_type_span)
                         .with_message("first declaration was here"),
-                    Label::secondary(self.schema.file_id, self.current_span)
+                    Label::primary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),
                 ],
                 Some("Cannot set root_type twice"),
@@ -328,7 +328,7 @@ impl<'ctx> CstConverter<'ctx> {
             self.emit_error(
                 ErrorKind::MISC_SEMANTIC_ERROR,
                 [
-                    Label::secondary(self.schema.file_id, file_extension_span)
+                    Label::primary(self.schema.file_id, file_extension_span)
                         .with_message("first declaration was here"),
                     Label::primary(self.schema.file_id, self.current_span)
                         .with_message("additional declaration was here"),

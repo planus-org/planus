@@ -1,0 +1,5 @@
+table Foo {
+  x: Bar;
+}
+
+rpc_service Bar {}

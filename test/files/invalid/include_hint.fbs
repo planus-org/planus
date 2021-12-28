@@ -1,0 +1,2 @@
+include "helpers/include_hint_helper1.fbs";
+include "helpers/include_hint_helper2.fbs";

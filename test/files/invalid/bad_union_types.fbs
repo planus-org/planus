@@ -1,0 +1,14 @@
+union A0 {
+  A: A0,
+  B: A1,
+  C: A2,
+  D: [bool],
+  E: [bool: 1],
+  F: bool,
+  G: uint8,
+  H: float32,
+  I: string,
+}
+
+struct A1 { x: bool; }
+enum A2: uint8 {}

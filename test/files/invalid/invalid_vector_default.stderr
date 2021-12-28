@@ -2,6 +2,6 @@
   [0m[34m┌─[0m test/files/invalid/invalid_vector_default.fbs:2:17
   [0m[34m│[0m
 [0m[34m2[0m [0m[34m│[0m     x:[int32] = [0m[31m[1][0m;
-  [0m[34m│[0m                 [0m[31m^^^[0m [0m[31mvectors only support default values of null or the empty list[0m
+  [0m[34m│[0m                 [0m[31m^^^[0m [0m[31mVectors only support default values of null or the empty list[0m
 
 Error: Bailing because of errors

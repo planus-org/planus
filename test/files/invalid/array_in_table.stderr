@@ -1,0 +1,7 @@
+[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
+  [0m[34m┌─[0m test/files/invalid/array_in_table.fbs:2:6
+  [0m[34m│[0m
+[0m[34m2[0m [0m[34m│[0m   x: [0m[31m[bool: 3][0m;
+  [0m[34m│[0m      [0m[31m^^^^^^^^^[0m [0m[31mArrays in tables are not supported[0m
+
+Error: Bailing because of errors

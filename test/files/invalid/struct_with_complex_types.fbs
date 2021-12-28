@@ -1,0 +1,10 @@
+struct Foo {
+  x0: string;
+  x1: Bar;
+  x2: Baz;
+  x3: [bool];
+  x4: [bool: 4];
+}
+
+table Bar {}
+union Baz {}

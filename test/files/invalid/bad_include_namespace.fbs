@@ -1,0 +1,5 @@
+include "helpers/bad_include_namespace_helper.fbs";
+
+namespace Foo;
+
+table Foo {}

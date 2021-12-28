@@ -91,18 +91,6 @@ impl Ctx {
         self.errors_seen.set(self.errors_seen.get() | error_type);
     }
 
-    pub fn emit_warning(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
-        self.emit(Severity::Warning, labels, msg)
-    }
-
-    pub fn emit_note(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
-        self.emit(Severity::Note, labels, msg)
-    }
-
-    pub fn emit_bug(&self, labels: impl IntoIterator<Item = Label<FileId>>, msg: Option<&str>) {
-        self.emit(Severity::Bug, labels, msg)
-    }
-
     pub fn emit_simple_error(&self, error_type: ErrorKind, file_id: FileId, span: Span, msg: &str) {
         self.emit_error(error_type, [Label::primary(file_id, span)], Some(msg))
     }
@@ -142,7 +130,7 @@ impl Ctx {
             }
             ParseError::User { error } => {
                 span = error.span;
-                msg = format!("{:?}", error.err);
+                msg = error.err.to_string();
             }
         }
         self.emit_error(
