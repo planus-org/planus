@@ -10,25 +10,27 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 fn bench_serialize(c: &mut Criterion) {
     let mut group = c.benchmark_group("Serialize");
     for i in [10000].into_iter() {
+        let mut buffer = Buffer::new();
         group.bench_with_input(BenchmarkId::new("planus", i), &i, |b, i| {
-            b.iter(|| serialize_planus(*i))
+            b.iter(|| serialize_planus(&mut buffer, *i))
         });
+        let mut buffer = flatbuffers::FlatBufferBuilder::new();
         group.bench_with_input(BenchmarkId::new("flatbuffers", i), &i, |b, i| {
-            b.iter(|| serialize_flatbuffers(*i))
+            b.iter(|| serialize_flatbuffers(&mut buffer, *i))
         });
     }
     group.finish();
 }
 
-fn serialize_flatbuffers(iterations: u64) {
+fn serialize_flatbuffers(builder: &mut flatbuffers::FlatBufferBuilder, iterations: u64) {
     for _ in 0..iterations {
-        let mut builder = flatbuffers::FlatBufferBuilder::new();
-        let offset = flatc::MyTable3::create(&mut builder, &flatc::MyTable3Args { x: 4 });
+        builder.reset();
+        let offset = flatc::MyTable3::create(builder, &flatc::MyTable3Args { x: 4 });
         let offset = builder.create_vector(&[offset]);
-        let w_offset = flatc::MyTable3::create(&mut builder, &flatc::MyTable3Args { x: 1337 })
-            .as_union_value();
+        let w_offset =
+            flatc::MyTable3::create(builder, &flatc::MyTable3Args { x: 1337 }).as_union_value();
         let offset = flatc::MyTable::create(
-            &mut builder,
+            builder,
             &flatc::MyTableArgs {
                 x: 3,
                 y: true,
@@ -39,7 +41,7 @@ fn serialize_flatbuffers(iterations: u64) {
             },
         );
         let offset = flatc::MyTable2::create(
-            &mut builder,
+            builder,
             &flatc::MyTable2Args {
                 x: 1,
                 y: Some(&flatc::MyStruct::new(2, true, flatc::MyEnumse::Apple)),
@@ -51,22 +53,15 @@ fn serialize_flatbuffers(iterations: u64) {
     }
 }
 
-fn serialize_planus(iterations: u64) {
+fn serialize_planus(buffer: &mut Buffer, iterations: u64) {
     for _ in 0..iterations {
-        let mut buffer = Buffer::new();
-        let table3: &[Offset<MyTable3>] = &[MyTable3::create(&mut buffer, 4)];
-        let w = MyTable3::create(&mut buffer, 1337);
-        let w = HelloUnion::create_y(&mut buffer, w);
-        let offset = MyTable::create(
-            &mut buffer,
-            3,
-            true,
-            MyEnumse::Banaaaaaaaan,
-            table3,
-            Some(w),
-        );
+        buffer.clear();
+        let table3: &[Offset<MyTable3>] = &[MyTable3::create(buffer, 4)];
+        let w = MyTable3::create(buffer, 1337);
+        let w = HelloUnion::create_y(buffer, w);
+        let offset = MyTable::create(buffer, 3, true, MyEnumse::Banaaaaaaaan, table3, Some(w));
         let offset = MyTable2::create(
-            &mut buffer,
+            buffer,
             1,
             MyStruct {
                 foo: 2,
