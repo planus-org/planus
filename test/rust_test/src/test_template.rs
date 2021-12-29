@@ -40,14 +40,7 @@ fn test_serialize() {
 
             let mut bin_path = file_path.clone();
             bin_path.set_extension("bin");
-            crate::tests::compare_regenerate_file(
-                &bin_path,
-                data.to_vec(),
-                identity,
-                identity,
-                should_regenerate,
-            )
-            .unwrap();
+            crate::tests::compare_regenerate_file(&bin_path, data, should_regenerate).unwrap();
         }
     }
 }
@@ -76,12 +69,11 @@ fn test_deserialize() {
 
                 let mut debug_path = file_path.clone();
                 debug_path.set_extension("txt");
+                let root_dbg = format!("{:#?}", root_ref);
 
-                crate::tests::compare_regenerate_file(
+                crate::tests::compare_regenerate_file_str(
                     &debug_path,
-                    format!("{:#?}", root_ref),
-                    |s| s.into_bytes(),
-                    |v| String::from_utf8(v).unwrap(),
+                    &root_dbg,
                     should_regenerate,
                 )
                 .unwrap();

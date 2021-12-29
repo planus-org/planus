@@ -15,28 +15,35 @@ pub mod tests {
     use anyhow::Result;
     use std::path::Path;
 
-    pub fn compare_regenerate_file<P, S, D, R>(
-        path: P,
-        new_val: R,
-        serialize: S,
-        deserialize: D,
+    pub fn compare_regenerate_file(
+        path: impl AsRef<Path>,
+        new_val: &[u8],
         should_regenerate: bool,
-    ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        D: Fn(Vec<u8>) -> R,
-        S: Fn(R) -> Vec<u8>,
-        R: PartialEq + std::fmt::Debug,
-    {
+    ) -> Result<()> {
         let path = path.as_ref();
 
         if path.exists() && !should_regenerate {
             let data = std::fs::read(path)?;
-            let prev_val = deserialize(data);
-            similar_asserts::assert_eq!(prev_val, new_val);
+            similar_asserts::assert_eq!(data, new_val);
         } else {
-            let data = serialize(new_val);
-            std::fs::write(path, &data)?;
+            std::fs::write(path, new_val)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn compare_regenerate_file_str(
+        path: impl AsRef<Path>,
+        new_val: &str,
+        should_regenerate: bool,
+    ) -> Result<()> {
+        let path = path.as_ref();
+
+        if path.exists() && !should_regenerate {
+            let data = std::fs::read_to_string(path)?;
+            similar_asserts::assert_str_eq!(data, new_val);
+        } else {
+            std::fs::write(path, &new_val)?;
         }
 
         Ok(())
