@@ -12,6 +12,14 @@ pub fn check_ast(ctx: &Ctx, schema: &ast::Schema) {
         );
     }
 
+    for attribute in &schema.attributes {
+        ctx.emit_error(
+            ErrorKind::NOT_SUPPORTED,
+            [Label::primary(schema.file_id, attribute.span)],
+            Some("User attributes are not supported"),
+        );
+    }
+
     for decl in schema.type_declarations.values() {
         match &decl.kind {
             ast::TypeDeclarationKind::RpcService(_) => {
