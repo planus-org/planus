@@ -41,6 +41,12 @@ fn test_serialize() {
             let mut bin_path = file_path.clone();
             bin_path.set_extension("bin");
             crate::tests::compare_regenerate_file(&bin_path, data, should_regenerate).unwrap();
+
+            let mut dump_path = file_path.clone();
+            dump_path.set_extension("dump.txt");
+            let dump = crate::hexdump::hexdump_flatbuffer_table(data);
+            crate::tests::compare_regenerate_file_str(&dump_path, &dump, should_regenerate)
+                .unwrap();
         }
     }
 }
