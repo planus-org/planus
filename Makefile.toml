@@ -8,19 +8,17 @@ default_to_workspace = false
 command = "cargo"
 args = ["build"]
 
-[tasks.generate]
+[tasks.cli-test]
 dependencies = ["build"]
 script = '''
     tmpdir=$(mktemp -d "/tmp/planus-generate-XXXXX")
-    mkdir -p build/rust
-    rm -f build/rust/*.rs
     for f in test/files/valid/*.fbs; do
-        if [[ -f $f ]]; then
+        if [ -f "$f" ]; then
             file_stem=$(basename -s .fbs $f)
             echo -n "Checking $f: "
             target/debug/planus check $f && true
 
-            if [[ $? -eq 0 ]]; then
+            if [ $? -eq 0 ]; then
                 echo -e "\e[0;32msuccess\e[0m"
             else
                 echo -e "\e[0;31mCheck failed\e[0m"
@@ -30,51 +28,52 @@ script = '''
     done
 
     for f in test/files/invalid/*.fbs; do
-        if [[ -f $f  ]]; then
+        if [ -f "$f"  ]; then
             file_stem=$(basename -s .fbs $f)
             echo -n "Checking $f: "
             target/debug/planus check $f 2> $tmpdir/$file_stem.stderr && true
             res=$?
-            if [[ $res -eq 0 ]]; then
+            if [ $res -eq 0 ]; then
                 echo -e "\e[0;31mcompiled\e[0m"
                 continue
-            elif [[ $res -eq 101 ]]; then
+            elif [ $res -eq 101 ]; then
                 echo -e "\e[0;31mpanic\e[0m"
                 continue
             fi
 
-            if [[ -f test/files/invalid/$file_stem.stderr ]]; then
-                diff -q test/files/invalid/$file_stem.stderr $tmpdir/$file_stem.stderr >/dev/null && true
-                if [[ $? -eq 0 ]]; then
+            if [ -f "test/files/invalid/$file_stem.stderr" ]; then
+                diff -q "test/files/invalid/$file_stem.stderr" "$tmpdir/$file_stem.stderr" >/dev/null && true
+                if [ $? -eq 0 ]; then
                     echo -e "\e[0;32msuccess\e[0m"
                 else
-                    if [[ $1 = "regenerate" ]]; then
+                    if [ "$1" = "regenerate" ]; then
                         echo -e "\e[0;33moverwriting\e[0m"
-                        cp $tmpdir/$file_stem.stderr test/files/invalid/$file_stem.stderr
+                        cp "$tmpdir/$file_stem.stderr" "test/files/invalid/$file_stem.stderr"
                     else
                         echo -e "\e[0;31mdiff changed\e[0m"
-                        diff test/files/invalid/$file_stem.stderr $tmpdir/$file_stem.stderr && true
-                        failed=1
+                        diff "test/files/invalid/$file_stem.stderr" "$tmpdir/$file_stem.stderr" && true
+                        failed="1"
                     fi
                 fi
             else
                 echo "Creating new test/files/invalid/$file_stem.stderr"
-                cp $tmpdir/$file_stem.stderr test/files/invalid/$file_stem.stderr
+                cp "$tmpdir/$file_stem.stderr" "test/files/invalid/$file_stem.stderr"
             fi
 
 
         fi
     done
 
-    if [[ $failed -eq 1 ]]; then
+    if [ "$failed" = "1" ]; then
         echo "cargo make generate failed: $tmpdir"
         exit 1
     else
-        rm -rf $tmpdir
+        rm -rf "$tmpdir"
     fi
 '''
 
 [tasks.commit-check]
+dependencies = ["cli-test"]
 script = '''
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
