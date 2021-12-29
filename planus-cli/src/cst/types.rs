@@ -105,8 +105,7 @@ pub struct StructDeclaration<'input> {
 pub struct EnumDeclaration<'input> {
     pub keyword: SimpleToken<'input>,
     pub ident: IdentToken<'input>,
-    pub colon: SimpleToken<'input>,
-    pub type_: Type<'input>,
+    pub type_: Option<(SimpleToken<'input>, Type<'input>)>,
     pub metadata: Option<Metadata<'input>>,
     pub start_brace: SimpleToken<'input>,
     pub declarations: Vec<EnumValDeclaration<'input>>,

@@ -1,0 +1,10 @@
+[0m[1m[38;5;9merror[0m[1m: Enum declarations must have a representation-type[0m
+  [0m[34m┌─[0m test/files/invalid/enum_without_type.fbs:1:9
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m enum Foo[0m[31m [0m{ X = 0 }
+  [0m[34m│[0m         [0m[31m^[0m
+  [0m[34m│[0m         [0m[31m│[0m
+  [0m[34m│[0m         [0m[31mType should be inserted here[0m
+  [0m[34m│[0m         [0m[34mHint: Try inserting `: [integer type]`[0m
+
+Error: Bailing because of errors

@@ -318,43 +318,45 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 if decl.declarations.is_empty() {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        [
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                            &decl.colon.token_metadata,
-                        ]
-                        .into_iter()
-                        .chain(decl.type_.kind.token_metas())
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([
-                            &decl.start_brace.token_metadata,
-                            &decl.end_brace.token_metadata,
-                        ]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.type_.iter().flat_map(|(colon, type_)| {
+                                std::iter::once(&colon.token_metadata)
+                                    .chain(type_.kind.token_metas())
+                            }))
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([
+                                &decl.start_brace.token_metadata,
+                                &decl.end_brace.token_metadata,
+                            ]),
                     )?;
                     self.write_str("enum ")?;
                     self.write_str(decl.ident.ident)?;
-                    self.write_str(": ")?;
-                    self.write_type(&decl.type_)?;
+                    if let Some((_colon, type_)) = &decl.type_ {
+                        self.write_str(": ")?;
+                        self.write_type(type_)?;
+                    }
                     self.write_metadata(&decl.metadata)?;
                     self.write_str(" {}")?;
                     self.write_post_comment(saved_post_comment)?;
                 } else {
                     let saved_post_comment = self.write_token_metas(
                         false,
-                        [
-                            &decl.keyword.token_metadata,
-                            &decl.ident.token_metadata,
-                            &decl.colon.token_metadata,
-                        ]
-                        .into_iter()
-                        .chain(decl.type_.kind.token_metas())
-                        .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
-                        .chain([&decl.start_brace.token_metadata]),
+                        [&decl.keyword.token_metadata, &decl.ident.token_metadata]
+                            .into_iter()
+                            .chain(decl.type_.iter().flat_map(|(colon, type_)| {
+                                std::iter::once(&colon.token_metadata)
+                                    .chain(type_.kind.token_metas())
+                            }))
+                            .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
+                            .chain([&decl.start_brace.token_metadata]),
                     )?;
                     self.write_str("enum ")?;
                     self.write_str(decl.ident.ident)?;
-                    self.write_str(": ")?;
-                    self.write_type(&decl.type_)?;
+                    if let Some((_colon, type_)) = &decl.type_ {
+                        self.write_str(": ")?;
+                        self.write_type(type_)?;
+                    }
                     self.write_metadata(&decl.metadata)?;
                     self.write_str(" {")?;
                     self.write_post_comment(saved_post_comment)?;

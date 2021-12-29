@@ -576,9 +576,28 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_enum(&mut self, decl: &cst::EnumDeclaration<'_>) -> Declaration {
         let identifier = self.convert_ident(&decl.ident);
-        let type_ = self
-            .convert_type_to_integer_type(&decl.type_)
-            .unwrap_or(IntegerType::U64);
+        let type_ = if let Some((_colon, type_)) = &decl.type_ {
+            self.convert_type_to_integer_type(type_)
+                .unwrap_or(IntegerType::U64)
+        } else {
+            self.emit_error(
+                ErrorKind::DECLARATION_PARSE_ERROR,
+                [
+                    Label::primary(
+                        self.schema.file_id,
+                        Span::new(decl.ident.span.end(), decl.ident.span.end()),
+                    )
+                    .with_message("Type should be inserted here"),
+                    Label::secondary(
+                        self.schema.file_id,
+                        Span::new(decl.ident.span.end(), decl.ident.span.end()),
+                    )
+                    .with_message("Hint: Try inserting `: [integer type]`"),
+                ],
+                Some("Enum declarations must have a representation-type"),
+            );
+            IntegerType::U64
+        };
         let metadata = self.convert_metadata(&decl.metadata);
 
         let mut variants: IndexMap<RawIdentifier, EnumVariant> = IndexMap::new();
@@ -610,14 +629,19 @@ impl<'ctx> CstConverter<'ctx> {
                 }
             });
         }
+        let definition_span = decl.keyword.span.merge(decl.ident.span);
 
         Declaration {
             file_id: self.schema.file_id,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
-            definition_span: decl.keyword.span.merge(decl.ident.span),
+            definition_span,
             identifier,
             kind: TypeDeclarationKind::Enum(Enum {
-                type_span: decl.type_.span,
+                type_span: decl
+                    .type_
+                    .as_ref()
+                    .map(|(_colon, type_)| type_.span)
+                    .unwrap_or(definition_span),
                 metadata,
                 type_,
                 variants,

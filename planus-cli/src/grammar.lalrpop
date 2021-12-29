@@ -123,8 +123,7 @@ StructDeclaration: StructDeclaration<'input> =
 EnumDeclaration: EnumDeclaration<'input> =
   <keyword: SimpleToken<"enum">>
   <ident: IdentToken>
-  <colon: SimpleToken<":">>
-  <type_: Type>
+  <type_: (SimpleToken<":"> Type)?>
   <metadata: Metadata?>
   <start_brace: SimpleToken<"{">>
   <declarations: (InitialEnumValDeclaration* FinalEnumValDeclaration)?>
@@ -136,7 +135,7 @@ EnumDeclaration: EnumDeclaration<'input> =
     } else {
       Vec::new()
     };
-    EnumDeclaration { keyword, ident, colon, type_, metadata, start_brace, declarations, end_brace }
+    EnumDeclaration { keyword, ident, type_, metadata, start_brace, declarations, end_brace }
   };
 
 UnionDeclaration: UnionDeclaration<'input> =
