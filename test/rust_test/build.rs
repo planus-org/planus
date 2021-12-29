@@ -56,19 +56,29 @@ fn generate_test_code(in_dir: &str, out_dir: &str, template: Option<&str>) -> Re
             let file_stem = file_path.file_stem().unwrap().to_str().unwrap();
 
             // Generate planus code
-            let generated = format!("{}_generated.rs", file_stem);
+            let generated = format!("{}_planus_generated.rs", file_stem);
             let generated_full_path = format!("{}/{}", out_dir, generated);
             planus_cli::codegen::rust::generate_code(&[&file_path], &generated_full_path)
                 .with_context(|| format_err!("Cannot generate code for {}", file_path.display()))?;
 
+            let flatc_generated = format!("{}_generated.rs", file_stem);
+            Command::new("flatc")
+                .args(&["--rust", "-o", out_dir])
+                .arg(&file_path)
+                .output()
+                .context("Cannot run flatc")?;
+
             // Generate test module
             let code_module_name = file_stem.to_string();
             let code_file_full_path = format!("{}/{}.rs", out_dir, code_module_name);
-            let mut code = String::new();
+            let mut code =
+                "#![allow(unused_unsafe, unused_imports, dead_code, clippy::all)]".to_string();
             writeln!(code, "#[path = {:?}]", generated).unwrap();
             writeln!(code, "mod generated;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
+            writeln!(code, "#[path = {:?}]", flatc_generated).unwrap();
+            writeln!(code, "mod flatc;").unwrap();
             writeln!(code).unwrap();
             writeln!(code, "#[allow(dead_code)]").unwrap();
             writeln!(

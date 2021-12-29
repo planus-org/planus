@@ -47,6 +47,13 @@ fn test_serialize() {
             let dump = crate::hexdump::hexdump_flatbuffer_table(data);
             crate::tests::compare_regenerate_file_str(&dump_path, &dump, should_regenerate)
                 .unwrap();
+
+            let mut dbg_path = file_path.clone();
+            dbg_path.set_extension("dbg.txt");
+            let flatc_dbg = flatbuffers::root::<flatc::Root>(data).unwrap();
+            let flatc_dbg = format!("{:#?}", flatc_dbg);
+            crate::tests::compare_regenerate_file_str(&dbg_path, &flatc_dbg, should_regenerate)
+                .unwrap();
         }
     }
 }
