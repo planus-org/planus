@@ -6,7 +6,7 @@ use indexmap::{map::Entry, IndexMap};
 
 use super::types::*;
 use crate::{
-    ast::{self, FloatType, LiteralKind, NamespacePath},
+    ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath},
     ctx::Ctx,
     error::ErrorKind,
     intermediate_language::checks::compatibility,
@@ -488,77 +488,20 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         decl: &ast::Struct,
     ) -> Struct {
+        for m in &decl.metadata {
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "structs",
+                m.kind.accepted_on_structs(),
+            );
+        }
+
         let fields = decl
             .fields
             .iter()
             .filter_map(|(ident, field)| {
-                let type_ =
-                    self.translate_type(current_namespace, current_file_id, &field.type_)?;
-                if let Some(assignment) = &field.assignment {
-                    self.ctx.emit_error(
-                        ErrorKind::MISC_SEMANTIC_ERROR,
-                        std::iter::once(
-                            Label::primary(current_file_id, assignment.span)
-                                .with_message("Struct fields cannot have default values"),
-                        ),
-                        None,
-                    )
-                }
-                match type_.kind {
-                    TypeKind::Table(_) => {
-                        self.ctx.emit_error(
-                            ErrorKind::TYPE_ERROR,
-                            [Label::primary(current_file_id, type_.span)
-                                .with_message("Tables in structs are not supported")],
-                            Some("Only simple types are permitted in structs"),
-                        );
-                        None
-                    }
-                    TypeKind::Union(_) => {
-                        self.ctx.emit_error(
-                            ErrorKind::TYPE_ERROR,
-                            [Label::primary(current_file_id, type_.span)
-                                .with_message("Unions in structs are not supported")],
-                            Some("Only simple types are permitted in structs"),
-                        );
-                        None
-                    }
-                    TypeKind::Vector(_) => {
-                        self.ctx.emit_error(
-                            ErrorKind::TYPE_ERROR,
-                            [Label::primary(current_file_id, type_.span)
-                                .with_message("Vectors in structs are not supported")],
-                            Some("Only simple types are permitted in structs"),
-                        );
-                        None
-                    }
-                    TypeKind::String => {
-                        self.ctx.emit_error(
-                            ErrorKind::TYPE_ERROR,
-                            [Label::primary(current_file_id, type_.span)
-                                .with_message("Strings in structs are not supported")],
-                            Some("Only simple types are permitted in structs"),
-                        );
-                        None
-                    }
-                    TypeKind::SimpleType(type_) => Some((
-                        self.ctx.resolve_identifier(*ident),
-                        StructField {
-                            type_,
-                            offset: u32::MAX,
-                            size: u32::MAX,
-                            padding_after_field: u32::MAX,
-                        },
-                    )),
-                    TypeKind::Array(_, _) => {
-                        self.ctx.emit_error(
-                            ErrorKind::TYPE_ERROR,
-                            std::iter::once(Label::primary(current_file_id, field.type_.span)),
-                            Some("Arrays are not currently supported in planus"),
-                        );
-                        None
-                    }
-                }
+                self.translate_struct_field(current_namespace, current_file_id, field, decl, ident)
             })
             .collect();
         Struct {
@@ -566,6 +509,90 @@ impl<'a> Translator<'a> {
             size: u32::MAX,
             alignment: u32::MAX,
             vector_stride: u32::MAX,
+        }
+    }
+
+    fn translate_struct_field(
+        &self,
+        current_namespace: &AbsolutePath,
+        current_file_id: FileId,
+        field: &ast::StructField,
+        decl: &ast::Struct,
+        ident: &string_interner::symbol::SymbolU32,
+    ) -> Option<(String, StructField)> {
+        let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
+        if let Some(assignment) = &field.assignment {
+            self.ctx.emit_error(
+                ErrorKind::MISC_SEMANTIC_ERROR,
+                std::iter::once(
+                    Label::primary(current_file_id, assignment.span)
+                        .with_message("Struct fields cannot have default values"),
+                ),
+                None,
+            )
+        }
+        for m in &decl.metadata {
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "struct fields",
+                m.kind.accepted_on_struct_fields(),
+            );
+        }
+        match type_.kind {
+            TypeKind::Table(_) => {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(current_file_id, type_.span)
+                        .with_message("Tables in structs are not supported")],
+                    Some("Only simple types are permitted in structs"),
+                );
+                None
+            }
+            TypeKind::Union(_) => {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(current_file_id, type_.span)
+                        .with_message("Unions in structs are not supported")],
+                    Some("Only simple types are permitted in structs"),
+                );
+                None
+            }
+            TypeKind::Vector(_) => {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(current_file_id, type_.span)
+                        .with_message("Vectors in structs are not supported")],
+                    Some("Only simple types are permitted in structs"),
+                );
+                None
+            }
+            TypeKind::String => {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(current_file_id, type_.span)
+                        .with_message("Strings in structs are not supported")],
+                    Some("Only simple types are permitted in structs"),
+                );
+                None
+            }
+            TypeKind::SimpleType(type_) => Some((
+                self.ctx.resolve_identifier(*ident),
+                StructField {
+                    type_,
+                    offset: u32::MAX,
+                    size: u32::MAX,
+                    padding_after_field: u32::MAX,
+                },
+            )),
+            TypeKind::Array(_, _) => {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    std::iter::once(Label::primary(current_file_id, field.type_.span)),
+                    Some("Arrays are not currently supported in planus"),
+                );
+                None
+            }
         }
     }
 
@@ -766,8 +793,8 @@ impl<'a> Translator<'a> {
         let vtable_index = *next_vtable_index;
 
         for m in &field.metadata {
-            match self.ctx.resolve_identifier(m.key.value).as_str() {
-                "required" => {
+            match m.kind {
+                MetadataValueKind::Required => {
                     if type_.kind.is_scalar() {
                         self.ctx.emit_error(
                             ErrorKind::MISC_SEMANTIC_ERROR,
@@ -775,7 +802,7 @@ impl<'a> Translator<'a> {
                                 Label::secondary(current_file_id, type_.span).with_message(
                                     "only non-scalar types support the 'required' attribute",
                                 ),
-                                Label::primary(current_file_id, m.key.span)
+                                Label::primary(current_file_id, m.span)
                                     .with_message("required attribute was here"),
                             ],
                             Some("Unsupported required attribute"),
@@ -784,7 +811,7 @@ impl<'a> Translator<'a> {
                         self.ctx.emit_error(
                             ErrorKind::MISC_SEMANTIC_ERROR,
                             [
-                                Label::secondary(current_file_id, m.key.span)
+                                Label::secondary(current_file_id, m.span)
                                     .with_message("field was declared required here"),
                                 Label::primary(
                                     current_file_id,
@@ -798,10 +825,16 @@ impl<'a> Translator<'a> {
                         required = true;
                     }
                 }
-                "deprecated" => deprecated = true,
-                // TODO: allow setting the vtable index here
-                // TODO: also remember to validate it
-                _ => (),
+                MetadataValueKind::Deprecated => deprecated = true,
+                // TODO: add support for MetdataValueKind::Id
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "table fields",
+                        m.kind.accepted_on_table_fields(),
+                    );
+                }
             }
         }
 
@@ -859,6 +892,27 @@ impl<'a> Translator<'a> {
         }
     }
 
+    fn emit_metadata_support_error(
+        &self,
+        current_file_id: FileId,
+        m: &ast::MetadataValue,
+        kind: &str,
+        works_upstream: bool,
+    ) {
+        let msg = match (works_upstream, m.kind.is_supported()) {
+            (true, true) => format!("Metadata attribute is not currently supported on {}", kind),
+            (true, false) => "Metadata attribute is not currently supported".to_string(),
+            (false, true) => format!("Metadata attribute does not make sense on {}", kind),
+            (false, false) => format!("Metadata attribute does not make sense on {} (but is additionally not supported in planus)", kind),
+        };
+
+        self.ctx.emit_error(
+            ErrorKind::MISC_SEMANTIC_ERROR,
+            [Label::primary(current_file_id, m.span)],
+            Some(&msg),
+        );
+    }
+
     fn translate_table(
         &self,
         current_namespace: &AbsolutePath,
@@ -867,6 +921,15 @@ impl<'a> Translator<'a> {
     ) -> Table {
         let mut next_vtable_index = 0u32;
         let mut max_vtable_index = 0u32;
+
+        for m in &decl.metadata {
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "tables",
+                m.kind.accepted_on_tables(),
+            );
+        }
 
         let fields = decl
             .fields
@@ -896,30 +959,37 @@ impl<'a> Translator<'a> {
     fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
         let mut alignment = decl.type_.byte_size();
         for m in &decl.metadata {
-            #[allow(clippy::single_match)]
-            match self.ctx.resolve_identifier(m.key.value).as_str() {
-                "force_align" => {
-                    if let Some(meta_value) = &m.value {
-                        match &meta_value.kind {
-                            ast::LiteralKind::Integer { is_negative, value } => {
-                                if let Some(value) = self.translate_integer_generic::<u32>(
-                                    current_file_id,
-                                    meta_value.span,
-                                    *is_negative,
-                                    value,
-                                ) {
-                                    if value.is_power_of_two() {
-                                        alignment = value;
-                                    } else {
-                                        // TODO: write an error
-                                    }
-                                }
-                            }
-                            _ => (),
+            match &m.kind {
+                MetadataValueKind::ForceAlign(ast::IntegerLiteral {
+                    span,
+                    is_negative,
+                    value,
+                }) => {
+                    if let Some(value) = self.translate_integer_generic::<u32>(
+                        current_file_id,
+                        *span,
+                        *is_negative,
+                        value,
+                    ) {
+                        if value.is_power_of_two() {
+                            alignment = value;
+                        } else {
+                            self.ctx.emit_error(
+                                ErrorKind::MISC_SEMANTIC_ERROR,
+                                [Label::primary(current_file_id, m.span)],
+                                Some("Alignment must be a power of two"),
+                            )
                         }
                     }
                 }
-                _ => (),
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "enums",
+                        m.kind.accepted_on_enums(),
+                    );
+                }
             }
         }
 
@@ -962,6 +1032,15 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         decl: &ast::Union,
     ) -> Union {
+        for m in &decl.metadata {
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "unions",
+                m.kind.accepted_on_unions(),
+            );
+        }
+
         let variants = decl
             .variants
             .values()

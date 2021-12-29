@@ -221,10 +221,59 @@ impl PrettyPrint for Literal {
 
 impl PrettyPrint for MetadataValue {
     fn print(&self, ctx: &Ctx) {
-        print!("{}", ctx.resolve_identifier(self.key.value));
-        if let Some(literal) = &self.value {
-            print!("=");
-            literal.print(ctx);
+        match &self.kind {
+            crate::ast::MetadataValueKind::ForceAlign(literal) => {
+                print!("force_align: ");
+                literal.print(ctx);
+            }
+            crate::ast::MetadataValueKind::BitFlags => print!("bit_flags"),
+            crate::ast::MetadataValueKind::CsharpPartial => print!("csharp_partial"),
+            crate::ast::MetadataValueKind::Private => print!("private"),
+            crate::ast::MetadataValueKind::NativeType(literal) => {
+                print!("native_type: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::NativeTypePackName(literal) => {
+                print!("native_type_pack_name: {}", literal.value);
+            }
+            crate::ast::MetadataValueKind::OriginalOrder => print!("original_order"),
+            crate::ast::MetadataValueKind::Required => print!("required"),
+            crate::ast::MetadataValueKind::Deprecated => print!("deprecated"),
+            crate::ast::MetadataValueKind::Key => print!("key"),
+            crate::ast::MetadataValueKind::Shared => print!("shared"),
+            crate::ast::MetadataValueKind::NestedFlatbuffer(literal) => {
+                print!("nested_flatbuffer: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::Id(literal) => {
+                print!("id: ");
+                literal.print(ctx);
+            }
+            crate::ast::MetadataValueKind::Hash(literal) => print!("hash: {}", literal.value),
+            crate::ast::MetadataValueKind::CppType(literal) => {
+                print!("cpp_type: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::CppPtrType(literal) => {
+                print!("cpp_ptr_type: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::CppPtrTypeGet(literal) => {
+                print!("cpp_ptr_type_get: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::CppStrType(literal) => {
+                print!("cpp_str_type: {}", literal.value)
+            }
+            crate::ast::MetadataValueKind::CppStrFlexCtor => {
+                print!("cpp_str_flex_ctor");
+            }
+            crate::ast::MetadataValueKind::NativeInline => {
+                print!("native_inline");
+            }
+            crate::ast::MetadataValueKind::NativeDefault(literal) => {
+                print!("native_default: {}", literal.value);
+            }
+            crate::ast::MetadataValueKind::Flexbuffer => print!("flexbuffer"),
+            crate::ast::MetadataValueKind::Streaming(literal) => {
+                print!("streaming: {}", literal.value);
+            }
+            crate::ast::MetadataValueKind::Idempotent => print!("idempotent"),
         }
     }
 }

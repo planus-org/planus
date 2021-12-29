@@ -792,26 +792,113 @@ impl<'ctx> CstConverter<'ctx> {
     fn convert_metadata(&mut self, metadata: &Option<cst::Metadata<'_>>) -> Vec<MetadataValue> {
         if let Some(metadata) = metadata {
             self.with_span(metadata.span, |self_| {
-                let mut values = Vec::with_capacity(metadata.values.len());
-                for value in &metadata.values {
-                    values.push(self_.convert_metadata_value(value));
-                }
-                values
+                metadata
+                    .values
+                    .iter()
+                    .flat_map(|value| self_.convert_metadata_value(value))
+                    .collect()
             })
         } else {
             Vec::new()
         }
     }
 
-    fn convert_metadata_value(&mut self, metadata_value: &cst::MetadataValue<'_>) -> MetadataValue {
+    fn convert_metadata_value(
+        &mut self,
+        metadata_value: &cst::MetadataValue<'_>,
+    ) -> Option<MetadataValue> {
         self.with_span(metadata_value.span, |self_| {
-            let key = self_.convert_ident(&metadata_value.key);
+            // let key = self_.convert_ident(&metadata_value.key);
             let value = if let Some((_equals, assignment)) = &metadata_value.assignment {
                 self_.convert_expr(assignment)
             } else {
                 None
             };
-            MetadataValue { key, value }
+            let key = MetadataValueKindKey::parse(metadata_value.key.ident).or_else(|| {
+                self_.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(
+                        self_.schema.file_id,
+                        metadata_value.key.span,
+                    )],
+                    Some(&format!("Unknown attribute `{}`", metadata_value.key.ident)),
+                );
+                None
+            })?;
+            use MetadataValueKindKey::*;
+
+            let bail_span = value
+                .as_ref()
+                .map_or(metadata_value.span, |value| value.span);
+            let bail = || -> Option<MetadataValue> {
+                self_.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(self_.schema.file_id, bail_span)],
+                    Some(&format!(
+                        "Attribute `{}` {}",
+                        metadata_value.key.ident,
+                        key.requirement()
+                    )),
+                );
+                None
+            };
+
+            let kind = match value {
+                Some(Literal {
+                    span,
+                    kind: LiteralKind::Integer { is_negative, value },
+                }) => {
+                    let literal = IntegerLiteral {
+                        span,
+                        is_negative,
+                        value,
+                    };
+                    match key {
+                        ForceAlign => MetadataValueKind::ForceAlign(literal),
+                        Id => MetadataValueKind::Id(literal),
+                        _ => return bail(),
+                    }
+                }
+                Some(Literal {
+                    span,
+                    kind: LiteralKind::String(value),
+                }) => {
+                    let literal = StringLiteral { span, value };
+                    match key {
+                        NativeType => MetadataValueKind::NativeType(literal),
+                        NativeTypePackName => MetadataValueKind::NativeTypePackName(literal),
+                        NestedFlatbuffer => MetadataValueKind::NestedFlatbuffer(literal),
+                        Hash => MetadataValueKind::Hash(literal),
+                        CppType => MetadataValueKind::CppType(literal),
+                        CppPtrType => MetadataValueKind::CppPtrType(literal),
+                        CppPtrTypeGet => MetadataValueKind::CppPtrTypeGet(literal),
+                        CppStrType => MetadataValueKind::CppStrType(literal),
+                        NativeDefault => MetadataValueKind::NativeDefault(literal),
+                        Streaming => MetadataValueKind::Streaming(literal),
+                        _ => return bail(),
+                    }
+                }
+                Some(_) => return bail(),
+                None => match key {
+                    BitFlags => MetadataValueKind::BitFlags,
+                    CsharpPartial => MetadataValueKind::CsharpPartial,
+                    Private => MetadataValueKind::Private,
+                    OriginalOrder => MetadataValueKind::OriginalOrder,
+                    Required => MetadataValueKind::Required,
+                    Deprecated => MetadataValueKind::Deprecated,
+                    Key => MetadataValueKind::Key,
+                    Shared => MetadataValueKind::Shared,
+                    CppStrFlexCtor => MetadataValueKind::CppStrFlexCtor,
+                    NativeInline => MetadataValueKind::NativeInline,
+                    Flexbuffer => MetadataValueKind::Flexbuffer,
+                    Idempotent => MetadataValueKind::Idempotent,
+                    _ => return bail(),
+                },
+            };
+            Some(MetadataValue {
+                span: metadata_value.span,
+                kind,
+            })
         })
     }
 

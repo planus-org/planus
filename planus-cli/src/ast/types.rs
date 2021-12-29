@@ -164,8 +164,217 @@ pub struct RpcMethod {
 
 #[derive(Clone, Debug)]
 pub struct MetadataValue {
-    pub key: Identifier,
-    pub value: Option<Literal>,
+    pub span: Span,
+    pub kind: MetadataValueKind,
+}
+
+#[derive(Clone, Debug)]
+pub enum MetadataValueKind {
+    ForceAlign(IntegerLiteral),
+    BitFlags,
+    CsharpPartial,
+    Private,
+    NativeType(StringLiteral),
+    NativeTypePackName(StringLiteral),
+    OriginalOrder,
+
+    Required,
+    Deprecated,
+    Key,
+    Shared,
+    NestedFlatbuffer(StringLiteral),
+    Id(IntegerLiteral),
+    Hash(StringLiteral),
+    CppType(StringLiteral),
+    CppPtrType(StringLiteral),
+    CppPtrTypeGet(StringLiteral),
+    CppStrType(StringLiteral),
+    CppStrFlexCtor,
+    NativeInline,
+    NativeDefault(StringLiteral),
+    Flexbuffer,
+
+    Streaming(StringLiteral),
+    Idempotent,
+}
+
+pub enum MetadataValueKindKey {
+    ForceAlign,
+    BitFlags,
+    CsharpPartial,
+    Private,
+    NativeType,
+    NativeTypePackName,
+    OriginalOrder,
+
+    Required,
+    Deprecated,
+    Key,
+    Shared,
+    NestedFlatbuffer,
+    Id,
+    Hash,
+    CppType,
+    CppPtrType,
+    CppPtrTypeGet,
+    CppStrType,
+    CppStrFlexCtor,
+    NativeInline,
+    NativeDefault,
+    Flexbuffer,
+
+    Streaming,
+    Idempotent,
+}
+
+impl MetadataValueKindKey {
+    pub fn parse(s: &str) -> Option<MetadataValueKindKey> {
+        match s {
+            "force_align" => Some(Self::ForceAlign),
+            "bit_flags" => Some(Self::BitFlags),
+            "csharp_partial" => Some(Self::CsharpPartial),
+            "private" => Some(Self::Private),
+            "native_type" => Some(Self::NativeType),
+            "native_type_pack_name" => Some(Self::NativeTypePackName),
+            "original_order" => Some(Self::OriginalOrder),
+            "required" => Some(Self::Required),
+            "deprecated" => Some(Self::Deprecated),
+            "key" => Some(Self::Key),
+            "shared" => Some(Self::Shared),
+            "nested_flatbuffer" => Some(Self::NestedFlatbuffer),
+            "id" => Some(Self::Id),
+            "hash" => Some(Self::Hash),
+            "cpp_type" => Some(Self::CppType),
+            "cpp_ptr_type" => Some(Self::CppPtrType),
+            "cpp_ptr_type_get" => Some(Self::CppPtrTypeGet),
+            "cpp_str_type" => Some(Self::CppStrType),
+            "cpp_str_flex_ctor" => Some(Self::CppStrFlexCtor),
+            "native_inline" => Some(Self::NativeInline),
+            "native_default" => Some(Self::NativeDefault),
+            "flexbuffer" => Some(Self::Flexbuffer),
+            "streaming" => Some(Self::Streaming),
+            "idempotent" => Some(Self::Idempotent),
+            _ => None,
+        }
+    }
+
+    pub fn requirement(&self) -> &'static str {
+        match self {
+            Self::BitFlags
+            | Self::CsharpPartial
+            | Self::Private
+            | Self::OriginalOrder
+            | Self::Required
+            | Self::Deprecated
+            | Self::Key
+            | Self::Shared
+            | Self::CppStrFlexCtor
+            | Self::NativeInline
+            | Self::Flexbuffer
+            | Self::Idempotent => "should not have an argument",
+            Self::ForceAlign | Self::Id => "should have an integer argument",
+            Self::NativeType
+            | Self::NativeTypePackName
+            | Self::NestedFlatbuffer
+            | Self::Hash
+            | Self::CppType
+            | Self::CppPtrType
+            | Self::CppPtrTypeGet
+            | Self::CppStrType
+            | Self::NativeDefault
+            | Self::Streaming => "should have a string argument",
+        }
+    }
+}
+
+impl MetadataValueKind {
+    // Does the attribute have at least partial support?
+    pub fn is_supported(&self) -> bool {
+        matches!(
+            self,
+            Self::ForceAlign(_) | Self::Required | Self::Deprecated
+        )
+    }
+
+    pub fn accepted_on_enums(&self) -> bool {
+        matches!(
+            self,
+            Self::ForceAlign(_) | Self::BitFlags | Self::CsharpPartial | Self::Private,
+        )
+    }
+
+    pub fn accepted_on_structs(&self) -> bool {
+        matches!(
+            self,
+            Self::ForceAlign(_)
+                | Self::CsharpPartial
+                | Self::Private
+                | Self::NativeType(_)
+                | Self::NativeTypePackName(_)
+        )
+    }
+
+    pub fn accepted_on_tables(&self) -> bool {
+        matches!(
+            self,
+            Self::CsharpPartial
+                | Self::Private
+                | Self::NativeType(_)
+                | Self::NativeTypePackName(_)
+                | Self::OriginalOrder
+        )
+    }
+
+    pub fn accepted_on_unions(&self) -> bool {
+        matches!(
+            self,
+            Self::CsharpPartial | Self::Private | Self::NativeType(_) | Self::NativeTypePackName(_)
+        )
+    }
+
+    pub fn accepted_on_rpc_services(&self) -> bool {
+        matches!(self, Self::Private)
+    }
+
+    pub fn accepted_on_struct_fields(&self) -> bool {
+        matches!(
+            self,
+            Self::ForceAlign(_)
+                | Self::Key
+                | Self::Hash(_)
+                | Self::CppType(_)
+                | Self::CppPtrType(_)
+                | Self::CppPtrTypeGet(_)
+                | Self::NativeInline
+                | Self::NativeDefault(_)
+        )
+    }
+
+    pub fn accepted_on_table_fields(&self) -> bool {
+        matches!(
+            self,
+            Self::ForceAlign(_)
+                | Self::Required
+                | Self::Deprecated
+                | Self::Key
+                | Self::Shared
+                | Self::NestedFlatbuffer(_)
+                | Self::Id(_)
+                | Self::Hash(_)
+                | Self::CppType(_)
+                | Self::CppPtrType(_)
+                | Self::CppPtrTypeGet(_)
+                | Self::CppStrType(_)
+                | Self::CppStrFlexCtor
+                | Self::NativeInline
+                | Self::NativeDefault(_)
+                | Self::Flexbuffer
+        )
+    }
+
+    pub fn accepted_on_rpc_methods(&self) -> bool {
+        matches!(self, Self::Streaming(_) | Self::Idempotent)
+    }
 }
 
 #[derive(Clone, Debug)]
