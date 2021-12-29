@@ -34,11 +34,16 @@ jobs:
         run: sudo apt-get install -y flatbuffers-compiler
       - uses: actions-rs/cargo@v1
         with:
-          command: build
-          args: --all-targets
+          command: install
+          args: cargo-make
       - uses: actions-rs/cargo@v1
         with:
-          command: test
+          command: make
+          args: test
+      - uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: generate
 
   Lint:
     runs-on: ubuntu-latest
