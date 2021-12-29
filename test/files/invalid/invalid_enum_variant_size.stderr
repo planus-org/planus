@@ -1,19 +1,19 @@
-[0m[1m[38;5;9merror[0m[1m: Integer is out of range for type u8 (range is [0; 255])[0m
-  [0m[34m┌─[0m test/files/invalid/invalid_enum_variant_size.fbs:2:7
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   X = [0m[31m-1[0m
-  [0m[34m│[0m       [0m[31m^^[0m
+error: Integer is out of range for type u8 (range is [0; 255])
+  ┌─ test/files/invalid/invalid_enum_variant_size.fbs:2:7
+  │
+2 │   X = -1
+  │       ^^
 
-[0m[1m[38;5;9merror[0m[1m: Integer is out of range for type u8 (range is [0; 255])[0m
-  [0m[34m┌─[0m test/files/invalid/invalid_enum_variant_size.fbs:6:7
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   X = [0m[31m256[0m
-  [0m[34m│[0m       [0m[31m^^^[0m
+error: Integer is out of range for type u8 (range is [0; 255])
+  ┌─ test/files/invalid/invalid_enum_variant_size.fbs:6:7
+  │
+6 │   X = 256
+  │       ^^^
 
-[0m[1m[38;5;9merror[0m[1m: Integer is out of range for type i8 (range is [-128; 127])[0m
-   [0m[34m┌─[0m test/files/invalid/invalid_enum_variant_size.fbs:10:7
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   X = [0m[31m128[0m
-   [0m[34m│[0m       [0m[31m^^^[0m
+error: Integer is out of range for type i8 (range is [-128; 127])
+   ┌─ test/files/invalid/invalid_enum_variant_size.fbs:10:7
+   │
+10 │   X = 128
+   │       ^^^
 
 Error: Bailing because of errors

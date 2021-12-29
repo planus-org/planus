@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: Could not read file "test/files/invalid/foo": No such file or directory (os error 2)[0m
-  [0m[34m┌─[0m test/files/invalid/include_not_exists.fbs:1:9
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m include [0m[31m"foo"[0m;
-  [0m[34m│[0m         [0m[31m^^^^^[0m
+error: Could not read file "test/files/invalid/foo": No such file or directory (os error 2)
+  ┌─ test/files/invalid/include_not_exists.fbs:1:9
+  │
+1 │ include "foo";
+  │         ^^^^^
 
 Error: Bailing because of errors

@@ -38,12 +38,17 @@ pub struct Ctx {
 
 impl Default for Ctx {
     fn default() -> Self {
+        let color_choice = if atty::is(atty::Stream::Stderr) {
+            ColorChoice::Auto
+        } else {
+            ColorChoice::Never
+        };
         Self {
             files: Files::default(),
             file_map: IndexMap::default(),
             interner: RefCell::new(Interner::default()),
             error_config: Config::default(),
-            error_stream: RwLock::new(BufferedStandardStream::stderr(ColorChoice::Auto)),
+            error_stream: RwLock::new(BufferedStandardStream::stderr(color_choice)),
             errors_seen: Cell::new(ErrorKind::empty()),
         }
     }

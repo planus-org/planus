@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: expected a primitive integer type[0m
-  [0m[34m┌─[0m test/files/invalid/invalid_enum_type.fbs:1:11
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m enum Foo: [0m[31mstring[0m {}
-  [0m[34m│[0m           [0m[31m^^^^^^[0m
+error: expected a primitive integer type
+  ┌─ test/files/invalid/invalid_enum_type.fbs:1:11
+  │
+1 │ enum Foo: string {}
+  │           ^^^^^^
 
 Error: Bailing because of errors

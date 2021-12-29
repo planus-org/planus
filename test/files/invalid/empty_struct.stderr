@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: Empty structs are not supported[0m
-  [0m[34m┌─[0m test/files/invalid/empty_struct.fbs:1:1
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m [0m[31mstruct X[0m {}
-  [0m[34m│[0m [0m[31m^^^^^^^^[0m
+error: Empty structs are not supported
+  ┌─ test/files/invalid/empty_struct.fbs:1:1
+  │
+1 │ struct X {}
+  │ ^^^^^^^^
 
 Error: Bailing because of errors

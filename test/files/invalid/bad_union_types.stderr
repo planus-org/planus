@@ -1,55 +1,55 @@
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:2:6
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   A: [0m[31mA0[0m,
-  [0m[34m│[0m      [0m[31m^^[0m [0m[31mUnions in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:2:6
+  │
+2 │   A: A0,
+  │      ^^ Unions in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:3:6
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   B: [0m[31mA1[0m,
-  [0m[34m│[0m      [0m[31m^^[0m [0m[31mStructs in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:3:6
+  │
+3 │   B: A1,
+  │      ^^ Structs in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:4:6
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   C: [0m[31mA2[0m,
-  [0m[34m│[0m      [0m[31m^^[0m [0m[31mEnums in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:4:6
+  │
+4 │   C: A2,
+  │      ^^ Enums in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:5:6
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   D: [0m[31m[bool][0m,
-  [0m[34m│[0m      [0m[31m^^^^^^[0m [0m[31mVectors in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:5:6
+  │
+5 │   D: [bool],
+  │      ^^^^^^ Vectors in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:6:6
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   E: [0m[31m[bool: 1][0m,
-  [0m[34m│[0m      [0m[31m^^^^^^^^^[0m [0m[31mArrays in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:6:6
+  │
+6 │   E: [bool: 1],
+  │      ^^^^^^^^^ Arrays in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:7:6
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   F: [0m[31mbool[0m,
-  [0m[34m│[0m      [0m[31m^^^^[0m [0m[31mBools in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:7:6
+  │
+7 │   F: bool,
+  │      ^^^^ Bools in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:8:6
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   G: [0m[31muint8[0m,
-  [0m[34m│[0m      [0m[31m^^^^^[0m [0m[31mIntegers in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:8:6
+  │
+8 │   G: uint8,
+  │      ^^^^^ Integers in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-  [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:9:6
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   H: [0m[31mfloat32[0m,
-  [0m[34m│[0m      [0m[31m^^^^^^^[0m [0m[31mFloats in unions are not supported[0m
+error: Unsupported type
+  ┌─ test/files/invalid/bad_union_types.fbs:9:6
+  │
+9 │   H: float32,
+  │      ^^^^^^^ Floats in unions are not supported
 
-[0m[1m[38;5;9merror[0m[1m: Unsupported type[0m
-   [0m[34m┌─[0m test/files/invalid/bad_union_types.fbs:10:6
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   I: [0m[31mstring[0m,
-   [0m[34m│[0m      [0m[31m^^^^^^[0m [0m[31mStrings in unions are not supported[0m
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:10:6
+   │
+10 │   I: string,
+   │      ^^^^^^ Strings in unions are not supported
 
 Error: Bailing because of errors

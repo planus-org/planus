@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: User attributes are not supported[0m
-  [0m[34m┌─[0m test/files/invalid/custom_attributes.fbs:1:11
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m attribute [0m[31m"priority"[0m;
-  [0m[34m│[0m           [0m[31m^^^^^^^^^^[0m
+error: User attributes are not supported
+  ┌─ test/files/invalid/custom_attributes.fbs:1:11
+  │
+1 │ attribute "priority";
+  │           ^^^^^^^^^^
 
 Error: Bailing because of errors

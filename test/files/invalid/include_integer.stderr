@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: unrecognized token `integer literal "7"`, expected one of string[0m
-  [0m[34m┌─[0m test/files/invalid/include_integer.fbs:1:9
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m include [0m[31m7[0m;
-  [0m[34m│[0m         [0m[31m^[0m
+error: unrecognized token `integer literal "7"`, expected one of string
+  ┌─ test/files/invalid/include_integer.fbs:1:9
+  │
+1 │ include 7;
+  │         ^
 
 Error: Bailing because of errors

@@ -1,12 +1,12 @@
-[0m[1m[38;5;9merror[0m[1m: Unknown type[0m
-  [0m[34m┌─[0m test/files/invalid/helpers/include_hint_helper1.fbs:2:6
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   x: [0m[31mBar[0m;
-  [0m[34m│[0m      [0m[31m^^^[0m
-  [0m[34m│[0m
-  [0m[34m┌─[0m test/files/invalid/helpers/include_hint_helper2.fbs:1:1
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m table Bar {}
-  [0m[34m│[0m [0m[34m---------[0m [0m[34mPerhaps you meant to include test/files/invalid/helpers/include_hint_helper2.fbs[0m
+error: Unknown type
+  ┌─ test/files/invalid/helpers/include_hint_helper1.fbs:2:6
+  │
+2 │   x: Bar;
+  │      ^^^
+  │
+  ┌─ test/files/invalid/helpers/include_hint_helper2.fbs:1:1
+  │
+1 │ table Bar {}
+  │ --------- Perhaps you meant to include test/files/invalid/helpers/include_hint_helper2.fbs
 
 Error: Bailing because of errors

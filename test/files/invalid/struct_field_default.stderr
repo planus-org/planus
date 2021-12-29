@@ -1,7 +1,7 @@
-[0m[1m[38;5;9merror[0m[1m: [0m
-  [0m[34m┌─[0m test/files/invalid/struct_field_default.fbs:2:14
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   x: uint8 = [0m[31m1[0m;
-  [0m[34m│[0m              [0m[31m^[0m [0m[31mStruct fields cannot have default values[0m
+error: 
+  ┌─ test/files/invalid/struct_field_default.fbs:2:14
+  │
+2 │   x: uint8 = 1;
+  │              ^ Struct fields cannot have default values
 
 Error: Bailing because of errors

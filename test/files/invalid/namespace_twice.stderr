@@ -1,9 +1,9 @@
-[0m[1m[38;5;9merror[0m[1m: Cannot set namespace twice[0m
-  [0m[34m┌─[0m test/files/invalid/namespace_twice.fbs:1:1
-  [0m[34m│[0m
-[0m[34m1[0m [0m[34m│[0m namespace A;
-  [0m[34m│[0m [0m[34m------------[0m [0m[34mfirst declaration was here[0m
-[0m[34m2[0m [0m[34m│[0m namespace B;
-  [0m[34m│[0m [0m[34m------------[0m [0m[34madditional declaration was here[0m
+error: Cannot set namespace twice
+  ┌─ test/files/invalid/namespace_twice.fbs:1:1
+  │
+1 │ namespace A;
+  │ ------------ first declaration was here
+2 │ namespace B;
+  │ ------------ additional declaration was here
 
 Error: Bailing because of errors

@@ -1,745 +1,745 @@
-[0m[1m[38;5;9merror[0m[1m: Attribute `force_align` should have an integer argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:2:3
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   [0m[31mforce_align,[0m force_align: 1, force_align: "", force_align: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `force_align` should have an integer argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:2:45
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   force_align, force_align: 1, force_align: [0m[31m""[0m, force_align: [],
-  [0m[34m│[0m                                             [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `force_align` should have an integer argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:2:62
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   force_align, force_align: 1, force_align: "", force_align: [0m[31m[][0m,
-  [0m[34m│[0m                                                              [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `bit_flags` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:3:25
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   bit_flags, bit_flags: [0m[31m1[0m, bit_flags: "", bit_flags: [],
-  [0m[34m│[0m                         [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `bit_flags` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:3:39
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   bit_flags, bit_flags: 1, bit_flags: [0m[31m""[0m, bit_flags: [],
-  [0m[34m│[0m                                       [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `bit_flags` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:3:54
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [0m[31m[][0m,
-  [0m[34m│[0m                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `csharp_partial` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:4:35
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   csharp_partial, csharp_partial: [0m[31m1[0m, csharp_partial: "", csharp_partial: [],
-  [0m[34m│[0m                                   [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `csharp_partial` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:4:54
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   csharp_partial, csharp_partial: 1, csharp_partial: [0m[31m""[0m, csharp_partial: [],
-  [0m[34m│[0m                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `csharp_partial` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:4:74
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [0m[31m[][0m,
-  [0m[34m│[0m                                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `private` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:5:21
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   private, private: [0m[31m1[0m, private: "", private: [],
-  [0m[34m│[0m                     [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `private` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:5:33
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   private, private: 1, private: [0m[31m""[0m, private: [],
-  [0m[34m│[0m                                 [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `private` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:5:46
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   private, private: 1, private: "", private: [0m[31m[][0m,
-  [0m[34m│[0m                                              [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:6:3
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   [0m[31mnative_type,[0m native_type: 1, native_type: "", native_type: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:6:29
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   native_type, native_type: [0m[31m1[0m, native_type: "", native_type: [],
-  [0m[34m│[0m                             [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:6:62
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   native_type, native_type: 1, native_type: "", native_type: [0m[31m[][0m,
-  [0m[34m│[0m                                                              [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type_pack_name` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:7:3
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   [0m[31mnative_type_pack_name,[0m native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type_pack_name` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:7:49
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   native_type_pack_name, native_type_pack_name: [0m[31m1[0m, native_type_pack_name: "", native_type_pack_name: [],
-  [0m[34m│[0m                                                 [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_type_pack_name` should have a string argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:7:102
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [0m[31m[][0m,
-  [0m[34m│[0m                                                                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `original_order` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:8:35
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   original_order, original_order: [0m[31m1[0m, original_order: "", original_order: [],
-  [0m[34m│[0m                                   [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `original_order` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:8:54
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   original_order, original_order: 1, original_order: [0m[31m""[0m, original_order: [],
-  [0m[34m│[0m                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `original_order` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:8:74
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   original_order, original_order: 1, original_order: "", original_order: [0m[31m[][0m,
-  [0m[34m│[0m                                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `required` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:9:23
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   required, required: [0m[31m1[0m, required: "", required: [],
-  [0m[34m│[0m                       [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `required` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:9:36
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   required, required: 1, required: [0m[31m""[0m, required: [],
-  [0m[34m│[0m                                    [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `required` should not have an argument[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:9:50
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   required, required: 1, required: "", required: [0m[31m[][0m,
-  [0m[34m│[0m                                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `deprecated` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:10:27
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   deprecated, deprecated: [0m[31m1[0m, deprecated: "", deprecated: [],
-   [0m[34m│[0m                           [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `deprecated` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:10:42
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   deprecated, deprecated: 1, deprecated: [0m[31m""[0m, deprecated: [],
-   [0m[34m│[0m                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `deprecated` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:10:58
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   deprecated, deprecated: 1, deprecated: "", deprecated: [0m[31m[][0m,
-   [0m[34m│[0m                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `key` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:11:13
-   [0m[34m│[0m
-[0m[34m11[0m [0m[34m│[0m   key, key: [0m[31m1[0m, key: "", key: [],
-   [0m[34m│[0m             [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `key` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:11:21
-   [0m[34m│[0m
-[0m[34m11[0m [0m[34m│[0m   key, key: 1, key: [0m[31m""[0m, key: [],
-   [0m[34m│[0m                     [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `key` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:11:30
-   [0m[34m│[0m
-[0m[34m11[0m [0m[34m│[0m   key, key: 1, key: "", key: [0m[31m[][0m,
-   [0m[34m│[0m                              [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `shared` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:12:19
-   [0m[34m│[0m
-[0m[34m12[0m [0m[34m│[0m   shared, shared: [0m[31m1[0m, shared: "", shared: [],
-   [0m[34m│[0m                   [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `shared` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:12:30
-   [0m[34m│[0m
-[0m[34m12[0m [0m[34m│[0m   shared, shared: 1, shared: [0m[31m""[0m, shared: [],
-   [0m[34m│[0m                              [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `shared` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:12:42
-   [0m[34m│[0m
-[0m[34m12[0m [0m[34m│[0m   shared, shared: 1, shared: "", shared: [0m[31m[][0m,
-   [0m[34m│[0m                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `nested_flatbuffer` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:13:3
-   [0m[34m│[0m
-[0m[34m13[0m [0m[34m│[0m   [0m[31mnested_flatbuffer,[0m nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `nested_flatbuffer` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:13:41
-   [0m[34m│[0m
-[0m[34m13[0m [0m[34m│[0m   nested_flatbuffer, nested_flatbuffer: [0m[31m1[0m, nested_flatbuffer: "", nested_flatbuffer: [],
-   [0m[34m│[0m                                         [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `nested_flatbuffer` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:13:86
-   [0m[34m│[0m
-[0m[34m13[0m [0m[34m│[0m   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [0m[31m[][0m,
-   [0m[34m│[0m                                                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `id` should have an integer argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:14:3
-   [0m[34m│[0m
-[0m[34m14[0m [0m[34m│[0m   [0m[31mid,[0m id: 1, id: "", id: [],
-   [0m[34m│[0m   [0m[31m^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `id` should have an integer argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:14:18
-   [0m[34m│[0m
-[0m[34m14[0m [0m[34m│[0m   id, id: 1, id: [0m[31m""[0m, id: [],
-   [0m[34m│[0m                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `id` should have an integer argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:14:26
-   [0m[34m│[0m
-[0m[34m14[0m [0m[34m│[0m   id, id: 1, id: "", id: [0m[31m[][0m,
-   [0m[34m│[0m                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `hash` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:15:3
-   [0m[34m│[0m
-[0m[34m15[0m [0m[34m│[0m   [0m[31mhash,[0m hash: 1, hash: "", hash: [],
-   [0m[34m│[0m   [0m[31m^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `hash` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:15:15
-   [0m[34m│[0m
-[0m[34m15[0m [0m[34m│[0m   hash, hash: [0m[31m1[0m, hash: "", hash: [],
-   [0m[34m│[0m               [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `hash` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:15:34
-   [0m[34m│[0m
-[0m[34m15[0m [0m[34m│[0m   hash, hash: 1, hash: "", hash: [0m[31m[][0m,
-   [0m[34m│[0m                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:16:3
-   [0m[34m│[0m
-[0m[34m16[0m [0m[34m│[0m   [0m[31mcpp_type,[0m cpp_type: 1, cpp_type: "", cpp_type: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:16:23
-   [0m[34m│[0m
-[0m[34m16[0m [0m[34m│[0m   cpp_type, cpp_type: [0m[31m1[0m, cpp_type: "", cpp_type: [],
-   [0m[34m│[0m                       [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:16:50
-   [0m[34m│[0m
-[0m[34m16[0m [0m[34m│[0m   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [0m[31m[][0m,
-   [0m[34m│[0m                                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:17:3
-   [0m[34m│[0m
-[0m[34m17[0m [0m[34m│[0m   [0m[31mcpp_ptr_type,[0m cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:17:31
-   [0m[34m│[0m
-[0m[34m17[0m [0m[34m│[0m   cpp_ptr_type, cpp_ptr_type: [0m[31m1[0m, cpp_ptr_type: "", cpp_ptr_type: [],
-   [0m[34m│[0m                               [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:17:66
-   [0m[34m│[0m
-[0m[34m17[0m [0m[34m│[0m   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [0m[31m[][0m,
-   [0m[34m│[0m                                                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type_get` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:18:3
-   [0m[34m│[0m
-[0m[34m18[0m [0m[34m│[0m   [0m[31mcpp_ptr_type_get,[0m cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type_get` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:18:39
-   [0m[34m│[0m
-[0m[34m18[0m [0m[34m│[0m   cpp_ptr_type_get, cpp_ptr_type_get: [0m[31m1[0m, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
-   [0m[34m│[0m                                       [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_ptr_type_get` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:18:82
-   [0m[34m│[0m
-[0m[34m18[0m [0m[34m│[0m   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [0m[31m[][0m,
-   [0m[34m│[0m                                                                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:19:3
-   [0m[34m│[0m
-[0m[34m19[0m [0m[34m│[0m   [0m[31mcpp_str_type,[0m cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:19:31
-   [0m[34m│[0m
-[0m[34m19[0m [0m[34m│[0m   cpp_str_type, cpp_str_type: [0m[31m1[0m, cpp_str_type: "", cpp_str_type: [],
-   [0m[34m│[0m                               [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_type` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:19:66
-   [0m[34m│[0m
-[0m[34m19[0m [0m[34m│[0m   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [0m[31m[][0m,
-   [0m[34m│[0m                                                                  [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_flex_ctor` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:20:41
-   [0m[34m│[0m
-[0m[34m20[0m [0m[34m│[0m   cpp_str_flex_ctor, cpp_str_flex_ctor: [0m[31m1[0m, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
-   [0m[34m│[0m                                         [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_flex_ctor` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:20:63
-   [0m[34m│[0m
-[0m[34m20[0m [0m[34m│[0m   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: [0m[31m""[0m, cpp_str_flex_ctor: [],
-   [0m[34m│[0m                                                               [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `cpp_str_flex_ctor` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:20:86
-   [0m[34m│[0m
-[0m[34m20[0m [0m[34m│[0m   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [0m[31m[][0m,
-   [0m[34m│[0m                                                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_inline` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:21:33
-   [0m[34m│[0m
-[0m[34m21[0m [0m[34m│[0m   native_inline, native_inline: [0m[31m1[0m, native_inline: "", native_inline: [],
-   [0m[34m│[0m                                 [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_inline` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:21:51
-   [0m[34m│[0m
-[0m[34m21[0m [0m[34m│[0m   native_inline, native_inline: 1, native_inline: [0m[31m""[0m, native_inline: [],
-   [0m[34m│[0m                                                   [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_inline` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:21:70
-   [0m[34m│[0m
-[0m[34m21[0m [0m[34m│[0m   native_inline, native_inline: 1, native_inline: "", native_inline: [0m[31m[][0m,
-   [0m[34m│[0m                                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_default` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:22:3
-   [0m[34m│[0m
-[0m[34m22[0m [0m[34m│[0m   [0m[31mnative_default,[0m native_default: 1, native_default: "", native_default: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_default` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:22:35
-   [0m[34m│[0m
-[0m[34m22[0m [0m[34m│[0m   native_default, native_default: [0m[31m1[0m, native_default: "", native_default: [],
-   [0m[34m│[0m                                   [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `native_default` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:22:74
-   [0m[34m│[0m
-[0m[34m22[0m [0m[34m│[0m   native_default, native_default: 1, native_default: "", native_default: [0m[31m[][0m,
-   [0m[34m│[0m                                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `flexbuffer` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:23:27
-   [0m[34m│[0m
-[0m[34m23[0m [0m[34m│[0m   flexbuffer, flexbuffer: [0m[31m1[0m, flexbuffer: "", flexbuffer: [],
-   [0m[34m│[0m                           [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `flexbuffer` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:23:42
-   [0m[34m│[0m
-[0m[34m23[0m [0m[34m│[0m   flexbuffer, flexbuffer: 1, flexbuffer: [0m[31m""[0m, flexbuffer: [],
-   [0m[34m│[0m                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `flexbuffer` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:23:58
-   [0m[34m│[0m
-[0m[34m23[0m [0m[34m│[0m   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [0m[31m[][0m,
-   [0m[34m│[0m                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `streaming` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:24:3
-   [0m[34m│[0m
-[0m[34m24[0m [0m[34m│[0m   [0m[31mstreaming,[0m streaming: 1, streaming: "", streaming: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `streaming` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:24:25
-   [0m[34m│[0m
-[0m[34m24[0m [0m[34m│[0m   streaming, streaming: [0m[31m1[0m, streaming: "", streaming: [],
-   [0m[34m│[0m                         [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `streaming` should have a string argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:24:54
-   [0m[34m│[0m
-[0m[34m24[0m [0m[34m│[0m   streaming, streaming: 1, streaming: "", streaming: [0m[31m[][0m,
-   [0m[34m│[0m                                                      [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `idempotent` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:25:27
-   [0m[34m│[0m
-[0m[34m25[0m [0m[34m│[0m   idempotent, idempotent: [0m[31m1[0m, idempotent: "", idempotent: [],
-   [0m[34m│[0m                           [0m[31m^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `idempotent` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:25:42
-   [0m[34m│[0m
-[0m[34m25[0m [0m[34m│[0m   idempotent, idempotent: 1, idempotent: [0m[31m""[0m, idempotent: [],
-   [0m[34m│[0m                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Attribute `idempotent` should not have an argument[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:25:58
-   [0m[34m│[0m
-[0m[34m25[0m [0m[34m│[0m   idempotent, idempotent: 1, idempotent: "", idempotent: [0m[31m[][0m,
-   [0m[34m│[0m                                                          [0m[31m^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Unknown attribute `blabla`[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:26:3
-   [0m[34m│[0m
-[0m[34m26[0m [0m[34m│[0m   [0m[31mblabla[0m, blabla: 1, blabla: "", blabla: [],
-   [0m[34m│[0m   [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Unknown attribute `blabla`[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:26:11
-   [0m[34m│[0m
-[0m[34m26[0m [0m[34m│[0m   blabla, [0m[31mblabla[0m: 1, blabla: "", blabla: [],
-   [0m[34m│[0m           [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Unknown attribute `blabla`[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:26:22
-   [0m[34m│[0m
-[0m[34m26[0m [0m[34m│[0m   blabla, blabla: 1, [0m[31mblabla[0m: "", blabla: [],
-   [0m[34m│[0m                      [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Unknown attribute `blabla`[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:26:34
-   [0m[34m│[0m
-[0m[34m26[0m [0m[34m│[0m   blabla, blabla: 1, blabla: "", [0m[31mblabla[0m: [],
-   [0m[34m│[0m                                  [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported on structs[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:2:16
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   force_align, [0m[31mforce_align: 1,[0m force_align: "", force_align: [],
-  [0m[34m│[0m                [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:3:3
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   [0m[31mbit_flags,[0m bit_flags: 1, bit_flags: "", bit_flags: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:4:3
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   [0m[31mcsharp_partial,[0m csharp_partial: 1, csharp_partial: "", csharp_partial: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:5:3
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   [0m[31mprivate,[0m private: 1, private: "", private: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:6:32
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   native_type, native_type: 1, [0m[31mnative_type: "",[0m native_type: [],
-  [0m[34m│[0m                                [0m[31m^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:7:52
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   native_type_pack_name, native_type_pack_name: 1, [0m[31mnative_type_pack_name: "",[0m native_type_pack_name: [],
-  [0m[34m│[0m                                                    [0m[31m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:8:3
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   [0m[31moriginal_order,[0m original_order: 1, original_order: "", original_order: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:9:3
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   [0m[31mrequired,[0m required: 1, required: "", required: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:10:3
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   [0m[31mdeprecated,[0m deprecated: 1, deprecated: "", deprecated: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:11:3
-   [0m[34m│[0m
-[0m[34m11[0m [0m[34m│[0m   [0m[31mkey,[0m key: 1, key: "", key: [],
-   [0m[34m│[0m   [0m[31m^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:12:3
-   [0m[34m│[0m
-[0m[34m12[0m [0m[34m│[0m   [0m[31mshared,[0m shared: 1, shared: "", shared: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:13:44
-   [0m[34m│[0m
-[0m[34m13[0m [0m[34m│[0m   nested_flatbuffer, nested_flatbuffer: 1, [0m[31mnested_flatbuffer: "",[0m nested_flatbuffer: [],
-   [0m[34m│[0m                                            [0m[31m^^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:14:7
-   [0m[34m│[0m
-[0m[34m14[0m [0m[34m│[0m   id, [0m[31mid: 1,[0m id: "", id: [],
-   [0m[34m│[0m       [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:15:18
-   [0m[34m│[0m
-[0m[34m15[0m [0m[34m│[0m   hash, hash: 1, [0m[31mhash: "",[0m hash: [],
-   [0m[34m│[0m                  [0m[31m^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:16:26
-   [0m[34m│[0m
-[0m[34m16[0m [0m[34m│[0m   cpp_type, cpp_type: 1, [0m[31mcpp_type: "",[0m cpp_type: [],
-   [0m[34m│[0m                          [0m[31m^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:17:34
-   [0m[34m│[0m
-[0m[34m17[0m [0m[34m│[0m   cpp_ptr_type, cpp_ptr_type: 1, [0m[31mcpp_ptr_type: "",[0m cpp_ptr_type: [],
-   [0m[34m│[0m                                  [0m[31m^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:18:42
-   [0m[34m│[0m
-[0m[34m18[0m [0m[34m│[0m   cpp_ptr_type_get, cpp_ptr_type_get: 1, [0m[31mcpp_ptr_type_get: "",[0m cpp_ptr_type_get: [],
-   [0m[34m│[0m                                          [0m[31m^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:19:34
-   [0m[34m│[0m
-[0m[34m19[0m [0m[34m│[0m   cpp_str_type, cpp_str_type: 1, [0m[31mcpp_str_type: "",[0m cpp_str_type: [],
-   [0m[34m│[0m                                  [0m[31m^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:20:3
-   [0m[34m│[0m
-[0m[34m20[0m [0m[34m│[0m   [0m[31mcpp_str_flex_ctor,[0m cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:21:3
-   [0m[34m│[0m
-[0m[34m21[0m [0m[34m│[0m   [0m[31mnative_inline,[0m native_inline: 1, native_inline: "", native_inline: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:22:38
-   [0m[34m│[0m
-[0m[34m22[0m [0m[34m│[0m   native_default, native_default: 1, [0m[31mnative_default: "",[0m native_default: [],
-   [0m[34m│[0m                                      [0m[31m^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:23:3
-   [0m[34m│[0m
-[0m[34m23[0m [0m[34m│[0m   [0m[31mflexbuffer,[0m flexbuffer: 1, flexbuffer: "", flexbuffer: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:24:28
-   [0m[34m│[0m
-[0m[34m24[0m [0m[34m│[0m   streaming, streaming: 1, [0m[31mstreaming: "",[0m streaming: [],
-   [0m[34m│[0m                            [0m[31m^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on structs (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:25:3
-   [0m[34m│[0m
-[0m[34m25[0m [0m[34m│[0m   [0m[31midempotent,[0m idempotent: 1, idempotent: "", idempotent: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported on struct fields[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:2:16
-  [0m[34m│[0m
-[0m[34m2[0m [0m[34m│[0m   force_align, [0m[31mforce_align: 1,[0m force_align: "", force_align: [],
-  [0m[34m│[0m                [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:3:3
-  [0m[34m│[0m
-[0m[34m3[0m [0m[34m│[0m   [0m[31mbit_flags,[0m bit_flags: 1, bit_flags: "", bit_flags: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:4:3
-  [0m[34m│[0m
-[0m[34m4[0m [0m[34m│[0m   [0m[31mcsharp_partial,[0m csharp_partial: 1, csharp_partial: "", csharp_partial: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:5:3
-  [0m[34m│[0m
-[0m[34m5[0m [0m[34m│[0m   [0m[31mprivate,[0m private: 1, private: "", private: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:6:32
-  [0m[34m│[0m
-[0m[34m6[0m [0m[34m│[0m   native_type, native_type: 1, [0m[31mnative_type: "",[0m native_type: [],
-  [0m[34m│[0m                                [0m[31m^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:7:52
-  [0m[34m│[0m
-[0m[34m7[0m [0m[34m│[0m   native_type_pack_name, native_type_pack_name: 1, [0m[31mnative_type_pack_name: "",[0m native_type_pack_name: [],
-  [0m[34m│[0m                                                    [0m[31m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:8:3
-  [0m[34m│[0m
-[0m[34m8[0m [0m[34m│[0m   [0m[31moriginal_order,[0m original_order: 1, original_order: "", original_order: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields[0m
-  [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:9:3
-  [0m[34m│[0m
-[0m[34m9[0m [0m[34m│[0m   [0m[31mrequired,[0m required: 1, required: "", required: [],
-  [0m[34m│[0m   [0m[31m^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:10:3
-   [0m[34m│[0m
-[0m[34m10[0m [0m[34m│[0m   [0m[31mdeprecated,[0m deprecated: 1, deprecated: "", deprecated: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:11:3
-   [0m[34m│[0m
-[0m[34m11[0m [0m[34m│[0m   [0m[31mkey,[0m key: 1, key: "", key: [],
-   [0m[34m│[0m   [0m[31m^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:12:3
-   [0m[34m│[0m
-[0m[34m12[0m [0m[34m│[0m   [0m[31mshared,[0m shared: 1, shared: "", shared: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:13:44
-   [0m[34m│[0m
-[0m[34m13[0m [0m[34m│[0m   nested_flatbuffer, nested_flatbuffer: 1, [0m[31mnested_flatbuffer: "",[0m nested_flatbuffer: [],
-   [0m[34m│[0m                                            [0m[31m^^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:14:7
-   [0m[34m│[0m
-[0m[34m14[0m [0m[34m│[0m   id, [0m[31mid: 1,[0m id: "", id: [],
-   [0m[34m│[0m       [0m[31m^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:15:18
-   [0m[34m│[0m
-[0m[34m15[0m [0m[34m│[0m   hash, hash: 1, [0m[31mhash: "",[0m hash: [],
-   [0m[34m│[0m                  [0m[31m^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:16:26
-   [0m[34m│[0m
-[0m[34m16[0m [0m[34m│[0m   cpp_type, cpp_type: 1, [0m[31mcpp_type: "",[0m cpp_type: [],
-   [0m[34m│[0m                          [0m[31m^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:17:34
-   [0m[34m│[0m
-[0m[34m17[0m [0m[34m│[0m   cpp_ptr_type, cpp_ptr_type: 1, [0m[31mcpp_ptr_type: "",[0m cpp_ptr_type: [],
-   [0m[34m│[0m                                  [0m[31m^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:18:42
-   [0m[34m│[0m
-[0m[34m18[0m [0m[34m│[0m   cpp_ptr_type_get, cpp_ptr_type_get: 1, [0m[31mcpp_ptr_type_get: "",[0m cpp_ptr_type_get: [],
-   [0m[34m│[0m                                          [0m[31m^^^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:19:34
-   [0m[34m│[0m
-[0m[34m19[0m [0m[34m│[0m   cpp_str_type, cpp_str_type: 1, [0m[31mcpp_str_type: "",[0m cpp_str_type: [],
-   [0m[34m│[0m                                  [0m[31m^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:20:3
-   [0m[34m│[0m
-[0m[34m20[0m [0m[34m│[0m   [0m[31mcpp_str_flex_ctor,[0m cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:21:3
-   [0m[34m│[0m
-[0m[34m21[0m [0m[34m│[0m   [0m[31mnative_inline,[0m native_inline: 1, native_inline: "", native_inline: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute is not currently supported[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:22:38
-   [0m[34m│[0m
-[0m[34m22[0m [0m[34m│[0m   native_default, native_default: 1, [0m[31mnative_default: "",[0m native_default: [],
-   [0m[34m│[0m                                      [0m[31m^^^^^^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:23:3
-   [0m[34m│[0m
-[0m[34m23[0m [0m[34m│[0m   [0m[31mflexbuffer,[0m flexbuffer: 1, flexbuffer: "", flexbuffer: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:24:28
-   [0m[34m│[0m
-[0m[34m24[0m [0m[34m│[0m   streaming, streaming: 1, [0m[31mstreaming: "",[0m streaming: [],
-   [0m[34m│[0m                            [0m[31m^^^^^^^^^^^^^^[0m
-
-[0m[1m[38;5;9merror[0m[1m: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)[0m
-   [0m[34m┌─[0m test/files/invalid/bad_attributes_struct.fbs:25:3
-   [0m[34m│[0m
-[0m[34m25[0m [0m[34m│[0m   [0m[31midempotent,[0m idempotent: 1, idempotent: "", idempotent: [],
-   [0m[34m│[0m   [0m[31m^^^^^^^^^^^[0m
+error: Attribute `force_align` should have an integer argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:3
+  │
+2 │   force_align, force_align: 1, force_align: "", force_align: [],
+  │   ^^^^^^^^^^^^
+
+error: Attribute `force_align` should have an integer argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:45
+  │
+2 │   force_align, force_align: 1, force_align: "", force_align: [],
+  │                                             ^^
+
+error: Attribute `force_align` should have an integer argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:62
+  │
+2 │   force_align, force_align: 1, force_align: "", force_align: [],
+  │                                                              ^^
+
+error: Attribute `bit_flags` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:3:25
+  │
+3 │   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [],
+  │                         ^
+
+error: Attribute `bit_flags` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:3:39
+  │
+3 │   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [],
+  │                                       ^^
+
+error: Attribute `bit_flags` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:3:54
+  │
+3 │   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [],
+  │                                                      ^^
+
+error: Attribute `csharp_partial` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:4:35
+  │
+4 │   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [],
+  │                                   ^
+
+error: Attribute `csharp_partial` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:4:54
+  │
+4 │   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [],
+  │                                                      ^^
+
+error: Attribute `csharp_partial` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:4:74
+  │
+4 │   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [],
+  │                                                                          ^^
+
+error: Attribute `private` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:5:21
+  │
+5 │   private, private: 1, private: "", private: [],
+  │                     ^
+
+error: Attribute `private` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:5:33
+  │
+5 │   private, private: 1, private: "", private: [],
+  │                                 ^^
+
+error: Attribute `private` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:5:46
+  │
+5 │   private, private: 1, private: "", private: [],
+  │                                              ^^
+
+error: Attribute `native_type` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:6:3
+  │
+6 │   native_type, native_type: 1, native_type: "", native_type: [],
+  │   ^^^^^^^^^^^^
+
+error: Attribute `native_type` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:6:29
+  │
+6 │   native_type, native_type: 1, native_type: "", native_type: [],
+  │                             ^
+
+error: Attribute `native_type` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:6:62
+  │
+6 │   native_type, native_type: 1, native_type: "", native_type: [],
+  │                                                              ^^
+
+error: Attribute `native_type_pack_name` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:7:3
+  │
+7 │   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
+  │   ^^^^^^^^^^^^^^^^^^^^^^
+
+error: Attribute `native_type_pack_name` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:7:49
+  │
+7 │   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
+  │                                                 ^
+
+error: Attribute `native_type_pack_name` should have a string argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:7:102
+  │
+7 │   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
+  │                                                                                                      ^^
+
+error: Attribute `original_order` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:8:35
+  │
+8 │   original_order, original_order: 1, original_order: "", original_order: [],
+  │                                   ^
+
+error: Attribute `original_order` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:8:54
+  │
+8 │   original_order, original_order: 1, original_order: "", original_order: [],
+  │                                                      ^^
+
+error: Attribute `original_order` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:8:74
+  │
+8 │   original_order, original_order: 1, original_order: "", original_order: [],
+  │                                                                          ^^
+
+error: Attribute `required` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:9:23
+  │
+9 │   required, required: 1, required: "", required: [],
+  │                       ^
+
+error: Attribute `required` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:9:36
+  │
+9 │   required, required: 1, required: "", required: [],
+  │                                    ^^
+
+error: Attribute `required` should not have an argument
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:9:50
+  │
+9 │   required, required: 1, required: "", required: [],
+  │                                                  ^^
+
+error: Attribute `deprecated` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:10:27
+   │
+10 │   deprecated, deprecated: 1, deprecated: "", deprecated: [],
+   │                           ^
+
+error: Attribute `deprecated` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:10:42
+   │
+10 │   deprecated, deprecated: 1, deprecated: "", deprecated: [],
+   │                                          ^^
+
+error: Attribute `deprecated` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:10:58
+   │
+10 │   deprecated, deprecated: 1, deprecated: "", deprecated: [],
+   │                                                          ^^
+
+error: Attribute `key` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:11:13
+   │
+11 │   key, key: 1, key: "", key: [],
+   │             ^
+
+error: Attribute `key` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:11:21
+   │
+11 │   key, key: 1, key: "", key: [],
+   │                     ^^
+
+error: Attribute `key` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:11:30
+   │
+11 │   key, key: 1, key: "", key: [],
+   │                              ^^
+
+error: Attribute `shared` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:12:19
+   │
+12 │   shared, shared: 1, shared: "", shared: [],
+   │                   ^
+
+error: Attribute `shared` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:12:30
+   │
+12 │   shared, shared: 1, shared: "", shared: [],
+   │                              ^^
+
+error: Attribute `shared` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:12:42
+   │
+12 │   shared, shared: 1, shared: "", shared: [],
+   │                                          ^^
+
+error: Attribute `nested_flatbuffer` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:13:3
+   │
+13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
+   │   ^^^^^^^^^^^^^^^^^^
+
+error: Attribute `nested_flatbuffer` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:13:41
+   │
+13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
+   │                                         ^
+
+error: Attribute `nested_flatbuffer` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:13:86
+   │
+13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
+   │                                                                                      ^^
+
+error: Attribute `id` should have an integer argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:14:3
+   │
+14 │   id, id: 1, id: "", id: [],
+   │   ^^^
+
+error: Attribute `id` should have an integer argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:14:18
+   │
+14 │   id, id: 1, id: "", id: [],
+   │                  ^^
+
+error: Attribute `id` should have an integer argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:14:26
+   │
+14 │   id, id: 1, id: "", id: [],
+   │                          ^^
+
+error: Attribute `hash` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:15:3
+   │
+15 │   hash, hash: 1, hash: "", hash: [],
+   │   ^^^^^
+
+error: Attribute `hash` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:15:15
+   │
+15 │   hash, hash: 1, hash: "", hash: [],
+   │               ^
+
+error: Attribute `hash` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:15:34
+   │
+15 │   hash, hash: 1, hash: "", hash: [],
+   │                                  ^^
+
+error: Attribute `cpp_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:16:3
+   │
+16 │   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [],
+   │   ^^^^^^^^^
+
+error: Attribute `cpp_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:16:23
+   │
+16 │   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [],
+   │                       ^
+
+error: Attribute `cpp_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:16:50
+   │
+16 │   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [],
+   │                                                  ^^
+
+error: Attribute `cpp_ptr_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:17:3
+   │
+17 │   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
+   │   ^^^^^^^^^^^^^
+
+error: Attribute `cpp_ptr_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:17:31
+   │
+17 │   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
+   │                               ^
+
+error: Attribute `cpp_ptr_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:17:66
+   │
+17 │   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
+   │                                                                  ^^
+
+error: Attribute `cpp_ptr_type_get` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:18:3
+   │
+18 │   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
+   │   ^^^^^^^^^^^^^^^^^
+
+error: Attribute `cpp_ptr_type_get` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:18:39
+   │
+18 │   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
+   │                                       ^
+
+error: Attribute `cpp_ptr_type_get` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:18:82
+   │
+18 │   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
+   │                                                                                  ^^
+
+error: Attribute `cpp_str_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:19:3
+   │
+19 │   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
+   │   ^^^^^^^^^^^^^
+
+error: Attribute `cpp_str_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:19:31
+   │
+19 │   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
+   │                               ^
+
+error: Attribute `cpp_str_type` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:19:66
+   │
+19 │   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
+   │                                                                  ^^
+
+error: Attribute `cpp_str_flex_ctor` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:20:41
+   │
+20 │   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
+   │                                         ^
+
+error: Attribute `cpp_str_flex_ctor` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:20:63
+   │
+20 │   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
+   │                                                               ^^
+
+error: Attribute `cpp_str_flex_ctor` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:20:86
+   │
+20 │   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
+   │                                                                                      ^^
+
+error: Attribute `native_inline` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:21:33
+   │
+21 │   native_inline, native_inline: 1, native_inline: "", native_inline: [],
+   │                                 ^
+
+error: Attribute `native_inline` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:21:51
+   │
+21 │   native_inline, native_inline: 1, native_inline: "", native_inline: [],
+   │                                                   ^^
+
+error: Attribute `native_inline` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:21:70
+   │
+21 │   native_inline, native_inline: 1, native_inline: "", native_inline: [],
+   │                                                                      ^^
+
+error: Attribute `native_default` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:22:3
+   │
+22 │   native_default, native_default: 1, native_default: "", native_default: [],
+   │   ^^^^^^^^^^^^^^^
+
+error: Attribute `native_default` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:22:35
+   │
+22 │   native_default, native_default: 1, native_default: "", native_default: [],
+   │                                   ^
+
+error: Attribute `native_default` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:22:74
+   │
+22 │   native_default, native_default: 1, native_default: "", native_default: [],
+   │                                                                          ^^
+
+error: Attribute `flexbuffer` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:23:27
+   │
+23 │   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [],
+   │                           ^
+
+error: Attribute `flexbuffer` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:23:42
+   │
+23 │   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [],
+   │                                          ^^
+
+error: Attribute `flexbuffer` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:23:58
+   │
+23 │   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [],
+   │                                                          ^^
+
+error: Attribute `streaming` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:24:3
+   │
+24 │   streaming, streaming: 1, streaming: "", streaming: [],
+   │   ^^^^^^^^^^
+
+error: Attribute `streaming` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:24:25
+   │
+24 │   streaming, streaming: 1, streaming: "", streaming: [],
+   │                         ^
+
+error: Attribute `streaming` should have a string argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:24:54
+   │
+24 │   streaming, streaming: 1, streaming: "", streaming: [],
+   │                                                      ^^
+
+error: Attribute `idempotent` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:25:27
+   │
+25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
+   │                           ^
+
+error: Attribute `idempotent` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:25:42
+   │
+25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
+   │                                          ^^
+
+error: Attribute `idempotent` should not have an argument
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:25:58
+   │
+25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
+   │                                                          ^^
+
+error: Unknown attribute `blabla`
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:26:3
+   │
+26 │   blabla, blabla: 1, blabla: "", blabla: [],
+   │   ^^^^^^
+
+error: Unknown attribute `blabla`
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:26:11
+   │
+26 │   blabla, blabla: 1, blabla: "", blabla: [],
+   │           ^^^^^^
+
+error: Unknown attribute `blabla`
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:26:22
+   │
+26 │   blabla, blabla: 1, blabla: "", blabla: [],
+   │                      ^^^^^^
+
+error: Unknown attribute `blabla`
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:26:34
+   │
+26 │   blabla, blabla: 1, blabla: "", blabla: [],
+   │                                  ^^^^^^
+
+error: Metadata attribute is not currently supported on structs
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:16
+  │
+2 │   force_align, force_align: 1, force_align: "", force_align: [],
+  │                ^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:3:3
+  │
+3 │   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [],
+  │   ^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:4:3
+  │
+4 │   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [],
+  │   ^^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:5:3
+  │
+5 │   private, private: 1, private: "", private: [],
+  │   ^^^^^^^^
+
+error: Metadata attribute is not currently supported
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:6:32
+  │
+6 │   native_type, native_type: 1, native_type: "", native_type: [],
+  │                                ^^^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:7:52
+  │
+7 │   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
+  │                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:8:3
+  │
+8 │   original_order, original_order: 1, original_order: "", original_order: [],
+  │   ^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:9:3
+  │
+9 │   required, required: 1, required: "", required: [],
+  │   ^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:10:3
+   │
+10 │   deprecated, deprecated: 1, deprecated: "", deprecated: [],
+   │   ^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:11:3
+   │
+11 │   key, key: 1, key: "", key: [],
+   │   ^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:12:3
+   │
+12 │   shared, shared: 1, shared: "", shared: [],
+   │   ^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:13:44
+   │
+13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
+   │                                            ^^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:14:7
+   │
+14 │   id, id: 1, id: "", id: [],
+   │       ^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:15:18
+   │
+15 │   hash, hash: 1, hash: "", hash: [],
+   │                  ^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:16:26
+   │
+16 │   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [],
+   │                          ^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:17:34
+   │
+17 │   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
+   │                                  ^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:18:42
+   │
+18 │   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
+   │                                          ^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:19:34
+   │
+19 │   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
+   │                                  ^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:20:3
+   │
+20 │   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
+   │   ^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:21:3
+   │
+21 │   native_inline, native_inline: 1, native_inline: "", native_inline: [],
+   │   ^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:22:38
+   │
+22 │   native_default, native_default: 1, native_default: "", native_default: [],
+   │                                      ^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:23:3
+   │
+23 │   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [],
+   │   ^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:24:28
+   │
+24 │   streaming, streaming: 1, streaming: "", streaming: [],
+   │                            ^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:25:3
+   │
+25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
+   │   ^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported on struct fields
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:16
+  │
+2 │   force_align, force_align: 1, force_align: "", force_align: [],
+  │                ^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:3:3
+  │
+3 │   bit_flags, bit_flags: 1, bit_flags: "", bit_flags: [],
+  │   ^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:4:3
+  │
+4 │   csharp_partial, csharp_partial: 1, csharp_partial: "", csharp_partial: [],
+  │   ^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:5:3
+  │
+5 │   private, private: 1, private: "", private: [],
+  │   ^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:6:32
+  │
+6 │   native_type, native_type: 1, native_type: "", native_type: [],
+  │                                ^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:7:52
+  │
+7 │   native_type_pack_name, native_type_pack_name: 1, native_type_pack_name: "", native_type_pack_name: [],
+  │                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:8:3
+  │
+8 │   original_order, original_order: 1, original_order: "", original_order: [],
+  │   ^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields
+  ┌─ test/files/invalid/bad_attributes_struct.fbs:9:3
+  │
+9 │   required, required: 1, required: "", required: [],
+  │   ^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:10:3
+   │
+10 │   deprecated, deprecated: 1, deprecated: "", deprecated: [],
+   │   ^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:11:3
+   │
+11 │   key, key: 1, key: "", key: [],
+   │   ^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:12:3
+   │
+12 │   shared, shared: 1, shared: "", shared: [],
+   │   ^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:13:44
+   │
+13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
+   │                                            ^^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:14:7
+   │
+14 │   id, id: 1, id: "", id: [],
+   │       ^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:15:18
+   │
+15 │   hash, hash: 1, hash: "", hash: [],
+   │                  ^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:16:26
+   │
+16 │   cpp_type, cpp_type: 1, cpp_type: "", cpp_type: [],
+   │                          ^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:17:34
+   │
+17 │   cpp_ptr_type, cpp_ptr_type: 1, cpp_ptr_type: "", cpp_ptr_type: [],
+   │                                  ^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:18:42
+   │
+18 │   cpp_ptr_type_get, cpp_ptr_type_get: 1, cpp_ptr_type_get: "", cpp_ptr_type_get: [],
+   │                                          ^^^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:19:34
+   │
+19 │   cpp_str_type, cpp_str_type: 1, cpp_str_type: "", cpp_str_type: [],
+   │                                  ^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:20:3
+   │
+20 │   cpp_str_flex_ctor, cpp_str_flex_ctor: 1, cpp_str_flex_ctor: "", cpp_str_flex_ctor: [],
+   │   ^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:21:3
+   │
+21 │   native_inline, native_inline: 1, native_inline: "", native_inline: [],
+   │   ^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:22:38
+   │
+22 │   native_default, native_default: 1, native_default: "", native_default: [],
+   │                                      ^^^^^^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:23:3
+   │
+23 │   flexbuffer, flexbuffer: 1, flexbuffer: "", flexbuffer: [],
+   │   ^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:24:28
+   │
+24 │   streaming, streaming: 1, streaming: "", streaming: [],
+   │                            ^^^^^^^^^^^^^^
+
+error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+   ┌─ test/files/invalid/bad_attributes_struct.fbs:25:3
+   │
+25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
+   │   ^^^^^^^^^^^
 
 Error: Bailing because of errors
