@@ -20,6 +20,7 @@ planus-cli = { path = "../../planus-cli" }
 [dev-dependencies]
 criterion = "0.3"
 serde_json = "1.0.73"
+similar-asserts = "1.1.0"
 
 [[bench]]
 name = "benchmark"
