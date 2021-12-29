@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct {{ info.owned_name }} {
     {% for field in fields -%}
         pub {{ field.info.name }}: {{ field.info.owned_type }},

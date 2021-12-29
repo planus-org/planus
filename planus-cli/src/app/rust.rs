@@ -14,7 +14,7 @@ pub struct Command {
 
 impl Command {
     pub fn run(self, _options: super::AppOptions) -> Result<()> {
-        generate_code(&self.files, self.output_filename)?;
+        generate_code(&self.files, &self.output_filename)?;
 
         Ok(())
     }

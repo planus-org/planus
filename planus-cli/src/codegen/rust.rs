@@ -802,7 +802,7 @@ pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
 
 pub fn generate_code<P: AsRef<Path>>(
     input_files: &[P],
-    output_filename: String,
+    output_filename: &str,
 ) -> anyhow::Result<()> {
     let mut ctx = Ctx::default();
     let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
@@ -818,6 +818,6 @@ pub fn generate_code<P: AsRef<Path>>(
     file.write_all(res.as_bytes())?;
     file.flush()?;
 
-    format_file(&output_filename)?;
+    format_file(output_filename)?;
     Ok(())
 }

@@ -4,6 +4,7 @@ mod tests {
 
     use crate::{flatc::conformance as flatc, planus::conformance::*};
 
+    // TODO: either actually test stuff here or combine it with test_template
     #[test]
     fn test_simple() {
         let mut builder = flatbuffers::FlatBufferBuilder::new();
