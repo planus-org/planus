@@ -29,7 +29,7 @@ fn test_serialize() {
 
             let root_ref = RootRef::from_buffer(
                 SliceWithStartOffset {
-                    buffer: &data,
+                    buffer: data,
                     offset_from_start: 0,
                 },
                 0,
