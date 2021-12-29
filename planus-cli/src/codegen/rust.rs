@@ -384,12 +384,14 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAs<{}>", owned_type);
+                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
 
                         serialize_default = Some(
+                            format!("&{}::{}", owned_type, variants[*variant_index].name).into(),
+                        );
+                        deserialize_default = Some(
                             format!("{}::{}", owned_type, variants[*variant_index].name).into(),
                         );
-                        deserialize_default = serialize_default.clone();
                     }
                     AssignMode::Optional => {
                         read_type = format!("Option<{}>", vtable_type);
@@ -510,9 +512,9 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Vector(v)) if v.is_empty() => {
                         read_type = format!("planus::Vector<'a, {}>", ref_name);
                         owned_type = format!("Vec<{}>", owned_name);
-                        create_trait = format!("WriteAs<{}>", vtable_type);
+                        create_trait = format!("WriteAsDefault<{}, ()>", vtable_type);
 
-                        serialize_default = Some("&[]".into());
+                        serialize_default = Some("&()".into());
                         deserialize_default = Some("planus::Vector::EMPTY".into());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
@@ -536,7 +538,7 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::String(s)) => {
                         read_type = "&'a str".to_string();
                         owned_type = "String".to_string();
-                        create_trait = "WriteAs<planus::Offset<str>>".to_string();
+                        create_trait = "WriteAsDefault<planus::Offset<str>, str>".to_string();
 
                         serialize_default = Some(format!("{:?}", s).into());
                         deserialize_default = Some(format!("{:?}", s).into());
@@ -551,9 +553,9 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Bool(lit)) => {
                         read_type = "bool".to_string();
                         owned_type = "bool".to_string();
-                        create_trait = "WriteAs<bool>".to_string();
-                        serialize_default = Some(format!("{}", lit).into());
-                        deserialize_default = serialize_default.clone();
+                        create_trait = "WriteAsDefault<bool, bool>".to_string();
+                        serialize_default = Some(format!("&{}", lit).into());
+                        deserialize_default = Some(format!("{}", lit).into());
                     }
                     AssignMode::Optional => {
                         read_type = "Option<bool>".to_string();
@@ -571,16 +573,16 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Int(lit)) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAs<{}>", owned_type);
-                        serialize_default = Some(format!("{}", lit).into());
-                        deserialize_default = serialize_default.clone();
+                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
+                        serialize_default = Some(format!("&{}", lit).into());
+                        deserialize_default = Some(format!("{}", lit).into());
                     }
                     AssignMode::Optional => {
                         read_type = format!("Option<{}>", vtable_type);
                         owned_type = read_type.clone();
                         create_trait = format!("WriteAsOptional<{}>", vtable_type);
                     }
-                    AssignMode::HasDefault(..) => todo!(),
+                    AssignMode::HasDefault(..) => unreachable!(),
                     AssignMode::Required => todo!(),
                 }
             }
@@ -591,9 +593,9 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Float(lit)) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAs<{}>", owned_type);
-                        serialize_default = Some(format!("{}", lit).into());
-                        deserialize_default = serialize_default.clone();
+                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
+                        serialize_default = Some(format!("&{}", lit).into());
+                        deserialize_default = Some(format!("{}", lit).into());
                     }
                     AssignMode::Optional => {
                         read_type = format!("Option<{}>", vtable_type);

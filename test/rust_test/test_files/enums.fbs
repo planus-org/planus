@@ -1,0 +1,73 @@
+enum EnumUint1: ubyte { X }
+enum EnumUint2: ushort { X }
+enum EnumUint3: uint { X }
+enum EnumUint4: ulong { X }
+enum EnumUint5: uint8 { X }
+enum EnumUint6: uint16 { X }
+enum EnumUint7: uint32 { X }
+enum EnumUint8: uint64 { X }
+
+enum EnumUint9: uint8 { }
+enum EnumUint10: uint8 { X = 0 }
+enum EnumUint11: uint8 { Y = 1 }
+enum EnumUint12: uint8 { Z = 255 }
+enum EnumUint13: uint8 { X = 0, Y = 1 }
+enum EnumUint14: uint8 { X = 0, Z = 255 }
+enum EnumUint15: uint8 { Y = 1, Z = 255 }
+enum EnumUint16: uint8 { X = 0, Y = 1, Z = 255 }
+
+enum EnumInt1: byte { X = 0 }
+enum EnumInt2: short { X = 0 }
+enum EnumInt3: int { X = 0 }
+enum EnumInt4: long { X = 0 }
+enum EnumInt5: int8 { X = 0 }
+enum EnumInt6: int16 { X = 0 }
+enum EnumInt7: int32 { X = 0 }
+enum EnumInt8: int64 { X = 0 }
+
+enum EnumInt9: int8 { }
+enum EnumInt10: int8 { X = 0 }
+enum EnumInt11: int8 { Y = 1 }
+enum EnumInt12: int8 { Z = -1 }
+enum EnumInt13: int8 { X = 0, Y = 1 }
+enum EnumInt14: int8 { X = 0, Z = -1 }
+enum EnumInt15: int8 { Y = 1, Z = -1 }
+enum EnumInt16: int8 { X = 0, Y = 1, Z = -1 }
+
+table Root {
+    field_uint1: EnumUint1;
+    field_uint2: EnumUint2;
+    field_uint3: EnumUint3;
+    field_uint4: EnumUint4;
+    field_uint5: EnumUint5;
+    field_uint6: EnumUint6;
+    field_uint7: EnumUint7;
+    field_uint8: EnumUint8;
+    // no empty enums
+    // field_uint9: EnumUint9;
+    field_uint10: EnumUint10;
+    field_uint11: EnumUint11 = Y;
+    field_uint12: EnumUint12 = Z;
+    field_uint13: EnumUint13;
+    field_uint14: EnumUint14;
+    field_uint15: EnumUint15 = Y;
+    field_uint16: EnumUint16;
+    field_int1: EnumInt1;
+    field_int2: EnumInt2;
+    field_int3: EnumInt3;
+    field_int4: EnumInt4;
+    field_int5: EnumInt5;
+    field_int6: EnumInt6;
+    field_int7: EnumInt7;
+    field_int8: EnumInt8;
+    // no empty enums
+    // field_int9: EnumInt9;
+    field_int10: EnumInt10;
+    field_int11: EnumInt11 = Y;
+    field_int12: EnumInt12 = Z;
+    field_int13: EnumInt13;
+    field_int14: EnumInt14;
+    field_int15: EnumInt15 = Y;
+    field_int16: EnumInt16;
+    filler: uint8;
+}

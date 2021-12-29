@@ -324,7 +324,7 @@ impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
     }
 }
 
-impl<'a, P: Primitive, D, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for &'a T {
+impl<'a, P: Primitive, D: ?Sized, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for &'a T {
     type Prepared = T::Prepared;
     #[inline]
     fn prepare(&self, buffer: &mut Buffer, default: &D) -> Option<T::Prepared> {
@@ -397,7 +397,7 @@ impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for Box<T> {
     }
 }
 
-impl<P: Primitive, D, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for Box<T> {
+impl<P: Primitive, D: ?Sized, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for Box<T> {
     type Prepared = T::Prepared;
     #[inline]
     fn prepare(&self, buffer: &mut Buffer, default: &D) -> Option<T::Prepared> {
