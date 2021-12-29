@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct {{ info.owned_name }}{
     {% for field in fields.declaration_order() -%}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
@@ -6,6 +6,7 @@ pub struct {{ info.owned_name }}{
 }
 
 impl {{info.owned_name}} {
+    #[allow(clippy::too_many_arguments)]
     pub fn create(
         buffer: &mut planus::Buffer,
         {% for field in fields.declaration_order() -%}

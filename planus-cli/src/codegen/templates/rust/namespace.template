@@ -1,5 +1,3 @@
-use serde::{Serialize, Deserialize};
-
 {%- if !info.name.is_empty() -%}
 pub mod {{info.name}} {
 {%- endif -%}
