@@ -10,8 +10,9 @@ mod unit_tests;
 
 #[cfg(test)]
 pub mod tests {
-    use anyhow::Result;
     use std::path::Path;
+
+    use anyhow::Result;
 
     pub fn compare_regenerate_file(
         path: impl AsRef<Path>,
