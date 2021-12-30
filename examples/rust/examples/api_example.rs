@@ -17,7 +17,6 @@ fn main() {
         mana: 150,
         hp: 80,
         name: Some("Orc".to_string()),
-        friendly: false,
         inventory: Some(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
         color: Color::Red,
         weapons: Some(vec![
@@ -72,7 +71,6 @@ fn main() {
         150,
         80,
         "Orc",
-        false,
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         Color::Red,
         weapons,

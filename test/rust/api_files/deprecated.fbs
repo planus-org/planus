@@ -1,0 +1,5 @@
+table Example {
+  x: uint32;
+  y: uint32 (deprecated);
+  z: uint32;
+}

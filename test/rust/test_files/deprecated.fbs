@@ -1,0 +1,5 @@
+table Root {
+  x: uint32;
+  y: uint32 (deprecated);
+  z: uint32;
+}

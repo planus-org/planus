@@ -336,7 +336,6 @@ pub mod my_game {
             pub mana: i16,
             pub hp: i16,
             pub name: Option<String>,
-            pub friendly: bool,
             pub inventory: Option<Vec<u8>>,
             pub color: self::Color,
             pub weapons: Option<Vec<self::Weapon>>,
@@ -352,7 +351,6 @@ pub mod my_game {
                 mana: impl planus::WriteAsDefault<i16, i16>,
                 hp: impl planus::WriteAsDefault<i16, i16>,
                 name: impl planus::WriteAsOptional<planus::Offset<str>>,
-                friendly: impl planus::WriteAsDefault<bool, bool>,
                 inventory: impl planus::WriteAsOptional<planus::Offset<[u8]>>,
                 color: impl planus::WriteAsDefault<self::Color, self::Color>,
                 weapons: impl planus::WriteAsOptional<planus::Offset<[planus::Offset<self::Weapon>]>>,
@@ -366,8 +364,6 @@ pub mod my_game {
                 let prepared_hp = hp.prepare(builder, &100);
 
                 let prepared_name = name.prepare(builder);
-
-                let prepared_friendly = friendly.prepare(builder, &false);
 
                 let prepared_inventory = inventory.prepare(builder);
 
@@ -392,9 +388,6 @@ pub mod my_game {
                 }
                 if prepared_name.is_some() {
                     table_writer.calculate_size::<planus::Offset<str>>(8);
-                }
-                if prepared_friendly.is_some() {
-                    table_writer.calculate_size::<bool>(10);
                 }
                 if prepared_inventory.is_some() {
                     table_writer.calculate_size::<planus::Offset<[u8]>>(12);
@@ -441,9 +434,6 @@ pub mod my_game {
                     if let Some(prepared_hp) = prepared_hp {
                         table_writer.write::<_, _, 2>(2, &prepared_hp);
                     }
-                    if let Some(prepared_friendly) = prepared_friendly {
-                        table_writer.write::<_, _, 1>(4, &prepared_friendly);
-                    }
                     if let Some(prepared_color) = prepared_color {
                         table_writer.write::<_, _, 1>(6, &prepared_color);
                     }
@@ -480,7 +470,6 @@ pub mod my_game {
                     &self.mana,
                     &self.hp,
                     &self.name,
-                    &self.friendly,
                     &self.inventory,
                     &self.color,
                     &self.weapons,
@@ -508,10 +497,6 @@ pub mod my_game {
 
             pub fn name(&self) -> planus::Result<Option<&'a str>> {
                 self.0.access(3, "Monster", "name")
-            }
-
-            pub fn friendly(&self) -> planus::Result<bool> {
-                Ok(self.0.access(4, "Monster", "friendly")?.unwrap_or(false))
             }
 
             pub fn inventory(&self) -> planus::Result<Option<planus::Vector<'a, u8>>> {
@@ -553,9 +538,6 @@ pub mod my_game {
                 if let Ok(Some(name)) = self.name() {
                     f.field("name", &name);
                 }
-                if let Ok(friendly) = self.friendly() {
-                    f.field("friendly", &friendly);
-                }
                 if let Ok(Some(inventory)) = self.inventory() {
                     f.field("inventory", &inventory);
                 }
@@ -592,7 +574,6 @@ pub mod my_game {
                     } else {
                         None
                     },
-                    friendly: planus::ToOwned::to_owned(self.friendly()?)?,
                     inventory: if let Some(inventory) = self.inventory()? {
                         Some(planus::ToOwned::to_owned(inventory)?)
                     } else {

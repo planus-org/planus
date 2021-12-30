@@ -65,7 +65,7 @@ pub struct BackendRpcService<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendTableFields<F> {
-    fields: Vec<F>,
+    fields: VecMap<F>,
     declaration_order: Vec<(usize, u32, BackendTableFieldType)>,
     alignment_order: Vec<(usize, u32, BackendTableFieldType)>,
 }
@@ -81,10 +81,36 @@ impl<F> BackendTableFields<F> {
         decl_path: &AbsolutePath,
         translated_decl: &B::TableInfo,
     ) -> BackendTableFields<<B as Backend>::TableFieldInfo> {
+        let mut declaration_order = Vec::new();
+
         let fields = decl
             .fields
             .iter()
-            .map(|(field_name, field)| {
+            .enumerate()
+            .filter(|(_index, (_field_name, field))| !field.deprecated)
+            .map(|(index, (field_name, field))| {
+                match field.type_.kind {
+                    TypeKind::Union(_) => {
+                        declaration_order.push((
+                            index,
+                            field.vtable_index,
+                            BackendTableFieldType::UnionKey,
+                        ));
+                        declaration_order.push((
+                            index,
+                            field.vtable_index + 1,
+                            BackendTableFieldType::UnionValue,
+                        ));
+                    }
+                    _ => {
+                        declaration_order.push((
+                            index,
+                            field.vtable_index,
+                            BackendTableFieldType::Other,
+                        ));
+                    }
+                }
+
                 let translated_type = translate_type(
                     translation_context,
                     declarations,
@@ -92,42 +118,19 @@ impl<F> BackendTableFields<F> {
                     &field.type_,
                     &decl_path.clone_pop(),
                 );
-                backend.generate_table_field(
-                    translation_context,
-                    translated_decl,
-                    decl,
-                    field_name,
-                    field,
-                    translated_type,
+                (
+                    index,
+                    backend.generate_table_field(
+                        translation_context,
+                        translated_decl,
+                        decl,
+                        field_name,
+                        field,
+                        translated_type,
+                    ),
                 )
             })
             .collect();
-
-        let mut declaration_order = Vec::new();
-
-        for (index, field) in decl.fields.values().enumerate() {
-            match field.type_.kind {
-                TypeKind::Union(_) => {
-                    declaration_order.push((
-                        index,
-                        field.vtable_index,
-                        BackendTableFieldType::UnionKey,
-                    ));
-                    declaration_order.push((
-                        index,
-                        field.vtable_index + 1,
-                        BackendTableFieldType::UnionValue,
-                    ));
-                }
-                _ => {
-                    declaration_order.push((
-                        index,
-                        field.vtable_index,
-                        BackendTableFieldType::Other,
-                    ));
-                }
-            }
-        }
 
         let mut alignment_order = declaration_order.clone();
         alignment_order.sort_by_key(|(index, _, field_type)| {
