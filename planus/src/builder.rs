@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, mem::MaybeUninit};
 
-use crate::{backvec::BackVec, Offset, Primitive};
+use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
 
 #[derive(Debug)]
 pub struct Builder {
@@ -158,7 +158,13 @@ impl Builder {
         self.inner.len() + vtable_size + 4 + needed_padding + object_size + 4
     }
 
-    pub fn finish<T>(&mut self, root: Offset<T>, file_identifier: Option<[u8; 4]>) -> &[u8] {
+    pub fn finish<T>(
+        &mut self,
+        root: impl WriteAsOffset<T>,
+        file_identifier: Option<[u8; 4]>,
+    ) -> &[u8] {
+        let root = root.prepare(self);
+
         if let Some(file_identifier) = file_identifier {
             // TODO: how does alignment interact with file identifiers? Is the alignment with out without the header?
             self.prepare_write(
