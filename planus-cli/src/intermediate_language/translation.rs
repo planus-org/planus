@@ -791,10 +791,10 @@ impl<'a> Translator<'a> {
         };
         let mut required = false;
         let mut deprecated = false;
-        let vtable_index = *next_vtable_index;
+        let mut vtable_index = *next_vtable_index;
 
         for m in &field.metadata {
-            match m.kind {
+            match &m.kind {
                 MetadataValueKind::Required => {
                     if type_.kind.is_scalar() {
                         self.ctx.emit_error(
@@ -827,7 +827,30 @@ impl<'a> Translator<'a> {
                     }
                 }
                 MetadataValueKind::Deprecated => deprecated = true,
-                // TODO: add support for MetdataValueKind::Id
+                MetadataValueKind::Id(ast::IntegerLiteral {
+                    span,
+                    value,
+                    is_negative,
+                }) => {
+                    // The specification says that the ID attribute for unions specifies the second
+                    // of the two IDs, while we use the first in our code
+                    let fixup = if matches!(type_.kind, TypeKind::Union(_)) {
+                        1
+                    } else {
+                        0
+                    };
+                    if let Some(n) = self.translate_integer_generic::<u32>(
+                        current_file_id,
+                        *span,
+                        *is_negative,
+                        value,
+                    ) {
+                        vtable_index = n - fixup;
+                    } else if let Ok(n) = value.parse::<u32>() {
+                        // This is only to avoid give a more sane default for later errors
+                        vtable_index = n - fixup;
+                    }
+                }
                 _ => {
                     self.emit_metadata_support_error(
                         current_file_id,

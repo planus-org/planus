@@ -292,7 +292,7 @@ impl MetadataValueKind {
     pub fn is_supported(&self) -> bool {
         matches!(
             self,
-            Self::ForceAlign(_) | Self::Required | Self::Deprecated
+            Self::ForceAlign(_) | Self::Required | Self::Deprecated | Self::Id(_)
         )
     }
 
