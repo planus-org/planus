@@ -1,4 +1,4 @@
-use planus::{Builder, WriteAsOffset};
+use planus::{Builder, ReadAsRoot, WriteAsOffset};
 use planus_example::monster_generated::my_game::sample::*;
 
 fn main() {
@@ -94,4 +94,23 @@ fn main() {
     let finished_data = builder.finish(monster, None);
 
     std::fs::write(path, finished_data).unwrap();
+
+    // We can decode the data using planus::ReadAsRoot
+    let monster_ref: MonsterRef<'_> = MonsterRef::read_as_root(finished_data).unwrap();
+    print_equipment(monster_ref).unwrap();
+}
+
+fn print_equipment(monster: MonsterRef<'_>) -> Result<(), planus::Error> {
+    // All accessors on tables return Result<_, planus::Error>
+    // If the field is optional, then an Result<Option<_>, planus::Error>.
+    if let Some(equipped) = monster.equipped()? {
+        // Unions translate to rust enums with data
+        match equipped {
+            EquipmentRef::Weapon(weapon) => {
+                // All generated types implement Debug
+                println!("{:?}", weapon);
+            }
+        }
+    }
+    Ok(())
 }

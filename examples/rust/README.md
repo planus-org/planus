@@ -5,7 +5,7 @@ Here are some recommended commands to get started:
 
 ```console
 # Re-generate the monster_generated.rs file in case monster.fbs has been changed
-foo@bar:~$ cargo run -p planus-cli rust monster.fbs > src/monster_generated.rs
+foo@bar:~$ cargo run -p planus-cli -- rust monster.fbs -o src/monster_generated.rs
 
 # Run the API-test to generate monster.bin
 foo@bar:~$ cargo run --example api_example monster.bin
