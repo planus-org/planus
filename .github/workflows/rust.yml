@@ -67,12 +67,13 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v1
       - name: Flatbuffers binary cache
+        id: flatbuffers-cache
         uses: actions/cache@v2
         with:
           path: ~/flatc
           key: flatbuffers-${{ runner.os }}
       - name: Install flatbuffers
-        if: steps.cache-packages.outputs.cache-hit != 'true'
+        if: steps.flatbuffers-cache.outputs.cache-hit != 'true'
         run: .github/workflows/build_flatbuffers.sh
       - name: Copy flatbuffers binary to /usr/bin
         run: sudo cp ~/flatc /usr/local/bin/
