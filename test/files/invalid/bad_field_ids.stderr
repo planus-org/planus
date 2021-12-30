@@ -1,0 +1,33 @@
+error: If any field has an id attribute, all fields must have one
+  ┌─ test/files/invalid/bad_field_ids.fbs:2:5
+  │
+2 │     x: int32 (id: 0);
+  │     ^^^^^^^^^^^^^^^^^ First attribute with an id attribute was here
+3 │     y: int32;
+  │     ^^^^^^^^^ First attribute without an id attribute was here
+
+error: Table contains non-consecutive ids. Missing id 0
+  ┌─ test/files/invalid/bad_field_ids.fbs:6:1
+  │
+6 │ table Bar {
+  │ ^^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing id 1
+   ┌─ test/files/invalid/bad_field_ids.fbs:11:1
+   │
+11 │ table Baz {
+   │ ^^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing ids 1..2
+   ┌─ test/files/invalid/bad_field_ids.fbs:16:1
+   │
+16 │ table Quux {
+   │ ^^^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing id 4
+   ┌─ test/files/invalid/bad_field_ids.fbs:16:1
+   │
+16 │ table Quux {
+   │ ^^^^^^^^^^
+
+Error: Bailing because of errors

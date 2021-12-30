@@ -1,0 +1,5 @@
+table Foo {
+    x: int32 (id: 1);
+    y: int32 (id: 0);
+    z: int32 (id: 2);
+}

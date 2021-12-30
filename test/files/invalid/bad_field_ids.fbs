@@ -1,0 +1,20 @@
+table Foo {
+    x: int32 (id: 0);
+    y: int32;
+}
+
+table Bar {
+    x: int32 (id: 1);
+    y: int32 (id: 2);
+}
+
+table Baz {
+    x: int32 (id: 0);
+    y: int32 (id: 2);
+}
+
+table Quux {
+    x: int32 (id: 0);
+    y: int32 (id: 3);
+    z: int32 (id: 5);
+}
