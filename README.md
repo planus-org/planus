@@ -1,7 +1,7 @@
 Planus – alternative flatbuffer implementation
 ===============================================
 
-![Build Status](https://github.com/TethysSvensson/planus/actions/workflows/rust.yml/badge.svg)
+[![Build Status](https://github.com/TethysSvensson/planus/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/TethysSvensson/planus/actions/workflows/rust.yml)
 
 Planus is an alternative compiler for [flatbuffers](https://google.github.io/flatbuffers/), an efficient cross platform serialization library.
 
