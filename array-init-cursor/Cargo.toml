@@ -7,3 +7,4 @@ repository = "https://github.com/TethysSvensson/planus"
 keywords = ["abstraction", "initialization", "no_std"]
 categories = ["data-structures", "no-std"]
 rust-version = "1.57"
+description = "Utility crate to help keep track of arrays of MaybeUninit"
