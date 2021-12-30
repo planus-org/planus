@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   pull_request:
   schedule:
     - cron: "32 4 * * 5"
@@ -29,9 +29,19 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
+          components: rustfmt
       - uses: Swatinem/rust-cache@v1
+      - name: Flatbuffers binary cache
+        id: flatbuffers-cache
+        uses: actions/cache@v2
+        with:
+          path: ~/flatc
+          key: flatbuffers-${{ runner.os }}
       - name: Install flatbuffers
-        run: sudo apt-get install -y flatbuffers-compiler
+        if: steps.flatbuffers-cache.outputs.cache-hit != 'true'
+        run: .github/workflows/build_flatbuffers.sh
+      - name: Copy flatbuffers binary to /usr/bin
+        run: sudo cp ~/flatc /usr/local/bin/
       - uses: actions-rs/cargo@v1
         with:
           command: install
@@ -56,8 +66,15 @@ jobs:
           override: true
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v1
+      - name: Flatbuffers binary cache
+        uses: actions/cache@v2
+        with:
+          path: ~/flatc
+          key: flatbuffers-${{ runner.os }}
       - name: Install flatbuffers
-        run: sudo apt-get install -y flatbuffers-compiler
+        if: steps.cache-packages.outputs.cache-hit != 'true'
+        run: .github/workflows/build_flatbuffers.sh
+      - name: Copy flatbuffers binary to /usr/bin
+        run: sudo cp ~/flatc /usr/local/bin/
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-targets -- -D warnings
-

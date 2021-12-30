@@ -69,9 +69,8 @@ fn generate_test_code(
                 assert!(Command::new("flatc")
                     .args(&["--rust", "-o", out_dir])
                     .arg(&file_path)
-                    .output()
+                    .status()
                     .context("Cannot run flatc")?
-                    .status
                     .success());
             }
 
