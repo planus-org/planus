@@ -7,21 +7,19 @@ mod util;
 
 /// A fixed-size cursor for initializing [`MaybeUninit`] arrays
 ///
-/// The cursor will panic on drop unless all bytes have been initialized.
+/// The cursor will guarantee that all values have been
+/// initialized when the value is dropped, which means
+/// that it is safe to call [`MaybeUninit::assume_init()`].
+///
+/// **NOTE:** This guarantee only holds as long as [`Drop::drop()`] is called.
+///           If the value goes out of scope without drop being called (e.g. because
+///           of [`core::mem::forget()`]), then this guarantee no longer applies.
 pub struct Cursor<'a, T, const N: usize> {
     slice: &'a mut [MaybeUninit<T>; N],
 }
 
 impl<'a, T, const N: usize> Cursor<'a, T, N> {
     /// Creates a new cursor.
-    ///
-    /// The cursor will guarantee that all values have been
-    /// initialized when the value is dropped, which means
-    /// that it is safe to call [`MaybeUninit::assume_init()`].
-    ///
-    /// **NOTE:** This guarantee only holds as long as [`Drop::drop()`] is called.
-    ///           If the value goes out of scope without drop being called (e.g. because
-    ///           of [`core::mem::forget()`]), then this guarantee no longer applies.
     pub fn new(slice: &'a mut [MaybeUninit<T>; N]) -> Self {
         Self { slice }
     }
