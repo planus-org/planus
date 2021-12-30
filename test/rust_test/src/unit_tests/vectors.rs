@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use planus::{Buffer, SliceWithStartOffset, TableRead, ToOwned};
+    use planus::{Builder, SliceWithStartOffset, TableRead, ToOwned};
 
     use crate::planus::vectors::*;
 
     #[test]
     fn test_roundtrip() {
-        let mut buffer = Buffer::new();
+        let mut builder = Builder::new();
 
         let table_a = vec![
             TableA { val1: 42, val2: 43 },
@@ -15,8 +15,8 @@ mod tests {
         ];
         let empty: Vec<TableA> = vec![];
 
-        let root = Wrap::create(&mut buffer, &table_a, &empty);
-        let slice = buffer.finish(root, None);
+        let root = Wrap::create(&mut builder, &table_a, &empty);
+        let slice = builder.finish(root, None);
 
         let table = WrapRef::from_buffer(
             SliceWithStartOffset {

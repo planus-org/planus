@@ -8,7 +8,7 @@ pub struct {{ info.owned_name }}{
 impl {{info.owned_name}} {
     #[allow(clippy::too_many_arguments)]
     pub fn create(
-        buffer: &mut planus::Buffer,
+        builder: &mut planus::Builder,
         {% for field in fields.declaration_order() -%}
             {{ field.info.create_name }}: impl planus::{{ field.info.create_trait }},
         {% endfor %}
@@ -16,14 +16,14 @@ impl {{info.owned_name}} {
         {% for field in fields.declaration_order() -%}
             {% match field.info.serialize_default %}
             {% when Some with (serialize_default) %}
-            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(buffer, {{ serialize_default }});
+            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(builder, {{ serialize_default }});
             {% when None %}
-            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(buffer);
+            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(builder);
             {% endmatch %}
         {% endfor %}
 
         {# TODO: Do not write out values if they are equal to the default value for the field #}
-        let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(buffer);
+        let mut table_writer = planus::table_writer::TableWriter::<{{(max_vtable_index+2)*2}}, {{max_size-4}}>::new(builder);
 
         {% for field in fields.declaration_order() %}
             {%- if field.info.read_type.starts_with("Option<") || field.info.serialize_default.is_some() -%}
@@ -65,23 +65,23 @@ impl {{info.owned_name}} {
 impl planus::WriteAs<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = planus::Offset<Self>;
 
-    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
-        planus::WriteAsOffset::prepare(self, buffer)
+    fn prepare(&self, builder: &mut planus::Builder) -> planus::Offset<{{info.owned_name}}> {
+        planus::WriteAsOffset::prepare(self, builder)
     }
 }
 
 impl planus::WriteAsOptional<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = planus::Offset<Self>;
 
-    fn prepare(&self, buffer: &mut planus::Buffer) -> Option<planus::Offset<{{info.owned_name}}>> {
-        Some(planus::WriteAsOffset::prepare(self, buffer))
+    fn prepare(&self, builder: &mut planus::Builder) -> Option<planus::Offset<{{info.owned_name}}>> {
+        Some(planus::WriteAsOffset::prepare(self, builder))
     }
 }
 
 impl planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
-    fn prepare(&self, buffer: &mut planus::Buffer) -> planus::Offset<{{info.owned_name}}> {
+    fn prepare(&self, builder: &mut planus::Builder) -> planus::Offset<{{info.owned_name}}> {
         {{info.owned_name}}::create(
-            buffer,
+            builder,
         {% for field in fields.declaration_order() %}
             &self.{{field.info.name}},
         {% endfor %}
@@ -187,8 +187,8 @@ impl<'a> planus::VectorRead<'a> for {{info.owned_name}} {
 impl planus::VectorWrite<planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Value = planus::Offset<{{info.owned_name}}>;
     const STRIDE: usize = 4;
-    fn prepare(&self, buffer: &mut planus::Buffer) -> Self::Value {
-        planus::WriteAs::prepare(self, buffer)
+    fn prepare(&self, builder: &mut planus::Builder) -> Self::Value {
+        planus::WriteAs::prepare(self, builder)
     }
 
     #[inline]

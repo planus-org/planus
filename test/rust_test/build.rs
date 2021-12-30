@@ -5,19 +5,12 @@ use anyhow::{format_err, Context, Result};
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Create flatbuffers files
     let out_dir = env::var("OUT_DIR").unwrap();
-    let flatc_dir = format!("{}/flatc", out_dir);
-    fs::create_dir_all(&flatc_dir).context("Cannot create flatc dir")?;
-    Command::new("flatc")
-        .args(&["--rust", "-o", &flatc_dir, "../files/test/conformance.fbs"])
-        .output()
-        .context("Cannot run flatc")?;
 
     // Create unit tests
     let planus_dir = format!("{}/planus", out_dir);
     fs::create_dir_all(&planus_dir).context("Cannot create planus out dir")?;
-    for file in ["conformance", "enums", "structs", "unions", "vectors"] {
+    for file in ["enums", "structs", "unions", "vectors"] {
         let input_files = &[format!("../files/test/{}.fbs", file)];
         let output_file = format!("{}/{}_generated.rs", planus_dir, file);
         planus_cli::codegen::rust::generate_code(input_files, &output_file)
@@ -27,18 +20,28 @@ fn main() -> Result<()> {
 
     // Create API tests
     let planus_api_dir = format!("{}/planus_api", out_dir);
-    generate_test_code("api_files", &planus_api_dir, None)?;
+    generate_test_code("api_files", &planus_api_dir, None, false)?;
 
     // Create serialize/deserialize tests
     let planus_test_dir = format!("{}/planus_test", out_dir);
     let serialize_template = std::fs::read_to_string("src/test_template.rs")
         .context("could not read serialize template")?;
-    generate_test_code("test_files", &planus_test_dir, Some(&serialize_template))?;
+    generate_test_code(
+        "test_files",
+        &planus_test_dir,
+        Some(&serialize_template),
+        true,
+    )?;
 
     Ok(())
 }
 
-fn generate_test_code(in_dir: &str, out_dir: &str, template: Option<&str>) -> Result<()> {
+fn generate_test_code(
+    in_dir: &str,
+    out_dir: &str,
+    template: Option<&str>,
+    generate_flatc: bool,
+) -> Result<()> {
     fs::create_dir_all(out_dir).with_context(|| format_err!("Cannot create dir: {}", out_dir))?;
 
     let mut mod_code = String::new();
@@ -62,11 +65,15 @@ fn generate_test_code(in_dir: &str, out_dir: &str, template: Option<&str>) -> Re
                 .with_context(|| format_err!("Cannot generate code for {}", file_path.display()))?;
 
             let flatc_generated = format!("{}_generated.rs", file_stem);
-            Command::new("flatc")
-                .args(&["--rust", "-o", out_dir])
-                .arg(&file_path)
-                .output()
-                .context("Cannot run flatc")?;
+            if generate_flatc {
+                assert!(Command::new("flatc")
+                    .args(&["--rust", "-o", out_dir])
+                    .arg(&file_path)
+                    .output()
+                    .context("Cannot run flatc")?
+                    .status
+                    .success());
+            }
 
             // Generate test module
             let code_module_name = file_stem.to_string();
@@ -77,8 +84,10 @@ fn generate_test_code(in_dir: &str, out_dir: &str, template: Option<&str>) -> Re
             writeln!(code, "mod generated;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
-            writeln!(code, "#[path = {:?}]", flatc_generated).unwrap();
-            writeln!(code, "mod flatc;").unwrap();
+            if generate_flatc {
+                writeln!(code, "#[path = {:?}]", flatc_generated).unwrap();
+                writeln!(code, "mod flatc;").unwrap();
+            }
             writeln!(code).unwrap();
             writeln!(code, "#[allow(dead_code)]").unwrap();
             writeln!(

@@ -26,14 +26,14 @@ impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
 
 impl planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> Self {
+    fn prepare(&self, _builder: &mut planus::Builder) -> Self {
         *self
     }
 }
 
 impl planus::WriteAsOptional<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> Option<Self> {
+    fn prepare(&self, _builder: &mut planus::Builder) -> Option<Self> {
         Some(*self)
     }
 }
@@ -113,7 +113,7 @@ impl planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
 
     type Value = {{ info.owned_name }};
 
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> Self::Value {
+    fn prepare(&self, _builder: &mut planus::Builder) -> Self::Value {
         *self
     }
 

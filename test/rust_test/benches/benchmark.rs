@@ -1,7 +1,8 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use planus::{Buffer, Offset};
+fn main() {}
 
-use rust_test::{flatc::conformance as flatc, planus::conformance::*};
+/*
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use planus::{Builder, Offset};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("fib 20", |b| b.iter(|| 2 + 2));
@@ -10,13 +11,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 fn bench_serialize(c: &mut Criterion) {
     let mut group = c.benchmark_group("Serialize");
     for i in [10000].into_iter() {
-        let mut buffer = Buffer::new();
+        let mut builder = Builder::new();
         group.bench_with_input(BenchmarkId::new("planus", i), &i, |b, i| {
-            b.iter(|| serialize_planus(&mut buffer, *i))
+            b.iter(|| serialize_planus(&mut builder, *i))
         });
-        let mut buffer = flatbuffers::FlatBufferBuilder::new();
+        let mut builder = flatbuffers::FlatBufferBuilder::new();
         group.bench_with_input(BenchmarkId::new("flatbuffers", i), &i, |b, i| {
-            b.iter(|| serialize_flatbuffers(&mut buffer, *i))
+            b.iter(|| serialize_flatbuffers(&mut builder, *i))
         });
     }
     group.finish();
@@ -53,15 +54,15 @@ fn serialize_flatbuffers(builder: &mut flatbuffers::FlatBufferBuilder, iteration
     }
 }
 
-fn serialize_planus(buffer: &mut Buffer, iterations: u64) {
+fn serialize_planus(builder: &mut Builder, iterations: u64) {
     for _ in 0..iterations {
-        buffer.clear();
-        let table3: &[Offset<MyTable3>] = &[MyTable3::create(buffer, 4)];
-        let w = MyTable3::create(buffer, 1337);
-        let w = HelloUnion::create_y(buffer, w);
-        let offset = MyTable::create(buffer, 3, true, MyEnumse::Banaaaaaaaan, table3, Some(w));
+        builder.clear();
+        let table3: &[Offset<MyTable3>] = &[MyTable3::create(builder, 4)];
+        let w = MyTable3::create(builder, 1337);
+        let w = HelloUnion::create_y(builder, w);
+        let offset = MyTable::create(builder, 3, true, MyEnumse::Banaaaaaaaan, table3, Some(w));
         let offset = MyTable2::create(
-            buffer,
+            builder,
             1,
             MyStruct {
                 foo: 2,
@@ -70,9 +71,10 @@ fn serialize_planus(buffer: &mut Buffer, iterations: u64) {
             },
             offset,
         );
-        buffer.finish(offset, None);
+        builder.finish(offset, None);
     }
 }
 
 criterion_group!(benches, bench_serialize);
 criterion_main!(benches);
+ */

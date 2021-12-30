@@ -1,9 +1,9 @@
 use std::mem::MaybeUninit;
 
-use crate::{Buffer, Offset, Primitive, WriteAsPrimitive};
+use crate::{Builder, Offset, Primitive, WriteAsPrimitive};
 
 pub struct TableWriter<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize> {
-    buffer: &'buf mut Buffer,
+    builder: &'buf mut Builder,
     vtable: [u8; VTABLE_MAX_BYTES],
     vtable_size: usize,
     object: [u8; OBJECT_MAX_BYTES],
@@ -17,9 +17,9 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
     TableWriter<'buf, VTABLE_MAX_BYTES, OBJECT_MAX_BYTES>
 {
     #[inline]
-    pub fn new(buffer: &'buf mut Buffer) -> Self {
+    pub fn new(builder: &'buf mut Builder) -> Self {
         Self {
-            buffer,
+            builder,
             vtable: [0; VTABLE_MAX_BYTES], // not including vtable size and object size
             object: [0; OBJECT_MAX_BYTES], // not including vtable offset
             buffer_position: 0,
@@ -42,7 +42,7 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
 
     #[inline]
     pub fn finish_calculating(&mut self) {
-        self.buffer_position = self.buffer.get_buffer_position_and_prepare_write(
+        self.buffer_position = self.builder.get_buffer_position_and_prepare_write(
             self.vtable_size,
             self.object_size,
             self.object_alignment_mask,
@@ -71,19 +71,19 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
     }
 
     pub fn finish<T>(self) -> Offset<T> {
-        self.buffer.write(&self.vtable[..self.vtable_size]);
-        self.buffer
+        self.builder.write(&self.vtable[..self.vtable_size]);
+        self.builder
             .write(&((self.object_size + 4) as u16).to_le_bytes());
-        self.buffer
+        self.builder
             .write(&((self.vtable_size + 4) as u16).to_le_bytes());
-        let offset = self.buffer.current_offset::<()>().offset;
-        self.buffer
+        let offset = self.builder.current_offset::<()>().offset;
+        self.builder
             .prepare_write(self.object_size, self.object_alignment_mask);
-        self.buffer.write(&self.object[..self.object_size]);
-        self.buffer.prepare_write(4, i32::ALIGNMENT_MASK);
-        self.buffer
+        self.builder.write(&self.object[..self.object_size]);
+        self.builder.prepare_write(4, i32::ALIGNMENT_MASK);
+        self.builder
             .write(&(offset as i32 - self.buffer_position as i32).to_le_bytes());
-        self.buffer.current_offset()
+        self.builder.current_offset()
     }
 }
 

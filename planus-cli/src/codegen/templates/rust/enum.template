@@ -52,7 +52,7 @@ impl planus::WriteAs<{{ info.name }}> for {{ info.name }} {
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> {{ info.name }} {
+    fn prepare(&self, _builder: &mut planus::Builder) -> {{ info.name }} {
         *self
     }
 }
@@ -61,7 +61,7 @@ impl planus::WriteAsDefault<{{ info.name }}, {{ info.name }}> for {{ info.name }
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _buffer: &mut planus::Buffer, default: &{{ info.name }}) -> Option<{{ info.name }}> {
+    fn prepare(&self, _builder: &mut planus::Builder, default: &{{ info.name }}) -> Option<{{ info.name }}> {
         if self == default {
             None
         } else {
@@ -74,7 +74,7 @@ impl planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> Option<{{ info.name }}> {
+    fn prepare(&self, _builder: &mut planus::Builder) -> Option<{{ info.name }}> {
         Some(*self)
     }
 }
@@ -110,7 +110,7 @@ impl<'buf> planus::VectorWrite<{{info.name}}> for {{ info.name }} {
 
     type Value = Self;
 
-    fn prepare(&self, _buffer: &mut planus::Buffer) -> Self::Value {
+    fn prepare(&self, _builder: &mut planus::Builder) -> Self::Value {
         *self
     }
 

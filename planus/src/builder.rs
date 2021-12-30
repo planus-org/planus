@@ -3,7 +3,7 @@ use std::{marker::PhantomData, mem::MaybeUninit};
 use crate::{backvec::BackVec, Offset, Primitive};
 
 #[derive(Debug)]
-pub struct Buffer {
+pub struct Builder {
     inner: BackVec,
     // This is a bit complicated. The buffer has support for guaranteeing a
     // specific write gets a specific alignment. It has many writes and thus
@@ -40,13 +40,13 @@ pub struct Buffer {
     missing_bytes: usize,
 }
 
-impl Default for Buffer {
+impl Default for Builder {
     fn default() -> Self {
         Self::with_capacity(0)
     }
 }
 
-impl Buffer {
+impl Builder {
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
@@ -192,7 +192,7 @@ mod tests {
         let mut back_offsets: Vec<(usize, usize, usize)> = Vec::new();
 
         for _ in 0..50 {
-            let mut buffer = Buffer::new();
+            let mut builder = Builder::new();
             back_offsets.clear();
 
             for byte in 1..50 {
@@ -203,20 +203,20 @@ mod tests {
                 }
                 let alignment: usize = 1 << (rng.gen::<u32>() % 5);
                 let alignment_mask = alignment - 1;
-                buffer.prepare_write(size, alignment_mask);
-                let len_before = buffer.inner.len();
-                buffer.write(slice);
-                assert!(buffer.inner.len() < len_before + slice.len() + alignment);
-                back_offsets.push((buffer.inner.len(), size, alignment));
+                builder.prepare_write(size, alignment_mask);
+                let len_before = builder.inner.len();
+                builder.write(slice);
+                assert!(builder.inner.len() < len_before + slice.len() + alignment);
+                back_offsets.push((builder.inner.len(), size, alignment));
             }
             let random_padding: usize = rng.gen::<usize>() % slice.len();
             let slice = &mut slice[..random_padding];
             for p in &mut *slice {
                 *p = rng.gen();
             }
-            buffer.prepare_write(random_padding, 1);
-            buffer.write(slice);
-            let buffer = buffer.finish(buffer.current_offset::<()>(), None);
+            builder.prepare_write(random_padding, 1);
+            builder.write(slice);
+            let buffer = builder.finish(builder.current_offset::<()>(), None);
 
             for (i, (back_offset, size, alignment)) in back_offsets.iter().enumerate() {
                 let byte = (i + 1) as u8;
@@ -229,38 +229,38 @@ mod tests {
 
     #[test]
     fn test_buffer_align() {
-        let mut buffer = Buffer::new();
-        buffer.prepare_write(3, 0);
-        buffer.write(b"MNO");
-        assert_eq!(buffer.delayed_bytes, 0);
-        buffer.prepare_write(4, 1);
-        buffer.write(b"IJKL");
-        assert_eq!(buffer.delayed_bytes, 0);
-        buffer.prepare_write(8, 3);
-        buffer.write(b"ABCDEFGH");
-        assert_eq!(buffer.delayed_bytes, 0);
-        buffer.prepare_write(7, 0);
-        buffer.write(b"0123456");
+        let mut builder = Builder::new();
+        builder.prepare_write(3, 0);
+        builder.write(b"MNO");
+        assert_eq!(builder.delayed_bytes, 0);
+        builder.prepare_write(4, 1);
+        builder.write(b"IJKL");
+        assert_eq!(builder.delayed_bytes, 0);
+        builder.prepare_write(8, 3);
+        builder.write(b"ABCDEFGH");
+        assert_eq!(builder.delayed_bytes, 0);
+        builder.prepare_write(7, 0);
+        builder.write(b"0123456");
         assert_eq!(
-            buffer.finish(buffer.current_offset::<()>(), None),
+            builder.finish(builder.current_offset::<()>(), None),
             b"\x05\x00\x00\x00\x000123456ABCDEFGHIJKLMNO"
         );
 
-        buffer.clear();
-        buffer.prepare_write(4, 3);
-        buffer.write(b"IJKL");
-        assert_eq!(buffer.delayed_bytes, 0);
-        buffer.prepare_write(1, 0);
-        buffer.write(b"X");
-        assert_eq!(buffer.delayed_bytes, 3);
-        buffer.prepare_write(1, 0);
-        buffer.write(b"Y");
-        assert_eq!(buffer.delayed_bytes, 2);
-        buffer.prepare_write(8, 7);
-        buffer.write(b"ABCDEFGH");
-        assert_eq!(buffer.delayed_bytes, 0);
+        builder.clear();
+        builder.prepare_write(4, 3);
+        builder.write(b"IJKL");
+        assert_eq!(builder.delayed_bytes, 0);
+        builder.prepare_write(1, 0);
+        builder.write(b"X");
+        assert_eq!(builder.delayed_bytes, 3);
+        builder.prepare_write(1, 0);
+        builder.write(b"Y");
+        assert_eq!(builder.delayed_bytes, 2);
+        builder.prepare_write(8, 7);
+        builder.write(b"ABCDEFGH");
+        assert_eq!(builder.delayed_bytes, 0);
         assert_eq!(
-            buffer.finish(buffer.current_offset::<()>(), None),
+            builder.finish(builder.current_offset::<()>(), None),
             b"\x08\x00\x00\x00\x00\x00\x00\x00ABCDEFGH\x00\x00YXIJKL"
         );
     }

@@ -1,19 +1,19 @@
 #[cfg(test)]
 mod tests {
-    use planus::{Buffer, SliceWithStartOffset, TableRead};
+    use planus::{Builder, SliceWithStartOffset, TableRead};
 
     use crate::planus::structs::*;
 
     #[test]
     fn test_roundtrip() {
-        let mut buffer = Buffer::new();
+        let mut builder = Builder::new();
         let abc = Abc {
             a: -1337,
             b: true,
             c: 12345,
         };
-        let root = Wrap::create(&mut buffer, &abc);
-        let slice = buffer.finish(root, None);
+        let root = Wrap::create(&mut builder, &abc);
+        let slice = builder.finish(root, None);
 
         let table = WrapRef::from_buffer(
             SliceWithStartOffset {

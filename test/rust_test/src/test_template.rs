@@ -23,9 +23,9 @@ fn test_serialize() {
             let json = std::fs::read_to_string(&file_path).unwrap();
             let root: Root = serde_json::from_str(&json).unwrap();
 
-            let mut buffer = planus::Buffer::new();
-            let offset = root.prepare(&mut buffer);
-            let data = buffer.finish(offset, None);
+            let mut builder = planus::Builder::new();
+            let offset = root.prepare(&mut builder);
+            let data = builder.finish(offset, None);
 
             let root_ref = RootRef::from_buffer(
                 SliceWithStartOffset {
