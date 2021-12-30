@@ -6,9 +6,10 @@ license = "MIT/Apache-2.0"
 repository = "https://github.com/TethysSvensson/planus"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
-readme = "README.md"
+readme = "../README.md"
 rust-version = "1.56"
-include = ["templates"]
+include = ["templates", "/src", "askama.toml", "build.rs"]
+description = "Command-line utility for planus."
 
 [dependencies]
 anyhow = "1.0.40"
@@ -34,9 +35,10 @@ vec_map = "0.8.2"
 derive_more = "0.99.14"
 lalrpop = "0.19.5"
 
-[[bin]]
-name = "planus"
-path = "bin/planus.rs"
-
 [dev-dependencies]
 rand = "0.8.4"
+
+[lib]
+
+[[bin]]
+name = "planus"
