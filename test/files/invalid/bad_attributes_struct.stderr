@@ -526,7 +526,7 @@ error: Metadata attribute does not make sense on structs (but is additionally no
 13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
    │                                            ^^^^^^^^^^^^^^^^^^^^^^
 
-error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
+error: Metadata attribute does not make sense on structs
    ┌─ test/files/invalid/bad_attributes_struct.fbs:14:7
    │
 14 │   id, id: 1, id: "", id: [],
@@ -670,7 +670,7 @@ error: Metadata attribute does not make sense on struct fields (but is additiona
 13 │   nested_flatbuffer, nested_flatbuffer: 1, nested_flatbuffer: "", nested_flatbuffer: [],
    │                                            ^^^^^^^^^^^^^^^^^^^^^^
 
-error: Metadata attribute does not make sense on struct fields (but is additionally not supported in planus)
+error: Metadata attribute does not make sense on struct fields
    ┌─ test/files/invalid/bad_attributes_struct.fbs:14:7
    │
 14 │   id, id: 1, id: "", id: [],

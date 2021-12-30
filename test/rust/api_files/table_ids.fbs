@@ -1,0 +1,11 @@
+union U {}
+
+table Example {
+  x: int32 (id: 1);
+  y: uint32 (id: 0);
+}
+
+table Example2 {
+  x: int32 (id: 2);
+  y: U (id: 1);
+}

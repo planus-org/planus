@@ -1,0 +1,56 @@
+union U {}
+
+table A0 {
+    x: int32 (id: 0);
+    y: int32 (id: 0);
+}
+
+table A1 {
+    x: int32 (id: 0);
+    y: int32;
+}
+
+table A2 {
+    x: int32 (id: 1);
+    y: int32 (id: 2);
+}
+
+table A3 {
+    x: int32 (id: 0);
+    y: int32 (id: 2);
+}
+
+table A4 {
+    x: int32 (id: 0);
+    y: int32 (id: 3);
+    z: int32 (id: 5);
+}
+
+table A5 {
+    x: U (id: 0);
+}
+
+table A6 {
+    x: int32 (id: 0);
+    y: U (id: 1);
+}
+
+table A7 {
+    x: int32 (id: 0);
+    y: U (id: 3);
+}
+
+table A8 {
+    x: int32 (id: 0);
+    y: U (id: 4);
+}
+
+table A9 {
+    x: int32 (id: 0);
+    y: int32 (id: -1);
+}
+
+table A10 {
+    x: int32 (id: 0);
+    y: int32 (id: 999999999999999999999);
+}

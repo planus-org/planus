@@ -47,7 +47,7 @@ Things we do not currently support:
 * `file_extension`, `file_identifier` and `root_type`
 * Fixed-size arrays
 * Vectors of unions
-* Any attribute besides `required`, `deprecated` or `force_align`.
+* Any attribute besides `required`, `deprecated`, `id` or `force_align`.
 * Some of the more exotic literal values, like hexadecimal floats or unicode surrogate pair parsing.
 * JSON conversion.
 

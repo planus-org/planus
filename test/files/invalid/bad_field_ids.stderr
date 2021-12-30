@@ -1,0 +1,81 @@
+error: Overlapping id assignments for id 0
+  ┌─ test/files/invalid/bad_field_ids.fbs:4:5
+  │
+4 │     x: int32 (id: 0);
+  │     ^^^^^^^^^^^^^^^^^ First id assignment was here
+5 │     y: int32 (id: 0);
+  │     ^^^^^^^^^^^^^^^^^ Second id assignment was here
+
+error: Table contains both fields with and without the id assignments, which is disallowed
+   ┌─ test/files/invalid/bad_field_ids.fbs:9:5
+   │
+ 8 │ table A1 {
+   │ -------- Offending table was here
+ 9 │     x: int32 (id: 0);
+   │     ^^^^^^^^^^^^^^^^^ First field with an id assignment was here
+10 │     y: int32;
+   │     ^^^^^^^^^ First field without an id assignment was here
+
+error: Table contains non-consecutive ids. Missing id 0
+   ┌─ test/files/invalid/bad_field_ids.fbs:13:1
+   │
+13 │ table A2 {
+   │ ^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing id 1
+   ┌─ test/files/invalid/bad_field_ids.fbs:18:1
+   │
+18 │ table A3 {
+   │ ^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing ids 1..2
+   ┌─ test/files/invalid/bad_field_ids.fbs:23:1
+   │
+23 │ table A4 {
+   │ ^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing id 4
+   ┌─ test/files/invalid/bad_field_ids.fbs:23:1
+   │
+23 │ table A4 {
+   │ ^^^^^^^^
+
+error: Id assignments for fields of union type specify the id of the value.
+   ┌─ test/files/invalid/bad_field_ids.fbs:30:15
+   │
+30 │     x: U (id: 0);
+   │               ^ This attribute implies the key will have an id of -1
+
+error: Overlapping id assignments for id 0
+   ┌─ test/files/invalid/bad_field_ids.fbs:34:5
+   │
+34 │     x: int32 (id: 0);
+   │     ^^^^^^^^^^^^^^^^^ First id assignment was here
+35 │     y: U (id: 1);
+   │     ^^^^^^^^^^^^^ Second id assignment was here
+
+error: Table contains non-consecutive ids. Missing id 1
+   ┌─ test/files/invalid/bad_field_ids.fbs:38:1
+   │
+38 │ table A7 {
+   │ ^^^^^^^^
+
+error: Table contains non-consecutive ids. Missing ids 1..2
+   ┌─ test/files/invalid/bad_field_ids.fbs:43:1
+   │
+43 │ table A8 {
+   │ ^^^^^^^^
+
+error: Integer is out of range for type u32 (range is [0; 4294967295])
+   ┌─ test/files/invalid/bad_field_ids.fbs:50:19
+   │
+50 │     y: int32 (id: -1);
+   │                   ^^
+
+error: Integer is out of range for type u32 (range is [0; 4294967295])
+   ┌─ test/files/invalid/bad_field_ids.fbs:55:19
+   │
+55 │     y: int32 (id: 999999999999999999999);
+   │                   ^^^^^^^^^^^^^^^^^^^^^
+
+Error: Bailing because of errors
