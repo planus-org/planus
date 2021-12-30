@@ -207,3 +207,16 @@ impl planus::VectorWrite<planus::Offset<{{info.owned_name}}>> for {{info.owned_n
         }
     }
 }
+
+impl<'a> planus::ReadAsRoot<'a> for {{info.ref_name}}<'a> {
+    fn read_as_root(slice: &'a [u8]) -> planus::Result<Self> {
+        planus::TableRead::from_buffer(planus::SliceWithStartOffset {
+            buffer: slice,
+            offset_from_start: 0,
+        }, 0).map_err(|error_kind| error_kind.with_error_location(
+            "[{{info.ref_name}}]",
+            "read_as_root",
+            0,
+        ))
+    }
+}

@@ -10,6 +10,7 @@ check_type!(+['a] ExampleU8Ref<'a> => &self.value() : planus::Result<u8>);
 check_type!(+['a] ExampleU8Ref<'a> => &self.value_null() : planus::Result<Option<u8>>);
 check_type!(+['a] ExampleU8Ref<'a> => &self.value_default_zero() : planus::Result<u8>);
 check_type!(+['a] ExampleU8Ref<'a> => &self.value_default_one() : planus::Result<u8>);
+check_type!(+['a] ExampleU8Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleU16 => value : u16);
 check_type!(ExampleU16 => value_null : Option<u16>);
@@ -23,6 +24,7 @@ check_type!(+['a] ExampleU16Ref<'a> => &self.value() : planus::Result<u16>);
 check_type!(+['a] ExampleU16Ref<'a> => &self.value_null() : planus::Result<Option<u16>>);
 check_type!(+['a] ExampleU16Ref<'a> => &self.value_default_zero() : planus::Result<u16>);
 check_type!(+['a] ExampleU16Ref<'a> => &self.value_default_one() : planus::Result<u16>);
+check_type!(+['a] ExampleU16Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleU32 => value : u32);
 check_type!(ExampleU32 => value_null : Option<u32>);
@@ -36,6 +38,7 @@ check_type!(+['a] ExampleU32Ref<'a> => &self.value() : planus::Result<u32>);
 check_type!(+['a] ExampleU32Ref<'a> => &self.value_null() : planus::Result<Option<u32>>);
 check_type!(+['a] ExampleU32Ref<'a> => &self.value_default_zero() : planus::Result<u32>);
 check_type!(+['a] ExampleU32Ref<'a> => &self.value_default_one() : planus::Result<u32>);
+check_type!(+['a] ExampleU32Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleU64 => value : u64);
 check_type!(ExampleU64 => value_null : Option<u64>);
@@ -49,6 +52,7 @@ check_type!(+['a] ExampleU64Ref<'a> => &self.value() : planus::Result<u64>);
 check_type!(+['a] ExampleU64Ref<'a> => &self.value_null() : planus::Result<Option<u64>>);
 check_type!(+['a] ExampleU64Ref<'a> => &self.value_default_zero() : planus::Result<u64>);
 check_type!(+['a] ExampleU64Ref<'a> => &self.value_default_one() : planus::Result<u64>);
+check_type!(+['a] ExampleU64Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleI8 => value : i8);
 check_type!(ExampleI8 => value_null : Option<i8>);
@@ -62,6 +66,7 @@ check_type!(+['a] ExampleI8Ref<'a> => &self.value() : planus::Result<i8>);
 check_type!(+['a] ExampleI8Ref<'a> => &self.value_null() : planus::Result<Option<i8>>);
 check_type!(+['a] ExampleI8Ref<'a> => &self.value_default_zero() : planus::Result<i8>);
 check_type!(+['a] ExampleI8Ref<'a> => &self.value_default_one() : planus::Result<i8>);
+check_type!(+['a] ExampleI8Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleI16 => value : i16);
 check_type!(ExampleI16 => value_null : Option<i16>);
@@ -75,6 +80,7 @@ check_type!(+['a] ExampleI16Ref<'a> => &self.value() : planus::Result<i16>);
 check_type!(+['a] ExampleI16Ref<'a> => &self.value_null() : planus::Result<Option<i16>>);
 check_type!(+['a] ExampleI16Ref<'a> => &self.value_default_zero() : planus::Result<i16>);
 check_type!(+['a] ExampleI16Ref<'a> => &self.value_default_one() : planus::Result<i16>);
+check_type!(+['a] ExampleI16Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleI32 => value : i32);
 check_type!(ExampleI32 => value_null : Option<i32>);
@@ -88,6 +94,7 @@ check_type!(+['a] ExampleI32Ref<'a> => &self.value() : planus::Result<i32>);
 check_type!(+['a] ExampleI32Ref<'a> => &self.value_null() : planus::Result<Option<i32>>);
 check_type!(+['a] ExampleI32Ref<'a> => &self.value_default_zero() : planus::Result<i32>);
 check_type!(+['a] ExampleI32Ref<'a> => &self.value_default_one() : planus::Result<i32>);
+check_type!(+['a] ExampleI32Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(ExampleI64 => value : i64);
 check_type!(ExampleI64 => value_null : Option<i64>);
@@ -101,3 +108,4 @@ check_type!(+['a] ExampleI64Ref<'a> => &self.value() : planus::Result<i64>);
 check_type!(+['a] ExampleI64Ref<'a> => &self.value_null() : planus::Result<Option<i64>>);
 check_type!(+['a] ExampleI64Ref<'a> => &self.value_default_zero() : planus::Result<i64>);
 check_type!(+['a] ExampleI64Ref<'a> => &self.value_default_one() : planus::Result<i64>);
+check_type!(+['a] ExampleI64Ref<'a> => impl planus::ReadAsRoot<'a>);

@@ -11,3 +11,4 @@ check_type!(Example => create(&mut planus::Builder, (), (), Inner) : planus::Off
 check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<InnerRef<'a>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<InnerRef<'a>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<InnerRef<'a>>);
+check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);

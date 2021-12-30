@@ -1,6 +1,6 @@
 // Included by build.rs into test files, should not be added to lib.rs
 #[allow(unused_imports)]
-use planus::{SliceWithStartOffset, TableRead, WriteAsOffset};
+use planus::{ReadAsRoot, WriteAsOffset};
 #[allow(unused_imports)]
 use std::convert::identity;
 #[allow(unused_imports)]
@@ -27,14 +27,7 @@ fn test_serialize() {
             let offset = root.prepare(&mut builder);
             let data = builder.finish(offset, None);
 
-            let root_ref = RootRef::from_buffer(
-                SliceWithStartOffset {
-                    buffer: data,
-                    offset_from_start: 0,
-                },
-                0,
-            )
-            .unwrap();
+            let root_ref = RootRef::read_as_root(data).unwrap();
             let root2 = planus::ToOwned::to_owned(root_ref).unwrap();
             similar_asserts::assert_eq!(root, root2);
 
@@ -71,14 +64,7 @@ fn test_deserialize() {
             {
                 let data = std::fs::read(&file_path).unwrap();
 
-                let root_ref = RootRef::from_buffer(
-                    SliceWithStartOffset {
-                        buffer: &data,
-                        offset_from_start: 0,
-                    },
-                    0,
-                )
-                .unwrap();
+                let root_ref = RootRef::read_as_root(&data).unwrap();
 
                 let mut debug_path = file_path.clone();
                 debug_path.set_extension("txt");

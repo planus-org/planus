@@ -11,6 +11,7 @@ check_type!(Example => create(&mut planus::Builder, (), (), Inner) : planus::Off
 check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<InnerRef<'a>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<InnerRef<'a>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<InnerRef<'a>>);
+check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(Example2 => value : Option<Inner2>);
 check_type!(Example2 => value_null : Option<Inner2>);
@@ -25,3 +26,4 @@ check_type!(Example2 => create(&mut planus::Builder, (), (), Inner2) : planus::O
 check_type!(+['a] Example2Ref<'a> => &self.value() : planus::Result<Option<Inner2Ref>>);
 check_type!(+['a] Example2Ref<'a> => &self.value_null() : planus::Result<Option<Inner2Ref>>);
 check_type!(+['a] Example2Ref<'a> => &self.value_required() : planus::Result<Inner2Ref>);
+check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);

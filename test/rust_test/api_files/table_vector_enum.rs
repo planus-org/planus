@@ -12,6 +12,7 @@ check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<planus
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Inner>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Inner>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Inner>>);
+check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(Example2 => value : Option<Vec<Inner2>>);
 check_type!(Example2 => value_null : Option<Vec<Inner2>>);
@@ -27,3 +28,4 @@ check_type!(+['a] Example2Ref<'a> => &self.value() : planus::Result<Option<planu
 check_type!(+['a] Example2Ref<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Inner2>>>);
 check_type!(+['a] Example2Ref<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Inner2>>);
 check_type!(+['a] Example2Ref<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Inner2>>);
+check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);

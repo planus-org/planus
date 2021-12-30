@@ -43,6 +43,14 @@ macro_rules! check_type {
             }
         };
     };
+    ($(+[ $($l:lifetime),* ])? $obj:ty => impl $($trait_to_impl:tt)*) => {
+        const _: () = {
+            fn assert_impl<$($($l,)*)? T: $($trait_to_impl)*>() {}
+            fn helper$(<$($l),*>)?($($(_: &$l()),*)?) {
+                assert_impl::<$obj>();
+            }
+        };
+    };
     ($obj:ty => $field:ident : $field_type:ty) => {
         const _: fn($obj) = |obj| {
             let _: $field_type = obj.$field;

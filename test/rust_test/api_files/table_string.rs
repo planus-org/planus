@@ -14,3 +14,4 @@ check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<&
 check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<&'a str>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_test() : planus::Result<&'a str>);
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<&'a str>);
+check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use planus::{Builder, SliceWithStartOffset, TableRead};
+    use planus::{Builder, ReadAsRoot};
 
     use crate::planus::unions::*;
 
@@ -12,14 +12,7 @@ mod tests {
         let abc = Abc::create_a(&mut builder, table);
         let root = Wrap::create(&mut builder, &abc);
         let slice = builder.finish(root, None);
-        let table = WrapRef::from_buffer(
-            SliceWithStartOffset {
-                buffer: slice,
-                offset_from_start: 0,
-            },
-            0,
-        )
-        .unwrap();
+        let table = WrapRef::read_as_root(slice).unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
         let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {
@@ -33,14 +26,7 @@ mod tests {
         let abc = Abc::create_b(&mut builder, table);
         let root = Wrap::create(&mut builder, &abc);
         let slice = builder.finish(root, None);
-        let table = WrapRef::from_buffer(
-            SliceWithStartOffset {
-                buffer: slice,
-                offset_from_start: 0,
-            },
-            0,
-        )
-        .unwrap();
+        let table = WrapRef::read_as_root(slice).unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
         let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {
@@ -54,14 +40,7 @@ mod tests {
         let abc = Abc::create_c(&mut builder, table);
         let root = Wrap::create(&mut builder, &abc);
         let slice = builder.finish(root, None);
-        let table = WrapRef::from_buffer(
-            SliceWithStartOffset {
-                buffer: slice,
-                offset_from_start: 0,
-            },
-            0,
-        )
-        .unwrap();
+        let table = WrapRef::read_as_root(slice).unwrap();
         let table_owned = planus::ToOwned::to_owned(&table);
         let variant = table_owned.unwrap().abc.unwrap();
         let table_inner = match variant {

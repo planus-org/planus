@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use planus::{Builder, SliceWithStartOffset, TableRead};
+    use planus::{Builder, ReadAsRoot};
 
     use crate::planus::structs::*;
 
@@ -15,14 +15,7 @@ mod tests {
         let root = Wrap::create(&mut builder, &abc);
         let slice = builder.finish(root, None);
 
-        let table = WrapRef::from_buffer(
-            SliceWithStartOffset {
-                buffer: slice,
-                offset_from_start: 0,
-            },
-            0,
-        )
-        .unwrap();
+        let table = WrapRef::read_as_root(slice).unwrap();
 
         let abc_ref = table.abc().unwrap().unwrap();
 

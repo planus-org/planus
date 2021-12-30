@@ -18,6 +18,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 
+#[doc(hidden)]
 pub enum Void {}
 
 #[doc(hidden)]
@@ -25,6 +26,10 @@ pub trait Primitive {
     const ALIGNMENT: usize;
     const ALIGNMENT_MASK: usize = Self::ALIGNMENT - 1;
     const SIZE: usize;
+}
+
+pub trait ReadAsRoot<'a>: Sized {
+    fn read_as_root(slice: &'a [u8]) -> Result<Self>;
 }
 
 pub trait WriteAs<P: Primitive> {

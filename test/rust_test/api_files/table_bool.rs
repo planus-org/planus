@@ -10,3 +10,4 @@ check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<bool>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<bool>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_false() : planus::Result<bool>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_true() : planus::Result<bool>);
+check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);

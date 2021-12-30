@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use planus::{Builder, SliceWithStartOffset, TableRead, ToOwned};
+    use planus::{Builder, ReadAsRoot, ToOwned};
 
     use crate::planus::vectors::*;
 
@@ -18,14 +18,7 @@ mod tests {
         let root = Wrap::create(&mut builder, &table_a, &empty);
         let slice = builder.finish(root, None);
 
-        let table = WrapRef::from_buffer(
-            SliceWithStartOffset {
-                buffer: slice,
-                offset_from_start: 0,
-            },
-            0,
-        )
-        .unwrap();
+        let table = WrapRef::read_as_root(slice).unwrap();
 
         let wrap_owned = ToOwned::to_owned(table).unwrap();
         let table_a_owned = wrap_owned.table_a.unwrap();
