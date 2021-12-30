@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{btree_map, BTreeMap, HashSet};
 
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
@@ -604,10 +604,11 @@ impl<'a> Translator<'a> {
         decl: &ast::Declaration,
     ) -> Declaration {
         let current_file_id = decl.file_id;
+        let definition_span = decl.definition_span;
         let kind =
             match &decl.kind {
                 ast::TypeDeclarationKind::Table(decl) => DeclarationKind::Table(
-                    self.translate_table(current_namespace, current_file_id, decl),
+                    self.translate_table(current_namespace, current_file_id, definition_span, decl),
                 ),
                 ast::TypeDeclarationKind::Struct(decl) => DeclarationKind::Struct(
                     self.translate_struct(current_namespace, current_file_id, decl),
@@ -871,6 +872,7 @@ impl<'a> Translator<'a> {
 
         Some(TableField {
             type_,
+            span: field.span,
             assign_mode,
             vtable_index,
             object_value_size: u32::MAX,
@@ -917,6 +919,7 @@ impl<'a> Translator<'a> {
         &self,
         current_namespace: &AbsolutePath,
         current_file_id: FileId,
+        definition_span: Span,
         decl: &ast::Struct,
     ) -> Table {
         let mut next_vtable_index = 0u32;
@@ -928,6 +931,51 @@ impl<'a> Translator<'a> {
                 m,
                 "tables",
                 m.kind.accepted_on_tables(),
+            );
+        }
+
+        let mut has_id_error = false;
+        let mut first_with_id = None;
+        let mut first_without_id = None;
+        for field in decl.fields.values() {
+            let mut cur_id = None;
+            for m in &field.metadata {
+                if let MetadataValueKind::Id(_) = &m.kind {
+                    if let Some(span) = cur_id {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [
+                                Label::primary(current_file_id, span)
+                                    .with_message("First attribute was here"),
+                                Label::primary(current_file_id, m.span)
+                                    .with_message("Second attribute was here"),
+                            ],
+                            Some("Field cannot have multiple id attributes"),
+                        );
+                        has_id_error = true;
+                    } else {
+                        cur_id = Some(m.span);
+                    }
+                }
+            }
+
+            if cur_id.is_some() {
+                first_with_id.get_or_insert(field.span);
+            } else {
+                first_without_id.get_or_insert(field.span);
+            }
+        }
+
+        if let (Some(first_with_id), Some(first_without_id)) = (first_with_id, first_without_id) {
+            self.ctx.emit_error(
+                ErrorKind::MISC_SEMANTIC_ERROR,
+                [
+                    Label::primary(current_file_id, first_with_id)
+                        .with_message("First attribute with an id attribute was here"),
+                    Label::primary(current_file_id, first_without_id)
+                        .with_message("First attribute without an id attribute was here"),
+                ],
+                Some("If any field has an id attribute, all fields must have one"),
             );
         }
 
@@ -946,7 +994,63 @@ impl<'a> Translator<'a> {
                     )?,
                 ))
             })
-            .collect();
+            .collect::<IndexMap<_, _>>();
+
+        let mut seen_vtable_ids: BTreeMap<u32, Span> = BTreeMap::new();
+        let mut insert = |vtable_index, span| match seen_vtable_ids.entry(vtable_index) {
+            btree_map::Entry::Vacant(entry) => {
+                entry.insert(span);
+            }
+            btree_map::Entry::Occupied(entry) => {
+                if !has_id_error {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [
+                            Label::primary(current_file_id, *entry.get())
+                                .with_message("First field was here"),
+                            Label::primary(current_file_id, span)
+                                .with_message("Second field was here"),
+                        ],
+                        Some("Fields with overlapping id assignments"),
+                    );
+                    has_id_error = true;
+                }
+            }
+        };
+
+        for field in fields.values() {
+            insert(field.vtable_index, field.span);
+            if matches!(field.type_.kind, TypeKind::Union(_)) {
+                insert(field.vtable_index + 1, field.span);
+            }
+        }
+
+        let mut next_expected_id = 0;
+        for &key in seen_vtable_ids.keys() {
+            if key != next_expected_id {
+                let msg = if key == next_expected_id + 1 {
+                    format!(
+                        "Table contains non-consecutive ids. Missing id {}",
+                        next_expected_id
+                    )
+                } else {
+                    format!(
+                        "Table contains non-consecutive ids. Missing ids {}..{}",
+                        next_expected_id,
+                        key - 1
+                    )
+                };
+                if !has_id_error {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(current_file_id, definition_span)],
+                        Some(&msg),
+                    );
+                }
+            }
+            next_expected_id = key + 1;
+        }
+
         Table {
             fields,
             alignment_order: Vec::new(),

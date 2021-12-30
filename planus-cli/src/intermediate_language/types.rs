@@ -166,6 +166,7 @@ pub struct TableField {
     /// The index into the vtable.
     /// Not necessarily the same as the index into the IndexMap.
     pub vtable_index: u32,
+    pub span: Span,
     pub type_: Type,
     pub assign_mode: AssignMode,
     pub object_value_size: u32,
