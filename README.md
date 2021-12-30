@@ -30,6 +30,12 @@ Languages supported
 
 Currently we only support Rust, though we plan to add support for more languages in the future. Pull requests are welcome!
 
+Getting started
+---------------
+
+For now our documention could use a bit of improvement, but we do have an example to help you get started. Look in [examples/rust](examples/rust).
+
+
 Status of the implementation
 ----------------------------
 
