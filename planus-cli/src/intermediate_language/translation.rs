@@ -768,6 +768,7 @@ impl<'a> Translator<'a> {
         field: &ast::StructField,
         next_vtable_index: &mut u32,
         max_vtable_index: &mut u32,
+        has_id_error: &mut bool,
     ) -> Option<TableField> {
         let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
         self.check_valid_table_field_type(current_file_id, &type_);
@@ -832,23 +833,32 @@ impl<'a> Translator<'a> {
                     value,
                     is_negative,
                 }) => {
-                    // The specification says that the ID attribute for unions specifies the second
-                    // of the two IDs, while we use the first in our code
-                    let fixup = if matches!(type_.kind, TypeKind::Union(_)) {
-                        1
-                    } else {
-                        0
-                    };
-                    if let Some(n) = self.translate_integer_generic::<u32>(
+                    if let Some(new_index) = self.translate_integer_generic::<u32>(
                         current_file_id,
                         *span,
                         *is_negative,
                         value,
                     ) {
-                        vtable_index = n - fixup;
-                    } else if let Ok(n) = value.parse::<u32>() {
-                        // This is only to avoid give a more sane default for later errors
-                        vtable_index = n - fixup;
+                        if matches!(type_.kind, TypeKind::Union(_)) {
+                            if new_index > 0 {
+                                // The specification says that the id assignment for unions specifies the second
+                                // of the two IDs, while we use the first in our code
+                                vtable_index = new_index - 1;
+                            } else {
+                                self.ctx.emit_error(
+                                    ErrorKind::MISC_SEMANTIC_ERROR,
+                                    [Label::primary(current_file_id, *span).with_message(
+                                        "This attribute implies the key will have an id of -1",
+                                    )],
+                                    Some("Id assignments for fields of union type specify the id of the value."),
+                                );
+                                vtable_index = 0;
+                            }
+                        } else {
+                            vtable_index = new_index;
+                        }
+                    } else {
+                        *has_id_error = true;
                     }
                 }
                 _ => {
@@ -994,11 +1004,12 @@ impl<'a> Translator<'a> {
                 ErrorKind::MISC_SEMANTIC_ERROR,
                 [
                     Label::primary(current_file_id, first_with_id)
-                        .with_message("First attribute with an id attribute was here"),
+                        .with_message("First field with an id assignment was here"),
                     Label::primary(current_file_id, first_without_id)
-                        .with_message("First attribute without an id attribute was here"),
+                        .with_message("First field without an id assignment was here"),
+                    Label::secondary(current_file_id, definition_span).with_message("Offending table was here")
                 ],
-                Some("If any field has an id attribute, all fields must have one"),
+                Some("Table contains both fields with and without the id assignments, which is disallowed"),
             );
         }
 
@@ -1014,6 +1025,7 @@ impl<'a> Translator<'a> {
                         field,
                         &mut next_vtable_index,
                         &mut max_vtable_index,
+                        &mut has_id_error,
                     )?,
                 ))
             })
@@ -1030,11 +1042,14 @@ impl<'a> Translator<'a> {
                         ErrorKind::MISC_SEMANTIC_ERROR,
                         [
                             Label::primary(current_file_id, *entry.get())
-                                .with_message("First field was here"),
+                                .with_message("First id assignment was here"),
                             Label::primary(current_file_id, span)
-                                .with_message("Second field was here"),
+                                .with_message("Second id assignment was here"),
                         ],
-                        Some("Fields with overlapping id assignments"),
+                        Some(&format!(
+                            "Overlapping id assignments for id {}",
+                            vtable_index
+                        )),
                     );
                     has_id_error = true;
                 }

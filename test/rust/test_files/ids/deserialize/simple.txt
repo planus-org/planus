@@ -1,0 +1,10 @@
+RootRef {
+    v1: 1,
+    v2: 2,
+    v3: InnerType(
+        InnerTypeRef {
+            v3_inner: 3,
+        },
+    ),
+    v4: 4,
+}

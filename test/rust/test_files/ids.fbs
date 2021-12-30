@@ -1,0 +1,15 @@
+table InnerType {
+  v3_inner: int32;
+}
+
+union U {
+  InnerType
+}
+
+
+table Root {
+  v1: int32 (id: 1);
+  v2: int32 (id: 0);
+  v3: U (id: 3);
+  v4: int32 (id: 4);
+}

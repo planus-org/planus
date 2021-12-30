@@ -1,0 +1,9 @@
+Root {
+    v2: 2,
+    v1: 1,
+    v3_type: InnerType,
+    v3: InnerType {
+        v3_inner: 3,
+    },
+    v4: 4,
+}

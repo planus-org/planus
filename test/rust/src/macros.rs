@@ -55,6 +55,14 @@ macro_rules! check_type {
         const _: fn($obj) = |obj| {
             let _: $field_type = obj.$field;
         };
+    };
+    ($obj:ident => { $($field:ident : $field_type:ty),* $(,)?}) => {
+        const _: fn($obj) = |obj| {
+            let $obj { $($field),* } = obj;
+            $(
+                let _: $field_type = $field;
+            )*
+        };
     }
 }
 
