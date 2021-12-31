@@ -23,7 +23,7 @@ Non-goals
 * **Full feature parity**: Certain features are difficult to re-implement in a clean fashion.
 * **API-level compatibility**: We aim for binary-level compatibility, but the code we generate will not works directly with the APIs of the official implementation.
 * **Language-specific extensions**: We do not plan to support any extensions that break support between different languages.
-* **Validation-free access**: We will we not provide any APIs that makes it easy to shoot yourself in the foot.
+* **Validation-free access**: Validation-free access makes it very easy to shoot yourself in the foot. We will not provide such APIs.
 
 Languages supported
 -------------------
