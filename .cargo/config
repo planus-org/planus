@@ -1,2 +1,2 @@
 [alias]
-planus = ["run", "--bin", "planus", "--"]
+planus = ["run", "-p", "planus-cli", "--bin", "planus", "--"]
