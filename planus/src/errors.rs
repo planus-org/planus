@@ -1,48 +1,108 @@
-#[derive(Copy, Clone, thiserror::Error, Debug)]
-#[error("In {source_location}: {error_kind}")]
+#[derive(Copy, Clone, Debug)]
 pub struct Error {
     pub source_location: ErrorLocation,
-    #[source]
     pub error_kind: ErrorKind,
 }
 
-#[derive(Copy, Clone, thiserror::Error, Debug)]
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "In {}: {}", self.source_location, self.error_kind)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error_kind)
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum ErrorKind {
-    #[error("Invalid offset")]
     InvalidOffset,
-    #[error("Invalid length")]
     InvalidLength,
-    #[error(transparent)]
-    UnknownEnumTag {
-        #[from]
-        source: UnknownEnumTagKind,
-    },
-    #[error("Unknown union (tag = {tag})")]
+    UnknownEnumTag { source: UnknownEnumTagKind },
     UnknownUnionTag { tag: u8 },
-    #[error("Invalid vtable length (length = {length})")]
     InvalidVtableLength { length: u16 },
-    #[error("Invalid utf-8")]
-    InvalidUtf8 {
-        #[from]
-        source: std::str::Utf8Error,
-    },
-    #[error("Missing required field")]
+    InvalidUtf8 { source: core::str::Utf8Error },
     MissingRequired,
 }
 
-#[derive(Clone, thiserror::Error, Debug)]
-#[error("In {source_location}: {error_kind}")]
+impl core::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            ErrorKind::InvalidOffset => write!(f, "Invalid offset"),
+            ErrorKind::InvalidLength => write!(f, "Invalid length"),
+            ErrorKind::UnknownEnumTag { source } => source.fmt(f),
+            ErrorKind::UnknownUnionTag { tag } => write!(f, "Unknown union (tag = {})", tag),
+            ErrorKind::InvalidVtableLength { length } => {
+                write!(f, "Invalid vtable length (length = {})", length)
+            }
+            ErrorKind::InvalidUtf8 { source } => write!(f, "Invalid utf-8: {}", source),
+            ErrorKind::MissingRequired => write!(f, "Missing required field"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ErrorKind {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ErrorKind::InvalidOffset => None,
+            ErrorKind::InvalidLength => None,
+            ErrorKind::UnknownEnumTag { source } => Some(source),
+            ErrorKind::UnknownUnionTag { .. } => None,
+            ErrorKind::InvalidVtableLength { .. } => None,
+            ErrorKind::InvalidUtf8 { source } => Some(source),
+            ErrorKind::MissingRequired => None,
+        }
+    }
+}
+
+impl From<UnknownEnumTagKind> for ErrorKind {
+    fn from(source: UnknownEnumTagKind) -> Self {
+        ErrorKind::UnknownEnumTag { source }
+    }
+}
+
+impl From<core::str::Utf8Error> for ErrorKind {
+    fn from(source: core::str::Utf8Error) -> Self {
+        ErrorKind::InvalidUtf8 { source }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct UnknownEnumTag {
     pub source_location: ErrorLocation,
-    #[source]
     pub error_kind: UnknownEnumTagKind,
 }
 
-#[derive(Copy, Clone, thiserror::Error, Debug)]
-#[error("Unknown enum (tag = {tag})")]
+impl core::fmt::Display for UnknownEnumTag {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "In {}: {}", self.source_location, self.error_kind)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownEnumTag {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error_kind)
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub struct UnknownEnumTagKind {
     pub tag: i128,
 }
+
+impl core::fmt::Display for UnknownEnumTagKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Unknown enum (tag = {})", self.tag)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownEnumTagKind {}
 
 #[derive(Copy, Clone, Debug)]
 pub struct ErrorLocation {
@@ -51,8 +111,8 @@ pub struct ErrorLocation {
     pub byte_offset: usize,
 }
 
-impl std::fmt::Display for ErrorLocation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ErrorLocation {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if self.byte_offset != usize::MAX {
             write!(
                 f,

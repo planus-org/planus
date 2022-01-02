@@ -1,5 +1,5 @@
-#[derive(Copy, Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-{% if !variants.is_empty() %}
+#[derive(Copy, Clone, Debug, PartialEq, Eq, ::serde::Serialize, ::serde::Deserialize)]
+{%- if !variants.is_empty() -%}
 #[repr({{info.repr_type}})]
 {%- endif -%}
 pub enum {{ info.name }} {
@@ -8,95 +8,95 @@ pub enum {{ info.name }} {
     {% endfor %}
 }
 
-impl TryFrom<{{info.repr_type}}> for {{info.name}} {
-    type Error = planus::errors::UnknownEnumTagKind;
-    fn try_from(value: {{info.repr_type}}) -> std::result::Result<Self, planus::errors::UnknownEnumTagKind> {
+impl ::core::convert::TryFrom<{{info.repr_type}}> for {{info.name}} {
+    type Error = ::planus::errors::UnknownEnumTagKind;
+    fn try_from(value: {{info.repr_type}}) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind> {
         #[allow(clippy::match_single_binding)]
         match value {
             {% for variant in variants -%}
-                {{ variant.value }} => Ok({{info.name}}::{{ variant.name }}),
+                {{ variant.value }} => ::core::result::Result::Ok({{info.name}}::{{ variant.name }}),
             {% endfor %}
 
-            _ => Err(planus::errors::UnknownEnumTagKind { tag: value as i128 }),
+            _ => ::core::result::Result::Err(::planus::errors::UnknownEnumTagKind { tag: value as i128 }),
         }
     }
 }
 
-impl From<{{info.name}}> for {{info.repr_type}} {
+impl ::core::convert::From<{{info.name}}> for {{info.repr_type}} {
     fn from(value: {{info.name}}) -> Self {
         value as {{info.repr_type}}
     }
 }
 
-impl planus::ToOwned for {{ info.name }} {
+impl ::planus::ToOwned for {{ info.name }} {
     type Value = {{ info.name }};
     #[inline]
-    fn to_owned(self) -> planus::Result<Self::Value> {
-       Ok(self)
+    fn to_owned(self) -> ::planus::Result<Self::Value> {
+       ::core::result::Result::Ok(self)
     }
 }
 
-impl planus::Primitive for {{ info.name }} {
+impl ::planus::Primitive for {{ info.name }} {
     const ALIGNMENT: usize = {{ size }};
     const SIZE: usize = {{ size }};
 }
 
-impl planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
+impl ::planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
     #[inline]
-    fn write<const N: usize>(&self, cursor: planus::Cursor<'_, N>, buffer_position: u32) {
+    fn write<const N: usize>(&self, cursor: ::planus::Cursor<'_, N>, buffer_position: u32) {
         (*self as {{ info.repr_type }}).write(cursor, buffer_position);
     }
 }
 
-impl planus::WriteAs<{{ info.name }}> for {{ info.name }} {
+impl ::planus::WriteAs<{{ info.name }}> for {{ info.name }} {
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _builder: &mut planus::Builder) -> {{ info.name }} {
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> {{ info.name }} {
         *self
     }
 }
 
-impl planus::WriteAsDefault<{{ info.name }}, {{ info.name }}> for {{ info.name }} {
+impl ::planus::WriteAsDefault<{{ info.name }}, {{ info.name }}> for {{ info.name }} {
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _builder: &mut planus::Builder, default: &{{ info.name }}) -> Option<{{ info.name }}> {
+    fn prepare(&self, _builder: &mut ::planus::Builder, default: &{{ info.name }}) -> ::core::option::Option<{{ info.name }}> {
         if self == default {
-            None
+            ::core::option::Option::None
         } else {
-            Some(*self)
+            ::core::option::Option::Some(*self)
         }
     }
 }
 
-impl planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
+impl ::planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
     type Prepared = Self;
 
     #[inline]
-    fn prepare(&self, _builder: &mut planus::Builder) -> Option<{{ info.name }}> {
-        Some(*self)
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> ::core::option::Option<{{ info.name }}> {
+        ::core::option::Option::Some(*self)
     }
 }
 
-impl<'buf> planus::TableRead<'buf> for {{ info.name }} {
-    fn from_buffer(buffer: planus::SliceWithStartOffset<'buf>, offset: usize) -> std::result::Result<Self, planus::errors::ErrorKind> {
-        let n: {{ info.repr_type }} = planus::TableRead::from_buffer(buffer, offset)?;
-        Ok(n.try_into()?)
+impl<'buf> ::planus::TableRead<'buf> for {{ info.name }} {
+    fn from_buffer(buffer: ::planus::SliceWithStartOffset<'buf>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
+        let n: {{ info.repr_type }} = ::planus::TableRead::from_buffer(buffer, offset)?;
+        ::core::result::Result::Ok(::core::convert::TryInto::try_into(n)?)
     }
 }
 
-impl<'buf> planus::VectorRead<'buf> for {{ info.name }} {
-    type Output = std::result::Result<Self, planus::errors::UnknownEnumTag>;
+impl<'buf> ::planus::VectorRead<'buf> for {{ info.name }} {
+    type Output = ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>;
 
     const STRIDE: usize = {{ size }};
     #[inline]
     unsafe fn from_buffer(
-        buffer: planus::SliceWithStartOffset<'buf>,
+        buffer: ::planus::SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> Self::Output {
-        let value = <{{info.repr_type}} as planus::VectorRead>::from_buffer(buffer, offset);
-        let value: std::result::Result<Self, _> = value.try_into();
+        let value = <{{info.repr_type}} as ::planus::VectorRead>::from_buffer(buffer, offset);
+        let value: ::core::result::Result<Self, _> = ::core::convert::TryInto::try_into(value);
         value.map_err(|error_kind| error_kind.with_error_location(
             "{{info.name}}",
             "VectorRead::from_buffer",
@@ -105,26 +105,26 @@ impl<'buf> planus::VectorRead<'buf> for {{ info.name }} {
     }
 }
 
-impl<'buf> planus::VectorWrite<{{info.name}}> for {{ info.name }} {
+impl<'buf> ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
     const STRIDE: usize = {{ size }};
 
     type Value = Self;
 
-    fn prepare(&self, _builder: &mut planus::Builder) -> Self::Value {
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
         *self
     }
 
     #[inline]
     unsafe fn write_values(
         values: &[Self],
-        bytes: *mut std::mem::MaybeUninit<u8>,
+        bytes: *mut ::core::mem::MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [std::mem::MaybeUninit<u8>; {{ size }}];
-        for (i, v) in values.iter().enumerate() {
-            planus::WriteAsPrimitive::write(
+        let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; {{ size }}];
+        for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
+            ::planus::WriteAsPrimitive::write(
                 v,
-                planus::Cursor::new(&mut *bytes.add(i)),
+                ::planus::Cursor::new(&mut *bytes.add(i)),
                 {% if size == 1 %}
                 buffer_position - i as u32,
                 {% else %}

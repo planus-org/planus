@@ -1,4 +1,4 @@
-use std::{alloc::Layout, mem::MaybeUninit, ptr::NonNull};
+use core::{alloc::Layout, mem::MaybeUninit, ptr::NonNull};
 
 pub struct BackVec {
     // This is a `Vec<u8>`, that is written from the back instead of the fron.
@@ -8,8 +8,8 @@ pub struct BackVec {
     capacity: usize,
 }
 
-impl std::fmt::Debug for BackVec {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for BackVec {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.as_slice().fmt(f)
     }
 }
@@ -19,7 +19,7 @@ impl BackVec {
         let capacity = capacity.max(16);
         Self {
             ptr: unsafe {
-                NonNull::new(std::alloc::alloc(
+                NonNull::new(alloc::alloc::alloc(
                     Layout::from_size_align(capacity, 1).unwrap(),
                 ))
                 .unwrap()
@@ -39,7 +39,7 @@ impl BackVec {
     }
 
     pub fn as_slice(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self.ptr.as_ptr().add(self.offset), self.len()) }
+        unsafe { core::slice::from_raw_parts(self.ptr.as_ptr().add(self.offset), self.len()) }
     }
 
     #[inline]
@@ -57,18 +57,18 @@ impl BackVec {
         let new_offset = new_capacity.checked_sub(len).unwrap();
 
         unsafe {
-            let new_ptr = NonNull::new(std::alloc::alloc(
+            let new_ptr = NonNull::new(alloc::alloc::alloc(
                 Layout::from_size_align(new_capacity, 1).unwrap(),
             ))
             .unwrap();
 
-            std::ptr::copy_nonoverlapping(
+            core::ptr::copy_nonoverlapping(
                 self.ptr.as_ptr().add(self.offset),
                 new_ptr.as_ptr().add(new_offset),
                 len,
             );
-            let old_ptr = std::mem::replace(&mut self.ptr, new_ptr);
-            std::alloc::dealloc(
+            let old_ptr = core::mem::replace(&mut self.ptr, new_ptr);
+            alloc::alloc::dealloc(
                 old_ptr.as_ptr(),
                 Layout::from_size_align_unchecked(self.capacity, 1),
             );
@@ -83,7 +83,7 @@ impl BackVec {
         self.reserve(buffer.len());
         let new_offset = self.offset.wrapping_sub(buffer.len());
         unsafe {
-            std::ptr::copy_nonoverlapping(
+            core::ptr::copy_nonoverlapping(
                 buffer.as_ptr(),
                 self.ptr.as_ptr().add(new_offset),
                 buffer.len(),
@@ -96,7 +96,7 @@ impl BackVec {
     pub fn extend_with_zeros(&mut self, count: usize) {
         self.reserve(count);
         let new_offset = self.offset.wrapping_sub(count);
-        unsafe { std::ptr::write_bytes(self.ptr.as_ptr().add(new_offset), 0, count) }
+        unsafe { core::ptr::write_bytes(self.ptr.as_ptr().add(new_offset), 0, count) }
         self.offset = new_offset;
     }
 
@@ -104,7 +104,7 @@ impl BackVec {
         self.reserve(count);
         let new_offset = self.offset.wrapping_sub(count);
         let ptr = self.ptr.as_ptr().add(new_offset) as *mut MaybeUninit<u8>;
-        let slice = std::slice::from_raw_parts_mut(ptr, count);
+        let slice = core::slice::from_raw_parts_mut(ptr, count);
         f(slice);
         self.offset = new_offset;
     }
@@ -113,7 +113,7 @@ impl BackVec {
 impl Drop for BackVec {
     fn drop(&mut self) {
         unsafe {
-            std::alloc::dealloc(
+            alloc::alloc::dealloc(
                 self.ptr.as_ptr(),
                 Layout::from_size_align_unchecked(self.capacity, 1),
             );
@@ -123,6 +123,7 @@ impl Drop for BackVec {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
     use rand::{thread_rng, Rng};
 
     use super::*;

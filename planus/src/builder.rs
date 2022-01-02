@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, mem::MaybeUninit};
+use core::{marker::PhantomData, mem::MaybeUninit};
 
 use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
 
@@ -187,6 +187,7 @@ impl Builder {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
     use rand::{thread_rng, Rng};
 
     use super::*;
