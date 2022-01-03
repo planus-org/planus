@@ -11,8 +11,11 @@ rust-version = "1.57"
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
 [dependencies]
-thiserror = "1.0.26"
 array-init-cursor = { version = "0.1", path = "../array-init-cursor" }
 
 [dev-dependencies]
 rand = "0.8.4"
+
+[features]
+default = ["std"]
+std = []

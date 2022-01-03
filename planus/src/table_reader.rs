@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
 
 use crate::{errors::ErrorKind, SliceWithStartOffset, TableRead, TableReadUnion};
 

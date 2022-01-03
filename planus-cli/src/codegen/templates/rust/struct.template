@@ -1,18 +1,18 @@
-#[derive(Copy, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
 pub struct {{ info.owned_name }} {
     {% for field in fields -%}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
     {% endfor %}
 }
 
-impl planus::Primitive for {{ info.owned_name }} {
+impl ::planus::Primitive for {{ info.owned_name }} {
     const ALIGNMENT: usize = {{ alignment }};
     const SIZE: usize = {{ size }};
 }
 
 #[allow(clippy::identity_op)]
-impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
-    fn write<const N: usize>(&self, cursor: planus::Cursor<'_, N>, buffer_position: u32) {
+impl ::planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
+    fn write<const N: usize>(&self, cursor: ::planus::Cursor<'_, N>, buffer_position: u32) {
         {% for field in fields -%}
             let (cur, cursor) = cursor.split::<{{ field.size }} , {{ size - field.offset - field.size }}>();
             self.{{ field.info.name }}.write(cur, buffer_position - {{ field.offset }});
@@ -24,22 +24,22 @@ impl planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
     }
 }
 
-impl planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
+impl ::planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
-    fn prepare(&self, _builder: &mut planus::Builder) -> Self {
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
         *self
     }
 }
 
-impl planus::WriteAsOptional<{{ info.owned_name }}> for {{ info.owned_name }} {
+impl ::planus::WriteAsOptional<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
-    fn prepare(&self, _builder: &mut planus::Builder) -> Option<Self> {
-        Some(*self)
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> ::core::option::Option<Self> {
+        ::core::option::Option::Some(*self)
     }
 }
 
 #[derive(Copy, Clone)]
-pub struct {{ info.ref_name }}<'a>(planus::ArrayWithStartOffset<'a, {{ size }}>);
+pub struct {{ info.ref_name }}<'a>(::planus::ArrayWithStartOffset<'a, {{ size }}>);
 
 impl<'a> {{ info.ref_name }}<'a> {
     {% for field in fields %}
@@ -58,12 +58,12 @@ impl<'a> {{ info.ref_name }}<'a> {
     {% endfor %}
 }
 
-impl<'a> std::fmt::Debug for {{ info.ref_name }}<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'a> ::core::fmt::Debug for {{ info.ref_name }}<'a> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields -%}
             {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
-                if let Some(value) = self.{{field.info.name}}().transpose() {
+                if let ::core::option::Option::Some(value) = self.{{field.info.name}}().transpose() {
                     f.field("{{field.info.name}}", &value);
                 }
             {%- else -%}
@@ -74,13 +74,13 @@ impl<'a> std::fmt::Debug for {{ info.ref_name }}<'a> {
     }
 }
 
-impl<'a> planus::ToOwned for {{ info.ref_name }}<'a> {
+impl<'a> ::planus::ToOwned for {{ info.ref_name }}<'a> {
     type Value = {{ info.owned_name }};
-    fn to_owned(self) -> planus::Result<Self::Value> {
-        Ok({{ info.owned_name }} {
+    fn to_owned(self) -> ::planus::Result<Self::Value> {
+        ::core::result::Result::Ok({{ info.owned_name }} {
         {% for field in fields -%}
             {{ field.info.name }}:
-            {%- if field.info.getter_return_type.starts_with("std::result::Result<") -%}
+            {%- if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
                 self.{{field.info.name}}()?,
             {%- elseif field.info.getter_return_type.ends_with("<'a>") -%}
                 self.{{field.info.name}}().to_owned()?,
@@ -92,43 +92,43 @@ impl<'a> planus::ToOwned for {{ info.ref_name }}<'a> {
     }
 }
 
-impl<'a> planus::TableRead<'a> for {{ info.ref_name }}<'a> {
-    fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> std::result::Result<Self, planus::errors::ErrorKind> {
+impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
+    fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         let buffer = buffer.advance_as_array::<{{size}}>(offset)?;
-        Ok(Self(buffer))
+        ::core::result::Result::Ok(Self(buffer))
     }
 }
 
-impl<'a> planus::VectorRead<'a> for {{ info.owned_name }} {
+impl<'a> ::planus::VectorRead<'a> for {{ info.owned_name }} {
     const STRIDE: usize = {{ vector_stride }};
 
     type Output = {{ info.ref_name}}<'a>;
-    unsafe fn from_buffer(buffer: planus::SliceWithStartOffset<'a>, offset: usize) -> {{ info.ref_name }}<'a> {
+    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> {{ info.ref_name }}<'a> {
         {{ info.ref_name}}(buffer.unchecked_advance_as_array(offset))
     }
 }
 
-impl planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
+impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
     const STRIDE: usize = {{ vector_stride }};
 
     type Value = {{ info.owned_name }};
 
-    fn prepare(&self, _builder: &mut planus::Builder) -> Self::Value {
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
         *self
     }
 
     #[inline]
     unsafe fn write_values(
         values: &[{{info.owned_name}}],
-        bytes: *mut std::mem::MaybeUninit<u8>,
+        bytes: *mut ::core::mem::MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [std::mem::MaybeUninit<u8>; {{ vector_stride }}];
-        for (i, v) in values.iter().enumerate() {
+        let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; {{ vector_stride }}];
+        for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
             {% if vector_stride == size %}
-            planus::WriteAsPrimitive::write(
+            ::planus::WriteAsPrimitive::write(
                 v,
-                planus::Cursor::new(&mut *bytes.add(i)),
+                ::planus::Cursor::new(&mut *bytes.add(i)),
                 {% if size == 1 %}
                 buffer_position - i as u32,
                 {% else %}
@@ -136,9 +136,9 @@ impl planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
                 {% endif %}
             );
             {% else %}
-            let cursor = planus::Cursor::new(&mut *bytes.add(i));
+            let cursor = ::planus::Cursor::new(&mut *bytes.add(i));
             let (value_cursor, padding_cursor) = cursor.split::<{{ size }}, {{ vector_stride - size }}>();
-            planus::WriteAsPrimitive::write(
+            ::planus::WriteAsPrimitive::write(
                 v,
                 value_cursor,
                 {% if size == 1 %}

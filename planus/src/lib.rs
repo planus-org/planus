@@ -1,3 +1,8 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[doc(hidden)]
+pub extern crate alloc;
+
 mod backvec;
 mod builder;
 
@@ -7,14 +12,15 @@ pub mod table_reader;
 #[doc(hidden)]
 pub mod table_writer;
 
-use std::{borrow::Cow, convert::TryInto, marker::PhantomData, mem::MaybeUninit};
+use alloc::{borrow::Cow, boxed::Box, string::String, vec::Vec};
+use core::{convert::TryInto, marker::PhantomData, mem::MaybeUninit};
 
 pub use errors::Error;
 use errors::ErrorKind;
 
 pub use crate::builder::Builder;
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 
@@ -98,7 +104,7 @@ impl<'buf> SliceWithStartOffset<'buf> {
         self.buffer
     }
 
-    pub fn advance(&self, amount: usize) -> std::result::Result<Self, errors::ErrorKind> {
+    pub fn advance(&self, amount: usize) -> core::result::Result<Self, errors::ErrorKind> {
         let buffer = self.buffer.get(amount..).ok_or(ErrorKind::InvalidOffset)?;
         Ok(Self {
             buffer,
@@ -109,7 +115,7 @@ impl<'buf> SliceWithStartOffset<'buf> {
     pub fn advance_as_array<const N: usize>(
         &self,
         amount: usize,
-    ) -> std::result::Result<ArrayWithStartOffset<'buf, N>, errors::ErrorKind> {
+    ) -> core::result::Result<ArrayWithStartOffset<'buf, N>, errors::ErrorKind> {
         let buffer = self
             .buffer
             .get(amount..amount + N)
@@ -149,7 +155,7 @@ impl<'buf, const N: usize> ArrayWithStartOffset<'buf, N> {
     pub fn advance_as_array<const K: usize>(
         &self,
         amount: usize,
-    ) -> std::result::Result<ArrayWithStartOffset<'buf, K>, errors::ErrorKind> {
+    ) -> core::result::Result<ArrayWithStartOffset<'buf, K>, errors::ErrorKind> {
         let buffer = self
             .buffer
             .get(amount..amount + K)
@@ -165,7 +171,7 @@ pub trait TableRead<'buf>: Sized {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<Self, ErrorKind>;
+    ) -> core::result::Result<Self, ErrorKind>;
 }
 
 #[doc(hidden)]
@@ -175,7 +181,7 @@ pub trait TableReadUnion<'buf>: Sized {
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
         tag: u8,
-    ) -> std::result::Result<Self, ErrorKind>;
+    ) -> core::result::Result<Self, ErrorKind>;
 }
 
 impl<P: Primitive> WriteAsOptional<P> for () {
@@ -496,7 +502,7 @@ macro_rules! gen_primitive_types {
             fn from_buffer(
                 buffer: SliceWithStartOffset<'buf>,
                 offset: usize,
-            ) -> std::result::Result<$ty, ErrorKind> {
+            ) -> core::result::Result<$ty, ErrorKind> {
                 let buffer = buffer.advance_as_array(offset)?.as_array();
                 Ok(<$ty>::from_le_bytes(*buffer))
             }
@@ -604,7 +610,7 @@ impl ToOwned for bool {
     }
 }
 
-impl<T: ToOwned, E> ToOwned for std::result::Result<T, E>
+impl<T: ToOwned, E> ToOwned for core::result::Result<T, E>
 where
     errors::Error: From<E>,
 {
@@ -621,7 +627,7 @@ impl<'buf> TableRead<'buf> for bool {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<bool, ErrorKind> {
+    ) -> core::result::Result<bool, ErrorKind> {
         Ok(buffer.advance_as_array::<1>(offset)?.as_array()[0] != 0)
     }
 }
@@ -759,7 +765,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
 fn array_from_buffer(
     buffer: SliceWithStartOffset<'_>,
     offset: usize,
-) -> std::result::Result<(SliceWithStartOffset<'_>, usize), ErrorKind> {
+) -> core::result::Result<(SliceWithStartOffset<'_>, usize), ErrorKind> {
     let value: u32 = TableRead::from_buffer(buffer, offset)?;
     let vector_offset = offset
         .checked_add(value as usize)
@@ -773,7 +779,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> TableRead<'buf> for Vector<'buf, T> {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<Self, ErrorKind> {
+    ) -> core::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
         if len.checked_mul(T::STRIDE).ok_or(ErrorKind::InvalidLength)? <= buffer.len() {
             Ok(Vector {
@@ -791,18 +797,18 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> ToOwned for Vector<'buf, T>
 where
     T::Output: ToOwned,
 {
-    type Value = Vec<<T::Output as ToOwned>::Value>;
+    type Value = alloc::vec::Vec<<T::Output as ToOwned>::Value>;
 
-    fn to_owned(self) -> std::result::Result<Self::Value, Error> {
+    fn to_owned(self) -> core::result::Result<Self::Value, Error> {
         self.iter().map(|v| v.to_owned()).collect()
     }
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> std::fmt::Debug for Vector<'buf, T>
+impl<'buf, T: ?Sized + VectorRead<'buf>> core::fmt::Debug for Vector<'buf, T>
 where
-    T::Output: std::fmt::Debug,
+    T::Output: core::fmt::Debug,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_list().entries(self.iter()).finish()
     }
 }
@@ -1075,7 +1081,7 @@ impl<'a> ToOwned for &'a str {
     type Value = String;
 
     fn to_owned(self) -> Result<Self::Value> {
-        Ok(self.to_string())
+        Ok(alloc::string::ToString::to_string(self))
     }
 }
 
@@ -1095,7 +1101,7 @@ impl<'buf> VectorRead<'buf> for str {
             .get(..len)
             .ok_or(ErrorKind::InvalidLength)
             .map_err(add_context)?;
-        let str = std::str::from_utf8(slice)
+        let str = core::str::from_utf8(slice)
             .map_err(|source| ErrorKind::InvalidUtf8 { source })
             .map_err(add_context)?;
         Ok(str)
@@ -1131,9 +1137,9 @@ impl<'buf> TableRead<'buf> for &'buf str {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<Self, ErrorKind> {
+    ) -> core::result::Result<Self, ErrorKind> {
         let slice: &[u8] = TableRead::from_buffer(buffer, offset)?;
-        Ok(std::str::from_utf8(slice)?)
+        Ok(core::str::from_utf8(slice)?)
     }
 }
 
@@ -1212,7 +1218,7 @@ impl<'buf> TableRead<'buf> for &'buf [u8] {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<Self, ErrorKind> {
+    ) -> core::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
         buffer.as_slice().get(..len).ok_or(ErrorKind::InvalidLength)
     }
@@ -1222,7 +1228,7 @@ impl<'buf> TableRead<'buf> for Cow<'buf, str> {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
-    ) -> std::result::Result<Self, ErrorKind> {
+    ) -> core::result::Result<Self, ErrorKind> {
         let bytes = <&'buf [u8] as TableRead<'buf>>::from_buffer(buffer, offset)?;
         Ok(String::from_utf8_lossy(bytes))
     }

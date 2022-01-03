@@ -1,4 +1,9 @@
-{%- if !info.name.is_empty() -%}
+{%- if info.name.is_empty() -%}
+
+pub use root::*;
+#[no_implicit_prelude]
+mod root {
+{%- else -%}
 pub mod {{info.name}} {
 {%- endif -%}
     {%- for child in children -%}
@@ -15,6 +20,4 @@ pub mod {{info.name}} {
         {% endmatch %}
 
     {% endfor -%}
-{%- if !info.name.is_empty() -%}
 }
-{%- endif -%}
