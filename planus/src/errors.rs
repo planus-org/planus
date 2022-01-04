@@ -18,6 +18,7 @@ impl std::error::Error for Error {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[non_exhaustive]
 pub enum ErrorKind {
     InvalidOffset,
     InvalidLength,
@@ -26,6 +27,7 @@ pub enum ErrorKind {
     InvalidVtableLength { length: u16 },
     InvalidUtf8 { source: core::str::Utf8Error },
     MissingRequired,
+    MissingNullTerminator,
 }
 
 impl core::fmt::Display for ErrorKind {
@@ -40,6 +42,7 @@ impl core::fmt::Display for ErrorKind {
             }
             ErrorKind::InvalidUtf8 { source } => write!(f, "Invalid utf-8: {}", source),
             ErrorKind::MissingRequired => write!(f, "Missing required field"),
+            ErrorKind::MissingNullTerminator => write!(f, "Missing null terminator"),
         }
     }
 }
@@ -55,6 +58,7 @@ impl std::error::Error for ErrorKind {
             ErrorKind::InvalidVtableLength { .. } => None,
             ErrorKind::InvalidUtf8 { source } => Some(source),
             ErrorKind::MissingRequired => None,
+            ErrorKind::MissingNullTerminator => None,
         }
     }
 }

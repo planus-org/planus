@@ -121,13 +121,11 @@ impl<'a> ::core::fmt::Debug for {{info.ref_name}}<'a> {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields.declaration_order() -%}
             {%- if field.info.read_type.starts_with("::core::option::Option<") -%}
-            if let ::core::result::Result::Ok(::core::option::Option::Some({{field.info.name}})) = self.{{field.info.name}}() {
+            if let ::core::option::Option::Some({{field.info.name}}) = self.{{field.info.name}}().transpose() {
                 f.field("{{field.info.name}}", &{{field.info.name}});
             }
             {%- else -%}
-            if let ::core::result::Result::Ok({{field.info.name}}) = self.{{field.info.name}}() {
-                f.field("{{field.info.name}}", &{{field.info.name}});
-            }
+            f.field("{{field.info.name}}", &self.{{field.info.name}}());
             {%- endif -%}
         {%- endfor %}
         f.finish()

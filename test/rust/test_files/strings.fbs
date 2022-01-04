@@ -1,0 +1,4 @@
+table Root {
+  a: string;
+  b: string;
+}

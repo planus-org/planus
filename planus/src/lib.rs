@@ -12,7 +12,7 @@ pub mod table_reader;
 #[doc(hidden)]
 pub mod table_writer;
 
-use alloc::{borrow::Cow, boxed::Box, string::String, vec::Vec};
+use alloc::{boxed::Box, string::String, vec::Vec};
 use core::{convert::TryInto, marker::PhantomData, mem::MaybeUninit};
 
 pub use errors::Error;
@@ -903,10 +903,16 @@ where
         for v in self.iter() {
             tmp.push(v.prepare(builder));
         }
+        // SAFETY: We need to make sure we always write the 4+stride*len bytes in the closure
         unsafe {
+            // TODO: This will not be correctly aligned if P::ALIGNMENT_MASK is bigger than u32::ALIGNMENT_MASK
             builder.write_with(
-                4 + T::STRIDE.checked_mul(self.len()).unwrap(),
-                P::ALIGNMENT_MASK.max(3),
+                T::STRIDE
+                    .checked_mul(self.len())
+                    .unwrap()
+                    .checked_add(4)
+                    .unwrap(),
+                P::ALIGNMENT_MASK.max(u32::ALIGNMENT_MASK),
                 |buffer_position, bytes| {
                     let bytes = bytes.as_mut_ptr();
 
@@ -918,7 +924,7 @@ where
                     T::write_values(&tmp, bytes.add(4), buffer_position - 4);
                 },
             )
-        };
+        }
         builder.current_offset()
     }
 }
@@ -1069,11 +1075,29 @@ impl WriteAsOptional<Offset<str>> for str {
 impl WriteAsOffset<str> for str {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Offset<str> {
-        let offset = <[u8] as WriteAsOffset<[u8]>>::prepare(self.as_bytes(), builder);
-        Offset {
-            offset: offset.offset,
-            phantom: PhantomData,
+        let size_including_len_and_null = self.len().checked_add(5).unwrap();
+        // SAFETY: We make sure to write the 4+len+1 bytes inside the closure.
+        unsafe {
+            builder.write_with(
+                size_including_len_and_null,
+                u32::ALIGNMENT_MASK,
+                |buffer_position, bytes| {
+                    let bytes = bytes.as_mut_ptr();
+
+                    (self.len() as u32).write(
+                        Cursor::new(&mut *(bytes as *mut [MaybeUninit<u8>; 4])),
+                        buffer_position,
+                    );
+                    std::ptr::copy_nonoverlapping(
+                        self.as_bytes().as_ptr() as *const MaybeUninit<u8>,
+                        bytes.add(4),
+                        self.len(),
+                    );
+                    bytes.add(4 + self.len()).write(MaybeUninit::new(0));
+                },
+            )
         }
+        builder.current_offset()
     }
 }
 
@@ -1096,6 +1120,10 @@ impl<'buf> VectorRead<'buf> for str {
         let add_context =
             |e: ErrorKind| e.with_error_location("[str]", "get", buffer.offset_from_start);
         let (slice, len) = array_from_buffer(buffer, offset).map_err(add_context)?;
+        #[cfg(feature = "extra-validation")]
+        if slice.as_slice().get(len) != Some(&0) {
+            return Err(add_context(ErrorKind::MissingNullTerminator));
+        }
         let slice = slice
             .as_slice()
             .get(..len)
@@ -1138,7 +1166,15 @@ impl<'buf> TableRead<'buf> for &'buf str {
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
     ) -> core::result::Result<Self, ErrorKind> {
-        let slice: &[u8] = TableRead::from_buffer(buffer, offset)?;
+        let (buffer, len) = array_from_buffer(buffer, offset)?;
+        #[cfg(feature = "extra-validation")]
+        if buffer.as_slice().get(len) != Some(&0) {
+            return Err(ErrorKind::MissingNullTerminator);
+        }
+        let slice = buffer
+            .as_slice()
+            .get(..len)
+            .ok_or(ErrorKind::InvalidLength)?;
         Ok(core::str::from_utf8(slice)?)
     }
 }
@@ -1221,15 +1257,5 @@ impl<'buf> TableRead<'buf> for &'buf [u8] {
     ) -> core::result::Result<Self, ErrorKind> {
         let (buffer, len) = array_from_buffer(buffer, offset)?;
         buffer.as_slice().get(..len).ok_or(ErrorKind::InvalidLength)
-    }
-}
-
-impl<'buf> TableRead<'buf> for Cow<'buf, str> {
-    fn from_buffer(
-        buffer: SliceWithStartOffset<'buf>,
-        offset: usize,
-    ) -> core::result::Result<Self, ErrorKind> {
-        let bytes = <&'buf [u8] as TableRead<'buf>>::from_buffer(buffer, offset)?;
-        Ok(String::from_utf8_lossy(bytes))
     }
 }
