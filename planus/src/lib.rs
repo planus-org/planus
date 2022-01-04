@@ -903,14 +903,16 @@ where
         for v in self.iter() {
             tmp.push(v.prepare(builder));
         }
+        // SAFETY: We need to make sure we always write the 4+stride*len bytes in the closure
         unsafe {
+            // TODO: This will not be correctly aligned if P::ALIGNMENT_MASK is bigger than u32::ALIGNMENT_MASK
             builder.write_with(
                 T::STRIDE
                     .checked_mul(self.len())
                     .unwrap()
                     .checked_add(4)
                     .unwrap(),
-                P::ALIGNMENT_MASK.max(3),
+                P::ALIGNMENT_MASK.max(u32::ALIGNMENT_MASK),
                 |buffer_position, bytes| {
                     let bytes = bytes.as_mut_ptr();
 
@@ -922,7 +924,7 @@ where
                     T::write_values(&tmp, bytes.add(4), buffer_position - 4);
                 },
             )
-        };
+        }
         builder.current_offset()
     }
 }
@@ -1073,10 +1075,12 @@ impl WriteAsOptional<Offset<str>> for str {
 impl WriteAsOffset<str> for str {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Offset<str> {
+        let size_including_len_and_null = self.len().checked_add(5).unwrap();
+        // SAFETY: We make sure to write the 4+len+1 bytes inside the closure.
         unsafe {
             builder.write_with(
-                self.len().checked_add(5).unwrap(),
-                3,
+                size_including_len_and_null,
+                u32::ALIGNMENT_MASK,
                 |buffer_position, bytes| {
                     let bytes = bytes.as_mut_ptr();
 
@@ -1092,7 +1096,7 @@ impl WriteAsOffset<str> for str {
                     bytes.add(4 + self.len()).write(MaybeUninit::new(0));
                 },
             )
-        };
+        }
         builder.current_offset()
     }
 }
