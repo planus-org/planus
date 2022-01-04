@@ -1,0 +1,12 @@
+RootRef {
+    x: Ok(
+        [
+            Ok(
+                "abcd",
+            ),
+            Ok(
+                "xyzw",
+            ),
+        ],
+    ),
+}

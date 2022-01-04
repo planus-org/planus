@@ -1,33 +1,95 @@
 RootRef {
-    field_uint1: X,
-    field_uint2: X,
-    field_uint3: X,
-    field_uint4: X,
-    field_uint5: X,
-    field_uint6: X,
-    field_uint7: X,
-    field_uint8: X,
-    field_uint10: X,
-    field_uint11: Y,
-    field_uint12: Z,
-    field_uint13: Y,
-    field_uint14: X,
-    field_uint15: Y,
-    field_uint16: X,
-    field_int1: X,
-    field_int2: X,
-    field_int3: X,
-    field_int4: X,
-    field_int5: X,
-    field_int6: X,
-    field_int7: X,
-    field_int8: X,
-    field_int10: X,
-    field_int11: Y,
-    field_int12: Z,
-    field_int13: X,
-    field_int14: X,
-    field_int15: Y,
-    field_int16: X,
-    filler: 1,
+    field_uint1: Ok(
+        X,
+    ),
+    field_uint2: Ok(
+        X,
+    ),
+    field_uint3: Ok(
+        X,
+    ),
+    field_uint4: Ok(
+        X,
+    ),
+    field_uint5: Ok(
+        X,
+    ),
+    field_uint6: Ok(
+        X,
+    ),
+    field_uint7: Ok(
+        X,
+    ),
+    field_uint8: Ok(
+        X,
+    ),
+    field_uint10: Ok(
+        X,
+    ),
+    field_uint11: Ok(
+        Y,
+    ),
+    field_uint12: Ok(
+        Z,
+    ),
+    field_uint13: Ok(
+        Y,
+    ),
+    field_uint14: Ok(
+        X,
+    ),
+    field_uint15: Ok(
+        Y,
+    ),
+    field_uint16: Ok(
+        X,
+    ),
+    field_int1: Ok(
+        X,
+    ),
+    field_int2: Ok(
+        X,
+    ),
+    field_int3: Ok(
+        X,
+    ),
+    field_int4: Ok(
+        X,
+    ),
+    field_int5: Ok(
+        X,
+    ),
+    field_int6: Ok(
+        X,
+    ),
+    field_int7: Ok(
+        X,
+    ),
+    field_int8: Ok(
+        X,
+    ),
+    field_int10: Ok(
+        X,
+    ),
+    field_int11: Ok(
+        Y,
+    ),
+    field_int12: Ok(
+        Z,
+    ),
+    field_int13: Ok(
+        X,
+    ),
+    field_int14: Ok(
+        X,
+    ),
+    field_int15: Ok(
+        Y,
+    ),
+    field_int16: Ok(
+        X,
+    ),
+    filler: Ok(
+        1,
+    ),
 }

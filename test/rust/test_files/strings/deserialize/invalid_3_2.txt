@@ -1,0 +1,15 @@
+RootRef {
+    a: Err(
+        Error {
+            source_location: ErrorLocation {
+                type_: "Root",
+                method: "a",
+                byte_offset: 4,
+            },
+            error_kind: MissingNullTerminator,
+        },
+    ),
+    b: Ok(
+        "xy",
+    ),
+}

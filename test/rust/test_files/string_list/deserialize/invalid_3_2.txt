@@ -1,0 +1,19 @@
+RootRef {
+    x: Ok(
+        [
+            Err(
+                Error {
+                    source_location: ErrorLocation {
+                        type_: "[str]",
+                        method: "get",
+                        byte_offset: 24,
+                    },
+                    error_kind: MissingNullTerminator,
+                },
+            ),
+            Ok(
+                "xy",
+            ),
+        ],
+    ),
+}

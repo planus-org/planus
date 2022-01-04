@@ -1,0 +1,8 @@
+Root {
+    a: Some(
+        "",
+    ),
+    b: Some(
+        "xy",
+    ),
+}
