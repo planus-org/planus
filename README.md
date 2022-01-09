@@ -20,7 +20,7 @@ Goals
 * **Modularity**: We have written our code such that parsing, validation and translation are clearly separated. We hope this will make it easy to implement additional backends with full support.
 * **Opinionated**: We are in some cases more strict than the official implementation.
 * **Developer tools**: We want to build good developer tools using our library. This includes at least a schema formatter and a tool to output a [DOT graph](https://en.wikipedia.org/wiki/DOT_(graph_description_language)) of the types in a schema.
-* **Rust**: By choosing to use Rust for our compiler, we are able to utilize excellent crates such as [structopt](https://github.com/TeXitoi/structopt), [LALRPOP](https://github.com/lalrpop/lalrpop) and [codespan](https://github.com/brendanzab/codespan) as force multipliers.
+* **Rust**: By choosing to use Rust for our compiler, we are able to utilize excellent crates such as [clap](https://github.com/clap-rs/clap), [LALRPOP](https://github.com/lalrpop/lalrpop) and [codespan](https://github.com/brendanzab/codespan) as force multipliers.
 
 Non-goals
 ---------
