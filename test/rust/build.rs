@@ -7,29 +7,17 @@ fn main() -> Result<()> {
 
     let out_dir = env::var("OUT_DIR").unwrap();
 
-    // Create unit tests
-    let planus_dir = format!("{}/planus", out_dir);
-    fs::create_dir_all(&planus_dir).context("Cannot create planus out dir")?;
-    for file in ["enums", "structs", "unions", "vectors"] {
-        let input_files = &[format!("../files/test/{}.fbs", file)];
-        let output_file = format!("{}/{}_generated.rs", planus_dir, file);
-        planus_cli::codegen::rust::generate_code(input_files, &output_file)
-            .with_context(|| format_err!("Cannot generate code for {}", file))?;
-        println!("cargo:rerun-if-changed=../files/{}.fbs", file);
-    }
-
     // Create API tests
     let planus_api_dir = format!("{}/planus_api", out_dir);
     generate_test_code("api_files", &planus_api_dir, None, false)?;
 
     // Create serialize/deserialize tests
     let planus_test_dir = format!("{}/planus_test", out_dir);
-    let serialize_template = std::fs::read_to_string("src/test_template.rs")
-        .context("could not read serialize template")?;
+    let serialize_template = std::fs::read_to_string("src/test_template.rs").ok();
     generate_test_code(
         "test_files",
         &planus_test_dir,
-        Some(&serialize_template),
+        serialize_template.as_deref(),
         true,
     )?;
 
@@ -45,6 +33,11 @@ fn generate_test_code(
     fs::create_dir_all(out_dir).with_context(|| format_err!("Cannot create dir: {}", out_dir))?;
 
     let mut mod_code = String::new();
+
+    // We want the same generated files as here in rust-build, but not the tests.
+    // Symlinking the relevant files and adding this check was the least bad option
+    // I could think of, but it's still not pretty.
+    let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust_test";
 
     for entry in
         std::fs::read_dir(in_dir).with_context(|| format_err!("Cannot read dir: {}", in_dir))?
@@ -65,7 +58,7 @@ fn generate_test_code(
                 .with_context(|| format_err!("Cannot generate code for {}", file_path.display()))?;
 
             let flatc_generated = format!("{}_generated.rs", file_stem);
-            if generate_flatc {
+            if generate_flatc && is_main_crate {
                 assert!(Command::new("flatc")
                     .args(&["--rust", "-o", out_dir])
                     .arg(&file_path)
@@ -83,7 +76,7 @@ fn generate_test_code(
             writeln!(code, "mod generated;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
-            if generate_flatc {
+            if generate_flatc && is_main_crate {
                 writeln!(code, "#[path = {:?}]", flatc_generated).unwrap();
                 writeln!(code, "mod flatc;").unwrap();
             }
@@ -99,12 +92,14 @@ fn generate_test_code(
 
             if let Some(template) = template {
                 code += template;
-            } else {
-                writeln!(code, "#[test] fn {}() {{", code_module_name).unwrap();
+            } else if is_main_crate {
                 let mut path = file_path.to_owned();
                 path.set_extension("rs");
-                code += &std::fs::read_to_string(path).context("Cannot read associated rs")?;
-                writeln!(code, "}}").unwrap();
+                if let Ok(test_code) = std::fs::read_to_string(&path) {
+                    writeln!(code, "#[test] fn {}() {{", code_module_name).unwrap();
+                    code += &test_code;
+                    writeln!(code, "}}").unwrap();
+                }
             }
 
             std::fs::write(&code_file_full_path, code)

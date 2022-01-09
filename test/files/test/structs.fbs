@@ -1,9 +1,0 @@
-struct ABC {
-    a: int32;
-    b: bool;
-    c: uint64;
-}
-
-table Wrap {
-    abc: ABC;
-}

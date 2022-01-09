@@ -1,0 +1,13 @@
+[package]
+name = "rust-compat"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+planus = { path = "../../planus", features = ["extra-validation"] }
+serde = "1.0.132"
+rust_test = { path = "../rust" }
+
+[build-dependencies]
+anyhow = "1.0.51"
+planus-cli = { path = "../../planus-cli" }
