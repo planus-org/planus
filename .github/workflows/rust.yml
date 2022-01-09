@@ -32,7 +32,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-          components: rustfmt
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v1
       - name: Flatbuffers binary cache
         id: flatbuffers-cache
@@ -53,28 +53,3 @@ jobs:
         with:
           command: make
           args: full-test
-
-  Lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v1
-      - name: Flatbuffers binary cache
-        id: flatbuffers-cache
-        uses: actions/cache@v2
-        with:
-          path: ~/flatc
-          key: flatbuffers-${{ runner.os }}
-      - name: Install flatbuffers
-        if: steps.flatbuffers-cache.outputs.cache-hit != 'true'
-        run: .github/workflows/build_flatbuffers.sh
-      - name: Copy flatbuffers binary to /usr/bin
-        run: sudo cp ~/flatc /usr/local/bin/
-      - run: cargo fmt --all -- --check
-      - run: cargo clippy --all-targets -- -D warnings
