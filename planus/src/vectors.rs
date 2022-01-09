@@ -15,9 +15,9 @@ impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
     }
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> core::fmt::Debug for Vector<'buf, T>
+impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Vector<'buf, T>
 where
-    T::Output: core::fmt::Debug,
+    T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_list().entries(self.iter()).finish()
@@ -35,7 +35,7 @@ impl<T: ?Sized + 'static> Vector<'static, T> {
     };
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
+impl<'buf, T: ?Sized> Vector<'buf, T> {
     pub fn is_empty(self) -> bool {
         self.len == 0
     }
@@ -43,9 +43,11 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
     pub fn len(self) -> usize {
         self.len
     }
+}
 
+impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     #[inline]
-    pub fn get(self, index: usize) -> Option<T::Output> {
+    pub fn get(self, index: usize) -> Option<T> {
         if index < self.len {
             Some(unsafe { T::from_buffer(self.buffer, T::STRIDE * index) })
         } else {
@@ -59,8 +61,34 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Vector<'buf, T> {
     }
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
-    type Item = T::Output;
+impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
+    pub fn to_vec<O>(&self) -> crate::Result<alloc::vec::Vec<O>>
+    where
+        O: core::convert::TryFrom<T>,
+        crate::errors::Error: From<O::Error>,
+    {
+        self.iter()
+            .map(|v| O::try_from(v).map_err(crate::errors::Error::from))
+            .collect()
+    }
+}
+
+impl<'buf, T, E> Vector<'buf, core::result::Result<T, E>> {
+    pub fn to_vec_result<O>(&self) -> crate::Result<alloc::vec::Vec<O>>
+    where
+        T: crate::traits::VectorReadInner<'buf>,
+        E: core::convert::From<T::Error>,
+        O: core::convert::TryFrom<T>,
+        crate::errors::Error: From<E> + From<O::Error>,
+    {
+        self.iter()
+            .map(|v| O::try_from(v?).map_err(|e| e.into()))
+            .collect()
+    }
+}
+
+impl<'buf, T: VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
+    type Item = T;
     type IntoIter = VectorIter<'buf, T>;
 
     #[inline]
@@ -72,11 +100,11 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
 #[derive(Clone)]
 pub struct VectorIter<'buf, T: ?Sized>(Vector<'buf, T>);
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
-    type Item = T::Output;
+impl<'buf, T: VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
+    type Item = T;
 
     #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<T> {
         if self.0.len > 0 {
             let result = unsafe { T::from_buffer(self.0.buffer, 0) };
             self.0.buffer = self
@@ -92,10 +120,7 @@ impl<'buf, T: ?Sized + VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
     }
 }
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> core::fmt::Debug for VectorIter<'buf, T>
-where
-    T::Output: core::fmt::Debug,
-{
+impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for VectorIter<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_tuple("VectorIter").field(&self.0).finish()
     }

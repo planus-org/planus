@@ -138,6 +138,12 @@ impl From<UnknownEnumTag> for Error {
     }
 }
 
+impl From<core::convert::Infallible> for Error {
+    fn from(value: core::convert::Infallible) -> Self {
+        match value {}
+    }
+}
+
 impl UnknownEnumTagKind {
     pub fn with_error_location(
         self,

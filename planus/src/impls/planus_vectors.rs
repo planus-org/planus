@@ -1,20 +1,31 @@
 use crate::{
-    errors::{Error, ErrorKind},
+    errors::{self, ErrorKind},
     slice_helpers::SliceWithStartOffset,
     traits::*,
     vectors::Vector,
 };
 use core::marker::PhantomData;
 
-impl<'buf, T: ?Sized + VectorRead<'buf>> ToOwned for Vector<'buf, T>
+impl<'buf, T: VectorRead<'buf>, O> TryFrom<Vector<'buf, T>> for alloc::vec::Vec<O>
 where
-    T::Output: ToOwned,
+    O: core::convert::TryFrom<T>,
+    errors::Error: From<O::Error>,
 {
-    type Value = alloc::vec::Vec<<T::Output as ToOwned>::Value>;
+    type Error = crate::errors::Error;
+
+    fn try_from(value: Vector<'buf, T>) -> Result<Self, Self::Error> {
+        value
+            .iter()
+            .map(|v| O::try_from(v).map_err(errors::Error::from))
+            .collect()
+    }
+    /*
+    type Value = ;
+    type Error = crate::errors::Error;
 
     fn to_owned(self) -> core::result::Result<Self::Value, Error> {
         self.iter().map(|v| v.to_owned()).collect()
-    }
+    } */
 }
 
 impl<'buf, T: ?Sized + VectorRead<'buf>> TableRead<'buf> for Vector<'buf, T> {

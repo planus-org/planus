@@ -31,6 +31,12 @@ pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 #[doc(hidden)]
 pub enum Void {}
 
+impl From<Void> for crate::Error {
+    fn from(v: Void) -> Self {
+        match v {}
+    }
+}
+
 pub struct Offset<T: ?Sized> {
     offset: u32,
     phantom: core::marker::PhantomData<T>,

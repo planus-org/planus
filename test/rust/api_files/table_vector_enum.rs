@@ -8,10 +8,10 @@ check_type!(Example => create(&mut planus::Builder, Option<Vec<Inner>>, Option<V
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, &'a [Inner], &'b [Inner], &'c [Inner], &'d [Inner]) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [Inner]>, Option<&'b [Inner]>, &'c [Inner], &'d [Inner]) : planus::Offset<Example>);
 
-check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, Inner>>>);
-check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Inner>>>);
-check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Inner>>);
-check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Inner>>);
+check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, Result<Inner, planus::errors::UnknownEnumTag>>>>);
+check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Result<Inner, planus::errors::UnknownEnumTag>>>>);
+check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Result<Inner, planus::errors::UnknownEnumTag>>>);
+check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Result<Inner, planus::errors::UnknownEnumTag>>>);
 check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
 
 check_type!(Example2 => value : Option<Vec<Inner2>>);
@@ -24,8 +24,8 @@ check_type!(Example2 => create(&mut planus::Builder, Option<Vec<Inner2>>, Option
 check_type!(+['a, 'b, 'c, 'd] Example2 => create(&mut planus::Builder, &'a [Inner2], &'b [Inner2], &'c [Inner2], &'d [Inner2]) : planus::Offset<Example2>);
 check_type!(+['a, 'b, 'c, 'd] Example2 => create(&mut planus::Builder, Option<&'a [Inner2]>, Option<&'b [Inner2]>, &'c [Inner2], &'d [Inner2]) : planus::Offset<Example2>);
 
-check_type!(+['a] Example2Ref<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, Inner2>>>);
-check_type!(+['a] Example2Ref<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Inner2>>>);
-check_type!(+['a] Example2Ref<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Inner2>>);
-check_type!(+['a] Example2Ref<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Inner2>>);
+check_type!(+['a] Example2Ref<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, Result<Inner2, planus::errors::UnknownEnumTag>>>>);
+check_type!(+['a] Example2Ref<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, Result<Inner2, planus::errors::UnknownEnumTag>>>>);
+check_type!(+['a] Example2Ref<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, Result<Inner2, planus::errors::UnknownEnumTag>>>);
+check_type!(+['a] Example2Ref<'a> => &self.value_required() : planus::Result<planus::Vector<'a, Result<Inner2, planus::errors::UnknownEnumTag>>>);
 check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);

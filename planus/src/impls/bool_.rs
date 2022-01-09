@@ -1,6 +1,5 @@
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
-    Result,
 };
 use core::mem::MaybeUninit;
 
@@ -44,15 +43,6 @@ impl WriteAsOptional<bool> for bool {
     }
 }
 
-impl ToOwned for bool {
-    type Value = bool;
-
-    #[inline]
-    fn to_owned(self) -> Result<bool> {
-        Ok(self)
-    }
-}
-
 impl<'buf> TableRead<'buf> for bool {
     #[inline]
     fn from_buffer(
@@ -64,7 +54,6 @@ impl<'buf> TableRead<'buf> for bool {
 }
 
 impl<'buf> VectorRead<'buf> for bool {
-    type Output = bool;
     const STRIDE: usize = 1;
 
     #[inline]

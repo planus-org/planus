@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset, Result, UnionOffset};
+use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset};
 use core::mem::MaybeUninit;
 
 impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
@@ -50,15 +50,6 @@ impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<UnionOffset<T1>> {
         T2::prepare(self, builder)
-    }
-}
-
-impl<'a, T: ?Sized + ToOwned + Copy> ToOwned for &'a T {
-    type Value = T::Value;
-
-    #[inline]
-    fn to_owned(self) -> Result<Self::Value> {
-        T::to_owned(*self)
     }
 }
 

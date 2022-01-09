@@ -38,14 +38,6 @@ mod root {
                 }
             }
 
-            impl ::planus::ToOwned for Color {
-                type Value = Color;
-                #[inline]
-                fn to_owned(self) -> ::planus::Result<Self::Value> {
-                    ::core::result::Result::Ok(self)
-                }
-            }
-
             impl ::planus::Primitive for Color {
                 const ALIGNMENT: usize = 1;
                 const SIZE: usize = 1;
@@ -110,15 +102,15 @@ mod root {
                 }
             }
 
-            impl<'buf> ::planus::VectorRead<'buf> for Color {
-                type Output = ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>;
-
+            impl<'buf> ::planus::VectorReadInner<'buf> for Color {
+                type Error = ::planus::errors::UnknownEnumTag;
                 const STRIDE: usize = 1;
                 #[inline]
                 unsafe fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'buf>,
                     offset: usize,
-                ) -> Self::Output {
+                ) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>
+                {
                     let value = <i8 as ::planus::VectorRead>::from_buffer(buffer, offset);
                     let value: ::core::result::Result<Self, _> =
                         ::core::convert::TryInto::try_into(value);
@@ -194,14 +186,16 @@ mod root {
                 Weapon(self::WeaponRef<'a>),
             }
 
-            impl<'a> ::planus::ToOwned for EquipmentRef<'a> {
-                type Value = Equipment;
+            impl<'a> ::core::convert::TryFrom<EquipmentRef<'a>> for Equipment {
+                type Error = ::planus::Error;
 
-                fn to_owned(self) -> ::planus::Result<Equipment> {
-                    ::core::result::Result::Ok(match self {
-                        Self::Weapon(value) => Equipment::Weapon(::planus::alloc::boxed::Box::new(
-                            ::planus::ToOwned::to_owned(value)?,
-                        )),
+                fn try_from(value: EquipmentRef<'a>) -> ::planus::Result<Self> {
+                    ::core::result::Result::Ok(match value {
+                        EquipmentRef::Weapon(value) => {
+                            Equipment::Weapon(::planus::alloc::boxed::Box::new(
+                                ::core::convert::TryFrom::try_from(value)?,
+                            ))
+                        }
                     })
                 }
             }
@@ -302,13 +296,15 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::ToOwned for Vec3Ref<'a> {
-                type Value = Vec3;
-                fn to_owned(self) -> ::planus::Result<Self::Value> {
+            impl<'a> ::core::convert::TryFrom<Vec3Ref<'a>> for Vec3 {
+                type Error = ::planus::Error;
+
+                #[allow(unreachable_code)]
+                fn try_from(value: Vec3Ref<'a>) -> ::planus::Result<Self> {
                     ::core::result::Result::Ok(Vec3 {
-                        x: self.x(),
-                        y: self.y(),
-                        z: self.z(),
+                        x: value.x(),
+                        y: value.y(),
+                        z: value.z(),
                     })
                 }
             }
@@ -323,15 +319,14 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::VectorRead<'a> for Vec3 {
+            impl<'a> ::planus::VectorRead<'a> for Vec3Ref<'a> {
                 const STRIDE: usize = 12;
 
-                type Output = Vec3Ref<'a>;
                 unsafe fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
-                ) -> Vec3Ref<'a> {
-                    Vec3Ref(buffer.unchecked_advance_as_array(offset))
+                ) -> Self {
+                    Self(buffer.unchecked_advance_as_array(offset))
                 }
             }
 
@@ -559,8 +554,11 @@ mod root {
 
                 pub fn weapons(
                     &self,
-                ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Weapon>>>
-                {
+                ) -> ::planus::Result<
+                    ::core::option::Option<
+                        ::planus::Vector<'a, ::planus::Result<self::WeaponRef<'a>>>,
+                    >,
+                > {
                     self.0.access(7, "Monster", "weapons")
                 }
 
@@ -573,7 +571,7 @@ mod root {
 
                 pub fn path(
                     &self,
-                ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Vec3>>>
+                ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Vec3Ref<'a>>>>
                 {
                     self.0.access(10, "Monster", "path")
                 }
@@ -607,43 +605,48 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::ToOwned for MonsterRef<'a> {
-                type Value = Monster;
+            impl<'a> ::core::convert::TryFrom<MonsterRef<'a>> for Monster {
+                type Error = ::planus::Error;
 
-                fn to_owned(self) -> ::planus::Result<Self::Value> {
-                    ::core::result::Result::Ok(Monster {
-                        pos: if let ::core::option::Option::Some(pos) = self.pos()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(pos)?)
+                #[allow(unreachable_code)]
+                fn try_from(value: MonsterRef<'a>) -> ::planus::Result<Self> {
+                    ::core::result::Result::Ok(Self {
+                        pos: if let ::core::option::Option::Some(pos) = value.pos()? {
+                            ::core::option::Option::Some(::core::convert::TryInto::try_into(pos)?)
                         } else {
                             ::core::option::Option::None
                         },
-                        mana: ::planus::ToOwned::to_owned(self.mana()?)?,
-                        hp: ::planus::ToOwned::to_owned(self.hp()?)?,
-                        name: if let ::core::option::Option::Some(name) = self.name()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(name)?)
+                        mana: ::core::convert::TryInto::try_into(value.mana()?)?,
+                        hp: ::core::convert::TryInto::try_into(value.hp()?)?,
+                        name: if let ::core::option::Option::Some(name) = value.name()? {
+                            ::core::option::Option::Some(::core::convert::TryInto::try_into(name)?)
                         } else {
                             ::core::option::Option::None
                         },
                         inventory: if let ::core::option::Option::Some(inventory) =
-                            self.inventory()?
+                            value.inventory()?
                         {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(inventory)?)
+                            ::core::option::Option::Some(inventory.to_vec()?)
                         } else {
                             ::core::option::Option::None
                         },
-                        color: ::planus::ToOwned::to_owned(self.color()?)?,
-                        weapons: if let ::core::option::Option::Some(weapons) = self.weapons()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(weapons)?)
+                        color: ::core::convert::TryInto::try_into(value.color()?)?,
+                        weapons: if let ::core::option::Option::Some(weapons) = value.weapons()? {
+                            ::core::option::Option::Some(weapons.to_vec_result()?)
                         } else {
                             ::core::option::Option::None
                         },
-                        equipped: if let ::core::option::Option::Some(equipped) = self.equipped()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(equipped)?)
+                        equipped: if let ::core::option::Option::Some(equipped) =
+                            value.equipped()?
+                        {
+                            ::core::option::Option::Some(::core::convert::TryInto::try_into(
+                                equipped,
+                            )?)
                         } else {
                             ::core::option::Option::None
                         },
-                        path: if let ::core::option::Option::Some(path) = self.path()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(path)?)
+                        path: if let ::core::option::Option::Some(path) = value.path()? {
+                            ::core::option::Option::Some(path.to_vec()?)
                         } else {
                             ::core::option::Option::None
                         },
@@ -662,14 +665,14 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::VectorRead<'a> for Monster {
-                type Output = ::planus::Result<MonsterRef<'a>>;
+            impl<'a> ::planus::VectorReadInner<'a> for MonsterRef<'a> {
+                type Error = ::planus::Error;
                 const STRIDE: usize = 4;
 
                 unsafe fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
-                ) -> Self::Output {
+                ) -> ::planus::Result<Self> {
                     ::planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| {
                         error_kind.with_error_location(
                             "[MonsterRef]",
@@ -813,17 +816,18 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::ToOwned for WeaponRef<'a> {
-                type Value = Weapon;
+            impl<'a> ::core::convert::TryFrom<WeaponRef<'a>> for Weapon {
+                type Error = ::planus::Error;
 
-                fn to_owned(self) -> ::planus::Result<Self::Value> {
-                    ::core::result::Result::Ok(Weapon {
-                        name: if let ::core::option::Option::Some(name) = self.name()? {
-                            ::core::option::Option::Some(::planus::ToOwned::to_owned(name)?)
+                #[allow(unreachable_code)]
+                fn try_from(value: WeaponRef<'a>) -> ::planus::Result<Self> {
+                    ::core::result::Result::Ok(Self {
+                        name: if let ::core::option::Option::Some(name) = value.name()? {
+                            ::core::option::Option::Some(::core::convert::TryInto::try_into(name)?)
                         } else {
                             ::core::option::Option::None
                         },
-                        damage: ::planus::ToOwned::to_owned(self.damage()?)?,
+                        damage: ::core::convert::TryInto::try_into(value.damage()?)?,
                     })
                 }
             }
@@ -839,14 +843,14 @@ mod root {
                 }
             }
 
-            impl<'a> ::planus::VectorRead<'a> for Weapon {
-                type Output = ::planus::Result<WeaponRef<'a>>;
+            impl<'a> ::planus::VectorReadInner<'a> for WeaponRef<'a> {
+                type Error = ::planus::Error;
                 const STRIDE: usize = 4;
 
                 unsafe fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
-                ) -> Self::Output {
+                ) -> ::planus::Result<Self> {
                     ::planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| {
                         error_kind.with_error_location(
                             "[WeaponRef]",

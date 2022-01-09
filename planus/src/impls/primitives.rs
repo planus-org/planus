@@ -1,6 +1,5 @@
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
-    Result,
 };
 use core::mem::MaybeUninit;
 
@@ -47,15 +46,6 @@ macro_rules! gen_primitive_types {
             }
         }
 
-        impl ToOwned for $ty {
-            type Value = $ty;
-
-            #[inline]
-            fn to_owned(self) -> Result<$ty> {
-                Ok(self)
-            }
-        }
-
         impl<'buf> TableRead<'buf> for $ty {
             #[inline]
             fn from_buffer(
@@ -68,16 +58,9 @@ macro_rules! gen_primitive_types {
         }
 
         impl<'buf> VectorRead<'buf> for $ty {
-            type Output = $ty;
-
-            #[doc(hidden)]
             const STRIDE: usize = $size;
-            #[doc(hidden)]
             #[inline]
-            unsafe fn from_buffer(
-                buffer: SliceWithStartOffset<'buf>,
-                offset: usize,
-            ) -> Self::Output {
+            unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> $ty {
                 let buffer = buffer.unchecked_advance_as_array(offset).as_array();
                 <$ty>::from_le_bytes(*buffer)
             }

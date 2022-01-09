@@ -51,24 +51,22 @@ pub enum {{ info.ref_name_with_lifetime }}{
 }
 
 {% if variants.is_empty() %}
-impl ::planus::ToOwned for {{info.ref_name}} {
-    type Value = {{info.owned_name}};
-
-    fn to_owned(self) -> ::planus::Result<{{info.owned_name}}> {
-        match self {}
+impl ::core::convert::From<{{info.ref_name}}> for {{info.owned_name}} {
+    fn from(value: {{info.ref_name}}) -> Self {
+        match value {}
     }
 }
 {% else %}
-impl<'a> ::planus::ToOwned for {{info.ref_name}}<'a> {
-    type Value = {{info.owned_name}};
+impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}} {
+    type Error = ::planus::Error;
 
-    fn to_owned(self) -> ::planus::Result<{{info.owned_name}}> {
-        ::core::result::Result::Ok(match self {
+    fn try_from(value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
+        ::core::result::Result::Ok(match value {
             {% for variant in variants -%}
                 {% if variant.owned_type.starts_with("::planus::alloc::boxed::Box<") %}
-                Self::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::planus::ToOwned::to_owned(value)?)),
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::TryFrom::try_from(value)?)),
                 {% else %}
-                Self::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::ToOwned::to_owned(value)?),
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::core::convert::TryFrom::try_from(value)?),
                 {% endif %}
             {% endfor %}
         })

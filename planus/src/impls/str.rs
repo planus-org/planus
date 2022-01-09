@@ -1,6 +1,6 @@
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
-    Offset, Result,
+    Offset,
 };
 use core::mem::MaybeUninit;
 
@@ -63,14 +63,6 @@ impl WriteAsDefault<Offset<str>, str> for str {
     }
 }
 
-impl<'a> ToOwned for &'a str {
-    type Value = alloc::string::String;
-
-    fn to_owned(self) -> Result<Self::Value> {
-        Ok(alloc::string::ToString::to_string(self))
-    }
-}
-
 impl<'buf> TableRead<'buf> for &'buf str {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
@@ -89,14 +81,15 @@ impl<'buf> TableRead<'buf> for &'buf str {
     }
 }
 
-impl<'buf> VectorRead<'buf> for str {
-    type Output = Result<&'buf str>;
+impl<'buf> VectorReadInner<'buf> for &'buf str {
+    type Error = crate::errors::Error;
 
-    #[doc(hidden)]
     const STRIDE: usize = 4;
-    #[doc(hidden)]
     #[inline]
-    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self::Output {
+    unsafe fn from_buffer(
+        buffer: SliceWithStartOffset<'buf>,
+        offset: usize,
+    ) -> crate::Result<&'buf str> {
         let add_context =
             |e: ErrorKind| e.with_error_location("[str]", "get", buffer.offset_from_start);
         let (slice, len) = super::array_from_buffer(buffer, offset).map_err(add_context)?;

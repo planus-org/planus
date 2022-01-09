@@ -132,31 +132,18 @@ impl<'a> ::core::fmt::Debug for {{info.ref_name}}<'a> {
     }
 }
 
-impl<'a> ::planus::ToOwned for {{info.ref_name}}<'a> {
-    type Value = {{info.owned_name}};
+impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}} {
+    type Error = ::planus::Error;
 
-    fn to_owned(self) -> ::planus::Result<Self::Value> {
-        ::core::result::Result::Ok({{info.owned_name}} {
+{% if fields.is_empty() %}
+    fn try_from(_value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
+{% else %}
+    #[allow(unreachable_code)]
+    fn try_from(value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
+{% endif %}
+        ::core::result::Result::Ok(Self {
             {% for field in fields.declaration_order() -%}
-                {{field.info.name}}:
-                    {% if field.info.owned_type.starts_with("::core::option::Option<::planus::alloc::boxed::Box<") -%}
-                    if let ::core::option::Option::Some({{field.info.name}}) = self.{{field.info.name}}()? {
-                        ::core::option::Option::Some(::planus::alloc::boxed::Box::new(::planus::ToOwned::to_owned({{field.info.name}})?))
-                    } else {
-                        ::core::option::Option::None
-                    }
-                    {% elseif field.info.owned_type.starts_with("::core::option::Option<") -%}
-                    if let ::core::option::Option::Some({{field.info.name}}) = self.{{field.info.name}}()? {
-                        ::core::option::Option::Some(::planus::ToOwned::to_owned({{field.info.name}})?)
-                    } else {
-                        ::core::option::Option::None
-                    }
-                    {% elseif field.info.owned_type.starts_with("::planus::alloc::boxed::Box<") -%}
-                        ::planus::alloc::boxed::Box::new(::planus::ToOwned::to_owned(self.{{field.info.name}}()?)?)
-                    {% else %}
-                    ::planus::ToOwned::to_owned(self.{{field.info.name}}()?)?
-                    {%- endif -%}
-                ,
+                {{field.info.name}}: {{field.info.try_from_code}},
             {%- endfor %}
         })
     }
@@ -168,11 +155,11 @@ impl<'a> ::planus::TableRead<'a> for {{info.ref_name}}<'a> {
     }
 }
 
-impl<'a> ::planus::VectorRead<'a> for {{info.owned_name}} {
-    type Output = ::planus::Result<{{info.ref_name}}<'a>>;
+impl<'a> ::planus::VectorReadInner<'a> for {{info.ref_name}}<'a> {
+    type Error = ::planus::Error;
     const STRIDE: usize = 4;
 
-    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> Self::Output {
+    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::planus::Result<Self> {
         ::planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| error_kind.with_error_location(
             "[{{info.ref_name}}]",
             "get",

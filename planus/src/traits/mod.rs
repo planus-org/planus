@@ -51,11 +51,6 @@ pub trait WriteAsOptionalUnion<T: ?Sized> {
     fn prepare(&self, builder: &mut Builder) -> Option<UnionOffset<T>>;
 }
 
-pub trait ToOwned {
-    type Value;
-    fn to_owned(self) -> Result<Self::Value>;
-}
-
 #[doc(hidden)]
 pub trait WriteAsPrimitive<P> {
     fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32);
@@ -79,12 +74,23 @@ pub trait TableReadUnion<'buf>: Sized {
 }
 
 pub trait VectorRead<'buf> {
-    type Output;
-
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
-    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self::Output;
+    unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self;
+}
+
+#[doc(hidden)]
+pub trait VectorReadInner<'buf>: Sized {
+    #[doc(hidden)]
+    type Error: Sized;
+    #[doc(hidden)]
+    const STRIDE: usize;
+    #[doc(hidden)]
+    unsafe fn from_buffer(
+        buffer: SliceWithStartOffset<'buf>,
+        offset: usize,
+    ) -> core::result::Result<Self, Self::Error>;
 }
 
 pub trait VectorWrite<P> {

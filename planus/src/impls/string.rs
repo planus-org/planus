@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset, Result};
+use crate::{builder::Builder, traits::*, Cursor, Offset};
 use alloc::string::String;
 use core::mem::MaybeUninit;
 
@@ -37,14 +37,6 @@ impl WriteAsOptional<Offset<str>> for String {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<Offset<str>> {
         Some(WriteAsOffset::prepare(self.as_str(), builder))
-    }
-}
-
-impl<'a> ToOwned for String {
-    type Value = String;
-
-    fn to_owned(self) -> Result<Self::Value> {
-        Ok(self)
     }
 }
 
