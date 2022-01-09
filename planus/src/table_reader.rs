@@ -1,6 +1,6 @@
 use core::convert::TryInto;
 
-use crate::{errors::ErrorKind, SliceWithStartOffset, TableRead, TableReadUnion};
+use crate::{errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Table<'buf> {

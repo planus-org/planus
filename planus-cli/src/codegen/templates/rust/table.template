@@ -46,8 +46,8 @@ impl {{info.owned_name}} {
                 if let ::core::option::Option::Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
                 {%- endif -%}
                     {%- match field.field_type -%}
-                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write::<_, _, 1>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag);
-                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write::<_, _, {{field.info.primitive_size}}>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset);
+                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write::<_, _, 1>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.tag());
+                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write::<_, _, {{field.info.primitive_size}}>({{field.vtable_index}}, &prepared_{{field.info.create_name}}.offset());
                     {%- when BackendTableFieldType::Other -%} table_writer.write::<_, _, {{field.info.primitive_size}}>({{field.vtable_index}}, &prepared_{{field.info.create_name}});
                     {%- endmatch -%}
                 {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
