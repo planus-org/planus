@@ -1,9 +1,10 @@
 use anyhow::Result;
 
 use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
+use clap::StructOpt;
 
 /// Checks validity of files
-#[derive(structopt::StructOpt)]
+#[derive(StructOpt)]
 pub struct Command {
     files: Vec<String>,
 }

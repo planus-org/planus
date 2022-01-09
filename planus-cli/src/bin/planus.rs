@@ -1,6 +1,8 @@
 use anyhow::Result;
+use clap::StructOpt;
 
-#[paw::main]
-pub fn main(args: planus_cli::app::App) -> Result<()> {
+fn main() -> Result<()> {
+    let args = planus_cli::app::App::parse();
+
     args.run()
 }

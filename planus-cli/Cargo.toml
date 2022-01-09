@@ -16,6 +16,7 @@ anyhow = "1.0.40"
 askama = "0.11"
 atty = "0.2.14"
 bitflags = "1.2.1"
+clap = { version = "3.0.5", features = ["derive"] }
 codespan = "0.11.1"
 codespan-reporting = "0.11.1"
 derive_more = "0.99.14"
@@ -24,10 +25,8 @@ indexmap = "1.7.0"
 lalrpop-util = "0.19.5"
 logos = "0.12.0"
 num-traits = "0.2.14"
-paw = "1.0.0"
 regex = "1.5.4"
 string-interner = "0.12.2"
-structopt = { version = "0.3.21", features = ["paw"] }
 thiserror = "1.0.24"
 vec_map = "0.8.2"
 

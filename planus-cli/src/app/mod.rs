@@ -2,23 +2,25 @@ mod check;
 mod format;
 mod rust;
 
-#[derive(structopt::StructOpt)]
+use clap::StructOpt;
+
+#[derive(StructOpt)]
 pub struct App {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     app_options: AppOptions,
 
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: Command,
 }
 
-#[derive(structopt::StructOpt)]
+#[derive(StructOpt)]
 pub enum Command {
     Rust(rust::Command),
     Format(format::Command),
     Check(check::Command),
 }
 
-#[derive(Default, structopt::StructOpt)]
+#[derive(Default, StructOpt)]
 pub struct AppOptions {}
 
 impl App {
