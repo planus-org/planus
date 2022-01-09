@@ -6,6 +6,7 @@ use logos::Logos;
 use crate::error::LexicalError;
 
 #[derive(Logos, Debug, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum Text {
     #[error]
     Error,
