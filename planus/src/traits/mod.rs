@@ -80,6 +80,10 @@ pub trait VectorRead<'buf> {
     unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self;
 }
 
+/// This trait is a hack to get around the coherence restriction.
+/// Ideally we would want to be able to do an `impl VectorRead<'buf> for planus::Result<MyType>`
+/// in our generated code, however instead we do something like this:
+///   impl<T: VectorReadInner<'buf>, E> VectorRead<'buf> for Result<T, E>
 #[doc(hidden)]
 pub trait VectorReadInner<'buf>: Sized {
     #[doc(hidden)]
