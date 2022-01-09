@@ -28,7 +28,7 @@ fn test_serialize() {
             let data = builder.finish(offset, None);
 
             let root_ref = RootRef::read_as_root(data).unwrap();
-            let root2 = planus::ToOwned::to_owned(root_ref).unwrap();
+            let root2 = Root::try_from(root_ref).unwrap();
             similar_asserts::assert_eq!(root, root2);
 
             let mut bin_path = file_path.clone();

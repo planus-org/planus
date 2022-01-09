@@ -74,19 +74,21 @@ impl<'a> ::core::fmt::Debug for {{ info.ref_name }}<'a> {
     }
 }
 
-impl<'a> ::planus::ToOwned for {{ info.ref_name }}<'a> {
-    type Value = {{ info.owned_name }};
-    fn to_owned(self) -> ::planus::Result<Self::Value> {
+impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_name}} {
+    type Error = ::planus::Error;
+
+    #[allow(unreachable_code)]
+    fn try_from(value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
         ::core::result::Result::Ok({{ info.owned_name }} {
         {% for field in fields -%}
             {{ field.info.name }}:
-            {%- if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
-                self.{{field.info.name}}()?,
-            {%- elseif field.info.getter_return_type.ends_with("<'a>") -%}
-                self.{{field.info.name}}().to_owned()?,
-            {%- else -%}
-                self.{{field.info.name}}(),
-            {%- endif -%}
+            {% if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
+                ::core::convert::TryInto::try_into(value.{{field.info.name}}()?)?,
+            {% elseif field.info.getter_return_type.ends_with("<'a>") -%}
+                ::core::convert::TryInto::try_into(value.{{field.info.name}}())?,
+            {% else -%}
+                value.{{field.info.name}}(),
+            {% endif -%}
         {%- endfor %}
         })
     }
@@ -99,12 +101,11 @@ impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
     }
 }
 
-impl<'a> ::planus::VectorRead<'a> for {{ info.owned_name }} {
+impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
     const STRIDE: usize = {{ vector_stride }};
 
-    type Output = {{ info.ref_name}}<'a>;
-    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> {{ info.ref_name }}<'a> {
-        {{ info.ref_name}}(buffer.unchecked_advance_as_array(offset))
+    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> Self {
+        Self(buffer.unchecked_advance_as_array(offset))
     }
 }
 

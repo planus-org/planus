@@ -39,6 +39,7 @@ pub struct TableField {
     pub required: bool,
     pub serialize_default: Option<Cow<'static, str>>,
     pub deserialize_default: Option<Cow<'static, str>>,
+    pub try_from_code: String,
 }
 
 #[derive(Clone, Debug)]
@@ -276,6 +277,24 @@ impl Backend for RustBackend {
         let primitive_size;
         let mut serialize_default: Option<Cow<'static, str>> = None;
         let mut deserialize_default: Option<Cow<'static, str>> = None;
+        let mut try_from_code = if matches!(field.assign_mode, AssignMode::Optional) {
+            format!(
+                r#"
+                    if let ::core::option::Option::Some({name}) = value.{name}()? {{
+                        ::core::option::Option::Some(::core::convert::TryInto::try_into({name})?)
+                    }} else {{
+                        ::core::option::Option::None
+                    }}
+                "#,
+                name = name
+            )
+        } else {
+            format!(
+                "::core::convert::TryInto::try_into(value.{name}()?)?",
+                name = name
+            )
+        };
+
         match resolved_type {
             ResolvedType::Struct(
                 decl,
@@ -328,6 +347,10 @@ impl Backend for RustBackend {
                         );
                         owned_type = format!("::planus::alloc::boxed::Box<{}>", owned_name);
                         create_trait = format!("WriteAs<{}>", vtable_type);
+                        try_from_code = format!(
+                            "::planus::alloc::boxed::Box::new(::core::convert::TryInto::try_into(value.{name}()?)?)",
+                            name = name
+                        );
                     }
                     AssignMode::Optional => {
                         read_type = format!(
@@ -339,6 +362,16 @@ impl Backend for RustBackend {
                             owned_name
                         );
                         create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        try_from_code = format!(
+                            r#"
+                                if let ::core::option::Option::Some({name}) = value.{name}()? {{
+                                    ::core::option::Option::Some(::planus::alloc::boxed::Box::new(::core::convert::TryInto::try_into({name})?))
+                                }} else {{
+                                    ::core::option::Option::None
+                                }}
+                            "#,
+                            name = name
+                        );
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
@@ -466,30 +499,43 @@ impl Backend for RustBackend {
                 }
                 fn vector_ref_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
                     match type_ {
-                        ResolvedType::Struct(_, info, relative_namespace) => {
-                            format_relative_namespace(relative_namespace, &info.owned_name)
-                                .to_string()
-                                .into()
-                        }
-                        ResolvedType::Table(_, info, relative_namespace) => {
-                            format_relative_namespace(relative_namespace, &info.owned_name)
-                                .to_string()
-                                .into()
-                        }
-                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                        ResolvedType::Struct(_, info, relative_namespace) => format!(
+                            "{}<'a>",
+                            format_relative_namespace(relative_namespace, &info.ref_name)
+                        )
+                        .into(),
+                        ResolvedType::Table(_, info, relative_namespace) => format!(
+                            "::planus::Result<{}<'a>>",
+                            format_relative_namespace(relative_namespace, &info.ref_name)
+                        )
+                        .into(),
+                        ResolvedType::Enum(_, info, relative_namespace, _) => format!(
+                            "::core::result::Result<{}, ::planus::errors::UnknownEnumTag>",
                             format_relative_namespace(relative_namespace, &info.name)
-                                .to_string()
-                                .into()
-                        }
+                        )
+                        .into(),
                         ResolvedType::Union(_, _, _) => todo!(),
                         ResolvedType::Vector(type_) => {
                             format!("[{}]", vector_offset_type(type_)).into()
                         }
                         ResolvedType::Array(_, _) => todo!(),
-                        ResolvedType::String => "::core::primitive::str".into(),
+                        ResolvedType::String => {
+                            "::planus::Result<&'a ::core::primitive::str>".into()
+                        }
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
                         ResolvedType::Float(type_) => float_type(type_).into(),
+                    }
+                }
+                fn vector_try_into_func<'a>(type_: &ResolvedType<'a, RustBackend>) -> &'static str {
+                    match type_ {
+                        ResolvedType::Table(..)
+                        | ResolvedType::Enum(..)
+                        | ResolvedType::Union(..)
+                        | ResolvedType::Vector(..)
+                        | ResolvedType::String => "to_vec_result",
+                        ResolvedType::Array(_, _) => todo!(),
+                        _ => "to_vec",
                     }
                 }
 
@@ -498,6 +544,26 @@ impl Backend for RustBackend {
                 let owned_name = vector_owned_type(&*type_);
                 primitive_size = 4;
                 vtable_type = format!("::planus::Offset<[{}]>", offset_name);
+
+                try_from_code = if matches!(field.assign_mode, AssignMode::Optional) {
+                    format!(
+                        r#"
+                        if let ::core::option::Option::Some({name}) = value.{name}()? {{
+                            ::core::option::Option::Some({name}.{try_into_func}()?)
+                        }} else {{
+                            ::core::option::Option::None
+                        }}
+                        "#,
+                        name = name,
+                        try_into_func = vector_try_into_func(&*type_)
+                    )
+                } else {
+                    format!(
+                        "value.{name}()?.{try_into_func}()?",
+                        name = name,
+                        try_into_func = vector_try_into_func(&*type_)
+                    )
+                };
                 match &field.assign_mode {
                     AssignMode::Required => {
                         read_type = format!("::planus::Vector<'a, {}>", ref_name);
@@ -627,6 +693,7 @@ impl Backend for RustBackend {
             required: matches!(field.assign_mode, AssignMode::Required),
             serialize_default,
             deserialize_default,
+            try_from_code,
         }
     }
 
