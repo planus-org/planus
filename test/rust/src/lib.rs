@@ -1,12 +1,10 @@
 #[macro_use]
 pub mod macros;
 
-pub mod planus;
 pub mod planus_api;
 pub mod planus_test;
 
 pub mod hexdump;
-mod unit_tests;
 
 #[cfg(test)]
 pub mod tests {
