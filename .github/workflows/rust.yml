@@ -52,11 +52,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: make
-          args: test
-      - uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: cli-test
+          args: full-test
 
   Lint:
     runs-on: ubuntu-latest
