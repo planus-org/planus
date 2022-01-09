@@ -2,7 +2,7 @@
 name = "planus"
 version = "0.1.0"
 license = "MIT/Apache-2.0"
-repository = "https://github.com/TethysSvensson/planus"
+repository = "https://github.com/planus-org/planus"
 edition = "2021"
 readme = "../README.md"
 keywords = ["flatbuffers", "serialization", "zero-copy"]

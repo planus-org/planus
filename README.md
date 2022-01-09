@@ -1,7 +1,7 @@
 Planus – alternative flatbuffer implementation
 ===============================================
 
-[![Build Status](https://github.com/TethysSvensson/planus/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/TethysSvensson/planus/actions/workflows/rust.yml)
+[![Build Status](https://github.com/planus-org/planus/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/planus-org/planus/actions/workflows/rust.yml)
 ![Rustc Version 1.57+](https://img.shields.io/badge/rustc-1.57+-lightgray.svg)
 [![License](https://img.shields.io/crates/l/planus)](https://crates.io/crates/planus)
 [![Crates.io](https://img.shields.io/crates/v/planus)](https://crates.io/crates/planus)
