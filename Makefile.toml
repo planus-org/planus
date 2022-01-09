@@ -72,10 +72,34 @@ script = '''
     fi
 '''
 
-[tasks.commit-check]
-dependencies = ["cli-test"]
+[tasks.lint]
 script = '''
-cargo fmt --all -- --check
-cargo clippy --all-targets -- -D warnings
-cargo test
+    cargo fmt --all -- --check
+    cargo clippy --all-targets -- -D warnings
 '''
+
+[tasks.commit-check]
+script = '''
+    uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | wc -l)
+    if [ $uncommited_changes -gt 0 ]; then
+        echo "commit-check failed because of unstaged changes:"
+        git status
+        exit 1
+    fi
+'''
+
+[tasks.regenerate-examples]
+dependencies = ["build"]
+script = '''
+    target/debug/planus rust -o examples/rust/src/monster_generated.rs examples/rust/monster.fbs
+'''
+
+[tasks.full-test]
+dependencies = [
+    "lint",
+    "regenerate-examples",
+    # Check that all examples are up to date
+    "commit-check",
+    "test",
+    "cli-test",
+]
