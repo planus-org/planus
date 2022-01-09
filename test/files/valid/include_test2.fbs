@@ -1,0 +1,19 @@
+include "include_helpers/A.fbs";
+include "include_helpers/A_A.fbs";
+include "include_helpers/A_B.fbs";
+include "include_helpers/B.fbs";
+include "include_helpers/B_A.fbs";
+include "include_helpers/B_B.fbs";
+
+namespace C;
+
+table Obj {
+  here: Obj;
+  a: A.Obj;
+  a_a: A.A.Obj;
+  a_b: A.B.Obj;
+  b: B.Obj;
+  b_a: B.A.Obj;
+  b_b: B.B.Obj;
+  c: C.Obj;
+}

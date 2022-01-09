@@ -1,0 +1,20 @@
+include "A.fbs";
+include "A_A.fbs";
+include "A_B.fbs";
+include "B.fbs";
+include "B_A.fbs";
+include "B_B.fbs";
+include "../include_test2.fbs";
+
+namespace A.B;
+
+table Obj {
+  here: Obj;
+  a: A.Obj;
+  a_a: A.A.Obj;
+  a_b: A.B.Obj;
+  b: B.Obj;
+  b_a: B.A.Obj;
+  b_b: B.B.Obj;
+  c: C.Obj;
+}

@@ -112,7 +112,13 @@ impl<'a> Translator<'a> {
 
         while let Some(last) = namespace_path.pop() {
             match self.namespaces.entry(namespace_path) {
-                Entry::Occupied(_) => break,
+                Entry::Occupied(mut entry) => {
+                    entry
+                        .get_mut()
+                        .child_namespaces
+                        .insert(last, NamespaceIndex(namespace_index));
+                    break;
+                }
                 Entry::Vacant(entry) => {
                     namespace_path = entry.key().clone();
                     let next_namespace_index = entry.index();
