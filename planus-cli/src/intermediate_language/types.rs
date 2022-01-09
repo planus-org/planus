@@ -5,9 +5,6 @@ use indexmap::IndexMap;
 
 use crate::ast;
 
-// TODO: docstrings
-// TODO: rpc services
-
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct AbsolutePath(pub Vec<String>);
 
@@ -128,9 +125,6 @@ impl Declarations {
 
 #[derive(Debug, Default)]
 pub struct Namespace {
-    // TODO: rpc services
-    // TODO: root_type, file_identifier, file_extension
-    // TODO: attributes?
     pub child_namespaces: IndexMap<String, NamespaceIndex>,
     pub declaration_ids: IndexMap<String, DeclarationIndex>,
 }

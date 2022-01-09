@@ -9,7 +9,6 @@ use crate::error::LexicalError;
 pub(crate) enum Text {
     #[error]
     Error,
-    // TODO: Implement unicode support
     #[regex(r#"[^"'\\]+"#)]
     Text,
     #[regex(r"\\.")]
@@ -38,7 +37,6 @@ impl Text {
                 Text::Byte => out.push(u8::from_str_radix(&lex.slice()[2..], 16).unwrap() as char),
                 Text::Codepoint => {
                     let codepoint = u32::from_str_radix(&lex.slice()[2..], 16).unwrap();
-                    // TODO: handle surrogate pairs
                     match codepoint.try_into() {
                         Ok(c) => out.push(c),
                         Err(_) => {

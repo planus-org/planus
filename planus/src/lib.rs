@@ -176,7 +176,6 @@ pub trait TableRead<'buf>: Sized {
 
 #[doc(hidden)]
 pub trait TableReadUnion<'buf>: Sized {
-    // TODO: Double-wrap the result: once for generic errors and one for unknown variants
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
         offset: usize,
