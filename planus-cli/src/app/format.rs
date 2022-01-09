@@ -1,9 +1,10 @@
 use anyhow::Result;
 
 use crate::ctx::Ctx;
+use clap::StructOpt;
 
 // Formats .fbs files
-#[derive(structopt::StructOpt)]
+#[derive(StructOpt)]
 pub struct Command {
     file: String,
 
