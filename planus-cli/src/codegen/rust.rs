@@ -84,14 +84,10 @@ pub struct UnionVariant {
 }
 
 #[derive(Clone, Debug)]
-pub struct RpcService {
-    // TODO
-}
+pub struct RpcService {}
 
 #[derive(Clone, Debug)]
-pub struct RpcMethod {
-    // TODO
-}
+pub struct RpcMethod {}
 
 const BINDING_KIND_TYPES: &str = "types";
 

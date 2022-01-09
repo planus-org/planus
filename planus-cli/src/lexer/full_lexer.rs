@@ -213,12 +213,4 @@ mod tests {
             println!("{:?}", token);
         }
     }
-
-    // TODO:
-    // - Generate random tokens
-    // - Output tokens in a random fasion
-    //   - Strings have multiple representations
-    //   - Randomize whitespace
-    // - Re-tokenize
-    // - Compare
 }
