@@ -1,7 +1,7 @@
 use std::{borrow::Cow, io::Write, path::Path, process::Command};
 
 use askama::Template;
-use heck::{CamelCase, SnakeCase};
+use heck::{ToSnakeCase, ToUpperCamelCase};
 
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, RelativeNamespace,
@@ -101,7 +101,7 @@ fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>)
 }
 
 fn reserve_type_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
-    let name = path.to_camel_case().into();
+    let name = path.to_upper_camel_case().into();
     declaration_names
         .declaration_names
         .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
@@ -125,7 +125,7 @@ fn reserve_rust_enum_variant_name(
     binding_kind: &'static str,
     declaration_names: &mut DeclarationNames<'_, '_>,
 ) -> String {
-    let name = path.to_camel_case().into();
+    let name = path.to_upper_camel_case().into();
     declaration_names
         .declaration_names
         .try_reserve_repeat(binding_kind, name, '_')
