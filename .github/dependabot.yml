@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/planus"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/planus-cli"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/test/rust"
+    schedule:
+      interval: "daily"
