@@ -6,7 +6,7 @@ use indexmap::IndexMap;
 use crate::{ctx::Ctx, error::ErrorKind};
 
 pub type RawIdentifier = string_interner::DefaultSymbol;
-pub type Interner = string_interner::StringInterner<RawIdentifier>;
+pub type Interner = string_interner::StringInterner;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Identifier {
