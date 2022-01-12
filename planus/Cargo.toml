@@ -1,6 +1,6 @@
 [package]
 name = "planus"
-version = "0.1.0"
+version = "0.2.0"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 edition = "2021"
@@ -11,7 +11,7 @@ rust-version = "1.57"
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
 [dependencies]
-array-init-cursor = { version = "0.1", path = "../array-init-cursor" }
+array-init-cursor = { version = "0.2.0", path = "../array-init-cursor" }
 
 [dev-dependencies]
 rand = "0.8.4"
