@@ -14,7 +14,7 @@ Goals
 -----
 
 * **User experience**: Our command-line interface has excellent error and help messages. We aim to output good error messages even for non-supported features.
-* **Ideomatic code**: We want to generate highly idiomatic code that should be very familiar to programmers of the target programming language.
+* **Idiomatic code**: We want to generate highly idiomatic code that should be very familiar to programmers of the target programming language.
 * **Safety**: Any undefined/unsafe behavior in the generated code is considered a critical bug.
 * **Performance**: We want to be at least as performant as the official implementation.
 * **Modularity**: We have written our code such that parsing, validation and translation are clearly separated. We hope this will make it easy to implement additional backends with full support.
