@@ -10,20 +10,26 @@ pub struct AbsolutePath(pub Vec<String>);
 
 impl AbsolutePath {
     pub const ROOT_PATH: Self = Self(Vec::new());
+
     pub fn push<S: Into<String>>(&mut self, value: S) {
         self.0.push(value.into())
     }
+
+    pub fn pop(&mut self) -> Option<String> {
+        self.0.pop()
+    }
+
+    #[must_use]
     pub fn clone_push<S: AsRef<str>>(&self, value: S) -> Self {
         let mut r = self.clone();
         r.push(value.as_ref());
         r
     }
+
+    #[must_use]
     pub fn clone_pop(&self) -> Self {
         assert!(!self.0.is_empty());
         Self(self.0[..self.0.len() - 1].to_vec())
-    }
-    pub fn pop(&mut self) -> Option<String> {
-        self.0.pop()
     }
 }
 

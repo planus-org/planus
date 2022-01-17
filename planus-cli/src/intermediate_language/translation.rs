@@ -1511,6 +1511,7 @@ impl ast::IntegerType {
 }
 
 impl IntegerLiteral {
+    #[must_use]
     pub fn next(&self) -> IntegerLiteral {
         match self {
             IntegerLiteral::U8(n) => IntegerLiteral::U8(n.wrapping_add(1)),
