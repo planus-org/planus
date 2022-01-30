@@ -12,6 +12,7 @@ anyhow = "1.0.51"
 planus = { path = "../../planus", features = ["extra-validation"] }
 flatbuffers = "2.0.0"
 serde = "1.0.132"
+static_assertions = "1.1.0"
 
 [build-dependencies]
 anyhow = "1.0.51"

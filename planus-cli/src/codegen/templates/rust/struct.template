@@ -1,4 +1,8 @@
-#[derive(Copy, Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd,
+{% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
+{% if info.should_do_default %}Default, {% endif %}
+::serde::Serialize, ::serde::Deserialize
+)]
 pub struct {{ info.owned_name }} {
     {% for field in fields -%}
         pub {{ field.info.name }}: {{ field.info.owned_type }},

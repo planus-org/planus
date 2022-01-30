@@ -21,3 +21,33 @@ struct Example {
   value_int64: int64;
   value_struct: Inner;
 }
+
+struct Example2 {
+  value_bool: bool;
+  value_empty_enum: Empty;
+  value_non_empty_enum: NonEmpty;
+  value_uint8: uint8;
+  value_uint16: uint16;
+  value_uint32: uint32;
+  value_uint64: uint64;
+  value_int8: int8;
+  value_int16: int16;
+  value_int32: int32;
+  value_int64: int64;
+  value_struct: Inner;
+}
+
+struct Example3 {
+  value_bool: bool;
+  value_float32: float32;
+  value_float64: float64;
+  value_uint8: uint8;
+  value_uint16: uint16;
+  value_uint32: uint32;
+  value_uint64: uint64;
+  value_int8: int8;
+  value_int16: int16;
+  value_int32: int32;
+  value_int64: int64;
+  value_struct: Inner;
+}

@@ -1,9 +1,26 @@
-#[derive(Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd,
+{% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
+::serde::Serialize, ::serde::Deserialize
+)]
 pub struct {{ info.owned_name }}{
     {% for field in fields.declaration_order() -%}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
     {%- endfor -%}
 }
+
+{% if info.should_do_default %}
+#[allow(clippy::derivable_impls)]
+impl ::core::default::Default for {{ info.owned_name }} {
+    fn default() -> Self {
+        Self {
+        {% for field in fields.declaration_order() -%}
+            {{ field.info.name }}: {{ field.info.impl_default_code }},
+        {% endfor %}
+        }
+    }
+}
+{% endif %}
+
 
 impl {{info.owned_name}} {
     #[allow(clippy::too_many_arguments)]

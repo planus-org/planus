@@ -76,6 +76,8 @@ fn generate_test_code(
             writeln!(code, "mod generated;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
+            writeln!(code, "#[allow(unused_imports)]").unwrap();
+            writeln!(code, "use core::{{fmt::Debug, hash::Hash}};").unwrap();
             if generate_flatc && is_main_crate {
                 writeln!(code, "#[path = {:?}]", flatc_generated).unwrap();
                 writeln!(code, "mod flatc;").unwrap();

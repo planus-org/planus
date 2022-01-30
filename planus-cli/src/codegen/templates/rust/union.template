@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd,
+{% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
+::serde::Serialize, ::serde::Deserialize)]
 pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
         {{ variant.enum_name }}({{ variant.owned_type }}),

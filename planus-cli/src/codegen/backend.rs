@@ -240,6 +240,7 @@ pub trait Backend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
         decl: &Table,
     ) -> Self::TableInfo;
@@ -248,6 +249,7 @@ pub trait Backend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
         decl: &Struct,
     ) -> Self::StructInfo;
@@ -256,6 +258,7 @@ pub trait Backend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
         decl: &Enum,
     ) -> Self::EnumInfo;
@@ -264,6 +267,7 @@ pub trait Backend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
         decl: &Union,
     ) -> Self::UnionInfo;
@@ -272,6 +276,7 @@ pub trait Backend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
         decl: &RpcService,
     ) -> Self::RpcServiceInfo;

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::BTreeSet, fmt::Display};
 
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
@@ -53,7 +53,7 @@ pub struct RelativePath {
     pub remaining: Vec<String>,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DeclarationIndex(pub usize);
 impl DeclarationIndex {
     pub const INVALID: DeclarationIndex = DeclarationIndex(usize::MAX);
@@ -93,6 +93,8 @@ impl<'a, 'b> From<&'b &'a NamespaceIndex> for NamespaceIndex {
 pub struct Declarations {
     pub namespaces: IndexMap<AbsolutePath, Namespace>,
     pub declarations: IndexMap<AbsolutePath, Declaration>,
+    pub children: Vec<Vec<DeclarationIndex>>,
+    pub parents: Vec<Vec<DeclarationIndex>>,
 }
 
 impl Declarations {
@@ -100,9 +102,31 @@ impl Declarations {
         namespaces: IndexMap<AbsolutePath, Namespace>,
         declarations: IndexMap<AbsolutePath, Declaration>,
     ) -> Self {
+        let children = declarations
+            .values()
+            .map(|decl| match &decl.kind {
+                DeclarationKind::Table(decl) => decl.children(),
+                DeclarationKind::Struct(decl) => decl.children(),
+                DeclarationKind::Enum(_) => Vec::new(),
+                DeclarationKind::Union(decl) => decl.children(),
+                DeclarationKind::RpcService(decl) => decl.children(),
+            })
+            .collect::<Vec<_>>();
+
+        let mut parents = (0..declarations.len())
+            .map(|_| Vec::new())
+            .collect::<Vec<_>>();
+        for (parent_decl_id, children) in children.iter().enumerate() {
+            for child_decl_id in children {
+                parents[child_decl_id.0].push(DeclarationIndex(parent_decl_id));
+            }
+        }
+
         Self {
             namespaces,
             declarations,
+            children,
+            parents,
         }
     }
 
@@ -248,6 +272,21 @@ impl TypeKind {
     pub fn is_enum(&self) -> bool {
         matches!(self, &TypeKind::SimpleType(SimpleType::Enum(..)))
     }
+
+    fn add_children(&self, children: &mut BTreeSet<DeclarationIndex>) {
+        match self {
+            TypeKind::Table(decl_id) | TypeKind::Union(decl_id) => {
+                children.insert(*decl_id);
+            }
+            TypeKind::Vector(type_) | TypeKind::Array(type_, _) => {
+                type_.kind.add_children(children)
+            }
+            TypeKind::SimpleType(kind) => {
+                kind.add_children(children);
+            }
+            TypeKind::String => (),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -277,6 +316,15 @@ impl SimpleType {
             | SimpleType::Bool
             | SimpleType::Integer(_)
             | SimpleType::Float(_) => true,
+        }
+    }
+
+    fn add_children(&self, children: &mut BTreeSet<DeclarationIndex>) {
+        match self {
+            SimpleType::Struct(decl_id) | SimpleType::Enum(decl_id) => {
+                children.insert(*decl_id);
+            }
+            SimpleType::Bool | SimpleType::Integer(_) | SimpleType::Float(_) => (),
         }
     }
 }
@@ -349,5 +397,45 @@ impl Display for FloatLiteral {
             FloatLiteral::F32(v) => write!(f, "{:?}", v),
             FloatLiteral::F64(v) => write!(f, "{:?}", v),
         }
+    }
+}
+impl Table {
+    fn children(&self) -> Vec<DeclarationIndex> {
+        let mut children = BTreeSet::new();
+        for field in self.fields.values() {
+            field.type_.kind.add_children(&mut children);
+        }
+        children.into_iter().collect()
+    }
+}
+
+impl Struct {
+    fn children(&self) -> Vec<DeclarationIndex> {
+        let mut children = BTreeSet::new();
+        for field in self.fields.values() {
+            field.type_.add_children(&mut children);
+        }
+        children.into_iter().collect()
+    }
+}
+
+impl Union {
+    fn children(&self) -> Vec<DeclarationIndex> {
+        let mut children = BTreeSet::new();
+        for variant in self.variants.values() {
+            variant.type_.kind.add_children(&mut children);
+        }
+        children.into_iter().collect()
+    }
+}
+
+impl RpcService {
+    fn children(&self) -> Vec<DeclarationIndex> {
+        let mut children = BTreeSet::new();
+        for method in self.methods.values() {
+            method.argument_type.kind.add_children(&mut children);
+            method.return_type.kind.add_children(&mut children);
+        }
+        children.into_iter().collect()
     }
 }
