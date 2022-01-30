@@ -1,12 +1,17 @@
 use core::{alloc::Layout, mem::MaybeUninit, ptr::NonNull};
 
 pub struct BackVec {
-    // This is a `Vec<u8>`, that is written from the back instead of the fron.
+    // This is a `Vec<u8>`, that is written from the back instead of the front.
     ptr: NonNull<u8>,
     // Offset of the last written byte
     offset: usize,
     capacity: usize,
 }
+
+// SAFETY: BackVec behaves like a Vec<u8>, and can thus implement
+// Send and Sync
+unsafe impl Send for BackVec {}
+unsafe impl Sync for BackVec {}
 
 impl core::fmt::Debug for BackVec {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
