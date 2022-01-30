@@ -38,7 +38,7 @@ Currently we only support Rust, though we plan to add support for more languages
 Getting started
 ---------------
 
-Firsy, install the command line utility
+First, install the command line utility
 ```shell
 cargo install planus-cli
 ```
