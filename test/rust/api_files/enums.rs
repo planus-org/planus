@@ -33,3 +33,38 @@ check_enum_variants!(EnumInt13: i8 { X = 0, Y = 1 });
 check_enum_variants!(EnumInt14: i8 { X = 0, Z = -1 });
 check_enum_variants!(EnumInt15: i8 { Y = 1, Z = -1 });
 check_enum_variants!(EnumInt16: i8 { X = 0, Y = 1, Z = -1 });
+
+assert_traits!(
+    EnumUint1: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint2: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint3: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint4: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint5: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint6: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint7: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint8: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint9: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint10: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint11: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint12: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint13: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint14: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint15: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumUint16: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt1: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt2: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt3: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt4: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt5: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt6: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt7: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt8: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt9: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt10: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt11: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt12: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt13: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt14: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt15: Copy + Debug + Eq + Ord + Hash + !Default,
+    EnumInt16: Copy + Debug + Eq + Ord + Hash + !Default,
+);

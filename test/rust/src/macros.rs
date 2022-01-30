@@ -91,3 +91,23 @@ macro_rules! check_enum_variants {
         )*
     }
 }
+
+#[allow(unused_macros)] // rust-analyzer is being weird
+macro_rules! assert_traits {
+    ($obj:ty : $trait:ident $($more:tt)*) => {
+        static_assertions::assert_impl_all!($obj: $trait);
+        assert_traits!($obj : $($more)*);
+    };
+    ($obj:ty : !$trait:ident $($more:tt)*) => {
+        static_assertions::assert_not_impl_all!($obj: $trait);
+        assert_traits!($obj : $($more)*);
+    };
+    ($obj:ty : + $($more:tt)*) => {
+        assert_traits!($obj : $($more)*);
+    };
+    ($obj:ty : , $($more:tt)*) => {
+        assert_traits!($($more)*);
+    };
+    ($obj:ty :) => {};
+    () => {};
+}

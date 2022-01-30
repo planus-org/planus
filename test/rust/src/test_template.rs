@@ -2,9 +2,8 @@
 #[allow(unused_imports)]
 use planus::{ReadAsRoot, WriteAsOffset};
 #[allow(unused_imports)]
-use std::convert::identity;
-#[allow(unused_imports)]
 use std::{
+    convert::identity,
     fs::{File, OpenOptions},
     io::{Read, Write},
 };

@@ -8,6 +8,8 @@ check_type!(Example => create(&mut planus::Builder, Option<Vec<f32>>, Option<Vec
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, &'a [f32], &'b [f32], &'c [f32], &'d [f32]) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [f32]>, Option<&'b [f32]>, &'c [f32], &'d [f32]) : planus::Offset<Example>);
 
+assert_traits!(Example: !Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default);
+
 check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, f32>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, f32>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, f32>>);

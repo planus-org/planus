@@ -1,3 +1,4 @@
+pub mod analysis;
 pub mod checks;
 pub mod translation;
 pub mod types;

@@ -109,3 +109,14 @@ check_type!(+['a] ExampleI64Ref<'a> => &self.value_null() : planus::Result<Optio
 check_type!(+['a] ExampleI64Ref<'a> => &self.value_default_zero() : planus::Result<i64>);
 check_type!(+['a] ExampleI64Ref<'a> => &self.value_default_one() : planus::Result<i64>);
 check_type!(+['a] ExampleI64Ref<'a> => impl planus::ReadAsRoot<'a>);
+
+assert_traits!(
+    ExampleU8: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleU16: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleU32: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleU64: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleI8: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleI16: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleI32: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleI64: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+);

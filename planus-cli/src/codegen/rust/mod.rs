@@ -1,3 +1,5 @@
+mod analysis;
+
 use std::{borrow::Cow, io::Write, path::Path, process::Command};
 
 use askama::Template;
@@ -10,11 +12,14 @@ use super::backend::{
 use crate::{
     ast::{FloatType, IntegerType},
     ctx::Ctx,
-    intermediate_language::types::{AssignMode, Literal},
+    intermediate_language::types::{AssignMode, DeclarationIndex, Literal},
 };
 
 #[derive(Debug, Clone)]
-pub struct RustBackend;
+pub struct RustBackend {
+    default_analysis: Vec<bool>,
+    eq_analysis: Vec<bool>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Namespace {
@@ -25,6 +30,8 @@ pub struct Namespace {
 pub struct Table {
     pub owned_name: String,
     pub ref_name: String,
+    pub should_do_default: bool,
+    pub should_do_eq: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -37,6 +44,7 @@ pub struct TableField {
     pub create_name: String,
     pub create_trait: String,
     pub required: bool,
+    pub impl_default_code: Cow<'static, str>,
     pub serialize_default: Option<Cow<'static, str>>,
     pub deserialize_default: Option<Cow<'static, str>>,
     pub try_from_code: String,
@@ -46,6 +54,8 @@ pub struct TableField {
 pub struct Struct {
     pub owned_name: String,
     pub ref_name: String,
+    pub should_do_default: bool,
+    pub should_do_eq: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -73,6 +83,7 @@ pub struct Union {
     pub owned_name: String,
     pub ref_name: String,
     pub ref_name_with_lifetime: String,
+    pub should_do_eq: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -183,6 +194,7 @@ impl Backend for RustBackend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::Table,
     ) -> Table {
@@ -190,6 +202,8 @@ impl Backend for RustBackend {
         Table {
             owned_name: reserve_type_name(decl_name, declaration_names),
             ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            should_do_default: self.default_analysis[decl_id.0],
+            should_do_eq: self.eq_analysis[decl_id.0],
         }
     }
 
@@ -197,6 +211,7 @@ impl Backend for RustBackend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::Struct,
     ) -> Struct {
@@ -204,6 +219,8 @@ impl Backend for RustBackend {
         Struct {
             owned_name: reserve_type_name(decl_name, declaration_names),
             ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            should_do_default: self.default_analysis[decl_id.0],
+            should_do_eq: self.eq_analysis[decl_id.0],
         }
     }
 
@@ -211,6 +228,7 @@ impl Backend for RustBackend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
+        _decl_id: DeclarationIndex,
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         decl: &crate::intermediate_language::types::Enum,
     ) -> Enum {
@@ -225,6 +243,7 @@ impl Backend for RustBackend {
         &mut self,
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
         decl_name: &crate::intermediate_language::types::AbsolutePath,
         decl: &crate::intermediate_language::types::Union,
     ) -> Union {
@@ -238,6 +257,7 @@ impl Backend for RustBackend {
                 format!("{}<'a>", ref_name)
             },
             ref_name,
+            should_do_eq: self.eq_analysis[decl_id.0],
         }
     }
 
@@ -245,6 +265,7 @@ impl Backend for RustBackend {
         &mut self,
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
+        _decl_id: DeclarationIndex,
         _decl_name: &crate::intermediate_language::types::AbsolutePath,
         _decl: &crate::intermediate_language::types::RpcService,
     ) -> RpcService {
@@ -277,6 +298,7 @@ impl Backend for RustBackend {
         let primitive_size;
         let mut serialize_default: Option<Cow<'static, str>> = None;
         let mut deserialize_default: Option<Cow<'static, str>> = None;
+        let mut impl_default_code: Cow<'static, str> = "::core::default::Default::default()".into();
         let mut try_from_code = if matches!(field.assign_mode, AssignMode::Optional) {
             format!(
                 r#"
@@ -301,6 +323,7 @@ impl Backend for RustBackend {
                 Struct {
                     owned_name,
                     ref_name,
+                    ..
                 },
                 relative_namespace,
             ) => {
@@ -332,6 +355,7 @@ impl Backend for RustBackend {
                 Table {
                     owned_name,
                     ref_name,
+                    ..
                 },
                 relative_namespace,
             ) => {
@@ -418,12 +442,12 @@ impl Backend for RustBackend {
                         owned_type = vtable_type.clone();
                         create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
 
+                        impl_default_code =
+                            format!("{}::{}", owned_type, variants[*variant_index].name).into();
                         serialize_default = Some(
                             format!("&{}::{}", owned_type, variants[*variant_index].name).into(),
                         );
-                        deserialize_default = Some(
-                            format!("{}::{}", owned_type, variants[*variant_index].name).into(),
-                        );
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{}>", vtable_type);
@@ -615,6 +639,7 @@ impl Backend for RustBackend {
                             "WriteAsDefault<::planus::Offset<::core::primitive::str>, ::core::primitive::str>"
                                 .to_string();
 
+                        impl_default_code = format!("{:?}.into()", s).into();
                         serialize_default = Some(format!("{:?}", s).into());
                         deserialize_default = Some(format!("{:?}", s).into());
                     }
@@ -629,8 +654,9 @@ impl Backend for RustBackend {
                         read_type = "bool".to_string();
                         owned_type = "bool".to_string();
                         create_trait = "WriteAsDefault<bool, bool>".to_string();
+                        impl_default_code = format!("{}", lit).into();
                         serialize_default = Some(format!("&{}", lit).into());
-                        deserialize_default = Some(format!("{}", lit).into());
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
                         read_type = "::core::option::Option<bool>".to_string();
@@ -649,8 +675,9 @@ impl Backend for RustBackend {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
                         create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
+                        impl_default_code = format!("{}", lit).into();
                         serialize_default = Some(format!("&{}", lit).into());
-                        deserialize_default = Some(format!("{}", lit).into());
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{}>", vtable_type);
@@ -669,8 +696,9 @@ impl Backend for RustBackend {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
                         create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
+                        impl_default_code = format!("{}", lit).into();
                         serialize_default = Some(format!("&{}", lit).into());
-                        deserialize_default = Some(format!("{}", lit).into());
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{}>", vtable_type);
@@ -691,6 +719,7 @@ impl Backend for RustBackend {
             create_name,
             create_trait,
             required: matches!(field.assign_mode, AssignMode::Required),
+            impl_default_code,
             serialize_default,
             deserialize_default,
             try_from_code,
@@ -884,12 +913,20 @@ pub fn generate_code<P: AsRef<Path>>(
 ) -> anyhow::Result<()> {
     let mut ctx = Ctx::default();
     let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
+    let default_analysis = declarations.run_analysis(&mut analysis::DefaultAnalysis);
+    let eq_analysis = declarations.run_analysis(&mut analysis::EqAnalysis);
 
     if ctx.has_errors() {
         anyhow::bail!("Bailing because of errors")
     }
 
-    let output = super::backend_translation::run_backend(&mut RustBackend, &declarations);
+    let output = super::backend_translation::run_backend(
+        &mut RustBackend {
+            default_analysis,
+            eq_analysis,
+        },
+        &declarations,
+    );
 
     let res = super::templates::rust::Namespace(&output).render().unwrap();
     let mut file = std::fs::File::create(&output_filename)?;

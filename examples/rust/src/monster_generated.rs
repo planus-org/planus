@@ -4,7 +4,16 @@ mod root {
     pub mod my_game {
         pub mod sample {
             #[derive(
-                Copy, Clone, Debug, PartialEq, Eq, ::serde::Serialize, ::serde::Deserialize,
+                Copy,
+                Clone,
+                Debug,
+                PartialEq,
+                Eq,
+                PartialOrd,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
             )]
             #[repr(i8)]
             pub enum Color {
@@ -150,7 +159,17 @@ mod root {
                 }
             }
 
-            #[derive(Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
             pub enum Equipment {
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
             }
@@ -217,7 +236,16 @@ mod root {
                 }
             }
 
-            #[derive(Copy, Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            #[derive(
+                Copy,
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Default,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
             pub struct Vec3 {
                 pub x: f32,
                 pub y: f32,
@@ -356,7 +384,9 @@ mod root {
                 }
             }
 
-            #[derive(Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            #[derive(
+                Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
+            )]
             pub struct Monster {
                 pub pos: ::core::option::Option<self::Vec3>,
                 pub mana: i16,
@@ -367,6 +397,23 @@ mod root {
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
                 pub equipped: ::core::option::Option<self::Equipment>,
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
+            }
+
+            #[allow(clippy::derivable_impls)]
+            impl ::core::default::Default for Monster {
+                fn default() -> Self {
+                    Self {
+                        pos: ::core::default::Default::default(),
+                        mana: 150,
+                        hp: 100,
+                        name: ::core::default::Default::default(),
+                        inventory: ::core::default::Default::default(),
+                        color: self::Color::Blue,
+                        weapons: ::core::default::Default::default(),
+                        equipped: ::core::default::Default::default(),
+                        path: ::core::default::Default::default(),
+                    }
+                }
             }
 
             impl Monster {
@@ -722,10 +769,30 @@ mod root {
                 }
             }
 
-            #[derive(Clone, Debug, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
             pub struct Weapon {
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
                 pub damage: i16,
+            }
+
+            #[allow(clippy::derivable_impls)]
+            impl ::core::default::Default for Weapon {
+                fn default() -> Self {
+                    Self {
+                        name: ::core::default::Default::default(),
+                        damage: 0,
+                    }
+                }
             }
 
             impl Weapon {

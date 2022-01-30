@@ -6,6 +6,8 @@ check_type!(Example => create(&mut planus::Builder, bool, bool, bool, bool) : pl
 check_type!(Example => create(&mut planus::Builder, bool, (), bool, bool) : planus::Offset<Example>);
 check_type!(Example => create(&mut planus::Builder, bool, Option<bool>, bool, bool) : planus::Offset<Example>);
 
+assert_traits!(Example: !Copy + Clone + Debug + Eq + Ord + Hash + Default);
+
 check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<bool>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<bool>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_false() : planus::Result<bool>);

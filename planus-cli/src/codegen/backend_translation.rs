@@ -6,7 +6,8 @@ use super::backend::{
 use crate::{
     codegen::backend::{DeclInfo, Keywords, Names, RelativeNamespace},
     intermediate_language::types::{
-        AbsolutePath, DeclarationKind, Declarations, NamespaceIndex, SimpleType, Type, TypeKind,
+        AbsolutePath, DeclarationIndex, DeclarationKind, Declarations, NamespaceIndex, SimpleType,
+        Type, TypeKind,
     },
 };
 
@@ -390,7 +391,8 @@ pub fn run_backend<B: ?Sized + Backend>(
         .declarations
         .iter()
         .zip(&mut declaration_names)
-        .map(|((decl_name, decl), declaration_names)| {
+        .enumerate()
+        .map(|(decl_id, ((decl_name, decl), declaration_names))| {
             let namespace_names = &mut namespace_names[decl.namespace_id.0];
             let decl: DeclInfo<B> = match &decl.kind {
                 DeclarationKind::Table(decl) => DeclInfo::Table(
@@ -401,6 +403,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             declaration_names,
                         },
                         &translated_namespaces,
+                        DeclarationIndex(decl_id),
                         decl_name,
                         decl,
                     ),
@@ -414,6 +417,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             declaration_names,
                         },
                         &translated_namespaces,
+                        DeclarationIndex(decl_id),
                         decl_name,
                         decl,
                     ),
@@ -427,6 +431,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             declaration_names,
                         },
                         &translated_namespaces,
+                        DeclarationIndex(decl_id),
                         decl_name,
                         decl,
                     ),
@@ -440,6 +445,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             declaration_names,
                         },
                         &translated_namespaces,
+                        DeclarationIndex(decl_id),
                         decl_name,
                         decl,
                     ),
@@ -453,6 +459,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                             declaration_names,
                         },
                         &translated_namespaces,
+                        DeclarationIndex(decl_id),
                         decl_name,
                         decl,
                     ),

@@ -23,3 +23,9 @@ check_type!(+['a] ExampleRef<'a> => &self.value_int16() : i16);
 check_type!(+['a] ExampleRef<'a> => &self.value_int32() : i32);
 check_type!(+['a] ExampleRef<'a> => &self.value_int64() : i64);
 check_type!(+['a] ExampleRef<'a> => &self.value_struct() : InnerRef<'a>);
+
+assert_traits!(
+    Example: Copy + Debug + !Eq + !Ord + !Hash + !Default,
+    Example2: Copy + Debug + Eq + Ord + Hash + !Default,
+    Example3: Copy + Debug + !Eq + !Ord + !Hash + Default,
+);

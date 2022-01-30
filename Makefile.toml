@@ -96,8 +96,8 @@ script = '''
 
 [tasks.full-test]
 dependencies = [
-    "lint",
     "regenerate-examples",
+    "lint",
     # Check that all examples are up to date
     "commit-check",
     "test",
