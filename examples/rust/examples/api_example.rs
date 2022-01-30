@@ -94,7 +94,7 @@ fn main() {
     std::fs::write(path, finished_data).unwrap();
 
     // We can decode the data using planus::ReadAsRoot
-    let monster_ref: MonsterRef = MonsterRef::read_as_root(finished_data).unwrap();
+    let monster_ref = MonsterRef::read_as_root(finished_data).unwrap();
     print_equipment(monster_ref).unwrap();
 
     // And we can get an owned version by using TryInto
