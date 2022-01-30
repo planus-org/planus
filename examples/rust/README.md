@@ -1,5 +1,21 @@
-planus-example – Small example for how to use planus
-====================================================
+planus-example – Small examples showing how to use planus with Rust
+===================================================================
+
+Basic concepts
+--------------
+For every type (except enums) in the flatbuffers schema planus generates both an
+owned type, named the same as the flatbuffers type, and a reference type with a
+`Ref` suffix and a lifetime tied to the buffer containing the serialized
+flatbuffers data.  The owned type can be created from the reference type using
+the `TryInto` trait.
+
+The generated code cannot panic, so every function that can potentially fail
+returns a `planus::Result`. This can quickly lead to a lot of `unwrap()`, so we
+recommended that you put your planus code into a function where you can use the
+`?` operator to propagate the deserialization errors.
+
+Running the examples
+--------------------
 
 Here are some recommended commands to get started:
 

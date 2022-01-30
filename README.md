@@ -38,7 +38,17 @@ Currently we only support Rust, though we plan to add support for more languages
 Getting started
 ---------------
 
-For now our documention could use a bit of improvement, but we do have an example to help you get started. Look in [examples/rust](examples/rust).
+First, install the command line utility
+```shell
+cargo install planus-cli
+```
+
+Next, write a flatbuffers file (or use an existing one). Then you can generate code using the command
+```shell
+planus rust -o <output_path.rs> <input_file.fbs>
+```
+
+For a complete example, see [examples/rust](examples/rust).
 
 
 Status of the implementation
