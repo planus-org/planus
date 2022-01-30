@@ -72,6 +72,15 @@ Things we will probably never support:
 * More than one `namespace` per file.
 * Flexbuffers.
 
+Minimum Supported Rust Version (MSRV)
+-------------------------------------
+
+Our current Minimum Supported Rust Version is 1.57.0. When adding features, we will follow these guidelines:
+
+* We will aim to support the latest four minor Rust versions. This gives you a 6 month window to upgrade your compiler.
+* Any change to the MSRV will be accompanied with a minor version bump
+* While the crate is pre-1.0, this will be a change to the patch version.
+
 
 I think I found a bug!
 ----------------------
