@@ -1,14 +1,33 @@
 # Changelog
+All notable changes to this project will be documented in this file.
 
-## Unreleased
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.2
+## [Unreleased]
+### Added
+- Improved documentation
+- \[Rust\]: The `Builder` now has impls for `Send` and and `Sync`
+- \[Rust\]: We now derive `Ord`, `Eq`, `Hash` and `Default` in some cases
+- \[Rust\]: Added an MSRV policy
+
+### Fixed
+- Fixed some typos by [@OliverEvans96](https://github.com/OliverEvans96)
+- Various clippy lints
+
+
+## [0.2.0] - 2022-01-12
 ### Rust
-* Add null terminators to strings
-* Make generated code work in `no_std`
-* Add support for the `id` attribute
-* (Breaking) Removed the `ToOwned` trait in favor of `TryInto`
-* (Breaking) The Vector deserialization API changed slightly, see #59 for details.
+- Add null terminators to strings
+- Make generated code work in `no_std`
+- Add support for the `id` attribute
+- (Breaking) Removed the `ToOwned` trait in favor of `TryInto`
+- (Breaking) The Vector deserialization API changed slightly, see #59 for details.
 
-## 0.1
-* Initial release
+
+## [0.1.0] - 2021-12-30
+- Initial release
+
+[Unreleased]: https://github.com/planus-org/planus/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/planus-org/planus/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/planus-org/planus/releases/tag/v0.1.0
