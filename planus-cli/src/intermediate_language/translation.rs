@@ -67,6 +67,10 @@ impl<'a> Translator<'a> {
         let namespace_entry = self.namespaces.entry(namespace_path.clone());
         let mut namespace_index = namespace_entry.index();
         let namespace = namespace_entry.or_default();
+        namespace.spans.push((
+            schema.file_id,
+            schema.namespace.as_ref().map(|(span, _)| *span),
+        ));
 
         for decl in schema.type_declarations.values() {
             let name = self.ctx.resolve_identifier(decl.identifier.value);
@@ -1401,6 +1405,22 @@ impl<'a> Translator<'a> {
 
     pub fn finish(mut self) -> Declarations {
         for (id, (path, decl)) in self.ast_declarations.iter().enumerate() {
+            if let Some(namespace) = self.namespaces.get(path) {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_DEFINED_TWICE,
+                    [Label::secondary(decl.file_id, decl.definition_span)
+                        .with_message("Declaration was here")]
+                    .into_iter()
+                    .chain(namespace.spans.iter().filter_map(|(file_id, span)| {
+                        let span = (*span)?;
+                        Some(
+                            Label::secondary(*file_id, span)
+                                .with_message("namespace was defined here"),
+                        )
+                    })),
+                    Some("Overlapping declarations"),
+                );
+            }
             let current_namespace = path.clone_pop();
             self.declarations.insert(
                 path.clone(),

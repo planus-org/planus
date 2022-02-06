@@ -155,6 +155,8 @@ impl Declarations {
 
 #[derive(Debug, Default)]
 pub struct Namespace {
+    /// The span is where the namespace path is defined
+    pub spans: Vec<(FileId, Option<Span>)>,
     pub child_namespaces: IndexMap<String, NamespaceIndex>,
     pub declaration_ids: IndexMap<String, DeclarationIndex>,
 }
