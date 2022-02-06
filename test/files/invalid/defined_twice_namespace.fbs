@@ -1,0 +1,4 @@
+include "helpers/overlapping_namespace1.fbs";
+include "helpers/overlapping_namespace2.fbs";
+
+table Foo {}
