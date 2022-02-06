@@ -1,13 +1,13 @@
   decl{{info.decl_id}}[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
       <TR>
-          <TD colspan="2" PORT="name">enum {{info.name}} : {{info.repr_type}}</TD>
+        <TD colspan="2" PORT="name">enum {{info.name}} : {{info.repr_type}}</TD>
       </TR>
-      {% for (variant_id, variant) in variants.iter().enumerate() %}
+      {%- for (variant_id, variant) in variants.iter().enumerate() %}
       <TR>
         <TD>{{variant.name}}</TD>
         <TD>{{variant.value}}</TD>
       </TR>
-      {% endfor %}
+      {%- endfor %}
     </TABLE>>
   ];

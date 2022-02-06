@@ -1,0 +1,149 @@
+digraph G
+{
+  node[ shape = none ];
+  rankdir=LR;
+
+  decl0[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="2" PORT="name">enum MyGame.Sample.Color : int8</TD>
+      </TR>
+      <TR>
+        <TD>Red</TD>
+        <TD>0</TD>
+      </TR>
+      <TR>
+        <TD>Green</TD>
+        <TD>1</TD>
+      </TR>
+      <TR>
+        <TD>Blue</TD>
+        <TD>2</TD>
+      </TR>
+    </TABLE>>
+  ];
+
+  decl1[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="3" PORT="name">union MyGame.Sample.Equipment</TD>
+      </TR>
+      <TR>
+        <TD>Weapon</TD>
+        <TD PORT="p0">MyGame.Sample.Weapon</TD>
+      </TR>
+    </TABLE>>
+  ];
+  decl1:p0:e -> decl4:name [color = "#f411d2"];
+
+  decl2[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="3" PORT="name">struct Vec3</TD>
+      </TR>
+      <TR>
+        <TD colspan="3">size=12, alignment=4</TD>
+      </TR>
+      <TR>
+        <TD>0</TD>
+        <TD>x</TD>
+        <TD PORT="p0">float32 (4 bytes)</TD>
+      </TR>
+      <TR>
+        <TD>4</TD>
+        <TD>y</TD>
+        <TD PORT="p1">float32 (4 bytes)</TD>
+      </TR>
+      <TR>
+        <TD>8</TD>
+        <TD>z</TD>
+        <TD PORT="p2">float32 (4 bytes)</TD>
+      </TR>
+    </TABLE>>
+  ];
+
+  decl3[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="4" PORT="name">table MyGame.Sample.Monster</TD>
+      </TR>
+      <TR>
+        <TD>0</TD>
+        <TD>pos</TD>
+        <TD>Vec3 (12 bytes)</TD>
+        <TD PORT="p0">optional</TD>
+      </TR>
+      <TR>
+        <TD>1</TD>
+        <TD>mana</TD>
+        <TD>int16 (2 bytes)</TD>
+        <TD PORT="p1">default 150</TD>
+      </TR>
+      <TR>
+        <TD>2</TD>
+        <TD>hp</TD>
+        <TD>int16 (2 bytes)</TD>
+        <TD PORT="p2">default 100</TD>
+      </TR>
+      <TR>
+        <TD>3</TD>
+        <TD>name</TD>
+        <TD>string (4 bytes)</TD>
+        <TD PORT="p3">optional</TD>
+      </TR>
+      <TR>
+        <TD>5</TD>
+        <TD>inventory</TD>
+        <TD>[uint8] (4 bytes)</TD>
+        <TD PORT="p4">optional</TD>
+      </TR>
+      <TR>
+        <TD>6</TD>
+        <TD>color</TD>
+        <TD>MyGame.Sample.Color (1 bytes)</TD>
+        <TD PORT="p5">default Blue</TD>
+      </TR>
+      <TR>
+        <TD>7</TD>
+        <TD>weapons</TD>
+        <TD>[MyGame.Sample.Weapon] (4 bytes)</TD>
+        <TD PORT="p6">optional</TD>
+      </TR>
+      <TR>
+        <TD>8 / 9</TD>
+        <TD>equipped</TD>
+        <TD>MyGame.Sample.Equipment (4 bytes)</TD>
+        <TD PORT="p7">optional</TD>
+      </TR>
+      <TR>
+        <TD>10</TD>
+        <TD>path</TD>
+        <TD>[Vec3] (4 bytes)</TD>
+        <TD PORT="p8">optional</TD>
+      </TR></TABLE>>
+  ];
+  decl3:p0:e -> decl2:name [color = "#0804f7"];
+  decl3:p5:e -> decl0:name [color = "#d8755f"];
+  decl3:p6:e -> decl4:name [color = "#fc0213"];
+  decl3:p7:e -> decl1:name [color = "#ba982a"];
+  decl3:p8:e -> decl2:name [color = "#66db23"];
+
+  decl4[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="4" PORT="name">table MyGame.Sample.Weapon</TD>
+      </TR>
+      <TR>
+        <TD>0</TD>
+        <TD>name</TD>
+        <TD>string (4 bytes)</TD>
+        <TD PORT="p0">optional</TD>
+      </TR>
+      <TR>
+        <TD>1</TD>
+        <TD>damage</TD>
+        <TD>int16 (2 bytes)</TD>
+        <TD PORT="p1">default 0</TD>
+      </TR></TABLE>>
+  ];
+}

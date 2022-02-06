@@ -1,19 +1,20 @@
   decl{{info.decl_id}}[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
       <TR>
-          <TD colspan="3" PORT="name">union {{info.name}}</TD>
+        <TD colspan="3" PORT="name">union {{info.name}}</TD>
       </TR>
-      {% for (variant_id, variant) in variants.iter().enumerate() %}
+      {%- for (variant_id, variant) in variants.iter().enumerate() %}
       <TR>
         <TD>{{variant.name}}</TD>
         <TD PORT="p{{variant_id}}">{{variant.type_}}</TD>
       </TR>
-      {% endfor %}
+      {%- endfor %}
     </TABLE>>
   ];
-  {% for (variant_id, variant) in variants.iter().enumerate() %}
-  {% match variant.type_ref %}
-  {% when Some with (v) %} decl{{info.decl_id}}:p{{variant_id}}:e -> decl{{v}}:name [color = "{{variant.color}}"];
-  {% when None %}
-  {% endmatch %}
-  {% endfor %}
+  {%- for (variant_id, variant) in variants.iter().enumerate() -%}
+  {%- match variant.type_ref -%}
+  {%- when Some with (v) %}
+  decl{{info.decl_id}}:p{{variant_id}}:e -> decl{{v}}:name [color = "{{variant.color}}"];
+  {%- when None -%}
+  {%- endmatch -%}
+  {%- endfor %}

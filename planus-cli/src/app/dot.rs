@@ -1,16 +1,20 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 
 use crate::codegen::dot::generate_code;
-use clap::StructOpt;
+use clap::{Parser, ValueHint};
 
-/// Generates a dot graph
-#[derive(StructOpt)]
+/// Generate a dot graph
+#[derive(Parser)]
 pub struct Command {
-    files: Vec<String>,
+    #[clap(value_hint = ValueHint::FilePath)]
+    files: Vec<PathBuf>,
 
     /// Output file
-    #[structopt(short = 'o')]
-    output_filename: String,
+    #[clap(short = 'o')]
+    #[clap(value_hint = ValueHint::AnyPath)]
+    output_filename: PathBuf,
 }
 
 impl Command {

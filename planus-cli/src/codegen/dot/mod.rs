@@ -11,7 +11,9 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct DotBackend;
+pub struct DotBackend {
+    color_seed: u64,
+}
 
 #[derive(Clone, Debug)]
 pub struct Namespace {
@@ -90,10 +92,14 @@ pub struct RpcMethod {
     pub return_type_ref: Option<DeclarationIndex>,
 }
 
-fn random_color() -> String {
-    random_color::RandomColor::new()
-        .luminosity(random_color::Luminosity::Bright)
-        .to_hex()
+impl DotBackend {
+    fn random_color(&mut self) -> String {
+        self.color_seed += 1;
+        random_color::RandomColor::new()
+            .luminosity(random_color::Luminosity::Bright)
+            .seed(self.color_seed)
+            .to_hex()
+    }
 }
 
 fn get_name(type_: &ResolvedType<'_, DotBackend>) -> (Cow<'static, str>, Option<DeclarationIndex>) {
@@ -258,7 +264,7 @@ impl Backend for DotBackend {
             type_,
             type_ref,
             assign_mode,
-            color: random_color(),
+            color: self.random_color(),
         }
     }
 
@@ -277,7 +283,7 @@ impl Backend for DotBackend {
             name: field_name.to_string(),
             type_,
             type_ref,
-            color: random_color(),
+            color: self.random_color(),
         }
     }
 
@@ -311,7 +317,7 @@ impl Backend for DotBackend {
             name: key.to_string(),
             type_,
             type_ref,
-            color: random_color(),
+            color: self.random_color(),
         }
     }
 
@@ -329,7 +335,7 @@ impl Backend for DotBackend {
 
 pub fn generate_code<P: AsRef<Path>>(
     input_files: &[P],
-    output_filename: &str,
+    output_filename: &Path,
 ) -> anyhow::Result<()> {
     let mut ctx = Ctx::default();
     let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
@@ -338,7 +344,8 @@ pub fn generate_code<P: AsRef<Path>>(
         anyhow::bail!("Bailing because of errors")
     }
 
-    let output = super::backend_translation::run_backend(&mut DotBackend, &declarations);
+    let output =
+        super::backend_translation::run_backend(&mut DotBackend { color_seed: 0 }, &declarations);
 
     let res = super::templates::dot::Namespace(&output).render().unwrap();
 
