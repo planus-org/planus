@@ -1,4 +1,7 @@
 pub use root::*;
+
+const _: () = ::planus::check_version_compatibility("planus-0.2.0");
+
 #[no_implicit_prelude]
 mod root {
     pub mod my_game {

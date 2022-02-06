@@ -24,6 +24,16 @@ pub use crate::{
     vectors::Vector,
 };
 
+#[doc(hidden)]
+pub const fn check_version_compatibility(s: &str) {
+    match s.as_bytes() {
+        b"planus-0.2.0" => (),
+        _ => panic!(
+            "Your generated code is out of date, please regenerate using planus version 0.2.0"
+        ),
+    }
+}
+
 pub type Result<T> = core::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;

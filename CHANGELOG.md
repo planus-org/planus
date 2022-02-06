@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a type-check for name overlap between namespaces and declarations
 - Added `generate-completions` subcommand to `planus-cli` to generate shell completions for popular shells.
 - Added a DOT backend
+- Added a version check to guard against using out-of-date code
 
 
 ### Fixed

@@ -93,10 +93,9 @@ script = '''
 '''
 
 [tasks.regenerate-examples]
-dependencies = ["build"]
 script = '''
-    target/debug/planus rust -o examples/rust/src/monster_generated.rs examples/rust/monster.fbs
-    target/debug/planus dot -o examples/rust/monster.dot examples/rust/monster.fbs
+    cargo run -p planus-cli --bin planus -- rust -o examples/rust/src/monster_generated.rs examples/rust/monster.fbs
+    cargo run -p planus-cli --bin planus -- dot -o examples/rust/monster.dot examples/rust/monster.fbs
     dot -Tsvg examples/rust/monster.dot -o examples/rust/monster.svg
 '''
 
