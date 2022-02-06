@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Added an MSRV policy
 - Added a type-check for name overlap between namespaces and declarations
 - Added a DOT backend
+- Added a version check to guard against using out-of-date code
 
 ### Fixed
 - Fixed some typos by [@OliverEvans96](https://github.com/OliverEvans96)
