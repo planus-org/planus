@@ -20,6 +20,11 @@ Running the examples
 Here are some recommended commands to get started:
 
 ```console
+# Generate a PDF overview of the schema using GraphViz
+foo@bar:~$ cargo run -p planus-cli -- dot monster.fbs -o monster.dot
+foo@bar:~$ dot -Tsvg monster.dot -o monster.svg
+foo@bar:~$ xdg-open monster.svg
+
 # Re-generate the monster_generated.rs file in case monster.fbs has been changed
 foo@bar:~$ cargo run -p planus-cli -- rust monster.fbs -o src/monster_generated.rs
 

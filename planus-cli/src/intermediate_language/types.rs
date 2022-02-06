@@ -59,6 +59,12 @@ impl DeclarationIndex {
     pub const INVALID: DeclarationIndex = DeclarationIndex(usize::MAX);
 }
 
+impl Display for DeclarationIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl<'a> From<&'a DeclarationIndex> for DeclarationIndex {
     fn from(decl: &'a DeclarationIndex) -> Self {
         *decl
@@ -368,6 +374,31 @@ impl IntegerLiteral {
             IntegerLiteral::I32(n) => *n == 0,
             IntegerLiteral::U64(n) => *n == 0,
             IntegerLiteral::I64(n) => *n == 0,
+        }
+    }
+}
+
+impl Display for Literal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Literal::Bool(v) => write!(f, "{}", v),
+            Literal::String(v) => write!(f, "{}", v),
+            Literal::Int(v) => write!(f, "{}", v),
+            Literal::Float(v) => write!(f, "{}", v),
+            Literal::Array(vs) | Literal::Vector(vs) => {
+                write!(f, "[")?;
+                let mut first = true;
+                for v in vs {
+                    if !first {
+                        write!(f, ", {}", v)?;
+                    } else {
+                        first = false;
+                        write!(f, "{}", v)?;
+                    }
+                }
+                write!(f, "]")
+            }
+            Literal::EnumTag { value, .. } => write!(f, "{}", value),
         }
     }
 }

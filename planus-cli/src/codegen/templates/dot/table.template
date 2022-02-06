@@ -1,0 +1,26 @@
+  decl{{info.decl_id}}[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="4" PORT="name">table {{info.name}}</TD>
+      </TR>
+      {%- for (field_id, field) in fields.declaration_order().enumerate() %}
+      <TR>
+      {%- if field.field_type == BackendTableFieldType::UnionValue %}
+        <TD>{{field.vtable_index-1}} / {{field.vtable_index}}</TD>
+      {%- else %}
+        <TD>{{field.vtable_index}}</TD>
+      {%- endif %}
+        <TD>{{field.info.name}}</TD>
+        <TD>{{field.info.type_}} ({{field.info.primitive_size}} bytes)</TD>
+        <TD PORT="p{{field_id}}">{{field.info.assign_mode}}</TD>
+      </TR>
+      {%- endfor -%}
+    </TABLE>>
+  ];
+  {%- for (field_id, field) in fields.declaration_order().enumerate() -%}
+  {% match field.info.type_ref -%}
+  {%- when Some with (v) %}
+  decl{{info.decl_id}}:p{{field_id}}:e -> decl{{v}}:name [color = "{{field.info.color}}"];
+  {%- when None -%}
+  {%- endmatch -%}
+  {%- endfor %}
