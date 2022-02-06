@@ -32,7 +32,6 @@ thiserror = "1.0.24"
 vec_map = "0.8.2"
 
 [build-dependencies]
-clap = "3.0.14"
 derive_more = "0.99.14"
 lalrpop = "0.19.5"
 
