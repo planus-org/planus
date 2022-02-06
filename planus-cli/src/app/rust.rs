@@ -14,7 +14,7 @@ pub struct Command {
     /// Output file
     #[clap(short = 'o')]
     #[clap(value_hint = ValueHint::AnyPath)]
-    output_filename: String,
+    output_filename: PathBuf,
 }
 
 impl Command {
