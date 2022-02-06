@@ -1,15 +1,19 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 
 use crate::codegen::rust::generate_code;
-use clap::StructOpt;
+use clap::{Parser, ValueHint};
 
-/// Generates rust code
-#[derive(StructOpt)]
+/// Generate rust code
+#[derive(Parser)]
 pub struct Command {
-    files: Vec<String>,
+    #[clap(value_hint = ValueHint::FilePath)]
+    files: Vec<PathBuf>,
 
     /// Output file
-    #[structopt(short = 'o')]
+    #[clap(short = 'o')]
+    #[clap(value_hint = ValueHint::AnyPath)]
     output_filename: String,
 }
 

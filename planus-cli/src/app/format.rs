@@ -1,15 +1,18 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 
 use crate::ctx::Ctx;
-use clap::StructOpt;
+use clap::{Parser, ValueHint};
 
-// Formats .fbs files
-#[derive(StructOpt)]
+/// Format .fbs files
+#[derive(Parser)]
 pub struct Command {
-    file: String,
+    #[clap(value_hint = ValueHint::FilePath)]
+    file: PathBuf,
 
     /// Try to generate output even if the input has errors
-    #[structopt(long)]
+    #[clap(long)]
     ignore_errors: bool,
 }
 

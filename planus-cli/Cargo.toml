@@ -17,6 +17,7 @@ askama = "0.11"
 atty = "0.2.14"
 bitflags = "1.2.1"
 clap = { version = "3.0.5", features = ["derive"] }
+clap_complete = "3.0.6"
 codespan = "0.11.1"
 codespan-reporting = "0.11.1"
 derive_more = "0.99.14"
@@ -31,6 +32,7 @@ thiserror = "1.0.24"
 vec_map = "0.8.2"
 
 [build-dependencies]
+clap = "3.0.14"
 derive_more = "0.99.14"
 lalrpop = "0.19.5"
 

@@ -1,10 +1,11 @@
 mod check;
 mod format;
+mod gen_completions;
 mod rust;
 
-use clap::StructOpt;
+use clap::Parser;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct App {
     #[clap(flatten)]
     app_options: AppOptions,
@@ -13,14 +14,15 @@ pub struct App {
     command: Command,
 }
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub enum Command {
     Rust(rust::Command),
     Format(format::Command),
     Check(check::Command),
+    GenerateCompletions(gen_completions::Command),
 }
 
-#[derive(Default, StructOpt)]
+#[derive(Default, Parser)]
 pub struct AppOptions {}
 
 impl App {
@@ -29,6 +31,7 @@ impl App {
             Command::Rust(command) => command.run(self.app_options)?,
             Command::Format(command) => command.run(self.app_options)?,
             Command::Check(command) => command.run(self.app_options)?,
+            Command::GenerateCompletions(command) => command.run(self.app_options),
         }
         Ok(())
     }

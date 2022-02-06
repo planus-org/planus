@@ -1,12 +1,15 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 
 use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
-use clap::StructOpt;
+use clap::{Parser, ValueHint};
 
-/// Checks validity of files
-#[derive(StructOpt)]
+/// Check validity of .fbs files
+#[derive(Parser)]
 pub struct Command {
-    files: Vec<String>,
+    #[clap(value_hint = ValueHint::FilePath)]
+    files: Vec<PathBuf>,
 }
 
 impl Command {
