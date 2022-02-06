@@ -907,9 +907,9 @@ pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn generate_code<P: AsRef<Path>>(
-    input_files: &[P],
-    output_filename: &str,
+pub fn generate_code(
+    input_files: &[impl AsRef<Path>],
+    output_filename: impl AsRef<Path>,
 ) -> anyhow::Result<()> {
     let mut ctx = Ctx::default();
     let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
