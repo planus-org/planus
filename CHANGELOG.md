@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Added an MSRV policy
 - Added a type-check for name overlap between namespaces and declarations
 - Added `generate-completions` subcommand to `planus-cli` to generate shell completions for popular shells.
+- Added a DOT backend
+
 
 ### Fixed
 - Fixed some typos by [@OliverEvans96](https://github.com/OliverEvans96)

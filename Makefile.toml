@@ -80,7 +80,11 @@ script = '''
 
 [tasks.commit-check]
 script = '''
-    uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | wc -l)
+    if [ "$CI" = true ]; then
+        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | grep -v '^ M examples/rust/monster.svg$' | wc -l)
+    else
+        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | wc -l)
+    fi
     if [ $uncommited_changes -gt 0 ]; then
         echo "commit-check failed because of unstaged changes:"
         git status
@@ -92,6 +96,8 @@ script = '''
 dependencies = ["build"]
 script = '''
     target/debug/planus rust -o examples/rust/src/monster_generated.rs examples/rust/monster.fbs
+    target/debug/planus dot -o examples/rust/monster.dot examples/rust/monster.fbs
+    dot -Tsvg examples/rust/monster.dot -o examples/rust/monster.svg
 '''
 
 [tasks.full-test]
