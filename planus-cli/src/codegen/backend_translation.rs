@@ -228,10 +228,10 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
     translation_context: &DeclarationTranslationContext<'a, '_, B>,
     declarations: &'a Declarations,
     full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
-    index: usize,
+    index: DeclarationIndex,
     current_namespace_path: &AbsolutePath,
 ) -> ResolvedType<'a, B> {
-    let (path, decl) = &translation_context.translated_decls[index];
+    let (path, decl) = &translation_context.translated_decls[index.0];
     let relative_path: RelativeNamespace<B> = RelativeNamespace::new(
         current_namespace_path,
         &path.clone_pop(),
@@ -247,7 +247,7 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
         }
         DeclInfo::Enum(translated_decl, decl) => {
             if let BackendDeclaration::Enum(BackendEnum { variants, .. }) =
-                full_translated_decls.get(index).unwrap()
+                full_translated_decls.get(index.0).unwrap()
             {
                 ResolvedType::Enum(decl, translated_decl, relative_path, variants)
             } else {
@@ -276,7 +276,7 @@ fn translate_type<'a, B: ?Sized + Backend>(
             translation_context,
             declarations,
             full_translated_decls,
-            index.0,
+            *index,
             current_namespace_path,
         ),
         TypeKind::SimpleType(type_) => translate_simple_type(
@@ -319,7 +319,7 @@ fn translate_simple_type<'a, B: ?Sized + Backend>(
             translation_context,
             declarations,
             full_translated_decls,
-            index.0,
+            *index,
             current_namespace_path,
         ),
         SimpleType::Bool => ResolvedType::Bool,

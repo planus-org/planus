@@ -487,6 +487,19 @@ impl IntegerType {
             IntegerType::I64 => 8,
         }
     }
+
+    pub fn flatbuffer_name(&self) -> &'static str {
+        match self {
+            IntegerType::U8 => "uint8",
+            IntegerType::U16 => "uint16",
+            IntegerType::U32 => "uint32",
+            IntegerType::U64 => "uint64",
+            IntegerType::I8 => "int8",
+            IntegerType::I16 => "int16",
+            IntegerType::I32 => "int32",
+            IntegerType::I64 => "int64",
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -500,6 +513,13 @@ impl FloatType {
         match self {
             FloatType::F32 => 4,
             FloatType::F64 => 8,
+        }
+    }
+
+    pub fn flatbuffer_name(&self) -> &'static str {
+        match self {
+            FloatType::F32 => "float32",
+            FloatType::F64 => "float64",
         }
     }
 }

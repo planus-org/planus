@@ -1,0 +1,24 @@
+{%- if info.is_root -%}
+digraph G
+{
+  node[ shape = none ];
+  rankdir=LR;
+{%- endif -%}
+
+{%- for child in children -%}
+    {{- Namespace(child) -}}
+{% endfor -%}
+{%- for child in declarations -%}
+    {%- match child -%}
+        {%- when BackendDeclaration::Struct(inner) -%}{{- Struct(inner) }}
+        {%- when BackendDeclaration::Table(inner) -%}{{- Table(inner) }}
+        {%- when BackendDeclaration::Enum(inner) -%}{{- Enum(inner) }}
+        {%- when BackendDeclaration::Union(inner) -%}{{- Union(inner) }}
+        {%- when BackendDeclaration::RpcService(inner) -%}{{- RpcService(inner) }}
+    {% endmatch %}
+
+{% endfor -%}
+
+{%- if info.is_root -%}
+}
+{%- endif -%}

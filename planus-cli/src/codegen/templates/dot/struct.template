@@ -1,0 +1,28 @@
+  decl{{info.decl_id}}[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+          <TD colspan="3" PORT="name">struct {{info.name}}</TD>
+      </TR>
+      <TR>
+          <TD colspan="3">size={{size}}, alignment={{alignment}}</TD>
+      </TR>
+      {% for (field_id, field) in fields.iter().enumerate() %}
+      <TR>
+        <TD>{{field.offset}}</TD>
+        <TD>{{field.info.name}}</TD>
+        <TD PORT="p{{field_id}}">{{field.info.type_}} ({{field.size}} bytes)</TD>
+      </TR>
+      {% if field.padding_after_field > 0 %}
+      <TR>
+        <TD colspan="3">{{field.padding_after_field}} bytes of padding</TD>
+      </TR>
+      {% endif %}
+      {% endfor %}
+    </TABLE>>
+  ];
+  {% for (field_id, field) in fields.iter().enumerate() %}
+  {% match field.info.type_ref %}
+  {% when Some with (v) %} decl{{info.decl_id}}:p{{field_id}}:e -> decl{{v}}:name [color = "{{field.info.color}}"];
+  {% when None %}
+  {% endmatch %}
+  {% endfor %}
