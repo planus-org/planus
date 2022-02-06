@@ -5,16 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.3.0] - 2022-02-06
 ### Added
 - Improved documentation
 - \[Rust\]: The `Builder` now has impls for `Send` and and `Sync`
 - \[Rust\]: We now derive `Ord`, `Eq`, `Hash` and `Default` in some cases
 - \[Rust\]: Added an MSRV policy
 - Added a type-check for name overlap between namespaces and declarations
-- Added `generate-completions` subcommand to `planus-cli` to generate shell completions for popular shells.
+- Added `generate-completions` subcommand to `planus-cli` to generate shell completions for popular shells
 - Added a DOT backend
 - Added a version check to guard against using out-of-date code
-
 
 ### Fixed
 - Fixed some typos by [@OliverEvans96](https://github.com/OliverEvans96)
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-12-30
 - Initial release
 
-[Unreleased]: https://github.com/planus-org/planus/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/planus-org/planus/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/planus-org/planus/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/planus-org/planus/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/planus-org/planus/releases/tag/v0.1.0
