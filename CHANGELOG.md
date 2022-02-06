@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: The `Builder` now has impls for `Send` and and `Sync`
 - \[Rust\]: We now derive `Ord`, `Eq`, `Hash` and `Default` in some cases
 - \[Rust\]: Added an MSRV policy
+- Added a type-check for name overlap between namespaces and declarations
 
 ### Fixed
 - Fixed some typos by [@OliverEvans96](https://github.com/OliverEvans96)
@@ -22,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make generated code work in `no_std`
 - Add support for the `id` attribute
 - (Breaking) Removed the `ToOwned` trait in favor of `TryInto`
-- (Breaking) The Vector deserialization API changed slightly, see #59 for details.
+- (Breaking) The Vector deserialization API changed slightly, see #59 for details
 
 
 ## [0.1.0] - 2021-12-30
