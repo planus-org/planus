@@ -1,0 +1,6 @@
+include "helpers/overlapping_namespace_inner1.fbs";
+include "helpers/overlapping_namespace_inner2.fbs";
+
+namespace Foo;
+
+table Bar {}

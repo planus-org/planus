@@ -1,0 +1,17 @@
+error: Overlapping declarations
+  ┌─ test/files/invalid/defined_twice_namespace_inner.fbs:6:1
+  │
+6 │ table Bar {}
+  │ --------- Declaration was here
+  │
+  ┌─ test/files/invalid/helpers/overlapping_namespace_inner1.fbs:1:1
+  │
+1 │ namespace Foo.Bar;
+  │ ------------------ namespace was defined here
+  │
+  ┌─ test/files/invalid/helpers/overlapping_namespace_inner2.fbs:1:1
+  │
+1 │ namespace Foo.Bar;
+  │ ------------------ namespace was defined here
+
+Error: Bailing because of errors
