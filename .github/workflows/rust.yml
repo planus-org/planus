@@ -68,7 +68,7 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - name: Flatbuffers binary cache
         id: flatbuffers-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/flatc
           key: flatbuffers-${{ runner.os }}
