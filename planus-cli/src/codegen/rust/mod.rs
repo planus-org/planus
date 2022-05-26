@@ -852,6 +852,11 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.owned_name)
                 );
             }
+            ResolvedType::String => {
+                owned_type = "::planus::alloc::string::String".to_string();
+                ref_type = "&'a str".to_string();
+                create_trait = "WriteAsOffset<str>".to_string();
+            }
             _ => todo!(),
         }
         UnionVariant {

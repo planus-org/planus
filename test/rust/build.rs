@@ -21,6 +21,13 @@ fn main() -> Result<()> {
         true,
     )?;
 
+    generate_test_code(
+        "test_files_no_flatc",
+        &planus_test_dir,
+        serialize_template.as_deref(),
+        false,
+    )?;
+
     Ok(())
 }
 
@@ -93,7 +100,14 @@ fn generate_test_code(
             writeln!(code).unwrap();
 
             if let Some(template) = template {
-                code += template;
+                if generate_flatc {
+                    code += template;
+                } else {
+                    let (start, end) = template.split_once("<FLATC>").unwrap();
+                    let (_mid, end) = end.split_once("</FLATC>").unwrap();
+                    code += start;
+                    code += end;
+                }
             } else if is_main_crate {
                 let mut path = file_path.to_owned();
                 path.set_extension("rs");

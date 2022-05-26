@@ -7,7 +7,6 @@ union A0 {
   F: bool,
   G: uint8,
   H: float32,
-  I: string,
 }
 
 struct A1 { x: bool; }
