@@ -3,6 +3,17 @@ use core::{marker::PhantomData, mem::MaybeUninit};
 use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
 
 #[derive(Debug)]
+/// Builder for serializing flatbuffers.
+///
+///
+/// # Examples
+/// ```
+/// use planus::Builder;
+/// use planus_example::monster_generated::my_game::sample::Weapon;
+/// let mut builder = Builder::new();
+/// let weapon = Weapon::create(&mut builder, "Axe", 24);
+/// builder.finish(weapon, None);
+/// ```
 pub struct Builder {
     inner: BackVec,
     // This is a bit complicated. The buffer has support for guaranteeing a
@@ -47,18 +58,22 @@ impl Default for Builder {
 }
 
 impl Builder {
+    /// Creates a new Builder.
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
 
+    /// Gets the length of the internal buffer in bytes.
     pub fn len(&self) -> usize {
         self.inner.len()
     }
 
+    /// Returns true if the internal buffer is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Creates a new builder with a specific internal capacity already allocated.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             inner: BackVec::with_capacity(capacity),
@@ -71,6 +86,7 @@ impl Builder {
         }
     }
 
+    /// Resets the builders internal state and clears the internal buffer.
     pub fn clear(&mut self) {
         self.inner.clear();
         self.delayed_bytes = 0;
@@ -158,6 +174,18 @@ impl Builder {
         self.inner.len() + vtable_size + 4 + needed_padding + object_size + 4
     }
 
+    /// Finish writing the internal buffer and return a byte slice of it.
+    ///
+    /// This will make sure all alignment requirements are fullfilled and that
+    /// the file identifier has been written if specified.
+    ///
+    /// It can also be used to directly serialize an owned flatbuffers struct:
+    /// ```
+    /// use planus::Builder;
+    /// use planus_example::monster_generated::my_game::sample::Weapon;
+    /// let mut builder = Builder::new();
+    /// let data = builder.finish(Weapon { name: Some("Sword".to_string()), damage: 12 }, None);
+    /// ```
     pub fn finish<T>(
         &mut self,
         root: impl WriteAsOffset<T>,
