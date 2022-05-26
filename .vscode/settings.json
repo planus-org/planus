@@ -1,7 +1,7 @@
 {
   "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
-  "rust-analyzer.assist.importPrefix": "crate",
-  "rust-analyzer.assist.importEnforceGranularity": true,
   "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "rust-analyzer.imports.granularity.enforce": true,
+  "rust-analyzer.imports.prefix": "crate"
 }

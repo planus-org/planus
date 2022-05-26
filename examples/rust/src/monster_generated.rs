@@ -136,7 +136,7 @@ mod root {
                 }
             }
 
-            impl<'buf> ::planus::VectorWrite<Color> for Color {
+            impl ::planus::VectorWrite<Color> for Color {
                 const STRIDE: usize = 1;
 
                 type Value = Self;

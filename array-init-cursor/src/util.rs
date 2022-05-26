@@ -21,6 +21,7 @@ impl<T, const X: usize, const Y: usize, const Z: usize> SizeCheck<T, X, Y, Z> fo
     const CHECK: () = check_impl::<T, X, Y, Z>();
 }
 
+#[allow(clippy::let_unit_value)]
 fn check<T, const X: usize, const Y: usize, const Z: usize>() {
     let _: () = SizeCheck::<T, X, Y, Z>::CHECK;
     // Do the same checks at run-time, so even if rustc changes to allow ignore

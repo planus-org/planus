@@ -11,6 +11,9 @@ macro_rules! check_type {
             );
         };
     };
+    // This code is currently not used in any tests, but we consider it highly likely that it will
+    // be needed at some point in the future. It has been commented out to silence warnings.
+    /*
     ($(+[ $($l:lifetime),* ])? $obj:ty => &mut self.$method:ident ($($arg:ty),* $(,)?) : $return:ty) => {
         check_type!($(+[ $($l),* ])? $obj => $method(&mut $obj, $($arg),*) : $return);
         #[allow(unused_unsafe)]
@@ -33,6 +36,7 @@ macro_rules! check_type {
             );
         };
     };
+     */
     ($(+[ $($l:lifetime),* ])? $obj:ty => $method:ident($($arg:ty),* $(,)?) : $return:ty) => {
         const _: () = {
             trait HasMethod$(< $($l),* > )? {

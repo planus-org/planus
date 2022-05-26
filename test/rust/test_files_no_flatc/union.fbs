@@ -1,0 +1,12 @@
+table Inner {
+  value: uint8;
+}
+
+union Union {
+  String: string,
+  Inner,
+}
+
+table Root {
+  value: Union;
+}

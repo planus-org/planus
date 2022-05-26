@@ -46,10 +46,4 @@ error: Unsupported type
 9 │   H: float32,
   │      ^^^^^^^ Floats in unions are not supported
 
-error: Unsupported type
-   ┌─ test/files/invalid/bad_union_types.fbs:10:6
-   │
-10 │   I: string,
-   │      ^^^^^^ Strings in unions are not supported
-
 Error: Bailing because of errors

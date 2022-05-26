@@ -712,7 +712,7 @@ impl<'a> Translator<'a> {
 
     fn check_valid_union_variant_type(&self, current_file_id: FileId, type_: &Type) {
         match type_.kind {
-            TypeKind::Table(_) => (),
+            TypeKind::Table(_) | TypeKind::String => (),
             TypeKind::SimpleType(SimpleType::Struct(_)) => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
@@ -759,13 +759,6 @@ impl<'a> Translator<'a> {
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
                     .with_message("Floats in unions are not supported")],
-                Some("Unsupported type"),
-            ),
-
-            TypeKind::String => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("Strings in unions are not supported")],
                 Some("Unsupported type"),
             ),
         }
