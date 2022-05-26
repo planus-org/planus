@@ -468,13 +468,6 @@ pub trait CstNode {
 
 macro_rules! cst_node {
     ($t:ident) => {
-        impl CstNode for $t {
-            fn span(&self) -> Span {
-                self.span
-            }
-        }
-    };
-    ($t:ident <'input>) => {
         impl<'input> CstNode for $t<'input> {
             fn span(&self) -> Span {
                 self.span
@@ -483,25 +476,25 @@ macro_rules! cst_node {
     };
 }
 
-cst_node!(Schema<'input>);
-cst_node!(Declaration<'input>);
-cst_node!(RpcMethod<'input>);
-cst_node!(Metadata<'input>);
-cst_node!(MetadataValue<'input>);
-cst_node!(FieldDeclaration<'input>);
-cst_node!(EnumValDeclaration<'input>);
-cst_node!(UnionValDeclaration<'input>);
-cst_node!(Type<'input>);
-cst_node!(VectorType<'input>);
-cst_node!(ArrayType<'input>);
-cst_node!(Expr<'input>);
-cst_node!(Sign<'input>);
-cst_node!(IntegerLiteral<'input>);
-cst_node!(FloatLiteral<'input>);
-cst_node!(StringLiteral<'input>);
-cst_node!(ListLiteral<'input>);
-cst_node!(ListLiteralValue<'input>);
-cst_node!(SimpleToken<'input>);
-cst_node!(IdentToken<'input>);
-cst_node!(NamespacePath<'input>);
-cst_node!(NamespacePathSegment<'input>);
+cst_node!(Schema);
+cst_node!(Declaration);
+cst_node!(RpcMethod);
+cst_node!(Metadata);
+cst_node!(MetadataValue);
+cst_node!(FieldDeclaration);
+cst_node!(EnumValDeclaration);
+cst_node!(UnionValDeclaration);
+cst_node!(Type);
+cst_node!(VectorType);
+cst_node!(ArrayType);
+cst_node!(Expr);
+cst_node!(Sign);
+cst_node!(IntegerLiteral);
+cst_node!(FloatLiteral);
+cst_node!(StringLiteral);
+cst_node!(ListLiteral);
+cst_node!(ListLiteralValue);
+cst_node!(SimpleToken);
+cst_node!(IdentToken);
+cst_node!(NamespacePath);
+cst_node!(NamespacePathSegment);

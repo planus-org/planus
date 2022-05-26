@@ -96,7 +96,7 @@ impl<'buf> ::planus::VectorReadInner<'buf> for {{info.name}} {
     }
 }
 
-impl<'buf> ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
+impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
     const STRIDE: usize = {{ size }};
 
     type Value = Self;
