@@ -87,7 +87,14 @@ impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, field_offset: usize, tag: u8) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         match tag {
             {% for variant in variants -%}
-                {{loop.index}} => ::core::result::Result::Ok(Self::{{ variant.enum_name }}(::planus::TableRead::from_buffer(buffer, field_offset)?)),
+                {%- if variant.is_struct -%}
+                    {{loop.index}} => {
+                        let struct_offset: u32 = ::planus::TableRead::from_buffer(buffer, field_offset)?;
+                        ::core::result::Result::Ok(Self::{{ variant.enum_name }}(::planus::TableRead::from_buffer(buffer, field_offset + struct_offset as usize)?))
+                    }
+                {%- else -%}
+                    {{loop.index}} => ::core::result::Result::Ok(Self::{{ variant.enum_name }}(::planus::TableRead::from_buffer(buffer, field_offset)?)),
+                {%- endif -%}
             {%- endfor -%}
             _ => ::core::result::Result::Err(::planus::errors::ErrorKind::UnknownUnionTag { tag }),
         }

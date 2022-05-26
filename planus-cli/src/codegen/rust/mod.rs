@@ -93,6 +93,7 @@ pub struct UnionVariant {
     pub enum_name: String,
     pub owned_type: String,
     pub ref_type: String,
+    pub is_struct: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -836,6 +837,7 @@ impl Backend for RustBackend {
         let create_trait;
         let owned_type;
         let ref_type;
+        let mut is_struct = false;
 
         match resolved_type {
             ResolvedType::Table(_, info, relative_namespace) => {
@@ -852,6 +854,19 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.owned_name)
                 );
             }
+            ResolvedType::Struct(_, info, relative_namespace) => {
+                owned_type =
+                    format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
+                ref_type = format!(
+                    "{}<'a>",
+                    format_relative_namespace(&relative_namespace, &info.ref_name)
+                );
+                create_trait = format!(
+                    "WriteAsOffset<{}>",
+                    format_relative_namespace(&relative_namespace, &info.owned_name)
+                );
+                is_struct = true;
+            }
             ResolvedType::String => {
                 owned_type = "::planus::alloc::string::String".to_string();
                 ref_type = "&'a str".to_string();
@@ -865,6 +880,7 @@ impl Backend for RustBackend {
             create_trait,
             owned_type,
             ref_type,
+            is_struct,
         }
     }
 

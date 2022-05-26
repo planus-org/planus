@@ -1,6 +1,6 @@
 {
   "value": {
-    "Inner": {
+    "InnerStruct": {
       "value": 17
     }
   }

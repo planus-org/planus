@@ -1,7 +1,7 @@
 RootRef {
     value: Ok(
-        Inner(
-            InnerRef {
+        InnerTable(
+            InnerTableRef {
                 value: Ok(
                     17,
                 ),
