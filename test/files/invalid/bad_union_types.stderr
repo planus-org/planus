@@ -8,42 +8,84 @@ error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:3:6
   │
 3 │   B: A1,
-  │      ^^ Structs in unions are not supported
+  │      ^^ Enums in unions are not supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:4:6
   │
-4 │   C: A2,
-  │      ^^ Enums in unions are not supported
+4 │   C: [bool],
+  │      ^^^^^^ Vectors in unions are not supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:5:6
   │
-5 │   D: [bool],
-  │      ^^^^^^ Vectors in unions are not supported
+5 │   D: [bool: 1],
+  │      ^^^^^^^^^ Arrays in unions are not supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:6:6
   │
-6 │   E: [bool: 1],
-  │      ^^^^^^^^^ Arrays in unions are not supported
+6 │   E: bool,
+  │      ^^^^ Bools in unions are not supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:7:6
   │
-7 │   F: bool,
-  │      ^^^^ Bools in unions are not supported
+7 │   F: uint8,
+  │      ^^^^^ Integers in unions are not supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_union_types.fbs:8:6
   │
-8 │   G: uint8,
-  │      ^^^^^ Integers in unions are not supported
+8 │   G: float32,
+  │      ^^^^^^^ Floats in unions are not supported
 
 error: Unsupported type
-  ┌─ test/files/invalid/bad_union_types.fbs:9:6
+  ┌─ test/files/invalid/bad_union_types.fbs:9:3
   │
-9 │   H: float32,
-  │      ^^^^^^^ Floats in unions are not supported
+9 │   A0,
+  │   ^^ Unions in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:10:3
+   │
+10 │   A1,
+   │   ^^ Enums in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:11:3
+   │
+11 │   [bool],
+   │   ^^^^^^ Vectors in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:12:3
+   │
+12 │   [bool: 1],
+   │   ^^^^^^^^^ Arrays in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:13:3
+   │
+13 │   bool,
+   │   ^^^^ Bools in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:14:3
+   │
+14 │   uint8,
+   │   ^^^^^ Integers in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:15:3
+   │
+15 │   float32,
+   │   ^^^^^^^ Floats in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:16:3
+   │
+16 │   string,
+   │   ^^^^^^ Strings in unions without variant names are not supported
 
 Error: Bailing because of errors

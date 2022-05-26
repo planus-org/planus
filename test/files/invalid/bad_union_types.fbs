@@ -1,13 +1,19 @@
 union A0 {
   A: A0,
   B: A1,
-  C: A2,
-  D: [bool],
-  E: [bool: 1],
-  F: bool,
-  G: uint8,
-  H: float32,
+  C: [bool],
+  D: [bool: 1],
+  E: bool,
+  F: uint8,
+  G: float32,
+  A0,
+  A1,
+  [bool],
+  [bool: 1],
+  bool,
+  uint8,
+  float32,
+  string,
 }
 
-struct A1 { x: bool; }
-enum A2: uint8 {}
+enum A1: uint8 {}

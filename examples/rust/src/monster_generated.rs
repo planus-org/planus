@@ -277,6 +277,25 @@ mod root {
                 }
             }
 
+            impl ::planus::WriteAsOffset<Vec3> for Vec3 {
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Vec3> {
+                    unsafe {
+                        builder.write_with(12, 4, |buffer_position, bytes| {
+                            let bytes = bytes.as_mut_ptr();
+
+                            ::planus::WriteAsPrimitive::write(
+                                self,
+                                ::planus::Cursor::new(
+                                    &mut *(bytes as *mut [::core::mem::MaybeUninit<u8>; 12]),
+                                ),
+                                buffer_position,
+                            );
+                        });
+                    }
+                    builder.current_offset()
+                }
+            }
+
             impl ::planus::WriteAs<Vec3> for Vec3 {
                 type Prepared = Self;
                 fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {

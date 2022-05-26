@@ -4,9 +4,18 @@ table Inner {
 
 union Union {
   String: string,
-  Inner,
+  InnerTable,
+  InnerStruct,
 }
 
 table Root {
   value: Union;
+}
+
+table InnerTable {
+  value: uint8;
+}
+
+struct InnerStruct {
+  value: uint8;
 }

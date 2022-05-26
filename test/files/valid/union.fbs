@@ -1,0 +1,15 @@
+union ValidUnion {
+  Foo,
+  Bar,
+  A0: string,
+  A1: Foo,
+  A2: Bar,
+}
+
+struct Foo {
+  x: uint8;
+}
+
+table Bar {
+  x: uint8;
+}

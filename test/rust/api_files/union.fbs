@@ -1,0 +1,15 @@
+union Union {
+  Foo: string,
+  Bar: InnerStruct,
+  Baz: InnerTable,
+  InnerStruct,
+  InnerTable,
+}
+
+struct InnerStruct {
+  value: uint8;
+}
+
+struct InnerTable {
+  value: uint8;
+}

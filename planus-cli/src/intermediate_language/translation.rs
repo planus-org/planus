@@ -710,13 +710,19 @@ impl<'a> Translator<'a> {
         }
     }
 
-    fn check_valid_union_variant_type(&self, current_file_id: FileId, type_: &Type) {
+    fn check_valid_union_variant_type(
+        &self,
+        current_file_id: FileId,
+        type_: &Type,
+        has_ident: bool,
+    ) {
         match type_.kind {
-            TypeKind::Table(_) | TypeKind::String => (),
-            TypeKind::SimpleType(SimpleType::Struct(_)) => self.ctx.emit_error(
+            TypeKind::Table(_) | TypeKind::SimpleType(SimpleType::Struct(_)) => (),
+            TypeKind::String if has_ident => (),
+            TypeKind::String => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
-                    .with_message("Structs in unions are not supported")],
+                    .with_message("Strings in unions without variant names are not supported")],
                 Some("Unsupported type"),
             ),
             TypeKind::Union(_) => self.ctx.emit_error(
@@ -1192,7 +1198,11 @@ impl<'a> Translator<'a> {
             .filter_map(|variant| {
                 let type_ =
                     self.translate_type(current_namespace, current_file_id, &variant.type_)?;
-                self.check_valid_union_variant_type(current_file_id, &type_);
+                self.check_valid_union_variant_type(
+                    current_file_id,
+                    &type_,
+                    variant.ident.is_some(),
+                );
 
                 let name = if let Some(ident) = variant.ident {
                     self.ctx.resolve_identifier(ident.value)
@@ -1202,7 +1212,7 @@ impl<'a> Translator<'a> {
                         ast::TypeKind::Path(p) => {
                             self.ctx.resolve_identifier(*p.parts.last().unwrap())
                         }
-                        _ => todo!(),
+                        _ => String::default(),
                     }
                 };
 

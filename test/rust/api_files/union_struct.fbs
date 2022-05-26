@@ -1,3 +1,0 @@
-union Union {
-  Foo: string,
-}
