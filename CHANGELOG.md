@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Add support for strings in unions
 - \[Rust\]: Add support for structs in unions
 - \[Rust\]: Fix a few codegen bugs when using certain field names
+- \[Rust\]: Fix panic when accessing union from invalid input
 
 ## [0.3.0] - 2022-02-06
 ### Added
