@@ -13,9 +13,9 @@ impl<'buf> Table<'buf> {
         buffer: SliceWithStartOffset<'buf>,
         field_offset: usize,
     ) -> Result<Self, ErrorKind> {
-        let field_value = u32::from_buffer(buffer, field_offset)?;
+        let object_size = u32::from_buffer(buffer, field_offset)?;
         let object_offset = field_offset
-            .checked_add(field_value as usize)
+            .checked_add(object_size as usize)
             .ok_or(ErrorKind::InvalidOffset)?;
         let object = buffer.advance(object_offset)?;
 
@@ -92,12 +92,6 @@ impl<'buf> Table<'buf> {
         type_: &'static str,
         method: &'static str,
     ) -> crate::Result<Option<T>> {
-        let offset = self
-            .vtable
-            .get(2 * vtable_offset..2 * (vtable_offset + 2))
-            .expect("IMPOSSIBLE: trying to access invalid vtable offset for union");
-        let tag_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
-        let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
         let make_error = |error_kind| crate::errors::Error {
             source_location: crate::errors::ErrorLocation {
                 type_,
@@ -106,6 +100,15 @@ impl<'buf> Table<'buf> {
             },
             error_kind,
         };
+
+        let offset = self
+            .vtable
+            .get(2 * vtable_offset..2 * (vtable_offset + 2))
+            .ok_or_else(|| make_error(ErrorKind::InvalidOffset))?;
+
+        let tag_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
+        let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
+
         let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
         if tag_offset != 0 && value_offset != 0 && tag != 0 {
             T::from_buffer(self.object, value_offset, tag)

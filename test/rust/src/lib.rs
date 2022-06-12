@@ -8,6 +8,8 @@ pub mod planus_test;
 
 pub mod hexdump;
 
+mod table_reader;
+
 #[cfg(test)]
 pub mod tests {
     use std::path::Path;
