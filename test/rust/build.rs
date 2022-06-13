@@ -13,6 +13,7 @@ fn main() -> Result<()> {
 
     // Create serialize/deserialize tests
     let planus_test_dir = format!("{}/planus_test", out_dir);
+    let planus_test_no_flatc_dir = format!("{}/planus_test_no_flatc", out_dir);
     let serialize_template = std::fs::read_to_string("src/test_template.rs").ok();
     generate_test_code(
         "test_files",
@@ -23,7 +24,7 @@ fn main() -> Result<()> {
 
     generate_test_code(
         "test_files_no_flatc",
-        &planus_test_dir,
+        &planus_test_no_flatc_dir,
         serialize_template.as_deref(),
         false,
     )?;

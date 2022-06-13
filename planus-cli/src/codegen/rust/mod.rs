@@ -177,6 +177,7 @@ impl Backend for RustBackend {
         "mut", "pub", "ref", "return", "Self", "self", "static", "struct", "super", "trait",
         "true", "type", "union", "unsafe", "use", "where", "while", "abstract", "become", "box",
         "do", "final", "macro", "override", "priv", "try", "typeof", "unsized", "virtual", "yield",
+        "_",
     ];
 
     fn generate_namespace(

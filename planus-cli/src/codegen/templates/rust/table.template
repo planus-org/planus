@@ -27,15 +27,15 @@ impl {{info.owned_name}} {
     pub fn create(
         builder: &mut ::planus::Builder,
         {% for field in fields.declaration_order() -%}
-            {{ field.info.create_name }}: impl ::planus::{{ field.info.create_trait }},
+            field_{{ field.info.create_name }}: impl ::planus::{{ field.info.create_trait }},
         {% endfor %}
     ) -> ::planus::Offset<Self> {
         {% for field in fields.declaration_order() -%}
             {% match field.info.serialize_default %}
             {% when Some with (serialize_default) %}
-            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(builder, {{ serialize_default }});
+            let prepared_{{ field.info.create_name }} = field_{{ field.info.create_name }}.prepare(builder, {{ serialize_default }});
             {% when None %}
-            let prepared_{{ field.info.create_name }} = {{ field.info.create_name }}.prepare(builder);
+            let prepared_{{ field.info.create_name }} = field_{{ field.info.create_name }}.prepare(builder);
             {% endmatch %}
         {% endfor %}
 
@@ -138,8 +138,8 @@ impl<'a> ::core::fmt::Debug for {{info.ref_name}}<'a> {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields.declaration_order() -%}
             {%- if field.info.read_type.starts_with("::core::option::Option<") -%}
-            if let ::core::option::Option::Some({{field.info.name}}) = self.{{field.info.name}}().transpose() {
-                f.field("{{field.info.name}}", &{{field.info.name}});
+            if let ::core::option::Option::Some(field_{{field.info.name}}) = self.{{field.info.name}}().transpose() {
+                f.field("{{field.info.name}}", &field_{{field.info.name}});
             }
             {%- else -%}
             f.field("{{field.info.name}}", &self.{{field.info.name}}());
