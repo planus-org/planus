@@ -13,9 +13,9 @@ impl<'buf> Table<'buf> {
         buffer: SliceWithStartOffset<'buf>,
         field_offset: usize,
     ) -> Result<Self, ErrorKind> {
-        let object_size = u32::from_buffer(buffer, field_offset)?;
+        let field_value = u32::from_buffer(buffer, field_offset)?;
         let object_offset = field_offset
-            .checked_add(object_size as usize)
+            .checked_add(field_value as usize)
             .ok_or(ErrorKind::InvalidOffset)?;
         let object = buffer.advance(object_offset)?;
 
