@@ -105,7 +105,10 @@ pub struct RpcMethod {}
 const BINDING_KIND_TYPES: &str = "types";
 
 fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>) -> String {
-    let name = path.to_snake_case().into();
+    let mut name: Cow<'_, str> = path.to_snake_case().into();
+    if name.is_empty() || name == "_" {
+        name = "__".into();
+    }
     namespace_names
         .namespace_names
         .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
@@ -113,7 +116,10 @@ fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>)
 }
 
 fn reserve_type_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
-    let name = path.to_upper_camel_case().into();
+    let mut name: Cow<'_, str> = path.to_upper_camel_case().into();
+    if name.is_empty() || name == "_" {
+        name = "__".into();
+    }
     declaration_names
         .declaration_names
         .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
@@ -125,7 +131,10 @@ fn reserve_field_name(
     binding_kind: &'static str,
     declaration_names: &mut DeclarationNames<'_, '_>,
 ) -> String {
-    let name = path.to_snake_case().into();
+    let mut name: Cow<'_, str> = path.to_snake_case().into();
+    if name.is_empty() || name == "_" {
+        name = "__".into();
+    }
     declaration_names
         .declaration_names
         .try_reserve_repeat(binding_kind, name, '_')
@@ -137,7 +146,10 @@ fn reserve_rust_enum_variant_name(
     binding_kind: &'static str,
     declaration_names: &mut DeclarationNames<'_, '_>,
 ) -> String {
-    let name = path.to_upper_camel_case().into();
+    let mut name: Cow<'_, str> = path.to_upper_camel_case().into();
+    if name.is_empty() || name == "_" {
+        name = "__".into();
+    }
     declaration_names
         .declaration_names
         .try_reserve_repeat(binding_kind, name, '_')

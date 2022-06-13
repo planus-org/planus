@@ -1,0 +1,101 @@
+table Table {
+  f: uint8;
+  n: uint8;
+  N: uint16;
+  _: uint8;
+  __: uint16;
+  builder: uint8;
+  _builder: uint16;
+  value: uint8;
+  _value: uint16;
+  values: uint8;
+  bytes: uint8;
+  offset: uint8;
+  cursor: uint8;
+  buffer: uint8;
+  buffer_position: uint8;
+  struct_offset: uint8;
+  field_offset: uint8;
+  _field_offset: uint16;
+  tag: uint8;
+  offset_from_start: uint8;
+  slice: uint8;
+  default: uint8;
+}
+
+struct Struct {
+  f: uint8;
+  n: uint8;
+  N: uint16;
+  _: uint8;
+  __: uint16;
+  builder: uint8;
+  _builder: uint16;
+  value: uint8;
+  _value: uint16;
+  values: uint8;
+  bytes: uint8;
+  offset: uint8;
+  cursor: uint8;
+  buffer: uint8;
+  buffer_position: uint8;
+  struct_offset: uint8;
+  field_offset: uint8;
+  _field_offset: uint16;
+  tag: uint8;
+  offset_from_start: uint8;
+  slice: uint8;
+  default: uint8;
+}
+
+enum Enum: uint8 {
+  f,
+  n,
+  N,
+  _,
+  __,
+  builder,
+  _builder,
+  value,
+  _value,
+  values,
+  bytes,
+  offset,
+  cursor,
+  buffer,
+  buffer_position,
+  struct_offset,
+  field_offset,
+  _field_offset,
+  tag,
+  offset_from_start,
+  slice,
+  default
+}
+
+table Table2 {}
+
+union Union {
+  f: Table,
+  n: Table,
+  N: Table2,
+  _: Table,
+  __: Table2,
+  builder: Table,
+  _builder: Table2,
+  value: Table,
+  _value: Table2,
+  values: Table,
+  bytes: Table,
+  offset: Table,
+  cursor: Table,
+  buffer: Table,
+  buffer_position: Table,
+  struct_offset: Table,
+  field_offset: Table,
+  _field_offset: Table2,
+  tag: Table,
+  offset_from_start: Table,
+  slice: Table,
+  default: Table
+}

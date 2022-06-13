@@ -141,7 +141,7 @@ mod root {
 
                 type Value = Self;
 
-                fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
+                fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
                     *self
                 }
 
@@ -442,35 +442,35 @@ mod root {
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
-                    pos: impl ::planus::WriteAsOptional<self::Vec3>,
-                    mana: impl ::planus::WriteAsDefault<i16, i16>,
-                    hp: impl ::planus::WriteAsDefault<i16, i16>,
-                    name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    inventory: impl ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
-                    color: impl ::planus::WriteAsDefault<self::Color, self::Color>,
-                    weapons: impl ::planus::WriteAsOptional<
+                    field_pos: impl ::planus::WriteAsOptional<self::Vec3>,
+                    field_mana: impl ::planus::WriteAsDefault<i16, i16>,
+                    field_hp: impl ::planus::WriteAsDefault<i16, i16>,
+                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    field_inventory: impl ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                    field_color: impl ::planus::WriteAsDefault<self::Color, self::Color>,
+                    field_weapons: impl ::planus::WriteAsOptional<
                         ::planus::Offset<[::planus::Offset<self::Weapon>]>,
                     >,
-                    equipped: impl ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    path: impl ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                    field_equipped: impl ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    field_path: impl ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 ) -> ::planus::Offset<Self> {
-                    let prepared_pos = pos.prepare(builder);
+                    let prepared_pos = field_pos.prepare(builder);
 
-                    let prepared_mana = mana.prepare(builder, &150);
+                    let prepared_mana = field_mana.prepare(builder, &150);
 
-                    let prepared_hp = hp.prepare(builder, &100);
+                    let prepared_hp = field_hp.prepare(builder, &100);
 
-                    let prepared_name = name.prepare(builder);
+                    let prepared_name = field_name.prepare(builder);
 
-                    let prepared_inventory = inventory.prepare(builder);
+                    let prepared_inventory = field_inventory.prepare(builder);
 
-                    let prepared_color = color.prepare(builder, &self::Color::Blue);
+                    let prepared_color = field_color.prepare(builder, &self::Color::Blue);
 
-                    let prepared_weapons = weapons.prepare(builder);
+                    let prepared_weapons = field_weapons.prepare(builder);
 
-                    let prepared_equipped = equipped.prepare(builder);
+                    let prepared_equipped = field_equipped.prepare(builder);
 
-                    let prepared_path = path.prepare(builder);
+                    let prepared_path = field_path.prepare(builder);
 
                     let mut table_writer =
                         ::planus::table_writer::TableWriter::<24, 39>::new(builder);
@@ -649,26 +649,31 @@ mod root {
             impl<'a> ::core::fmt::Debug for MonsterRef<'a> {
                 fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     let mut f = f.debug_struct("MonsterRef");
-                    if let ::core::option::Option::Some(pos) = self.pos().transpose() {
-                        f.field("pos", &pos);
+                    if let ::core::option::Option::Some(field_pos) = self.pos().transpose() {
+                        f.field("pos", &field_pos);
                     }
                     f.field("mana", &self.mana());
                     f.field("hp", &self.hp());
-                    if let ::core::option::Option::Some(name) = self.name().transpose() {
-                        f.field("name", &name);
+                    if let ::core::option::Option::Some(field_name) = self.name().transpose() {
+                        f.field("name", &field_name);
                     }
-                    if let ::core::option::Option::Some(inventory) = self.inventory().transpose() {
-                        f.field("inventory", &inventory);
+                    if let ::core::option::Option::Some(field_inventory) =
+                        self.inventory().transpose()
+                    {
+                        f.field("inventory", &field_inventory);
                     }
                     f.field("color", &self.color());
-                    if let ::core::option::Option::Some(weapons) = self.weapons().transpose() {
-                        f.field("weapons", &weapons);
+                    if let ::core::option::Option::Some(field_weapons) = self.weapons().transpose()
+                    {
+                        f.field("weapons", &field_weapons);
                     }
-                    if let ::core::option::Option::Some(equipped) = self.equipped().transpose() {
-                        f.field("equipped", &equipped);
+                    if let ::core::option::Option::Some(field_equipped) =
+                        self.equipped().transpose()
+                    {
+                        f.field("equipped", &field_equipped);
                     }
-                    if let ::core::option::Option::Some(path) = self.path().transpose() {
-                        f.field("path", &path);
+                    if let ::core::option::Option::Some(field_path) = self.path().transpose() {
+                        f.field("path", &field_path);
                     }
                     f.finish()
                 }
@@ -821,12 +826,12 @@ mod root {
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
-                    name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    damage: impl ::planus::WriteAsDefault<i16, i16>,
+                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    field_damage: impl ::planus::WriteAsDefault<i16, i16>,
                 ) -> ::planus::Offset<Self> {
-                    let prepared_name = name.prepare(builder);
+                    let prepared_name = field_name.prepare(builder);
 
-                    let prepared_damage = damage.prepare(builder, &0);
+                    let prepared_damage = field_damage.prepare(builder, &0);
 
                     let mut table_writer =
                         ::planus::table_writer::TableWriter::<6, 6>::new(builder);
@@ -897,8 +902,8 @@ mod root {
             impl<'a> ::core::fmt::Debug for WeaponRef<'a> {
                 fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     let mut f = f.debug_struct("WeaponRef");
-                    if let ::core::option::Option::Some(name) = self.name().transpose() {
-                        f.field("name", &name);
+                    if let ::core::option::Option::Some(field_name) = self.name().transpose() {
+                        f.field("name", &field_name);
                     }
                     f.field("damage", &self.damage());
                     f.finish()

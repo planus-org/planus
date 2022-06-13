@@ -88,8 +88,8 @@ impl<'a> ::core::fmt::Debug for {{ info.ref_name }}<'a> {
         let mut f = f.debug_struct("{{info.ref_name}}");
         {% for field in fields -%}
             {%- if field.info.getter_return_type.starts_with("planus::Result<") -%}
-                if let ::core::option::Option::Some(value) = self.{{field.info.name}}().transpose() {
-                    f.field("{{field.info.name}}", &value);
+                if let ::core::option::Option::Some(field_{{field.info.name}}) = self.{{field.info.name}}().transpose() {
+                    f.field("{{field.info.name}}", &field_{{field.info.name}});
                 }
             {%- else -%}
                 f.field("{{field.info.name}}", &self.{{field.info.name}}());

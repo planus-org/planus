@@ -101,7 +101,7 @@ impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
 
     type Value = Self;
 
-    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
         *self
     }
 
