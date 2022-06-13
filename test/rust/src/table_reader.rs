@@ -20,11 +20,11 @@ impl<'buf> TableReadUnion<'buf> for A {
 fn access_union() {
     use planus::table_reader::Table;
     let data: Vec<u8> = vec![
-        8, 0, 0, 0, // vtable size
-        4, 0, 1, 0, // vtable with tag offset (u16) and value offset (u16)
-        4, 0, 0, 0, // object size (u32)
+        8, 0, 0, 0, // vtable size and object size
+        4, 0, 99, 0, // vtable with tag offset (u16) and value offset (u16)
+        4, 0, 0, 0, // object offset (u32)
         12, 0, 0, 0, // vtable offset (i32)
-        1, 0, 0, 0, // tag
+        42, 0, 0, 0, // tag
     ];
     let data = SliceWithStartOffset {
         buffer: &data,
@@ -36,7 +36,7 @@ fn access_union() {
     // => accessing index 0 must be ok
     assert_eq!(
         table.access_union::<A>(0, "", "").unwrap(),
-        Some(A { tag: 1, offset: 1 })
+        Some(A { tag: 42, offset: 99 })
     );
     //  => accessing index 1 must error
     assert!(table.access_union::<A>(1, "", "").is_err())
