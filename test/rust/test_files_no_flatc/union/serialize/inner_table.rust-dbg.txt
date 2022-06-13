@@ -1,0 +1,11 @@
+RootRef {
+    value: Ok(
+        InnerTable(
+            InnerTableRef {
+                value: Ok(
+                    17,
+                ),
+            },
+        ),
+    ),
+}

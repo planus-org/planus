@@ -1,0 +1,9 @@
+RootRef {
+    value: Ok(
+        InnerStruct(
+            InnerStructRef {
+                value: 17,
+            },
+        ),
+    ),
+}
