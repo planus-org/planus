@@ -1,0 +1,14 @@
+RootRef {
+    f: Err(
+        Error {
+            source_location: ErrorLocation {
+                type_: "Root",
+                method: "f",
+                byte_offset: 10,
+            },
+            error_kind: InvalidVtableLength {
+                length: 6,
+            },
+        },
+    ),
+}

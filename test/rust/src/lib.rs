@@ -9,6 +9,8 @@ pub mod planus_test_no_flatc;
 
 pub mod hexdump;
 
+mod table_reader;
+
 #[cfg(test)]
 pub mod tests {
     use std::path::Path;

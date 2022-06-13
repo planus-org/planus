@@ -92,12 +92,6 @@ impl<'buf> Table<'buf> {
         type_: &'static str,
         method: &'static str,
     ) -> crate::Result<Option<T>> {
-        let offset = self
-            .vtable
-            .get(2 * vtable_offset..2 * (vtable_offset + 2))
-            .expect("IMPOSSIBLE: trying to access invalid vtable offset for union");
-        let tag_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
-        let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
         let make_error = |error_kind| crate::errors::Error {
             source_location: crate::errors::ErrorLocation {
                 type_,
@@ -106,13 +100,26 @@ impl<'buf> Table<'buf> {
             },
             error_kind,
         };
-        let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
-        if tag_offset != 0 && value_offset != 0 && tag != 0 {
-            T::from_buffer(self.object, value_offset, tag)
-                .map(Some)
-                .map_err(make_error)
-        } else {
+
+        if let Some(offset) = self.vtable.get(2 * vtable_offset..2 * (vtable_offset + 2)) {
+            let tag_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
+            let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
+            let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
+            if tag_offset != 0 && value_offset != 0 && tag != 0 {
+                T::from_buffer(self.object, value_offset, tag)
+                    .map(Some)
+                    .map_err(make_error)
+            } else {
+                Ok(None)
+            }
+        } else if self.vtable.len() <= 2 * vtable_offset {
             Ok(None)
+        } else {
+            Err(make_error(ErrorKind::InvalidVtableLength {
+                // The slice does not contain the vtable or objects
+                // size, but they are included for the error message
+                length: self.vtable.len() as u16 + 4,
+            }))
         }
     }
 

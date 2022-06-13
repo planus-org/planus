@@ -1,0 +1,9 @@
+table Table {}
+
+union Union {
+  t: Table
+}
+
+table Root {
+  f: Union;
+}
