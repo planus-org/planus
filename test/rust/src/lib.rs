@@ -5,6 +5,7 @@ pub mod macros;
 
 pub mod planus_api;
 pub mod planus_test;
+pub mod planus_test_no_flatc;
 
 pub mod hexdump;
 
