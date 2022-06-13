@@ -32,7 +32,7 @@ impl<'keywords> Names<'keywords> {
     }
 
     pub fn try_reserve(&mut self, binding_kind: &'static str, value: &str) -> bool {
-        if self.keywords.contains(value) {
+        if value.is_empty() || self.keywords.contains(value) {
             false
         } else {
             let names = self.names.entry(binding_kind).or_default();
