@@ -19,6 +19,7 @@ impl<'buf> TableReadUnion<'buf> for A {
 #[test]
 fn access_union() {
     use planus::table_reader::Table;
+    #[rustfmt::skip]
     let data: Vec<u8> = vec![
         // object offset (u32)
         12, 0, 0, 0,
@@ -41,7 +42,10 @@ fn access_union() {
     // => accessing index 0 must be ok
     assert_eq!(
         table.access_union::<A>(0, "", "").unwrap(),
-        Some(A { tag: 42, offset: 99 })
+        Some(A {
+            tag: 42,
+            offset: 99
+        })
     );
     //  => accessing index 1 must error
     assert!(table.access_union::<A>(1, "", "").is_err())
