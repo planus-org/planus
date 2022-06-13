@@ -116,6 +116,8 @@ impl<'buf> Table<'buf> {
             Ok(None)
         } else {
             Err(make_error(ErrorKind::InvalidVtableLength {
+                // The slice does not contain the vtable or objects
+                // size, but they are included for the error message
                 length: self.vtable.len() as u16 + 4,
             }))
         }
