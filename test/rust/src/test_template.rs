@@ -40,6 +40,12 @@ fn test_serialize() {
             crate::tests::compare_regenerate_file_str(&dump_path, &dump, should_regenerate)
                 .unwrap();
 
+            let mut dbg_rust_path = file_path.clone();
+            dbg_rust_path.set_extension("rust-dbg.txt");
+            let rust_dbg = format!("{:#?}", root_ref);
+            crate::tests::compare_regenerate_file_str(&dbg_rust_path, &rust_dbg, should_regenerate)
+                .unwrap();
+
             // <FLATC>
             let mut dbg_path = file_path.clone();
             dbg_path.set_extension("dbg.txt");

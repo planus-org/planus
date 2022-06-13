@@ -1,0 +1,8 @@
+RootRef {
+    a: Ok(
+        "",
+    ),
+    b: Ok(
+        "xyzw",
+    ),
+}

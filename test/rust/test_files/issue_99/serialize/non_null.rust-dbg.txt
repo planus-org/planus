@@ -1,0 +1,7 @@
+RootRef {
+    f: Ok(
+        T(
+            TableRef,
+        ),
+    ),
+}
