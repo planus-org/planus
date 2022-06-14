@@ -8,18 +8,22 @@ pub struct SliceWithStartOffset<'buf> {
 }
 
 impl<'buf> SliceWithStartOffset<'buf> {
+    /// Length of the slize in bytes.
     pub fn len(&self) -> usize {
         self.buffer.len()
     }
 
+    /// Returns true if the slice is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Returns the inner buffer as a slice.
     pub fn as_slice(&self) -> &'buf [u8] {
         self.buffer
     }
 
+    /// Returns a new slice which is advanced by `amount` bytes.
     pub fn advance(&self, amount: usize) -> core::result::Result<Self, ErrorKind> {
         let buffer = self.buffer.get(amount..).ok_or(ErrorKind::InvalidOffset)?;
         Ok(Self {
@@ -28,6 +32,7 @@ impl<'buf> SliceWithStartOffset<'buf> {
         })
     }
 
+    /// The same as [`SliceWithStartOffset::advance`], but converted to an array reference.
     pub fn advance_as_array<const N: usize>(
         &self,
         amount: usize,
