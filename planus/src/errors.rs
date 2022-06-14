@@ -40,7 +40,7 @@ pub enum ErrorKind {
         /// The union tag that wasn't recognized.
         tag: u8,
     },
-    /// A vtable was too large for the remaining buffer.
+    /// A vtable had an invalid length (too large, too small or unaligned).
     InvalidVtableLength {
         /// The length of the vtable.
         length: u16,

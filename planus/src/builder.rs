@@ -179,7 +179,16 @@ impl Builder {
     /// This will make sure all alignment requirements are fullfilled and that
     /// the file identifier has been written if specified.
     ///
-    /// It can also be used to directly serialize an owned flatbuffers struct:
+    /// # Examples
+    /// ```
+    /// use planus::Builder;
+    /// use planus_example::monster_generated::my_game::sample::Weapon;
+    /// let mut builder = Builder::new();
+    /// let weapon = Weapon::create(&mut builder, "Axe", 24);
+    /// builder.finish(weapon, None);
+    /// ```
+    ///
+    /// It can also be used to directly serialize an owned flatbuffers struct
     /// ```
     /// use planus::Builder;
     /// use planus_example::monster_generated::my_game::sample::Weapon;

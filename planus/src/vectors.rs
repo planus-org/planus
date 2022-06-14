@@ -26,7 +26,7 @@ where
 }
 
 impl<T: ?Sized + 'static> Vector<'static, T> {
-    /// A pre-allocated empty vector.
+    #[doc(hidden)]
     pub const EMPTY: Self = Self {
         buffer: SliceWithStartOffset {
             buffer: &[],
