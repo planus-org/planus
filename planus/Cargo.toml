@@ -1,10 +1,10 @@
 [package]
 name = "planus"
-version = "0.3.0"
+version = "0.3.1"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 edition = "2021"
-readme = "../README.md"
+readme = "README.md"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
 rust-version = "1.57"

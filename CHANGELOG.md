@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.3.1] - 2022-06-15
+### Added
 - \[Rust\]: Made planus crate `#[deny(missing_docs)]`
 - \[Rust\]: Add support for strings in unions
 - \[Rust\]: Add support for structs in unions
+
+### Fixed
 - \[Rust\]: Fix a few codegen bugs when using certain field names
 - \[Rust\]: Fix panic when accessing union from invalid input
 - \[Rust\]: Fix a bug where struct attributes were used instead of struct field attributes
