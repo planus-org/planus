@@ -511,7 +511,7 @@ impl<'a> Translator<'a> {
             .fields
             .iter()
             .filter_map(|(ident, field)| {
-                self.translate_struct_field(current_namespace, current_file_id, field, decl, ident)
+                self.translate_struct_field(current_namespace, current_file_id, field, ident)
             })
             .collect();
         Struct {
@@ -527,7 +527,6 @@ impl<'a> Translator<'a> {
         current_namespace: &AbsolutePath,
         current_file_id: FileId,
         field: &ast::StructField,
-        decl: &ast::Struct,
         ident: &string_interner::symbol::SymbolU32,
     ) -> Option<(String, StructField)> {
         let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
@@ -541,7 +540,8 @@ impl<'a> Translator<'a> {
                 None,
             )
         }
-        for m in &decl.metadata {
+
+        for m in &field.metadata {
             self.emit_metadata_support_error(
                 current_file_id,
                 m,
