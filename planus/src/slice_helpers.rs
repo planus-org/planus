@@ -69,10 +69,12 @@ pub struct ArrayWithStartOffset<'buf, const N: usize> {
 }
 
 impl<'buf, const N: usize> ArrayWithStartOffset<'buf, N> {
+    /// Get inner buffer as an array reference
     pub fn as_array(&self) -> &'buf [u8; N] {
         self.buffer
     }
 
+    /// Returns a new array which is advanced by `amount` bytes.
     pub fn advance_as_array<const K: usize>(
         &self,
         amount: usize,
