@@ -1,12 +1,15 @@
+#![deny(missing_docs)]
+#![doc = include_str!("../../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
-
 mod backvec;
 mod builder;
 mod impls;
 mod slice_helpers;
 mod traits;
 
+/// Error types for serialization/deserialization
 pub mod errors;
+/// Types for interacting with vectors in serialized data
 pub mod vectors;
 
 #[doc(hidden)]
@@ -34,6 +37,13 @@ pub const fn check_version_compatibility(s: &str) {
     }
 }
 
+/// A type alias for [`Result`] with a Planus error
+///
+/// It is recommended to handle reading of serialized data in functions
+/// returning this result type to avoid boilerplate error handling using
+/// the ? operator.
+///
+/// [`Result`]: std::result::Result
 pub type Result<T> = core::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
@@ -47,6 +57,7 @@ impl From<Void> for crate::Error {
     }
 }
 
+/// An offset to a serialized value of type T inside a buffer currently being built.
 pub struct Offset<T: ?Sized> {
     offset: u32,
     phantom: core::marker::PhantomData<T>,
@@ -59,6 +70,7 @@ impl<T: ?Sized> Clone for Offset<T> {
     }
 }
 
+/// An offset to a serialized union value of type T inside a buffer currently being built.
 pub struct UnionOffset<T: ?Sized> {
     tag: u8,
     offset: Offset<()>,

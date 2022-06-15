@@ -1,6 +1,9 @@
+/// The main error type for Planus
 #[derive(Copy, Clone, Debug)]
 pub struct Error {
+    /// The location of the error
     pub source_location: ErrorLocation,
+    /// The kind of error
     pub error_kind: ErrorKind,
 }
 
@@ -17,16 +20,39 @@ impl std::error::Error for Error {
     }
 }
 
+/// The possible errors in planus when reading data from a serialized buffer.
 #[derive(Copy, Clone, Debug)]
 #[non_exhaustive]
 pub enum ErrorKind {
+    /// The offset was out of bounds.
     InvalidOffset,
+    /// The buffer was too short while validating a length field.
     InvalidLength,
-    UnknownEnumTag { source: UnknownEnumTagKind },
-    UnknownUnionTag { tag: u8 },
-    InvalidVtableLength { length: u16 },
-    InvalidUtf8 { source: core::str::Utf8Error },
+    /// An enum contained an unknown value. For forward compatibility this
+    /// error should be handled appropriately.
+    UnknownEnumTag {
+        /// The enum value that wasn't recognized.
+        source: UnknownEnumTagKind,
+    },
+    /// An union contained an unknown variant. For forward compatibility this
+    /// error should be handled appropriately.
+    UnknownUnionTag {
+        /// The union tag that wasn't recognized.
+        tag: u8,
+    },
+    /// A vtable had an invalid length (too large, too small or unaligned).
+    InvalidVtableLength {
+        /// The length of the vtable.
+        length: u16,
+    },
+    /// A string contained invalid utf-8.
+    InvalidUtf8 {
+        /// The utf-8 error triggered by the string.
+        source: core::str::Utf8Error,
+    },
+    /// A required field was missing.
     MissingRequired,
+    /// A string null terminator was missing.
     MissingNullTerminator,
 }
 
@@ -76,8 +102,14 @@ impl From<core::str::Utf8Error> for ErrorKind {
 }
 
 #[derive(Clone, Debug)]
+/// Information about an unrecognized enum tag.
+///
+/// In order to be forward compatible [`Result`]s with this error variant should
+/// be handled gracefully.
 pub struct UnknownEnumTag {
+    /// The location of the unknown tag.
     pub source_location: ErrorLocation,
+    /// The unknown tag.
     pub error_kind: UnknownEnumTagKind,
 }
 
@@ -95,7 +127,9 @@ impl std::error::Error for UnknownEnumTag {
 }
 
 #[derive(Copy, Clone, Debug)]
+/// The value of an unknown enum tag.
 pub struct UnknownEnumTagKind {
+    /// The unknown tag.
     pub tag: i128,
 }
 
@@ -109,9 +143,14 @@ impl core::fmt::Display for UnknownEnumTagKind {
 impl std::error::Error for UnknownEnumTagKind {}
 
 #[derive(Copy, Clone, Debug)]
+/// The location of the error in both the generated code and the binary data
+/// where it was encountered.
 pub struct ErrorLocation {
+    /// The flatbuffers type where the error was encountered.
     pub type_: &'static str,
+    /// The generated method where the error was encountered.
     pub method: &'static str,
+    /// Offset into the flatbuffers buffer where the error was encountered.
     pub byte_offset: usize,
 }
 
@@ -145,6 +184,7 @@ impl From<core::convert::Infallible> for Error {
 }
 
 impl UnknownEnumTagKind {
+    /// Helper function that adds an error location to this error.
     pub fn with_error_location(
         self,
         type_: &'static str,
@@ -163,6 +203,7 @@ impl UnknownEnumTagKind {
 }
 
 impl ErrorKind {
+    /// Helper function that adds an error location to this error.
     pub fn with_error_location(
         self,
         type_: &'static str,

@@ -1,6 +1,7 @@
 use crate::{slice_helpers::SliceWithStartOffset, traits::VectorRead};
 use core::marker::PhantomData;
 
+/// A `Vec` like view into a serialized buffer that deserializes on demand.
 pub struct Vector<'buf, T: ?Sized> {
     pub(crate) buffer: SliceWithStartOffset<'buf>,
     pub(crate) len: usize,
@@ -25,6 +26,9 @@ where
 }
 
 impl<T: ?Sized + 'static> Vector<'static, T> {
+    // Needed because beta 1.62 gave a weird error
+    #[allow(unused_attributes)]
+    #[doc(hidden)]
     pub const EMPTY: Self = Self {
         buffer: SliceWithStartOffset {
             buffer: &[],
@@ -36,16 +40,19 @@ impl<T: ?Sized + 'static> Vector<'static, T> {
 }
 
 impl<'buf, T: ?Sized> Vector<'buf, T> {
+    /// Checks if the vector is empty.
     pub fn is_empty(self) -> bool {
         self.len == 0
     }
 
+    /// Returns the number of elements in the vector.
     pub fn len(self) -> usize {
         self.len
     }
 }
 
 impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
+    /// Returns the element at the given index, or None if out of bounds.
     #[inline]
     pub fn get(self, index: usize) -> Option<T> {
         if index < self.len {
@@ -55,6 +62,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
         }
     }
 
+    /// Returns an iterator over the vector.
     #[inline]
     pub fn iter(self) -> VectorIter<'buf, T> {
         VectorIter(self)
@@ -62,6 +70,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
+    /// Copies self into a new `Vec`.
     pub fn to_vec<O>(&self) -> crate::Result<alloc::vec::Vec<O>>
     where
         O: core::convert::TryFrom<T>,
@@ -74,6 +83,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
 }
 
 impl<'buf, T, E> Vector<'buf, core::result::Result<T, E>> {
+    /// Copies self into a new `Vec`.
     pub fn to_vec_result<O>(&self) -> crate::Result<alloc::vec::Vec<O>>
     where
         T: crate::traits::VectorReadInner<'buf>,
@@ -98,6 +108,7 @@ impl<'buf, T: VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
 }
 
 #[derive(Clone)]
+/// An iterator over the elements of a `Vector`.
 pub struct VectorIter<'buf, T: ?Sized>(Vector<'buf, T>);
 
 impl<'buf, T: VectorRead<'buf>> Iterator for VectorIter<'buf, T> {
