@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Fix a few codegen bugs when using certain field names
 - \[Rust\]: Fix panic when accessing union from invalid input
 - \[Rust\]: Fix a bug where struct attributes were used instead of struct field attributes
+- \[Rust\]: Implement support for the `force_align` attribute on structs
 
 ## [0.3.0] - 2022-02-06
 ### Added
