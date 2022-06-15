@@ -339,8 +339,7 @@ impl MetadataValueKind {
     pub fn accepted_on_struct_fields(&self) -> bool {
         matches!(
             self,
-            Self::ForceAlign(_)
-                | Self::Key
+            Self::Key
                 | Self::Hash(_)
                 | Self::CppType(_)
                 | Self::CppPtrType(_)

@@ -1,0 +1,3 @@
+struct Aligned (force_align: 16) {
+  v: uint8;
+}
