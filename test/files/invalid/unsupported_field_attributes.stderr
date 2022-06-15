@@ -1,0 +1,13 @@
+error: Metadata attribute does not make sense on struct fields
+  ┌─ test/files/invalid/unsupported_field_attributes.fbs:2:14
+  │
+2 │   v0: uint8 (force_align: 16);
+  │              ^^^^^^^^^^^^^^^
+
+error: Metadata attribute is not currently supported
+  ┌─ test/files/invalid/unsupported_field_attributes.fbs:3:14
+  │
+3 │   v1: uint8 (key);
+  │              ^^^
+
+Error: Bailing because of errors
