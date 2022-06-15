@@ -1,0 +1,50 @@
+Root {
+    values: Some(
+        [
+            AlignmentStruct {
+                a: NoAlign {
+                    v: 41,
+                },
+                b: Align4 {
+                    v: 42,
+                },
+                c: Align16 {
+                    v: 43,
+                },
+                d: NoAlign {
+                    v: 44,
+                },
+            },
+            AlignmentStruct {
+                a: NoAlign {
+                    v: 45,
+                },
+                b: Align4 {
+                    v: 46,
+                },
+                c: Align16 {
+                    v: 47,
+                },
+                d: NoAlign {
+                    v: 48,
+                },
+            },
+        ],
+    ),
+    value: Some(
+        AlignmentStruct {
+            a: NoAlign {
+                v: 49,
+            },
+            b: Align4 {
+                v: 50,
+            },
+            c: Align16 {
+                v: 51,
+            },
+            d: NoAlign {
+                v: 52,
+            },
+        },
+    ),
+}

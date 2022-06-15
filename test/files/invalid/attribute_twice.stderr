@@ -1,0 +1,9 @@
+error: cannot set the same attribute twice
+  ┌─ test/files/invalid/attribute_twice.fbs:1:13
+  │
+1 │ struct Foo (force_align: 4, force_align: 1) {
+  │             --------------- -------------- second attribute was here
+  │             │                
+  │             first attribute was here
+
+Error: Bailing because of errors

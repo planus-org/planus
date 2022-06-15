@@ -294,9 +294,9 @@ impl PrettyPrint for Vec<MetadataValue> {
 
 impl PrettyPrint for Struct {
     fn print(&self, ctx: &Ctx) {
-        if !self.metadata.is_empty() {
+        if !self.metadata.values.is_empty() {
             print!("    metadata: ");
-            self.metadata.print(ctx);
+            self.metadata.values.print(ctx);
             println!();
         }
         for field in self.fields.values() {
@@ -310,9 +310,9 @@ impl PrettyPrint for StructField {
         print!("    field {}: ", ctx.resolve_identifier(self.ident.value));
         self.type_.print(ctx);
         println!();
-        if !self.metadata.is_empty() {
+        if !self.metadata.values.is_empty() {
             print!("      metadata: ");
-            self.metadata.print(ctx);
+            self.metadata.values.print(ctx);
             println!();
         }
     }
@@ -320,9 +320,9 @@ impl PrettyPrint for StructField {
 
 impl PrettyPrint for Enum {
     fn print(&self, ctx: &Ctx) {
-        if !self.metadata.is_empty() {
+        if !self.metadata.values.is_empty() {
             print!("    metadata: ");
-            self.metadata.print(ctx);
+            self.metadata.values.print(ctx);
             println!();
         }
         print!("    type: ");
@@ -347,9 +347,9 @@ impl PrettyPrint for EnumVariant {
 
 impl PrettyPrint for Union {
     fn print(&self, ctx: &Ctx) {
-        if !self.metadata.is_empty() {
+        if !self.metadata.values.is_empty() {
             print!("    metadata: ");
-            self.metadata.print(ctx);
+            self.metadata.values.print(ctx);
             println!();
         }
         for variant in self.variants.values() {
@@ -383,9 +383,9 @@ impl PrettyPrint for RpcMethod {
         print!(") -> ");
         self.return_type.print(ctx);
         println!();
-        if !self.metadata.is_empty() {
+        if !self.metadata.values.is_empty() {
             print!("      metadata: ");
-            self.metadata.print(ctx);
+            self.metadata.values.print(ctx);
         }
         println!();
     }

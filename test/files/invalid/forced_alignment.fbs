@@ -1,0 +1,23 @@
+struct Align1 (force_align: 1) {
+  value: uint16;
+}
+
+struct Align2 (force_align: 2) {
+  value: uint32;
+}
+
+struct Align3 (force_align: 3) {
+  value: uint8;
+}
+
+struct Align4 (force_align: 4) {
+  value: uint64;
+}
+
+struct Inner (force_align: 8) {
+  value: uint8;
+}
+
+struct Align8 (force_align: 4) {
+  value: Inner;
+}
