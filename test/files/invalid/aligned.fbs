@@ -1,7 +1,3 @@
 struct Aligned (force_align: 16) {
   v: uint8;
 }
-
-struct Aligned2 {
-  v: uint8 (force_align: 16);
-}
