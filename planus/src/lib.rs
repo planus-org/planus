@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
 mod backvec;
 mod builder;
@@ -30,9 +30,9 @@ pub use crate::{
 #[doc(hidden)]
 pub const fn check_version_compatibility(s: &str) {
     match s.as_bytes() {
-        b"planus-0.3.0" => (),
+        b"planus-0.3.1" => (),
         _ => panic!(
-            "Your generated code is out of date, please regenerate using planus version 0.3.0"
+            "Your generated code is out of date, please regenerate using planus version 0.3.1"
         ),
     }
 }

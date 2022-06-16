@@ -1,6 +1,6 @@
 pub use root::*;
 
-const _: () = ::planus::check_version_compatibility("planus-0.3.0");
+const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 
 #[no_implicit_prelude]
 mod root {
