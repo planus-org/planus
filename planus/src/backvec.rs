@@ -139,7 +139,8 @@ mod tests {
         let mut vec = BackVec::with_capacity(rng.gen::<usize>() % 64);
         let mut slice = [0; 50];
         let mut saved = Vec::new();
-        for _ in 0..100_000 {
+        let limit = if cfg!(miri) { 1_000 } else { 100_000 };
+        for _ in 0..limit {
             assert!(vec.len() <= vec.capacity);
             assert_eq!(vec.as_slice().len(), vec.len());
 
