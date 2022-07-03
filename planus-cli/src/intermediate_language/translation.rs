@@ -390,7 +390,7 @@ impl<'a> Translator<'a> {
                         current_namespace,
                         current_file_id,
                         literal,
-                        &*type_,
+                        type_,
                     )?);
                 }
                 Some(Literal::Vector(out))
@@ -403,7 +403,7 @@ impl<'a> Translator<'a> {
                             current_namespace,
                             current_file_id,
                             literal,
-                            &*type_,
+                            type_,
                         )?);
                     }
                     Some(Literal::Array(out))
@@ -470,7 +470,7 @@ impl<'a> Translator<'a> {
                 kind: TypeKind::Vector(Box::new(self.translate_type(
                     current_namespace,
                     current_file_id,
-                    &*inner_type,
+                    inner_type,
                 )?)),
             }),
             ast::TypeKind::Array { inner_type, size } => Some(Type {
@@ -479,7 +479,7 @@ impl<'a> Translator<'a> {
                     Box::new(self.translate_type(
                         current_namespace,
                         current_file_id,
-                        &*inner_type,
+                        inner_type,
                     )?),
                     *size,
                 ),
