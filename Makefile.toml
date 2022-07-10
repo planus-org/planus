@@ -100,6 +100,8 @@ script = '''
 '''
 
 [tasks.test-features]
+script_runner = "bash"
+script_extension = "sh"
 script = '''
     for dir in test/rust test/rust-compat; do
 	pushd $dir
@@ -113,6 +115,8 @@ script = '''
 '''
 
 [tasks.test-example]
+script_runner = "bash"
+script_extension = "sh"
 script = '''
     pushd examples/rust
     cargo test
