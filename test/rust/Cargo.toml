@@ -1,17 +1,22 @@
 [package]
-name = "rust_test"
+name = "rust-test"
 version = "0.1.0"
 edition = "2021"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 build = "build.rs"
-rust-version = "1.57"
+rust-version = "1.60"
+
+[features]
+default = []
+std = ["planus/std", "serde/std"]
+bstr = ["planus/bstr"]
 
 [dependencies]
 anyhow = "1.0.51"
-planus = { path = "../../planus", features = ["extra-validation"] }
+planus = { path = "../../planus", default-features = false, features = ["extra-validation"] }
 flatbuffers = "2.0.0"
-serde = "1.0.132"
+serde = { version = "1.0.132", features = ["derive"] }
 static_assertions = "1.1.0"
 
 [build-dependencies]

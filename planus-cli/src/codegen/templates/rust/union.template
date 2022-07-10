@@ -65,8 +65,8 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
     fn try_from(value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
         ::core::result::Result::Ok(match value {
             {% for variant in variants -%}
-                {% if variant.owned_type.starts_with("::planus::alloc::boxed::Box<") %}
-                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::TryFrom::try_from(value)?)),
+                {% if variant.owned_type.starts_with("::planus::exports::Box<") %}
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::exports::Box::new(::core::convert::TryFrom::try_from(value)?)),
                 {% else %}
                 {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::core::convert::TryFrom::try_from(value)?),
                 {% endif %}

@@ -99,6 +99,26 @@ script = '''
     dot -Tsvg examples/rust/monster.dot -o examples/rust/monster.svg
 '''
 
+[tasks.test-features]
+script = '''
+    for dir in test/rust test/rust-compat; do
+	pushd $dir
+        for std in "" "std"; do
+            for bstr in "" "bstr"; do
+                cargo test --features "${std} ${bstr}"
+            done
+	    done
+        popd
+    done
+'''
+
+[tasks.test-example]
+script = '''
+    pushd examples/rust
+    cargo test
+    cargo test --features planus/bstr
+'''
+
 [tasks.full-test]
 dependencies = [
     "regenerate-examples",
@@ -106,5 +126,7 @@ dependencies = [
     # Check that all examples are up to date
     "commit-check",
     "test",
+    "test-features",
+    "test-example",
     "cli-test",
 ]

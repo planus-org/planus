@@ -75,7 +75,7 @@ Things we will probably never support:
 Minimum Supported Rust Version (MSRV)
 -------------------------------------
 
-Our current Minimum Supported Rust Version is 1.57.0. When adding features, we will follow these guidelines:
+Our current Minimum Supported Rust Version is 1.60.0. When adding features, we will follow these guidelines:
 
 * We will aim to support the latest four minor Rust versions. This gives you a 6 month window to upgrade your compiler.
 * Any change to the MSRV will be accompanied with a minor version bump

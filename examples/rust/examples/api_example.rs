@@ -16,21 +16,21 @@ fn main() {
         }),
         mana: 150,
         hp: 80,
-        name: Some("Orc".to_string()),
+        name: Some("Orc".into()),
         inventory: Some(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
         color: Color::Red,
         weapons: Some(vec![
             Weapon {
-                name: Some("Sword".to_string()),
+                name: Some("Sword".into()),
                 damage: 3,
             },
             Weapon {
-                name: Some("Axe".to_string()),
+                name: Some("Axe".into()),
                 damage: 5,
             },
         ]),
         equipped: Some(Equipment::Weapon(Box::new(Weapon {
-            name: Some("Sword".to_string()),
+            name: Some("Sword".into()),
             damage: 3,
         }))),
         path: Some(vec![

@@ -7,17 +7,25 @@ edition = "2021"
 readme = "README.md"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
-rust-version = "1.57"
+rust-version = "1.60"
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
 [dependencies]
 array-init-cursor = { version = "0.2.0", path = "../array-init-cursor" }
+
+[dependencies.bstr]
+git = "https://github.com/TethysSvensson/bstr"
+branch = "planus-fixed"
+optional = true
+default-features = false
+features = ["serde1-alloc"]
 
 [dev-dependencies]
 rand = "0.8.4"
 planus-example = { path = "../examples/rust" }
 
 [features]
-default = ["std"]
-std = []
+default = ["std", "bstr"]
+std = ["bstr?/std"]
+bstr = ["dep:bstr"]
 extra-validation = []
