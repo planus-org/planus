@@ -50,6 +50,12 @@ pub enum ErrorKind {
         /// The utf-8 error triggered by the string.
         source: core::str::Utf8Error,
     },
+    #[cfg(feature = "bstr-deserialize")]
+    /// A string contained invalid utf-8.
+    BStrInvalidUtf8 {
+        /// The utf-8 error triggered by the string.
+        source: bstr::Utf8Error,
+    },
     /// A required field was missing.
     MissingRequired,
     /// A string null terminator was missing.
@@ -67,6 +73,8 @@ impl core::fmt::Display for ErrorKind {
                 write!(f, "Invalid vtable length (length = {})", length)
             }
             ErrorKind::InvalidUtf8 { source } => write!(f, "Invalid utf-8: {}", source),
+            #[cfg(feature = "bstr-deserialize")]
+            ErrorKind::BStrInvalidUtf8 { source } => write!(f, "Invalid utf-8: {}", source),
             ErrorKind::MissingRequired => write!(f, "Missing required field"),
             ErrorKind::MissingNullTerminator => write!(f, "Missing null terminator"),
         }
@@ -83,6 +91,8 @@ impl std::error::Error for ErrorKind {
             ErrorKind::UnknownUnionTag { .. } => None,
             ErrorKind::InvalidVtableLength { .. } => None,
             ErrorKind::InvalidUtf8 { source } => Some(source),
+            #[cfg(feature = "bstr-deserialize")]
+            ErrorKind::BStrInvalidUtf8 { source } => Some(source),
             ErrorKind::MissingRequired => None,
             ErrorKind::MissingNullTerminator => None,
         }
@@ -98,6 +108,13 @@ impl From<UnknownEnumTagKind> for ErrorKind {
 impl From<core::str::Utf8Error> for ErrorKind {
     fn from(source: core::str::Utf8Error) -> Self {
         ErrorKind::InvalidUtf8 { source }
+    }
+}
+
+#[cfg(feature = "bstr-deserialize")]
+impl From<bstr::Utf8Error> for ErrorKind {
+    fn from(source: bstr::Utf8Error) -> Self {
+        ErrorKind::BStrInvalidUtf8 { source }
     }
 }
 

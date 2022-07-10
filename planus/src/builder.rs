@@ -193,7 +193,7 @@ impl Builder {
     /// use planus::Builder;
     /// use planus_example::monster_generated::my_game::sample::Weapon;
     /// let mut builder = Builder::new();
-    /// let weapon = Weapon { name: Some("Sword".to_string()), damage: 12 };
+    /// let weapon = Weapon { name: Some("Sword".into()), damage: 12 };
     /// let data = builder.finish(&weapon, None);
     /// ```
     pub fn finish<T>(

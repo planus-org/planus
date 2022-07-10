@@ -6,5 +6,5 @@ license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 keywords = ["abstraction", "initialization", "no_std"]
 categories = ["data-structures", "no-std"]
-rust-version = "1.57"
+rust-version = "1.60"
 description = "Utility crate to help keep track of arrays of MaybeUninit"

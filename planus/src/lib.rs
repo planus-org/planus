@@ -7,17 +7,35 @@ mod impls;
 mod slice_helpers;
 mod traits;
 
+extern crate alloc;
+
 /// Error types for serialization/deserialization
 pub mod errors;
 /// Types for interacting with vectors in serialized data
 pub mod vectors;
 
 #[doc(hidden)]
-pub extern crate alloc;
-#[doc(hidden)]
 pub mod table_reader;
 #[doc(hidden)]
 pub mod table_writer;
+
+#[doc(hidden)]
+pub mod exports {
+    pub use crate::alloc::boxed::Box;
+    pub use crate::alloc::vec::Vec;
+
+    #[cfg(feature = "bstr")]
+    pub type String = bstr::BString;
+    #[cfg(not(feature = "bstr"))]
+    pub type String = crate::alloc::string::String;
+
+    #[cfg(feature = "bstr")]
+    #[allow(non_camel_case_types)]
+    pub type str = bstr::BStr;
+    #[cfg(not(feature = "bstr"))]
+    #[allow(non_camel_case_types)]
+    pub type str = core::primitive::str;
+}
 
 pub use crate::{
     builder::Builder,

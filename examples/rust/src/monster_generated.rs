@@ -174,7 +174,7 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub enum Equipment {
-                Weapon(::planus::alloc::boxed::Box<self::Weapon>),
+                Weapon(::planus::exports::Box<self::Weapon>),
             }
 
             impl Equipment {
@@ -213,11 +213,9 @@ mod root {
 
                 fn try_from(value: EquipmentRef<'a>) -> ::planus::Result<Self> {
                     ::core::result::Result::Ok(match value {
-                        EquipmentRef::Weapon(value) => {
-                            Equipment::Weapon(::planus::alloc::boxed::Box::new(
-                                ::core::convert::TryFrom::try_from(value)?,
-                            ))
-                        }
+                        EquipmentRef::Weapon(value) => Equipment::Weapon(
+                            ::planus::exports::Box::new(::core::convert::TryFrom::try_from(value)?),
+                        ),
                     })
                 }
             }
@@ -413,12 +411,12 @@ mod root {
                 pub pos: ::core::option::Option<self::Vec3>,
                 pub mana: i16,
                 pub hp: i16,
-                pub name: ::core::option::Option<::planus::alloc::string::String>,
-                pub inventory: ::core::option::Option<::planus::alloc::vec::Vec<u8>>,
+                pub name: ::core::option::Option<::planus::exports::String>,
+                pub inventory: ::core::option::Option<::planus::exports::Vec<u8>>,
                 pub color: self::Color,
-                pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
+                pub weapons: ::core::option::Option<::planus::exports::Vec<self::Weapon>>,
                 pub equipped: ::core::option::Option<self::Equipment>,
-                pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
+                pub path: ::core::option::Option<::planus::exports::Vec<self::Vec3>>,
             }
 
             #[allow(clippy::derivable_impls)]
@@ -445,7 +443,7 @@ mod root {
                     field_pos: impl ::planus::WriteAsOptional<self::Vec3>,
                     field_mana: impl ::planus::WriteAsDefault<i16, i16>,
                     field_hp: impl ::planus::WriteAsDefault<i16, i16>,
-                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<str>>,
                     field_inventory: impl ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
                     field_color: impl ::planus::WriteAsDefault<self::Color, self::Color>,
                     field_weapons: impl ::planus::WriteAsOptional<
@@ -601,7 +599,7 @@ mod root {
 
                 pub fn name(
                     &self,
-                ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
+                ) -> ::planus::Result<::core::option::Option<&'a ::planus::exports::str>>
                 {
                     self.0.access(3, "Monster", "name")
                 }
@@ -808,7 +806,7 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub struct Weapon {
-                pub name: ::core::option::Option<::planus::alloc::string::String>,
+                pub name: ::core::option::Option<::planus::exports::String>,
                 pub damage: i16,
             }
 
@@ -826,7 +824,7 @@ mod root {
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
-                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<str>>,
                     field_damage: impl ::planus::WriteAsDefault<i16, i16>,
                 ) -> ::planus::Offset<Self> {
                     let prepared_name = field_name.prepare(builder);
@@ -889,7 +887,7 @@ mod root {
             impl<'a> WeaponRef<'a> {
                 pub fn name(
                     &self,
-                ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
+                ) -> ::planus::Result<::core::option::Option<&'a ::planus::exports::str>>
                 {
                     self.0.access(0, "Weapon", "name")
                 }

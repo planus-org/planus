@@ -15,6 +15,13 @@ mod union_offset;
 mod unit;
 mod vec;
 
+#[cfg(feature = "bstr")]
+mod bstr_deserialize;
+#[cfg(feature = "bstr")]
+mod bstr_serialize;
+#[cfg(feature = "bstr")]
+mod bstring_serialize;
+
 fn array_from_buffer(
     buffer: crate::slice_helpers::SliceWithStartOffset<'_>,
     offset: usize,

@@ -1,12 +1,16 @@
 [package]
-name = "rust-compat"
+name = "rust-test-compat"
 version = "0.1.0"
 edition = "2018"
 
+[features]
+default = []
+std = ["planus/std", "serde/std"]
+bstr = ["planus/bstr"]
+
 [dependencies]
-planus = { path = "../../planus", features = ["extra-validation"] }
-serde = "1.0.132"
-rust_test = { path = "../rust" }
+planus = { path = "../../planus", default-features = false, features = ["extra-validation"] }
+serde = { version = "1.0.132", features = ["derive"] }
 
 [build-dependencies]
 anyhow = "1.0.51"
