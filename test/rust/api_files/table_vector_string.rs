@@ -10,10 +10,13 @@ check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, &'a [&'a s
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [&'a str]>, Option<&'b [&'b str]>, &'c [&'c str], &'d [&'d str]) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [planus::Offset<str>]>, Option<&'b [planus::Offset<str>]>, &'c [planus::Offset<str>], &'d [planus::Offset<str>]) : planus::Offset<Example>);
 
-assert_traits!(Example: !Copy + Clone + Debug + Eq + Ord + Hash + !Default);
-
 check_type!(+['a] ExampleRef<'a> => &self.value() : planus::Result<Option<planus::Vector<'a, planus::Result<&'a str>>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<planus::Vector<'a, planus::Result<&'a str>>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_default_empty() : planus::Result<planus::Vector<'a, planus::Result<&'a str>>>);
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<planus::Vector<'a, planus::Result<&'a str>>>);
 check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
+
+assert_traits!(
+    Example: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
+    ExampleRef<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
+);

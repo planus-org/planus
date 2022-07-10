@@ -13,4 +13,7 @@ check_type!(+['a] ExampleRef<'a> => &self.value_null() : planus::Result<Option<I
 check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<InnerRef<'a>>);
 check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
 
-assert_traits!(Example: !Copy + Clone + Debug + Eq + Ord + Hash + Default);
+assert_traits!(
+    Example: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleRef<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
+);

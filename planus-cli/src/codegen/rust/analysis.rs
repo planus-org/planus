@@ -178,3 +178,86 @@ impl DeclarationAnalysis for EqAnalysis {
         }
     }
 }
+
+fn infallible_conversion_simple_type(infallible_conversion: &[bool], type_: &SimpleType) -> bool {
+    match type_ {
+        SimpleType::Struct(decl_id) => infallible_conversion[decl_id.0],
+        SimpleType::Bool | SimpleType::Integer(_) | SimpleType::Float(_) => true,
+        SimpleType::Enum(_) => false,
+    }
+}
+
+fn infallible_conversion_type_kind(infallible_conversion: &[bool], type_: &TypeKind) -> bool {
+    match type_ {
+        TypeKind::Union(decl_id) => infallible_conversion[decl_id.0],
+        TypeKind::SimpleType(type_) => {
+            infallible_conversion_simple_type(infallible_conversion, type_)
+        }
+        TypeKind::Table(_) | TypeKind::Array(_, _) | TypeKind::Vector(_) | TypeKind::String => {
+            false
+        }
+    }
+}
+pub struct InfallibleConversionAnalysis;
+impl DeclarationAnalysis for InfallibleConversionAnalysis {
+    type State = bool;
+
+    fn new_state(
+        &mut self,
+        _declarations: &Declarations,
+        _decl_id: DeclarationIndex,
+        declaration: &Declaration,
+    ) -> Self::State {
+        match declaration.kind {
+            DeclarationKind::Struct(_) | DeclarationKind::Union(_) => true,
+            DeclarationKind::Enum(_)
+            | DeclarationKind::Table(_)
+            | DeclarationKind::RpcService(_) => false,
+        }
+    }
+
+    fn update_state(
+        &mut self,
+        _declarations: &Declarations,
+        decl_id: DeclarationIndex,
+        declaration: &Declaration,
+        infallible_conversion: &mut [Self::State],
+    ) -> WasChanged {
+        if !infallible_conversion[decl_id.0] {
+            return WasChanged::NoChange;
+        }
+        let mut cur_conversion_possible = infallible_conversion[decl_id.0];
+
+        match &declaration.kind {
+            DeclarationKind::Struct(decl) => {
+                for field in decl.fields.values() {
+                    if !infallible_conversion_simple_type(infallible_conversion, &field.type_) {
+                        cur_conversion_possible = false;
+                        break;
+                    }
+                }
+            }
+            DeclarationKind::Union(decl) => {
+                for variant in decl.variants.values() {
+                    if !infallible_conversion_type_kind(infallible_conversion, &variant.type_.kind)
+                    {
+                        cur_conversion_possible = false;
+                        break;
+                    }
+                }
+            }
+            DeclarationKind::Table(_)
+            | DeclarationKind::Enum(_)
+            | DeclarationKind::RpcService(_) => {
+                cur_conversion_possible = false;
+            }
+        }
+
+        if cur_conversion_possible != infallible_conversion[decl_id.0] {
+            infallible_conversion[decl_id.0] = cur_conversion_possible;
+            WasChanged::Changed
+        } else {
+            WasChanged::NoChange
+        }
+    }
+}

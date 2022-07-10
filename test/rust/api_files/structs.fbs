@@ -51,3 +51,16 @@ struct Example3 {
   value_int64: int64;
   value_struct: Inner;
 }
+
+struct Example4 {
+  value_bool: bool;
+  value_uint8: uint8;
+  value_uint16: uint16;
+  value_uint32: uint32;
+  value_uint64: uint64;
+  value_int8: int8;
+  value_int16: int16;
+  value_int32: int32;
+  value_int64: int64;
+  value_struct: Inner;
+}

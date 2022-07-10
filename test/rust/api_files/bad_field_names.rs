@@ -49,6 +49,7 @@ check_type!(+['a] TableRef<'a> => &self.default() : planus::Result<u8>);
 
 assert_traits!(
     Table: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    TableRef<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Table>} + !{Into<Table>},
 );
 
 check_type!(Struct => value : u8);
@@ -102,6 +103,7 @@ check_type!(+['a] StructRef<'a> => &self.default() : u8);
 
 assert_traits!(
     Struct: Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    StructRef<'_>: Copy + Clone + Debug + Eq + Ord + Hash + !Default + {Into<Struct>},
 );
 
 check_enum_variants!(Enum: u8 {
@@ -129,9 +131,7 @@ check_enum_variants!(Enum: u8 {
     Default = 21,
 });
 
-assert_traits!(
-    Enum: Copy + Clone + Debug + Eq + Ord + Hash,
-);
+assert_traits!(Enum: Copy + Clone + Debug + Eq + Ord + Hash + !Default);
 
 check_type!(Union => Value(Box<Table>) : Union);
 check_type!(Union => F(Box<Table>) : Union);
@@ -182,5 +182,6 @@ check_type!(+['a] UnionRef<'a> => Slice(TableRef<'a>) : UnionRef<'a>);
 check_type!(+['a] UnionRef<'a> => Default(TableRef<'a>) : UnionRef<'a>);
 
 assert_traits!(
-    Union: !Copy + Clone + Debug + Eq + Ord + Hash,
+    Union: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
+    UnionRef<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Union>} + !{Into<Union>},
 );
