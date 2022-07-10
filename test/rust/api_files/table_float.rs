@@ -32,6 +32,6 @@ check_type!(+['a] Example64Ref<'a> => &self.value_default_one() : planus::Result
 check_type!(+['a] Example64Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    Example64: !Copy + Clone + Debug + !Eq + !Ord + !Hash + Default,
-    Example64Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example64>} + !{Into<Example64>},
+    Example64: !Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + Default,
+    Example64Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example64>} + !{Into<Example64>},
 );

@@ -15,8 +15,8 @@ check_type!(+['a] ExampleRef<'a> => &self.value_required() : planus::Result<plan
 check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    Example: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    ExampleRef<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
+    Example: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    ExampleRef<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
 );
 
 check_type!(Example2 => value : Option<Vec<Inner2>>);
@@ -36,6 +36,6 @@ check_type!(+['a] Example2Ref<'a> => &self.value_required() : planus::Result<pla
 check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    Example2: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Example2Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
+    Example2: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Example2Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
 );

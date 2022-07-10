@@ -48,8 +48,8 @@ check_type!(+['a] Union1Ref<'a> => InnerEnum(InnerEnumRef<'a>) : Union1Ref<'a>);
 check_type!(+['a] Union1Ref<'a> => InnerTable(InnerTableRef<'a>) : Union1Ref<'a>);
 
 assert_traits!(
-    Union1: !Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default,
-    Union1Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Union1>} + !{Into<Union1>},
+    Union1: !Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + !Default,
+    Union1Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Union1>} + !{Into<Union1>},
 );
 
 // Union2
@@ -76,8 +76,8 @@ check_type!(+['a] Union2Ref<'a> => InnerU8(InnerU8Ref<'a>) : Union2Ref<'a>);
 check_type!(+['a] Union2Ref<'a> => InnerF32(InnerF32Ref<'a>) : Union2Ref<'a>);
 
 assert_traits!(
-    Union2: !Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default,
-    Union2Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {Into<Union2>},
+    Union2: !Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + !Default,
+    Union2Ref<'_>: Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + !Default + {Into<Union2>},
 );
 
 // Union3
@@ -104,8 +104,8 @@ check_type!(+['a] Union3Ref<'a> => InnerU8(InnerU8Ref<'a>) : Union3Ref<'a>);
 check_type!(+['a] Union3Ref<'a> => InnerEnum(InnerEnumRef<'a>) : Union3Ref<'a>);
 
 assert_traits!(
-    Union3: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Union3Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Union3>} + !{Into<Union3>},
+    Union3: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Union3Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Union3>} + !{Into<Union3>},
 );
 
 // Union4
@@ -132,8 +132,8 @@ check_type!(+['a] Union4Ref<'a> => InnerU8(InnerU8Ref<'a>) : Union4Ref<'a>);
 check_type!(+['a] Union4Ref<'a> => InnerTable(InnerTableRef<'a>) : Union4Ref<'a>);
 
 assert_traits!(
-    Union4: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Union4Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Union4>} + !{Into<Union4>},
+    Union4: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Union4Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Union4>} + !{Into<Union4>},
 );
 
 // Union5
@@ -156,8 +156,8 @@ check_type!(+['a] Union5Ref<'a> => F4(&'a str) : Union5Ref<'a>);
 check_type!(+['a] Union5Ref<'a> => InnerU8(InnerU8Ref<'a>) : Union5Ref<'a>);
 
 assert_traits!(
-    Union5: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Union5Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Union5>} + !{Into<Union5>},
+    Union5: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Union5Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Union5>} + !{Into<Union5>},
 );
 
 // Union6
@@ -174,12 +174,12 @@ check_type!(+['a] Union6Ref<'a> => F0(InnerU8Ref<'a>) : Union6Ref<'a>);
 check_type!(+['a] Union6Ref<'a> => InnerU8(InnerU8Ref<'a>) : Union6Ref<'a>);
 
 assert_traits!(
-    Union6: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Union6Ref<'_>: Copy + Clone + Debug + Eq + Ord + Hash + !Default + {Into<Union6>},
+    Union6: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Union6Ref<'_>: Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default + {Into<Union6>},
 );
 
 // Union7
 assert_traits!(
-    Union7: !Copy + Clone + Debug + Eq + Ord + Hash + !Default,
-    Union7Ref: Copy + Clone + Debug + Eq + Ord + Hash + !Default + {Into<Union7>},
+    Union7: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Union7Ref: Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default + {Into<Union7>},
 );

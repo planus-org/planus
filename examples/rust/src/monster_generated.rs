@@ -357,6 +357,31 @@ mod root {
                 }
             }
 
+            impl<'a, 'b> ::core::cmp::PartialEq<Vec3Ref<'a>> for Vec3Ref<'b> {
+                fn eq(&self, other: &Vec3Ref<'_>) -> bool {
+                    self.x() == other.x() && self.y() == other.y() && self.z() == other.z()
+                }
+            }
+
+            impl<'a, 'b> ::core::cmp::PartialOrd<Vec3Ref<'a>> for Vec3Ref<'b> {
+                fn partial_cmp(
+                    &self,
+                    other: &Vec3Ref<'_>,
+                ) -> ::core::option::Option<::core::cmp::Ordering> {
+                    match self.x().partial_cmp(&other.x()) {
+                        ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                        o => return o,
+                    }
+
+                    match self.y().partial_cmp(&other.y()) {
+                        ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                        o => return o,
+                    }
+
+                    self.z().partial_cmp(&other.z())
+                }
+            }
+
             impl<'a> ::planus::TableRead<'a> for Vec3Ref<'a> {
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,

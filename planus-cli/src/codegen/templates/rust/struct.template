@@ -115,6 +115,58 @@ impl<'a> ::core::convert::From<{{ info.ref_name }}<'a>> for {{ info.owned_name}}
         }
     }
 }
+
+impl<'a, 'b> ::core::cmp::PartialEq<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+    fn eq(&self, other: &{{info.ref_name}}<'_>) -> bool {
+        {% for field in fields -%}
+            {% if !loop.first %} && {% endif %}
+            self.{{field.info.name}}() == other.{{field.info.name}}()
+        {%- endfor %}
+    }
+}
+{% if  info.should_do_eq %}
+    impl<'a> ::core::cmp::Eq for {{ info.ref_name}}<'a> {}
+    impl<'a, 'b> ::core::cmp::PartialOrd<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+        fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
+            ::core::option::Option::Some(::core::cmp::Ord::cmp(self, other))
+        }
+    }
+
+    impl<'a> ::core::cmp::Ord for {{ info.ref_name }}<'a> {
+        fn cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::cmp::Ordering {
+            {% for field in fields -%}
+                {% if loop.first %}
+                self.{{field.info.name}}().cmp(&other.{{field.info.name}}())
+                {% else %}
+                .then_with(|| self.{{field.info.name}}().cmp(&other.{{field.info.name}}()))
+                {% endif %}
+            {%- endfor %}
+        }
+    }
+
+    impl<'a> ::core::hash::Hash for {{ info.ref_name }}<'a> {
+        fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+            {% for field in fields -%}
+                self.{{field.info.name}}().hash(state);
+            {%- endfor %}
+        }
+    }
+{% else %}
+    impl<'a, 'b> ::core::cmp::PartialOrd<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+        fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
+            {% for field in fields -%}
+                {% if loop.last %}
+                self.{{field.info.name}}().partial_cmp(&other.{{field.info.name}}())
+                {% else %}
+                match self.{{field.info.name}}().partial_cmp(&other.{{field.info.name}}()) {
+                    ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                    o => return o,
+                }
+                {% endif %}
+            {%- endfor %}
+        }
+    }
+{% endif %}
 {%- else -%}
 impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_name}} {
     type Error = ::planus::Error;
@@ -136,44 +188,6 @@ impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_nam
     }
 }
 {%- endif %}
-
-{% if info.should_do_infallible_conversion && info.should_do_eq %}
-impl<'a, 'b> ::core::cmp::PartialEq<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
-    fn eq(&self, other: &{{info.ref_name}}<'_>) -> bool {
-        {% for field in fields -%}
-            {% if !loop.first %} && {% endif %}
-            self.{{field.info.name}}() == other.{{field.info.name}}()
-        {%- endfor %}
-    }
-}
-impl<'a> ::core::cmp::Eq for {{ info.ref_name}}<'a> {}
-
-impl<'a, 'b> ::core::cmp::PartialOrd<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
-    fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
-        ::core::option::Option::Some(::core::cmp::Ord::cmp(self, other))
-    }
-}
-
-impl<'a> ::core::cmp::Ord for {{ info.ref_name }}<'a> {
-    fn cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::cmp::Ordering {
-        {% for field in fields -%}
-            {% if loop.first %}
-            self.{{field.info.name}}().cmp(&other.{{field.info.name}}())
-            {% else %}
-            .then_with(|| self.{{field.info.name}}().cmp(&other.{{field.info.name}}()))
-            {% endif %}
-        {%- endfor %}
-    }
-}
-
-impl<'a> ::core::hash::Hash for {{ info.ref_name }}<'a> {
-    fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
-        {% for field in fields -%}
-            self.{{field.info.name}}().hash(state);
-        {%- endfor %}
-    }
-}
-{% endif %}
 
 impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {

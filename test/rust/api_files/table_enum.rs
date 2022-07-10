@@ -30,6 +30,6 @@ check_type!(+['a] Example2Ref<'a> => &self.value_default_y() : planus::Result<In
 check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    Example2: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    Example2Ref<'_>: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
+    Example2: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    Example2Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
 );
