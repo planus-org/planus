@@ -41,17 +41,31 @@ impl<T: ?Sized + 'static> Vector<'static, T> {
 
 impl<'buf, T: ?Sized> Vector<'buf, T> {
     /// Checks if the vector is empty.
+    #[inline]
     pub fn is_empty(self) -> bool {
         self.len == 0
     }
 
     /// Returns the number of elements in the vector.
+    #[inline]
     pub fn len(self) -> usize {
         self.len
     }
 }
 
 impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
+    /// Returns the first element of the `Vector`, or `None` if it is empty.
+    #[inline]
+    pub fn first(&self) -> Option<T> {
+        self.get(0)
+    }
+
+    /// Returns the last element of the `Vector`, or `None` if it is empty.
+    #[inline]
+    pub fn last(&self) -> Option<T> {
+        self.get(self.len().checked_sub(1)?)
+    }
+
     /// Returns the element at the given index, or None if out of bounds.
     #[inline]
     pub fn get(self, index: usize) -> Option<T> {
