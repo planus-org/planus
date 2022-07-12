@@ -111,12 +111,20 @@ check_type!(+['a] ExampleI64Ref<'a> => &self.value_default_one() : planus::Resul
 check_type!(+['a] ExampleI64Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    ExampleU8: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleU16: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleU32: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleU64: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleI8: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleI16: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleI32: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleI64: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    ExampleU8: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleU16: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleU32: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleU64: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleI8: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleI16: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleI32: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleI64: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleU8Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleU8>} + !{Into<ExampleU8>},
+    ExampleU16Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleU16>} + !{Into<ExampleU16>},
+    ExampleU32Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleU32>} + !{Into<ExampleU32>},
+    ExampleU64Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleU64>} + !{Into<ExampleU64>},
+    ExampleI8Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleI8>} + !{Into<ExampleI8>},
+    ExampleI16Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleI16>} + !{Into<ExampleI16>},
+    ExampleI32Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleI32>} + !{Into<ExampleI32>},
+    ExampleI64Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleI64>} + !{Into<ExampleI64>},
 );

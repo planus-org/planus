@@ -25,7 +25,12 @@ check_type!(+['a] ExampleRef<'a> => &self.value_int64() : i64);
 check_type!(+['a] ExampleRef<'a> => &self.value_struct() : InnerRef<'a>);
 
 assert_traits!(
-    Example: Copy + Debug + !Eq + !Ord + !Hash + !Default,
-    Example2: Copy + Debug + Eq + Ord + Hash + !Default,
-    Example3: Copy + Debug + !Eq + !Ord + !Hash + Default,
+    Example: Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + !Default,
+    Example2: Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default,
+    Example3: Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + Default,
+    Example4: Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    ExampleRef<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
+    Example2Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
+    Example3Ref<'_>: Copy + Clone + Debug + PartialEq + PartialOrd + !Eq + !Ord + !Hash + !Default + {Into<Example3>},
+    Example4Ref<'_>: Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + !Default + {Into<Example4>},
 );

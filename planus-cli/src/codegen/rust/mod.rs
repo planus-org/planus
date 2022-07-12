@@ -19,6 +19,7 @@ use crate::{
 pub struct RustBackend {
     default_analysis: Vec<bool>,
     eq_analysis: Vec<bool>,
+    infallible_analysis: Vec<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -56,6 +57,7 @@ pub struct Struct {
     pub ref_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
+    pub should_do_infallible_conversion: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -84,6 +86,7 @@ pub struct Union {
     pub ref_name: String,
     pub ref_name_with_lifetime: String,
     pub should_do_eq: bool,
+    pub should_do_infallible_conversion: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -223,6 +226,7 @@ impl Backend for RustBackend {
             ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
+            should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
         }
     }
 
@@ -260,6 +264,7 @@ impl Backend for RustBackend {
             },
             ref_name,
             should_do_eq: self.eq_analysis[decl_id.0],
+            should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
         }
     }
 
@@ -937,6 +942,8 @@ pub fn generate_code(
     let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
     let default_analysis = declarations.run_analysis(&mut analysis::DefaultAnalysis);
     let eq_analysis = declarations.run_analysis(&mut analysis::EqAnalysis);
+    let infallible_analysis =
+        declarations.run_analysis(&mut analysis::InfallibleConversionAnalysis);
 
     if ctx.has_errors() {
         anyhow::bail!("Bailing because of errors")
@@ -946,6 +953,7 @@ pub fn generate_code(
         &mut RustBackend {
             default_analysis,
             eq_analysis,
+            infallible_analysis,
         },
         &declarations,
     );

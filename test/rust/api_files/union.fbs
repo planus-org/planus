@@ -1,15 +1,65 @@
-union Union {
-  Foo: string,
-  Bar: InnerStruct,
-  Baz: InnerTable,
-  InnerStruct,
+enum Enum: uint8 {
+  A, B
+}
+
+struct InnerU8 {
+  value: uint8;
+}
+
+struct InnerF32 {
+  value: float32;
+}
+
+struct InnerEnum {
+  value: Enum;
+}
+
+table InnerTable {
+  value: uint8;
+}
+
+union Union1 {
+  F0: InnerU8,
+  F1: InnerF32,
+  F2: InnerEnum,
+  F3: InnerTable,
+  F4: string,
+  InnerU8,
+  InnerF32,
+  InnerEnum,
   InnerTable,
 }
 
-struct InnerStruct {
-  value: uint8;
+union Union2 {
+  F0: InnerU8,
+  F1: InnerF32,
+  InnerU8,
+  InnerF32,
 }
 
-struct InnerTable {
-  value: uint8;
+union Union3 {
+  F0: InnerU8,
+  F2: InnerEnum,
+  InnerU8,
+  InnerEnum,
 }
+
+union Union4 {
+  F0: InnerU8,
+  F3: InnerTable,
+  InnerU8,
+  InnerTable,
+}
+
+union Union5 {
+  F0: InnerU8,
+  F4: string,
+  InnerU8,
+}
+
+union Union6 {
+  F0: InnerU8,
+  InnerU8,
+}
+
+union Union7 {}

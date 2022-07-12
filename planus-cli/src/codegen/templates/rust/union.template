@@ -45,7 +45,12 @@ impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}}
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug
+{%- if info.should_do_infallible_conversion -%}
+  , PartialEq, PartialOrd
+  {%- if info.should_do_eq -%}, Eq, Ord, Hash{%- endif -%}
+{%- endif -%}
+)]
 pub enum {{ info.ref_name_with_lifetime }}{
     {% for variant in variants -%}
         {{ variant.enum_name }}({{ variant.ref_type }}),
@@ -58,6 +63,20 @@ impl ::core::convert::From<{{info.ref_name}}> for {{info.owned_name}} {
         match value {}
     }
 }
+{% elseif info.should_do_infallible_conversion %}
+    impl<'a> ::core::convert::From<{{info.ref_name}}<'a>> for {{info.owned_name}} {
+        fn from(value: {{info.ref_name}}<'a>) -> Self {
+            match value {
+                {% for variant in variants -%}
+                    {% if variant.owned_type.starts_with("::planus::alloc::boxed::Box<") %}
+                    {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::From::from(value))),
+                    {% else %}
+                    {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::core::convert::From::from(value)),
+                    {% endif %}
+                {% endfor %}
+            }
+        }
+    }
 {% else %}
 impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}} {
     type Error = ::planus::Error;
@@ -66,9 +85,9 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
         ::core::result::Result::Ok(match value {
             {% for variant in variants -%}
                 {% if variant.owned_type.starts_with("::planus::alloc::boxed::Box<") %}
-                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::TryFrom::try_from(value)?)),
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::TryFrom::try_from(value)?)),
                 {% else %}
-                {{info.ref_name}}::{{ variant.enum_name }}(value) => {{info.owned_name}}::{{variant.enum_name}}(::core::convert::TryFrom::try_from(value)?),
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::core::convert::TryFrom::try_from(value)?),
                 {% endif %}
             {% endfor %}
         })

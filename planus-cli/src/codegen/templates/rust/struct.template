@@ -99,12 +99,81 @@ impl<'a> ::core::fmt::Debug for {{ info.ref_name }}<'a> {
     }
 }
 
+{% if info.should_do_infallible_conversion -%}
+impl<'a> ::core::convert::From<{{ info.ref_name }}<'a>> for {{ info.owned_name}} {
+    #[allow(unreachable_code)]
+    fn from(value: {{info.ref_name}}<'a>) -> Self {
+        Self {
+        {% for field in fields -%}
+            {{ field.info.name }}:
+            {% if field.info.getter_return_type.ends_with("<'a>") -%}
+                ::core::convert::From::from(value.{{field.info.name}}()),
+            {% else -%}
+                value.{{field.info.name}}(),
+            {% endif %}
+        {%- endfor %}
+        }
+    }
+}
+
+impl<'a, 'b> ::core::cmp::PartialEq<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+    fn eq(&self, other: &{{info.ref_name}}<'_>) -> bool {
+        {% for field in fields -%}
+            {% if !loop.first %} && {% endif %}
+            self.{{field.info.name}}() == other.{{field.info.name}}()
+        {%- endfor %}
+    }
+}
+{% if  info.should_do_eq %}
+    impl<'a> ::core::cmp::Eq for {{ info.ref_name}}<'a> {}
+    impl<'a, 'b> ::core::cmp::PartialOrd<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+        fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
+            ::core::option::Option::Some(::core::cmp::Ord::cmp(self, other))
+        }
+    }
+
+    impl<'a> ::core::cmp::Ord for {{ info.ref_name }}<'a> {
+        fn cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::cmp::Ordering {
+            {% for field in fields -%}
+                {% if loop.first %}
+                self.{{field.info.name}}().cmp(&other.{{field.info.name}}())
+                {% else %}
+                .then_with(|| self.{{field.info.name}}().cmp(&other.{{field.info.name}}()))
+                {% endif %}
+            {%- endfor %}
+        }
+    }
+
+    impl<'a> ::core::hash::Hash for {{ info.ref_name }}<'a> {
+        fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+            {% for field in fields -%}
+                self.{{field.info.name}}().hash(state);
+            {%- endfor %}
+        }
+    }
+{% else %}
+    impl<'a, 'b> ::core::cmp::PartialOrd<{{ info.ref_name }}<'a>> for {{ info.ref_name }}<'b> {
+        fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
+            {% for field in fields -%}
+                {% if loop.last %}
+                self.{{field.info.name}}().partial_cmp(&other.{{field.info.name}}())
+                {% else %}
+                match self.{{field.info.name}}().partial_cmp(&other.{{field.info.name}}()) {
+                    ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                    o => return o,
+                }
+                {% endif %}
+            {%- endfor %}
+        }
+    }
+{% endif %}
+{%- else -%}
 impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_name}} {
     type Error = ::planus::Error;
 
     #[allow(unreachable_code)]
     fn try_from(value: {{info.ref_name}}<'a>) -> ::planus::Result<Self> {
-        ::core::result::Result::Ok({{ info.owned_name }} {
+        ::core::result::Result::Ok(Self {
         {% for field in fields -%}
             {{ field.info.name }}:
             {% if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
@@ -118,6 +187,7 @@ impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_nam
         })
     }
 }
+{%- endif %}
 
 impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {

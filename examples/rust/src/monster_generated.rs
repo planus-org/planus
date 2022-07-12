@@ -214,7 +214,7 @@ mod root {
                 fn try_from(value: EquipmentRef<'a>) -> ::planus::Result<Self> {
                     ::core::result::Result::Ok(match value {
                         EquipmentRef::Weapon(value) => {
-                            Equipment::Weapon(::planus::alloc::boxed::Box::new(
+                            Self::Weapon(::planus::alloc::boxed::Box::new(
                                 ::core::convert::TryFrom::try_from(value)?,
                             ))
                         }
@@ -346,16 +346,39 @@ mod root {
                 }
             }
 
-            impl<'a> ::core::convert::TryFrom<Vec3Ref<'a>> for Vec3 {
-                type Error = ::planus::Error;
-
+            impl<'a> ::core::convert::From<Vec3Ref<'a>> for Vec3 {
                 #[allow(unreachable_code)]
-                fn try_from(value: Vec3Ref<'a>) -> ::planus::Result<Self> {
-                    ::core::result::Result::Ok(Vec3 {
+                fn from(value: Vec3Ref<'a>) -> Self {
+                    Self {
                         x: value.x(),
                         y: value.y(),
                         z: value.z(),
-                    })
+                    }
+                }
+            }
+
+            impl<'a, 'b> ::core::cmp::PartialEq<Vec3Ref<'a>> for Vec3Ref<'b> {
+                fn eq(&self, other: &Vec3Ref<'_>) -> bool {
+                    self.x() == other.x() && self.y() == other.y() && self.z() == other.z()
+                }
+            }
+
+            impl<'a, 'b> ::core::cmp::PartialOrd<Vec3Ref<'a>> for Vec3Ref<'b> {
+                fn partial_cmp(
+                    &self,
+                    other: &Vec3Ref<'_>,
+                ) -> ::core::option::Option<::core::cmp::Ordering> {
+                    match self.x().partial_cmp(&other.x()) {
+                        ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                        o => return o,
+                    }
+
+                    match self.y().partial_cmp(&other.y()) {
+                        ::core::option::Option::Some(::core::cmp::Ordering::Equal) => (),
+                        o => return o,
+                    }
+
+                    self.z().partial_cmp(&other.z())
                 }
             }
 
