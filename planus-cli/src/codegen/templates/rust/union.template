@@ -45,7 +45,12 @@ impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}}
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug
+{%- if info.should_do_infallible_conversion -%}
+  , PartialEq, PartialOrd
+  {%- if info.should_do_eq -%}, Eq, Ord, Hash{%- endif -%}
+{%- endif -%}
+)]
 pub enum {{ info.ref_name_with_lifetime }}{
     {% for variant in variants -%}
         {{ variant.enum_name }}({{ variant.ref_type }}),
@@ -56,27 +61,6 @@ pub enum {{ info.ref_name_with_lifetime }}{
 impl ::core::convert::From<{{info.ref_name}}> for {{info.owned_name}} {
     fn from(value: {{info.ref_name}}) -> Self {
         match value {}
-    }
-}
-impl ::core::cmp::PartialEq<{{info.ref_name}}> for {{info.ref_name}} {
-    fn eq(&self, _other: &{{info.ref_name}}) -> bool {
-        match *self {}
-    }
-}
-impl ::core::cmp::Eq for {{info.ref_name}} {}
-impl ::core::cmp::PartialOrd<{{info.ref_name}}> for {{info.ref_name}} {
-    fn partial_cmp(&self, _other: &{{info.ref_name}}) -> ::core::option::Option<::core::cmp::Ordering> {
-        match *self {}
-    }
-}
-impl ::core::cmp::Ord for {{info.ref_name}} {
-    fn cmp(&self, _other: &{{info.ref_name}}) -> ::core::cmp::Ordering {
-        match *self {}
-    }
-}
-impl ::core::hash::Hash for {{info.ref_name}} {
-    fn hash<H: ::core::hash::Hasher>(&self, _state: &mut H) {
-        match *self {}
     }
 }
 {% elseif info.should_do_infallible_conversion %}
@@ -93,104 +77,6 @@ impl ::core::hash::Hash for {{info.ref_name}} {
             }
         }
     }
-
-    impl<'a, 'b> ::core::cmp::PartialEq<{{info.ref_name}}<'a>> for {{info.ref_name}}<'b> {
-        fn eq(&self, other: &{{info.ref_name}}) -> bool {
-            match (self, other) {
-                {% for variant in variants -%}
-                    ({{info.ref_name}}::{{ variant.enum_name }}(l), {{info.ref_name}}::{{ variant.enum_name }}(r)) => l == r,
-                {% endfor %}
-                {% if variants.len() > 1 %}
-                    _ => false,
-                {% endif %}
-            }
-        }
-    }
-
-
-    {% if info.should_do_eq %}
-    impl<'a> ::core::cmp::Eq for {{info.ref_name}}<'a> {}
-    impl<'a, 'b> ::core::cmp::PartialOrd<{{info.ref_name}}<'a>> for {{info.ref_name}}<'b> {
-        fn partial_cmp(&self, other: &{{info.ref_name}}) -> ::core::option::Option<::core::cmp::Ordering> {
-            ::core::option::Option::Some(::core::cmp::Ord::cmp(self, other))
-        }
-    }
-
-    impl<'a> ::core::cmp::Ord for {{info.ref_name}}<'a> {
-        fn cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::cmp::Ordering {
-        {% if variants.len() > 1 %}
-            fn discriminant(value: &{{info.ref_name}}<'_>) -> u8 {
-                match value {
-                {% for variant in variants -%}
-                    {{info.ref_name}}::{{ variant.enum_name }}(_) => {{loop.index}},
-                {% endfor %}
-                }
-            }
-            let self_discriminant = discriminant(self);
-            let other_discriminant = discriminant(self);
-            if self_discriminant == other_discriminant {
-                match (self, other) {
-                {% for variant in variants -%}
-                    ({{info.ref_name}}::{{ variant.enum_name }}(l), {{info.ref_name}}::{{ variant.enum_name }}(r)) => l.cmp(r),
-                {% endfor %}
-                _ => ::core::unreachable!(),
-                }
-            } else {
-                self_discriminant.cmp(&other_discriminant)
-            }
-        {% else %}
-            match (self, other) {
-            {% for variant in variants -%}
-                ({{info.ref_name}}::{{ variant.enum_name }}(l), {{info.ref_name}}::{{ variant.enum_name }}(r)) => l.cmp(r),
-            {% endfor %}
-            }
-        {% endif %}
-        }
-    }
-
-    impl<'a> ::core::hash::Hash for {{info.ref_name}}<'a> {
-        fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
-            ::core::mem::discriminant(self).hash(state);
-            match self {
-            {% for variant in variants -%}
-                {{info.ref_name}}::{{ variant.enum_name }}(v) => v.hash(state),
-            {% endfor %}
-            }
-        }
-    }
-    {% else %}
-    impl<'a, 'b> ::core::cmp::PartialOrd<{{info.ref_name}}<'a>> for {{info.ref_name}}<'b> {
-        fn partial_cmp(&self, other: &{{info.ref_name}}<'_>) -> ::core::option::Option<::core::cmp::Ordering> {
-        {% if variants.len() > 1 %}
-            fn discriminant(value: &{{info.ref_name}}<'_>) -> u8 {
-                match value {
-                {% for variant in variants -%}
-                    {{info.ref_name}}::{{ variant.enum_name }}(_) => {{loop.index}},
-                {% endfor %}
-                }
-            }
-            let self_discriminant = discriminant(self);
-            let other_discriminant = discriminant(self);
-            if self_discriminant == other_discriminant {
-                match (self, other) {
-                {% for variant in variants -%}
-                    ({{info.ref_name}}::{{ variant.enum_name }}(l), {{info.ref_name}}::{{ variant.enum_name }}(r)) => l.partial_cmp(r),
-                {% endfor %}
-                _ => ::core::unreachable!(),
-                }
-            } else {
-                self_discriminant.partial_cmp(&other_discriminant)
-            }
-        {% else %}
-            match (self, other) {
-            {% for variant in variants -%}
-                ({{info.ref_name}}::{{ variant.enum_name }}(l), {{info.ref_name}}::{{ variant.enum_name }}(r)) => l.partial_cmp(r),
-            {% endfor %}
-            }
-        {% endif %}
-        }
-    }
-    {% endif %}
 {% else %}
 impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}} {
     type Error = ::planus::Error;
