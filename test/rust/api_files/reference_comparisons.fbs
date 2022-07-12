@@ -1,21 +1,22 @@
 struct InnerU8 {
-  value: uint8;
+  v0: uint8;
+  v1: uint8;
 }
 
 struct InnerF32 {
-  value: float32;
+  v0: float32;
+  v1: float32;
 }
 
 table InnerTable {
-  value: uint8;
+  v0: uint8;
+  v1: uint8;
 }
 
 union Union {
   F0: string,
   F1: InnerU8,
-  F2: InnerF32,
-  F3: InnerTable,
+  F2: InnerTable,
+  F3: InnerF32,
   InnerU8,
-  InnerF32,
-  InnerTable,
 }
