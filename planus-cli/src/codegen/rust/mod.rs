@@ -616,7 +616,7 @@ impl Backend for RustBackend {
                         create_trait = format!("WriteAsDefault<{}, ()>", vtable_type);
 
                         serialize_default = Some("&()".into());
-                        deserialize_default = Some("::planus::Vector::EMPTY".into());
+                        deserialize_default = Some("::planus::Vector::empty()".into());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
