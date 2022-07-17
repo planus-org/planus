@@ -1,0 +1,15 @@
+struct Struct {
+  value: uint64;
+}
+
+table Table {
+  value: uint64;
+}
+
+table Root {
+  structs: [Struct];
+  tables: [Table];
+  strings: [string];
+  uint16s: [uint16];
+  uint64s: [uint64];
+}

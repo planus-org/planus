@@ -52,6 +52,12 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Iter<'buf, T> {
     }
 
     #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.v = self.v.get(n..).unwrap_or_else(|| Vector::new_empty());
+        self.next()
+    }
+
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -65,12 +71,6 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Iter<'buf, T> {
     #[inline]
     fn last(self) -> Option<Self::Item> {
         self.v.last()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = self.v.get(n..).unwrap_or_else(|| Vector::empty());
-        self.next()
     }
 }
 
@@ -98,6 +98,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Iter<'buf, T> 
         self.v.len()
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Iter<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
@@ -147,8 +148,15 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Chunks<'buf, T> {
             self.v = remaining;
             Some(first)
         } else {
-            Some(core::mem::replace(&mut self.v, Vector::empty()))
+            Some(core::mem::replace(&mut self.v, Vector::new_empty()))
         }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        let skip = n.saturating_mul(self.chunk_size.get());
+        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
+        self.next()
     }
 
     #[inline]
@@ -165,13 +173,6 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Chunks<'buf, T> {
     #[inline]
     fn last(mut self) -> Option<Self::Item> {
         self.next_back()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let skip = n.saturating_mul(self.chunk_size.get());
-        self.v.get(skip..).unwrap_or_else(|| Vector::empty());
-        self.next()
     }
 }
 
@@ -211,6 +212,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Chunks<'buf, T
         div_ceil(len, self.chunk_size.get())
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Chunks<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
@@ -267,6 +269,19 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunks<'buf, T> {
     }
 
     #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.v = unsafe {
+            self.v.get_unchecked(
+                ..self
+                    .v
+                    .len()
+                    .saturating_sub(n.saturating_mul(self.chunk_size.get())),
+            )
+        };
+        self.next()
+    }
+
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -281,19 +296,6 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunks<'buf, T> {
     fn last(mut self) -> Option<Self::Item> {
         self.next_back()
     }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = unsafe {
-            self.v.get_unchecked(
-                ..self
-                    .v
-                    .len()
-                    .saturating_sub(n.saturating_mul(self.chunk_size.get())),
-            )
-        };
-        self.next()
-    }
 }
 
 impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf, T> {
@@ -303,8 +305,8 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf
             None
         } else {
             let mid = ((self.v.len() - 1) % self.chunk_size) + 1;
-            let (start, end) = unsafe { self.v.split_at_unchecked(mid) };
-            self.v = end;
+            let (start, remaining) = unsafe { self.v.split_at_unchecked(mid) };
+            self.v = remaining;
             Some(start)
         }
     }
@@ -318,7 +320,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf
             // This makes it easy to calculate the new size
             self.v = unsafe {
                 self.v
-                    .get_unchecked(..self.v.len() - (new_chunk_count * self.chunk_size.get()))
+                    .get_unchecked(self.v.len() - (new_chunk_count * self.chunk_size.get())..)
             };
         }
         self.next_back()
@@ -331,6 +333,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for RChunks<'buf, 
         div_ceil(self.v.len(), self.chunk_size.get())
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size` elements
@@ -398,6 +401,13 @@ impl<'buf, T: VectorRead<'buf>> Iterator for ChunksExact<'buf, T> {
     }
 
     #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        let skip = n.saturating_mul(self.chunk_size.get());
+        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
+        self.next()
+    }
+
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -409,20 +419,8 @@ impl<'buf, T: VectorRead<'buf>> Iterator for ChunksExact<'buf, T> {
     }
 
     #[inline]
-    fn last(self) -> Option<Self::Item> {
-        debug_assert!(self.v.len() % self.chunk_size == 0);
-        if self.v.is_empty() {
-            None
-        } else {
-            Some(unsafe { self.v.get_unchecked(self.v.len() - self.chunk_size.get()..) })
-        }
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let skip = n.saturating_mul(self.chunk_size.get());
-        self.v.get(skip..).unwrap_or_else(|| Vector::empty());
-        self.next()
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
     }
 }
 
@@ -433,7 +431,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for ChunksExact<
         if self.v.is_empty() {
             None
         } else {
-            let (last, remaining) = unsafe {
+            let (remaining, last) = unsafe {
                 self.v
                     .split_at_unchecked(self.v.len() - self.chunk_size.get())
             };
@@ -462,6 +460,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for ChunksExact<'b
         self.v.len() / self.chunk_size
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for ChunksExact<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
@@ -501,7 +500,7 @@ impl<'buf, T> Clone for RChunksExact<'buf, T> {
 impl<'buf, T: VectorRead<'buf>> RChunksExact<'buf, T> {
     pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         let rem_size = v.len() % chunk_size;
-        let (v, rem) = unsafe { v.split_at_unchecked(rem_size) };
+        let (rem, v) = unsafe { v.split_at_unchecked(rem_size) };
         Self { v, rem, chunk_size }
     }
 }
@@ -515,13 +514,26 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunksExact<'buf, T> {
         if self.v.is_empty() {
             None
         } else {
-            let (last, remaining) = unsafe {
+            let (remaining, last) = unsafe {
                 self.v
                     .split_at_unchecked(self.v.len() - self.chunk_size.get())
             };
             self.v = remaining;
             Some(last)
         }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.v = unsafe {
+            self.v.get_unchecked(
+                ..self
+                    .v
+                    .len()
+                    .saturating_sub(n.saturating_mul(self.chunk_size.get())),
+            )
+        };
+        self.next()
     }
 
     #[inline]
@@ -538,19 +550,6 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunksExact<'buf, T> {
     #[inline]
     fn last(mut self) -> Option<Self::Item> {
         self.next_back()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = unsafe {
-            self.v.get_unchecked(
-                ..self
-                    .v
-                    .len()
-                    .saturating_sub(n.saturating_mul(self.chunk_size.get())),
-            )
-        };
-        self.next()
     }
 }
 
@@ -570,7 +569,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunksExact
     #[inline]
     fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
         let skip = n.saturating_mul(self.chunk_size.get());
-        self.v.get(skip..).unwrap_or_else(|| Vector::empty());
+        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
         self.next_back()
     }
 }
@@ -581,6 +580,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for RChunksExact<'
         self.v.len() / self.chunk_size
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunksExact<'buf, T> {}
 
 /// An iterator over overlapping sub-vectors of length `size`.
@@ -626,6 +626,12 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Windows<'buf, T> {
     }
 
     #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.v = self.v.get(n..).unwrap_or_else(|| Vector::new_empty());
+        self.next()
+    }
+
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -639,12 +645,6 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Windows<'buf, T> {
     #[inline]
     fn last(mut self) -> Option<Self::Item> {
         self.next_back()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = self.v.get(n..).unwrap_or_else(|| Vector::empty());
-        self.next()
     }
 }
 
@@ -670,4 +670,5 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Windows<'buf, 
         self.v.len().saturating_sub(self.size.get() - 1)
     }
 }
+
 impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Windows<'buf, T> {}

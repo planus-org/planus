@@ -24,9 +24,12 @@ impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
 
 impl<'buf, T: ?Sized> Vector<'buf, T> {
     /// Returns an empty `Vector`
+    ///
+    /// This is typically not very useful, since the vector is read-only, but
+    /// has uses for instance as a default value.
     #[inline]
     #[must_use]
-    pub const fn empty() -> Vector<'buf, T> {
+    pub const fn new_empty() -> Vector<'buf, T> {
         Self {
             buffer: SliceWithStartOffset {
                 buffer: &[],
