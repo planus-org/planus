@@ -126,7 +126,11 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     /// # Panics
     ///
     /// Panics if `chunk_size` is 0.
+    ///
+    /// [`chunks_exact`]: Vector::chunks_exact
+    /// [`rchunks`]: Vector::rchunks
     #[inline]
+    #[must_use]
     pub fn chunks(self, chunk_size: usize) -> super::Chunks<'buf, T> {
         let chunk_size = NonZeroUsize::new(chunk_size).expect("chunks cannot have a size of zero");
         super::Chunks::new(self, chunk_size)
@@ -145,7 +149,11 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     /// # Panics
     ///
     /// Panics if `chunk_size` is 0.
+    ///
+    /// [`rchunks_exact`]: Vector::rchunks_exact
+    /// [`chunks`]: Vector::chunks
     #[inline]
+    #[must_use]
     pub fn rchunks(self, chunk_size: usize) -> super::RChunks<'buf, T> {
         let chunk_size = NonZeroUsize::new(chunk_size).expect("chunks cannot have a size of zero");
         super::RChunks::new(self, chunk_size)
@@ -166,7 +174,12 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     ///
     /// # Panics
     ///
-    /// Panics if `chunk_size` is 0.    #[inline]
+    /// Panics if `chunk_size` is 0.
+    ///
+    /// [`chunks`]: Vector::chunks
+    /// [`rchunks_exact`]: Vector::rchunks_exact
+    #[inline]
+    #[must_use]
     pub fn chunks_exact(self, chunk_size: usize) -> super::ChunksExact<'buf, T> {
         let chunk_size = NonZeroUsize::new(chunk_size).expect("chunks cannot have a size of zero");
         super::ChunksExact::new(self, chunk_size)
@@ -189,6 +202,11 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     /// # Panics
     ///
     /// Panics if `chunk_size` is 0.
+    ///
+    /// [`rchunks`]: Vector::rchunks
+    /// [`chunks_exact`]: Vector::chunks_exact
+    #[inline]
+    #[must_use]
     pub fn rchunks_exact(self, chunk_size: usize) -> super::RChunksExact<'buf, T> {
         let chunk_size = NonZeroUsize::new(chunk_size).expect("chunks cannot have a size of zero");
         super::RChunksExact::new(self, chunk_size)
@@ -201,6 +219,8 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     /// # Panics
     ///
     /// Panics if `size` is 0.
+    #[inline]
+    #[must_use]
     pub fn windows(self, size: usize) -> super::Windows<'buf, T> {
         let size = NonZeroUsize::new(size).expect("windows cannot have a size of zero");
         super::Windows::new(self, size)

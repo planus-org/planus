@@ -27,12 +27,14 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Iter<'bu
 }
 
 impl<'buf, T> Clone for Iter<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self { v: self.v }
     }
 }
 
 impl<'buf, T: VectorRead<'buf>> Iter<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: super::Vector<'buf, T>) -> Self {
         Self { v }
     }
@@ -123,6 +125,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Chunks<'
 }
 
 impl<'buf, T> Clone for Chunks<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             v: self.v,
@@ -132,6 +135,7 @@ impl<'buf, T> Clone for Chunks<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> Chunks<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         Self { v, chunk_size }
     }
@@ -237,6 +241,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunks<
 }
 
 impl<'buf, T> Clone for RChunks<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             v: self.v,
@@ -246,6 +251,7 @@ impl<'buf, T> Clone for RChunks<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> RChunks<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         Self { v, chunk_size }
     }
@@ -344,6 +350,9 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {
 /// the [`remainder`] function from the iterator.
 ///
 /// This struct is created by the [`chunks_exact`] method on [`Vector`]s.
+///
+/// [`chunks_exact`]: Vector::chunks_exact
+/// [`remainder`]: ChunksExact::remainder
 pub struct ChunksExact<'buf, T> {
     v: Vector<'buf, T>,
     rem: Vector<'buf, T>,
@@ -361,6 +370,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for ChunksEx
 }
 
 impl<'buf, T> Clone for ChunksExact<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             v: self.v,
@@ -371,6 +381,7 @@ impl<'buf, T> Clone for ChunksExact<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> ChunksExact<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         let len = v.len() / chunk_size.get() * chunk_size.get();
         let (v, rem) = unsafe { v.split_at_unchecked(len) };
@@ -380,6 +391,8 @@ impl<'buf, T: VectorRead<'buf>> ChunksExact<'buf, T> {
     /// Returns the remainder of the original vector that is not going to be
     /// returned by the iterator. The returned vector has at most `chunk_size-1`
     /// elements.
+    #[inline]
+    #[must_use]
     pub fn remainder(&self) -> Vector<'buf, T> {
         self.rem
     }
@@ -471,6 +484,9 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for ChunksExact<'buf, 
 /// the [`remainder`] function from the iterator.
 ///
 /// This struct is created by the [`rchunks_exact`] method on [`Vector`]s.
+///
+/// [`remainder`]: RChunksExact::remainder
+/// [`rchunks_exact`]: Vector::rchunks_exact
 pub struct RChunksExact<'buf, T> {
     v: Vector<'buf, T>,
     rem: Vector<'buf, T>,
@@ -488,6 +504,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunksE
 }
 
 impl<'buf, T> Clone for RChunksExact<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             v: self.v,
@@ -498,10 +515,20 @@ impl<'buf, T> Clone for RChunksExact<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> RChunksExact<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         let rem_size = v.len() % chunk_size;
         let (rem, v) = unsafe { v.split_at_unchecked(rem_size) };
         Self { v, rem, chunk_size }
+    }
+
+    /// Returns the remainder of the original vector that is not going to be
+    /// returned by the iterator. The returned vector has at most `chunk_size-1`
+    /// elements.
+    #[inline]
+    #[must_use]
+    pub fn remainder(&self) -> Vector<'buf, T> {
+        self.rem
     }
 }
 
@@ -586,6 +613,8 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunksExact<'buf,
 /// An iterator over overlapping sub-vectors of length `size`.
 ///
 /// This struct is created by the [`windows`] method on [`Vector`]s.
+///
+/// [`windows`]: Vector::windows
 pub struct Windows<'buf, T> {
     v: Vector<'buf, T>,
     size: NonZeroUsize,
@@ -601,6 +630,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Windows<
 }
 
 impl<'buf, T> Clone for Windows<'buf, T> {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             v: self.v,
@@ -610,6 +640,7 @@ impl<'buf, T> Clone for Windows<'buf, T> {
 }
 
 impl<'buf, T: VectorRead<'buf>> Windows<'buf, T> {
+    #[inline]
     pub(crate) fn new(v: Vector<'buf, T>, size: NonZeroUsize) -> Self {
         Self { v, size }
     }
