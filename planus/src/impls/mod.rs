@@ -4,7 +4,6 @@ mod box_;
 mod byte_slice;
 mod offset;
 mod option;
-mod planus_vectors;
 mod primitives;
 mod ref_;
 mod result;
@@ -15,7 +14,7 @@ mod union_offset;
 mod unit;
 mod vec;
 
-fn array_from_buffer(
+pub(crate) fn array_from_buffer(
     buffer: crate::slice_helpers::SliceWithStartOffset<'_>,
     offset: usize,
 ) -> core::result::Result<
