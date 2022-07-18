@@ -1,0 +1,27 @@
+RootRef {
+    u8_default_empty: Ok(
+        [],
+    ),
+    u8_required: Ok(
+        [
+            0,
+            1,
+            2,
+            3,
+        ],
+    ),
+    i8_default_empty: Ok(
+        [],
+    ),
+    i8_required: Ok(
+        [
+            -3,
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3,
+        ],
+    ),
+}

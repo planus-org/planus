@@ -629,10 +629,7 @@ mod root {
                     self.0.access(3, "Monster", "name")
                 }
 
-                pub fn inventory(
-                    &self,
-                ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, u8>>>
-                {
+                pub fn inventory(&self) -> ::planus::Result<::core::option::Option<&'a [u8]>> {
                     self.0.access(5, "Monster", "inventory")
                 }
 
@@ -720,13 +717,7 @@ mod root {
                         } else {
                             ::core::option::Option::None
                         },
-                        inventory: if let ::core::option::Option::Some(inventory) =
-                            value.inventory()?
-                        {
-                            ::core::option::Option::Some(inventory.to_vec()?)
-                        } else {
-                            ::core::option::Option::None
-                        },
+                        inventory: value.inventory()?.map(|v| v.to_vec()),
                         color: ::core::convert::TryInto::try_into(value.color()?)?,
                         weapons: if let ::core::option::Option::Some(weapons) = value.weapons()? {
                             ::core::option::Option::Some(weapons.to_vec_result()?)

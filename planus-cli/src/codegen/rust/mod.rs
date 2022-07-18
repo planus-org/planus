@@ -528,34 +528,30 @@ impl Backend for RustBackend {
                         ResolvedType::Float(type_) => float_type(type_).into(),
                     }
                 }
-                fn vector_ref_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
+                fn vector_read_type(type_: &ResolvedType<'_, RustBackend>) -> String {
                     match type_ {
                         ResolvedType::Struct(_, info, relative_namespace) => format!(
-                            "{}<'a>",
+                            "::planus::Vector<'a, {}<'a>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
-                        )
-                        .into(),
+                        ),
                         ResolvedType::Table(_, info, relative_namespace) => format!(
-                            "::planus::Result<{}<'a>>",
+                            "::planus::Vector<'a, ::planus::Result<{}<'a>>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
-                        )
-                        .into(),
+                        ),
                         ResolvedType::Enum(_, info, relative_namespace, _) => format!(
-                            "::core::result::Result<{}, ::planus::errors::UnknownEnumTag>",
+                            "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
-                        )
-                        .into(),
-                        ResolvedType::Union(_, _, _) => todo!(),
-                        ResolvedType::Vector(type_) => {
-                            format!("[{}]", vector_offset_type(type_)).into()
-                        }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ),
+                        ResolvedType::Union(_, _, _) => unreachable!(),
+                        ResolvedType::Vector(_) => unreachable!(),
+                        ResolvedType::Array(_, _) => unreachable!(),
                         ResolvedType::String => {
-                            "::planus::Result<&'a ::core::primitive::str>".into()
+                            "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>".into()
                         }
-                        ResolvedType::Bool => "bool".into(),
-                        ResolvedType::Integer(type_) => integer_type(type_).into(),
-                        ResolvedType::Float(type_) => float_type(type_).into(),
+                        ResolvedType::Bool => "::planus::Vector<'a, bool>".into(),
+                        ResolvedType::Integer(type_) if matches!(type_, IntegerType::U8 | IntegerType::I8) => format!("&'a [{}]", integer_type(type_)),
+                        ResolvedType::Integer(type_) => format!("::planus::Vector<'a, {}>", integer_type(type_)),
+                        ResolvedType::Float(type_) => format!("::planus::Vector<'a, {}>", float_type(type_)),
                     }
                 }
                 fn vector_try_into_func<'a>(type_: &ResolvedType<'a, RustBackend>) -> &'static str {
@@ -565,45 +561,46 @@ impl Backend for RustBackend {
                         | ResolvedType::Union(..)
                         | ResolvedType::Vector(..)
                         | ResolvedType::String => "to_vec_result",
-                        ResolvedType::Array(_, _) => todo!(),
                         _ => "to_vec",
                     }
                 }
 
                 let offset_name = vector_offset_type(&*type_);
-                let ref_name = vector_ref_type(&*type_);
+                let read_name = vector_read_type(&*type_);
                 let owned_name = vector_owned_type(&*type_);
                 primitive_size = 4;
                 vtable_type = format!("::planus::Offset<[{}]>", offset_name);
 
-                try_from_code = if matches!(field.assign_mode, AssignMode::Optional) {
-                    format!(
+                let is_byte_slice = matches!(
+                    &*type_,
+                    ResolvedType::Integer(IntegerType::U8) | ResolvedType::Integer(IntegerType::I8)
+                );
+                try_from_code = match (&field.assign_mode, is_byte_slice) {
+                    (AssignMode::Optional, true) => format!("value.{name}()?.map(|v| v.to_vec())"),
+                    (_, true) => format!("value.{name}()?.to_vec()"),
+                    (AssignMode::Optional, false) => format!(
                         r#"
-                        if let ::core::option::Option::Some({name}) = value.{name}()? {{
-                            ::core::option::Option::Some({name}.{try_into_func}()?)
-                        }} else {{
-                            ::core::option::Option::None
-                        }}
+                            if let ::core::option::Option::Some({name}) = value.{name}()? {{
+                                ::core::option::Option::Some({name}.{try_into_func}()?)
+                            }} else {{
+                                ::core::option::Option::None
+                            }}
                         "#,
-                        name = name,
                         try_into_func = vector_try_into_func(&*type_)
-                    )
-                } else {
-                    format!(
+                    ),
+                    (_, false) => format!(
                         "value.{name}()?.{try_into_func}()?",
-                        name = name,
                         try_into_func = vector_try_into_func(&*type_)
-                    )
+                    ),
                 };
                 match &field.assign_mode {
                     AssignMode::Required => {
-                        read_type = format!("::planus::Vector<'a, {}>", ref_name);
+                        read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{}>", owned_name);
                         create_trait = format!("WriteAs<{}>", vtable_type);
                     }
                     AssignMode::Optional => {
-                        read_type =
-                            format!("::core::option::Option<::planus::Vector<'a, {}>>", ref_name);
+                        read_type = format!("::core::option::Option<{read_name}>",);
                         owned_type = format!(
                             "::core::option::Option<::planus::alloc::vec::Vec<{}>>",
                             owned_name
@@ -611,12 +608,19 @@ impl Backend for RustBackend {
                         create_trait = format!("WriteAsOptional<{}>", vtable_type);
                     }
                     AssignMode::HasDefault(Literal::Vector(v)) if v.is_empty() => {
-                        read_type = format!("::planus::Vector<'a, {}>", ref_name);
+                        read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{}>", owned_name);
                         create_trait = format!("WriteAsDefault<{}, ()>", vtable_type);
 
                         serialize_default = Some("&()".into());
-                        deserialize_default = Some("::planus::Vector::EMPTY".into());
+                        deserialize_default = Some(
+                            if is_byte_slice {
+                                "&[]"
+                            } else {
+                                "::planus::Vector::EMPTY"
+                            }
+                            .into(),
+                        );
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }

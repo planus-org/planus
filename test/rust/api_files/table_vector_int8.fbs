@@ -1,0 +1,12 @@
+table Example {
+  value: [int8];
+  value_null: [int8] = null;
+  value_default_empty: [int8] = [];
+  value_required: [int8] (required);
+}
+
+table ExampleWithDefault {
+  value: [int8];
+  value_null: [int8] = null;
+  value_default_empty: [int8] = [];
+}

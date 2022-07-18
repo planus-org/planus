@@ -1,0 +1,8 @@
+table Root {
+  u8: [uint8];
+  u8_default_empty: [uint8] = [];
+  u8_required: [uint8] (required);
+  i8: [int8];
+  i8_default_empty: [int8] = [];
+  i8_required: [int8] (required);
+}
