@@ -646,9 +646,9 @@ impl Backend for RustBackend {
                             "WriteAsDefault<::planus::Offset<::core::primitive::str>, ::core::primitive::str>"
                                 .to_string();
 
-                        impl_default_code = format!("{:?}.into()", s).into();
+                        impl_default_code = format!("::core::convert::Into::into({:?})", s).into();
                         serialize_default = Some(format!("{:?}", s).into());
-                        deserialize_default = Some(format!("{:?}", s).into());
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
