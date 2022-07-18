@@ -8,6 +8,13 @@ pub enum {{ info.name }} {
     {% endfor %}
 }
 
+impl {{ info.name }} {
+    /// Array containing all valid variants of {{ info.name }}
+    pub const ENUM_VALUES: [Self; {{ variants.len() }}] = [
+        {%- for variant in variants -%} Self::{{ variant.name }}, {%- endfor -%}
+    ];
+}
+
 impl ::core::convert::TryFrom<{{info.repr_type}}> for {{info.name}} {
     type Error = ::planus::errors::UnknownEnumTagKind;
     fn try_from(value: {{info.repr_type}}) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind> {

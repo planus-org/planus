@@ -25,6 +25,11 @@ mod root {
                 Blue = 2,
             }
 
+            impl Color {
+                /// Array containing all valid variants of Color
+                pub const ENUM_VALUES: [Self; 3] = [Self::Red, Self::Green, Self::Blue];
+            }
+
             impl ::core::convert::TryFrom<i8> for Color {
                 type Error = ::planus::errors::UnknownEnumTagKind;
                 fn try_from(
