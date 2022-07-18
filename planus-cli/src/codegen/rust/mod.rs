@@ -483,11 +483,15 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _) => todo!(),
-                        ResolvedType::Vector(type_) => {
-                            format!("[{}]", vector_offset_type(type_)).into()
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => "::planus::Offset<str>".into(),
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
@@ -512,16 +516,15 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, info, relative_namespace) => {
-                            format_relative_namespace(relative_namespace, &info.owned_name)
-                                .to_string()
-                                .into()
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Vector(type_) => {
-                            format!("::planus::alloc::vec::Vec<{}>", vector_owned_type(type_))
-                                .into()
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => "::planus::alloc::string::String".into(),
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
@@ -545,11 +548,15 @@ impl Backend for RustBackend {
                             format_relative_namespace(relative_namespace, &info.name)
                         )
                         .into(),
-                        ResolvedType::Union(_, _, _) => todo!(),
-                        ResolvedType::Vector(type_) => {
-                            format!("[{}]", vector_offset_type(type_)).into()
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => {
                             "::planus::Result<&'a ::core::primitive::str>".into()
                         }

@@ -10,4 +10,10 @@ error: Unsupported type
 3 │   y: [[Foo: 1]];
   │       ^^^^^^^^ Arrays in vectors are not currently supported
 
+error: Unsupported type
+  ┌─ test/files/invalid/bad_vector_types.fbs:4:7
+  │
+4 │   z: [[Foo]];
+  │       ^^^^^ Vectors in vectors are not currently supported
+
 Error: Bailing because of errors
