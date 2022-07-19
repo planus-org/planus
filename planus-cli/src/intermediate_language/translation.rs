@@ -675,10 +675,15 @@ impl<'a> Translator<'a> {
     fn check_valid_vector_type(&self, current_file_id: FileId, type_: &Type) {
         match type_.kind {
             TypeKind::Table(_) => (),
-            TypeKind::Vector(_) => (),
             TypeKind::SimpleType(_) => (),
             TypeKind::String => (),
 
+            TypeKind::Vector(_) => self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("Vectors in vectors are not currently supported")],
+                Some("Unsupported type"),
+            ),
             TypeKind::Union(_) => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)

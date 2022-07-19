@@ -75,7 +75,8 @@ script = '''
 [tasks.lint]
 script = '''
     cargo fmt --all -- --check
-    cargo clippy --all-targets -- -D warnings
+    cargo clippy --no-default-features --all-targets -- -D warnings
+    cargo clippy --all-features --all-targets -- -D warnings
 '''
 
 [tasks.commit-check]
@@ -99,6 +100,28 @@ script = '''
     dot -Tsvg examples/rust/monster.dot -o examples/rust/monster.svg
 '''
 
+[tasks.test-features]
+script_runner = "bash"
+script_extension = "sh"
+script = '''
+    for dir in test/rust test/rust-compat; do
+        pushd $dir
+        for std in "" "std"; do
+            cargo test --features "${std}"
+        done
+        popd
+    done
+'''
+
+[tasks.test-example]
+script_runner = "bash"
+script_extension = "sh"
+script = '''
+    pushd examples/rust
+    cargo test --no-default-features
+    cargo test --all-features
+'''
+
 [tasks.full-test]
 dependencies = [
     "regenerate-examples",
@@ -106,5 +129,7 @@ dependencies = [
     # Check that all examples are up to date
     "commit-check",
     "test",
+    "test-features",
+    "test-example",
     "cli-test",
 ]

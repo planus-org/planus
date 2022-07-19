@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-planus = { version = "0.3.1", path = "../../planus" }
+planus = { version = "0.3.1", path = "../../planus", default-features = false }
 serde = { version = "1", default-features = false, features = ["derive", "std"] }
 
 [dev-dependencies]
