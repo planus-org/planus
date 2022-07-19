@@ -104,7 +104,7 @@ pub trait TableReadUnion<'buf>: Sized {
 }
 
 /// Trait used by generated code to read elements from vectors.
-pub trait VectorRead<'buf> {
+pub trait VectorRead<'buf>: 'buf {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
@@ -116,7 +116,7 @@ pub trait VectorRead<'buf> {
 /// in our generated code, however instead we do something like this:
 ///   impl<T: VectorReadInner<'buf>, E> VectorRead<'buf> for Result<T, E>
 #[doc(hidden)]
-pub trait VectorReadInner<'buf>: Sized {
+pub trait VectorReadInner<'buf>: 'buf + Sized {
     #[doc(hidden)]
     type Error: Sized;
     #[doc(hidden)]

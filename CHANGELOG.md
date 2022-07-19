@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - \[Rust\]: Added more `impl`s for union and struct references
+- \[Rust\]: Add an `ENUM_VALUES` const to enums
+- \[Rust\]: Make `Vector` more similar to rust slices by adding more methods
 - \[Rust\]: Vectors of `uint8`/`int8` now deserialize directly to rust slices
 
 ## [0.3.1] - 2022-06-15

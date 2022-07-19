@@ -5,3 +5,10 @@ table Example {
   value_default_test: string = "test";
   value_required: string (required);
 }
+
+table ExampleWithDefault {
+  value: string;
+  value_null: string = null;
+  value_default_empty: string = "";
+  value_default_test: string = "test";
+}

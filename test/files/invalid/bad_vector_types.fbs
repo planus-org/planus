@@ -1,6 +1,7 @@
 table Foo {
   x: [Bar];
   y: [[Foo: 1]];
+  z: [[Foo]];
 }
 
 union Bar {}

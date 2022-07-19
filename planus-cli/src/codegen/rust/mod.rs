@@ -483,11 +483,15 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _) => todo!(),
-                        ResolvedType::Vector(type_) => {
-                            format!("[{}]", vector_offset_type(type_)).into()
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => "::planus::Offset<str>".into(),
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
@@ -512,16 +516,15 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, info, relative_namespace) => {
-                            format_relative_namespace(relative_namespace, &info.owned_name)
-                                .to_string()
-                                .into()
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Vector(type_) => {
-                            format!("::planus::alloc::vec::Vec<{}>", vector_owned_type(type_))
-                                .into()
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
                         }
-                        ResolvedType::Array(_, _) => todo!(),
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => "::planus::alloc::string::String".into(),
                         ResolvedType::Bool => "bool".into(),
                         ResolvedType::Integer(type_) => integer_type(type_).into(),
@@ -542,9 +545,15 @@ impl Backend for RustBackend {
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
                         ),
-                        ResolvedType::Union(_, _, _) => unreachable!(),
-                        ResolvedType::Vector(_) => unreachable!(),
-                        ResolvedType::Array(_, _) => unreachable!(),
+                        ResolvedType::Union(_, _, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
+                        ResolvedType::Vector(_) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
+                        ResolvedType::Array(_, _) => {
+                            unreachable!("This should have been rejected in type-check")
+                        }
                         ResolvedType::String => {
                             "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>".into()
                         }
@@ -617,7 +626,7 @@ impl Backend for RustBackend {
                             if is_byte_slice {
                                 "&[]"
                             } else {
-                                "::planus::Vector::EMPTY"
+                                "::planus::Vector::new_empty()"
                             }
                             .into(),
                         );
@@ -650,9 +659,9 @@ impl Backend for RustBackend {
                             "WriteAsDefault<::planus::Offset<::core::primitive::str>, ::core::primitive::str>"
                                 .to_string();
 
-                        impl_default_code = format!("{:?}.into()", s).into();
+                        impl_default_code = format!("::core::convert::Into::into({:?})", s).into();
                         serialize_default = Some(format!("{:?}", s).into());
-                        deserialize_default = Some(format!("{:?}", s).into());
+                        deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
