@@ -1,5 +1,6 @@
-use crate::{builder::Builder, traits::*, Offset, UnionOffset};
 use alloc::boxed::Box;
+
+use crate::{builder::Builder, traits::*, Offset, UnionOffset};
 
 impl<P, T: ?Sized + WriteAsOffset<P>> WriteAsOffset<P> for Box<T> {
     #[inline]

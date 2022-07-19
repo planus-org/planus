@@ -1,5 +1,6 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset};
 use core::mem::MaybeUninit;
+
+use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset};
 
 impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
     #[inline]

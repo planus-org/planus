@@ -1,5 +1,6 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset};
 use core::mem::MaybeUninit;
+
+use crate::{builder::Builder, traits::*, Cursor, Offset};
 
 impl<T: ?Sized> Primitive for Offset<T> {
     const ALIGNMENT: usize = 4;
