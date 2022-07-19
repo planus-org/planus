@@ -10,6 +10,7 @@ rust-version = "1.57"
 [features]
 default = []
 std = ["planus/std", "serde/std"]
+vtable-cache = ["planus/vtable-cache"]
 
 [dependencies]
 anyhow = "1.0.51"

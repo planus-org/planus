@@ -1,0 +1,32 @@
+Root {
+    inner: Some(
+        [
+            Inner {
+                x: Some(
+                    "eye",
+                ),
+            },
+            Inner {
+                x: Some(
+                    "of",
+                ),
+            },
+            Inner {
+                x: None,
+            },
+            Inner {
+                x: Some(
+                    "the",
+                ),
+            },
+            Inner {
+                x: None,
+            },
+            Inner {
+                x: Some(
+                    "tiger",
+                ),
+            },
+        ],
+    ),
+}
