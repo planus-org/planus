@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - \[Rust\]: Added more `impl`s for union and struct references
+- \[Rust\]: Add an `ENUM_VALUES` const to enums
 
 ## [0.3.1] - 2022-06-15
 ### Added
