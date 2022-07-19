@@ -329,7 +329,6 @@ impl<'buf, T: VectorRead<'buf>> IntoIterator for Vector<'buf, T> {
     }
 }
 
-// Debug impls
 impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Vector<'buf, T>
 where
     T: core::fmt::Debug,
