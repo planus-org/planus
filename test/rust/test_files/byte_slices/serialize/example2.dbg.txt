@@ -1,0 +1,21 @@
+Root {
+    u8_: None,
+    u8_default_empty: [],
+    u8_required: [
+        0,
+        1,
+        2,
+        3,
+    ],
+    i8_: None,
+    i8_default_empty: [],
+    i8_required: [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+    ],
+}
