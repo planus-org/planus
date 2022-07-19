@@ -98,8 +98,6 @@ where
     I1::Item: std::fmt::Debug + PartialEq<I2::Item>,
     I2::Item: std::fmt::Debug,
 {
-    // println!("iter1={iter1:?}");
-    // println!("iter2={iter2:?}");
     if !iter1.clone().eq(iter2.clone()) {
         let iter1 = iter1.collect::<Vec<_>>();
         let iter2 = iter2.collect::<Vec<_>>();
