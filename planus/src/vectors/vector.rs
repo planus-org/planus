@@ -268,7 +268,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
         }
     }
 
-    /// Divides one `Vector`] into two at an index, without doing bounds checking.
+    /// Divides one [`Vector`] into two at an index, without doing bounds checking.
     ///
     /// The first will contain all indices from `[0, mid)` (excluding
     /// the index `mid` itself) and the second will contain all
