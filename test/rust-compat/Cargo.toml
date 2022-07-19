@@ -9,6 +9,7 @@ rust-version = "1.57"
 [features]
 default = []
 std = ["planus/std", "serde/std"]
+vtable-cache = ["planus/vtable-cache"]
 
 [dependencies]
 planus = { path = "../../planus", default-features = false, features = ["extra-validation"] }

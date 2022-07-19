@@ -31,11 +31,19 @@ fn test_serialize() {
             similar_asserts::assert_eq!(root, root2);
 
             let mut bin_path = file_path.clone();
-            bin_path.set_extension("bin");
+            if cfg!(feature = "vtable-cache") {
+                bin_path.set_extension("vtable-cache.bin");
+            } else {
+                bin_path.set_extension("bin");
+            }
             crate::tests::compare_regenerate_file(&bin_path, data, should_regenerate).unwrap();
 
             let mut dump_path = file_path.clone();
-            dump_path.set_extension("dump.txt");
+            if cfg!(feature = "vtable-cache") {
+                dump_path.set_extension("vtable-cache.dump.txt");
+            } else {
+                dump_path.set_extension("dump.txt");
+            }
             let dump = crate::hexdump::hexdump_flatbuffer_table(data);
             crate::tests::compare_regenerate_file_str(&dump_path, &dump, should_regenerate)
                 .unwrap();
