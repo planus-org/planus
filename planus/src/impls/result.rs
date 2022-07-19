@@ -14,7 +14,7 @@ where
 }
  */
 
-impl<'buf, T: VectorReadInner<'buf>, E> VectorRead<'buf> for Result<T, E>
+impl<'buf, T: VectorReadInner<'buf>, E: 'buf> VectorRead<'buf> for Result<T, E>
 where
     E: core::convert::From<T::Error>,
 {
