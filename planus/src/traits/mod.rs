@@ -1,8 +1,9 @@
+use core::mem::MaybeUninit;
+
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, Cursor, Offset,
     Result, UnionOffset,
 };
-use core::mem::MaybeUninit;
 
 #[doc(hidden)]
 pub trait Primitive {

@@ -1,0 +1,7 @@
+table Inner {
+  x: string;
+}
+
+table Root {
+  inner: [Inner];
+}
