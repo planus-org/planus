@@ -108,8 +108,8 @@ script = '''
     for dir in test/rust test/rust-compat; do
         pushd $dir
         for std in "" "std"; do
-            for vtable in "" "vtable-cache"; do
-                cargo test --features "${std} ${vtable}"
+            for cache in "" "vtable-cache" "string-cache" "bytes-cache" "vtable-cache string-cache bytes-cache"; do
+                cargo test --features "${std} ${cache}"
             done
         done
         popd

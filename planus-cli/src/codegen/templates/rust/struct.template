@@ -197,7 +197,7 @@ impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
 }
 
 impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
-    const STRIDE: usize = {{ vector_stride }};
+    const STRIDE: usize = {{ size }};
 
     unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> Self {
         Self(buffer.unchecked_advance_as_array(offset))
@@ -205,7 +205,7 @@ impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
 }
 
 impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
-    const STRIDE: usize = {{ vector_stride }};
+    const STRIDE: usize = {{ size }};
 
     type Value = {{ info.owned_name }};
 
@@ -219,9 +219,8 @@ impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
         bytes: *mut ::core::mem::MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; {{ vector_stride }}];
+        let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; {{ size }}];
         for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
-            {% if vector_stride == size %}
             ::planus::WriteAsPrimitive::write(
                 v,
                 ::planus::Cursor::new(&mut *bytes.add(i)),
@@ -231,20 +230,6 @@ impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
                 buffer_position - ({{ size }} * i) as u32,
                 {% endif %}
             );
-            {% else %}
-            let cursor = ::planus::Cursor::new(&mut *bytes.add(i));
-            let (value_cursor, padding_cursor) = cursor.split::<{{ size }}, {{ vector_stride - size }}>();
-            ::planus::WriteAsPrimitive::write(
-                v,
-                value_cursor,
-                {% if size == 1 %}
-                buffer_position - i as u32,
-                {% else %}
-                buffer_position - ({{ size }} * i) as u32,
-                {% endif %}
-            );
-            padding_cursor.finish([0; {{ vector_stride - size }}]);
-            {% endif %}
         }
     }
 }

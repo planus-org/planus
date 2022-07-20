@@ -12,7 +12,11 @@ pub mod errors;
 /// Types for interacting with vectors in serialized data
 pub mod vectors;
 
-#[cfg(feature = "vtable-cache")]
+#[cfg(any(
+    feature = "vtable-cache",
+    feature = "string-cache",
+    feature = "bytes-cache"
+))]
 mod builder_cache;
 
 #[doc(hidden)]
