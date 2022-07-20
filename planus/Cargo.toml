@@ -19,7 +19,9 @@ rand = "0.8.4"
 planus-example = { path = "../examples/rust" }
 
 [features]
-default = ["std", "vtable-cache"]
+default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
 std = []
 extra-validation = []
 vtable-cache = ["hashbrown"]
+string-cache = ["hashbrown"]
+bytes-cache = ["hashbrown"]

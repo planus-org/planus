@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset};
+use crate::{builder::Builder, traits::*, Offset};
 
 impl<T, P: Primitive> WriteAsOffset<[P]> for [T]
 where
@@ -13,25 +13,19 @@ where
         }
         // SAFETY: We need to make sure we always write the 4+stride*len bytes in the closure
         unsafe {
-            // TODO: This will not be correctly aligned if P::ALIGNMENT_MASK is bigger than u32::ALIGNMENT_MASK
             builder.write_with(
-                T::STRIDE
-                    .checked_mul(self.len())
-                    .unwrap()
-                    .checked_add(4)
-                    .unwrap(),
+                T::STRIDE.checked_mul(self.len()).unwrap(),
                 P::ALIGNMENT_MASK.max(u32::ALIGNMENT_MASK),
                 |buffer_position, bytes| {
                     let bytes = bytes.as_mut_ptr();
 
-                    (self.len() as u32).write(
-                        Cursor::new(&mut *(bytes as *mut [MaybeUninit<u8>; 4])),
-                        buffer_position,
-                    );
-
-                    T::write_values(&tmp, bytes.add(4), buffer_position - 4);
+                    T::write_values(&tmp, bytes, buffer_position);
                 },
-            )
+            );
+            builder.write_with(4, 0, |_buffer_position, bytes| {
+                let len = (self.len() as u32).to_le_bytes().map(MaybeUninit::new);
+                bytes.copy_from_slice(&len);
+            });
         }
         builder.current_offset()
     }

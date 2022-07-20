@@ -220,7 +220,6 @@ pub struct Struct {
     pub fields: IndexMap<String, StructField>,
     pub size: u32,
     pub alignment: u32,
-    pub vector_stride: u32,
 }
 
 #[derive(Debug)]

@@ -20,6 +20,14 @@ pub struct Builder {
     #[cfg(feature = "vtable-cache")]
     vtable_cache: crate::builder_cache::Cache<crate::builder_cache::VTable>,
 
+    // byte slices and strings are sufficiently similar that they can share a
+    // cache type, but they cannot share the cache because strings need to be
+    // null byte terminated
+    #[cfg(feature = "string-cache")]
+    string_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+    #[cfg(feature = "bytes-cache")]
+    bytes_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+
     // This is a bit complicated. The buffer has support for guaranteeing a
     // specific write gets a specific alignment. It has many writes and thus
     // many promises, so how does keep track of this this across those promises, even
@@ -88,9 +96,104 @@ impl Builder {
             #[cfg(feature = "vtable-cache")]
             vtable_cache: crate::builder_cache::Cache::default(),
 
+            #[cfg(feature = "string-cache")]
+            string_cache: crate::builder_cache::Cache::default(),
+
+            #[cfg(feature = "bytes-cache")]
+            bytes_cache: crate::builder_cache::Cache::default(),
+
             #[cfg(debug_assertions)]
             missing_bytes: 0,
         }
+    }
+
+    /// Serializes a string and returns the offset to it
+    ///
+    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
+    pub fn create_string(&mut self, v: &str) -> Offset<str> {
+        #[cfg(feature = "string-cache")]
+        {
+            let hash = self.string_cache.hash(v.as_bytes());
+            if let Some(offset) = self
+                .string_cache
+                .get(self.inner.as_slice(), hash, v.as_bytes())
+            {
+                Offset {
+                    offset: offset as u32,
+                    phantom: PhantomData,
+                }
+            } else {
+                let offset = v.prepare(self);
+                self.string_cache.insert(hash, offset.offset);
+                offset
+            }
+        }
+        #[cfg(not(feature = "string-cache"))]
+        {
+            v.prepare(self)
+        }
+    }
+
+    /// Serializes a slice of `u8` and returns the offset to it
+    ///
+    /// This is an specialized version the more generic [`create_vector`] method.
+    ///
+    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
+    ///
+    /// [`create_vector`]: Self::create_vector
+    pub fn create_vector_u8(&mut self, v: &[u8]) -> Offset<[u8]> {
+        #[cfg(feature = "bytes-cache")]
+        {
+            let hash = self.bytes_cache.hash(v);
+            if let Some(offset) = self.bytes_cache.get(self.inner.as_slice(), hash, v) {
+                Offset {
+                    offset: offset as u32,
+                    phantom: PhantomData,
+                }
+            } else {
+                let offset = v.prepare(self);
+                self.bytes_cache.insert(hash, offset.offset);
+                offset
+            }
+        }
+        #[cfg(not(feature = "bytes-cache"))]
+        {
+            v.prepare(self)
+        }
+    }
+
+    /// Serializes a slice of `i8` and returns the offset to it
+    ///
+    /// This is an optimized version
+    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
+    pub fn create_vector_i8(&mut self, v: &[i8]) -> Offset<[i8]> {
+        #[cfg(feature = "bytes-cache")]
+        {
+            let v: &[u8] = unsafe { core::slice::from_raw_parts(v.as_ptr() as *const u8, v.len()) };
+            let hash = self.bytes_cache.hash(v);
+            if let Some(offset) = self.bytes_cache.get(self.inner.as_slice(), hash, v) {
+                Offset {
+                    offset: offset as u32,
+                    phantom: PhantomData,
+                }
+            } else {
+                let offset = v.prepare(self);
+                self.bytes_cache.insert(hash, offset.offset);
+                Offset {
+                    offset: offset.offset,
+                    phantom: PhantomData,
+                }
+            }
+        }
+        #[cfg(not(feature = "bytes-cache"))]
+        {
+            v.prepare(self)
+        }
+    }
+
+    /// Serializes a slice
+    pub fn create_vector<T>(&mut self, v: impl WriteAsOffset<[T]>) -> Offset<[T]> {
+        v.prepare(self)
     }
 
     /// Resets the builders internal state and clears the internal buffer.
@@ -155,11 +258,11 @@ impl Builder {
 
         let hash = self.vtable_cache.hash(vtable);
         if let Some(offset) = self.vtable_cache.get(self.inner.as_slice(), hash, vtable) {
-            offset
+            offset as usize
         } else {
             let offset = self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
             self.write(vtable);
-            self.vtable_cache.insert(hash, offset);
+            self.vtable_cache.insert(hash, offset.try_into().unwrap());
             offset
         }
     }

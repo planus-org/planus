@@ -10,10 +10,7 @@ use crate::{
     ctx::Ctx,
     error::ErrorKind,
     intermediate_language::checks::compatibility,
-    util::{
-        align_up,
-        sorted_map::{SortedMap, SortedSet},
-    },
+    util::sorted_map::{SortedMap, SortedSet},
 };
 
 pub struct Translator<'a> {
@@ -547,7 +544,6 @@ impl<'a> Translator<'a> {
             fields,
             size: u32::MAX,
             alignment: u32::MAX,
-            vector_stride: u32::MAX,
         }
     }
 
@@ -1399,7 +1395,6 @@ impl<'a> Translator<'a> {
         }
         decl.alignment = max_alignment;
         decl.size = offset;
-        decl.vector_stride = align_up(offset, max_alignment);
 
         self.descriptions[index] = TypeDescription::Struct {
             size: offset,
