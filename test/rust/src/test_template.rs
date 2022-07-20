@@ -31,19 +31,24 @@ fn test_serialize() {
             similar_asserts::assert_eq!(root, root2);
 
             let mut bin_path = file_path.clone();
-            if cfg!(feature = "vtable-cache") {
-                bin_path.set_extension("vtable-cache.bin");
-            } else {
-                bin_path.set_extension("bin");
-            }
-            crate::tests::compare_regenerate_file(&bin_path, data, should_regenerate).unwrap();
-
             let mut dump_path = file_path.clone();
-            if cfg!(feature = "vtable-cache") {
+
+            if cfg!(feature = "vtable-cache") && FILE_PATH.contains("vtable") {
                 dump_path.set_extension("vtable-cache.dump.txt");
+                bin_path.set_extension("vtable-cache.bin");
+            } else if cfg!(feature = "string-cache") && FILE_PATH.contains("string") {
+                dump_path.set_extension("string-cache.dump.txt");
+                bin_path.set_extension("string-cache.bin");
+            } else if cfg!(feature = "bytes-cache") && FILE_PATH.contains("bytes") {
+                dump_path.set_extension("bytes-cache.dump.txt");
+                bin_path.set_extension("bytes-cache.bin");
             } else {
                 dump_path.set_extension("dump.txt");
+                bin_path.set_extension("bin");
             }
+
+            crate::tests::compare_regenerate_file(&bin_path, data, should_regenerate).unwrap();
+
             let dump = crate::hexdump::hexdump_flatbuffer_table(data);
             crate::tests::compare_regenerate_file_str(&dump_path, &dump, should_regenerate)
                 .unwrap();

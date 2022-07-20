@@ -15,7 +15,7 @@ use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
 /// builder.finish(weapon, None);
 /// ```
 pub struct Builder {
-    inner: BackVec,
+    pub(crate) inner: BackVec,
 
     #[cfg(feature = "vtable-cache")]
     vtable_cache: crate::builder_cache::Cache<crate::builder_cache::VTable>,
@@ -24,7 +24,7 @@ pub struct Builder {
     // cache type, but they cannot share the cache because strings need to be
     // null byte terminated
     #[cfg(feature = "string-cache")]
-    string_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+    pub(crate) string_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
     #[cfg(feature = "bytes-cache")]
     bytes_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
 
@@ -107,38 +107,11 @@ impl Builder {
         }
     }
 
-    /// Serializes a string and returns the offset to it
-    ///
-    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
-    pub fn create_string(&mut self, v: &str) -> Offset<str> {
-        #[cfg(feature = "string-cache")]
-        {
-            let hash = self.string_cache.hash(v.as_bytes());
-            if let Some(offset) = self
-                .string_cache
-                .get(self.inner.as_slice(), hash, v.as_bytes())
-            {
-                Offset {
-                    offset: offset as u32,
-                    phantom: PhantomData,
-                }
-            } else {
-                let offset = v.prepare(self);
-                self.string_cache.insert(hash, offset.offset);
-                offset
-            }
-        }
-        #[cfg(not(feature = "string-cache"))]
-        {
-            v.prepare(self)
-        }
-    }
-
     /// Serializes a slice of `u8` and returns the offset to it
     ///
     /// This is an specialized version the more generic [`create_vector`] method.
     ///
-    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
+    /// If the `bytes-cache` feature has been enabled, then uses a cache to reuse slices
     ///
     /// [`create_vector`]: Self::create_vector
     pub fn create_vector_u8(&mut self, v: &[u8]) -> Offset<[u8]> {
@@ -164,8 +137,11 @@ impl Builder {
 
     /// Serializes a slice of `i8` and returns the offset to it
     ///
-    /// This is an optimized version
-    /// If the `string-cache` feature has been enabled, then uses a cache to reuse strings
+    /// This is an specialized version the more generic [`create_vector`] method.
+    ///
+    /// If the `bytes-cache` feature has been enabled, then uses a cache to reuse slices
+    ///
+    /// [`create_vector`]: Self::create_vector
     pub fn create_vector_i8(&mut self, v: &[i8]) -> Offset<[i8]> {
         #[cfg(feature = "bytes-cache")]
         {
@@ -191,7 +167,7 @@ impl Builder {
         }
     }
 
-    /// Serializes a slice
+    /// Serializes a slice and returns the offset to it
     pub fn create_vector<T>(&mut self, v: impl WriteAsOffset<[T]>) -> Offset<[T]> {
         v.prepare(self)
     }
@@ -201,6 +177,10 @@ impl Builder {
         self.inner.clear();
         #[cfg(feature = "vtable-cache")]
         self.vtable_cache.clear();
+        #[cfg(feature = "string-cache")]
+        self.string_cache.clear();
+        #[cfg(feature = "bytes-cache")]
+        self.bytes_cache.clear();
         self.delayed_bytes = 0;
         self.alignment_mask = 0;
         #[cfg(debug_assertions)]
