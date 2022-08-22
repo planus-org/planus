@@ -1,4 +1,4 @@
-name: discord
+name: Discord notification workflow
 
 on:
   workflow_run:
@@ -16,11 +16,14 @@ jobs:
     steps:
       - name: on-success
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: Ilshidur/action-discord@master
-        with:
-          args: "Github repo: ${{ github.repository }}\n- Branch: ${{ github.event.workflow_run.head_branch }}\n- [Link: to Actions](<${{ github.event.workflow_run.html_url }}>)\n- Status: 🎉  ${{ github.event.workflow_run.conclusion }}  🍏"
-      - name: on-failure
+        run: echo "STATUS_MESSAGE=Success 🎉" >> $GITHUB_ENV
+      - name: on-error
         if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        run: echo "STATUS_MESSAGE=Failure 💣💥" >> $GITHUB_ENV
+      - name: on-unknown
+        if: ${{ github.event.workflow_run.conclusion != 'success' && github.event.workflow_run.conclusion != 'failure' }}
+        run: echo "STATUS_MESSAGE=${{ github.event.workflow_run.conclusion }} ⁉️" >> $GITHUB_ENV
+      - name: send-message
         uses: Ilshidur/action-discord@master
         with:
-          args: "Github repo: ${{ github.repository }}\n- Branch: ${{ github.event.workflow_run.head_branch }}\n- [Link: to Actions](<${{ github.event.workflow_run.html_url }}>)\n- Status: 🤔  ${{ github.event.workflow_run.conclusion }}  💣💥"
+          args: "Workflow run:\n- Status: ${{ env.STATUS_MESSAGE }}\n- Run: [${{ github.event.workflow_run.name }}](<${{ github.event.workflow_run.html_url }}>) 💣💥\n- Commit: [${{ github.event.workflow_run.head_commit.message }}](<${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}>)\n- Branch: [${{ github.event.workflow_run.head_branch }}](<${{ github.event.workflow_run.repository.html_url }}/tree/${{ github.event.workflow_run.head_branch }}>)"
