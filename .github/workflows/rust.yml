@@ -9,6 +9,7 @@ on:
   pull_request:
   schedule:
     - cron: "32 4 * * 5"
+  workflow_dispatch:
 
 jobs:
   test-msrv:
