@@ -43,7 +43,7 @@ pub mod tests {
 
         if path.exists() && !should_regenerate {
             let data = std::fs::read_to_string(path)?;
-            similar_asserts::assert_str_eq!(data, new_val);
+            similar_asserts::assert_eq!(data, new_val);
         } else {
             std::fs::write(path, &new_val)?;
         }
