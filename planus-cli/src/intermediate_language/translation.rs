@@ -1365,30 +1365,27 @@ impl<'a> Translator<'a> {
 
         let (ast_decl, ast_kind) = get_ast_decl!();
         for m in &ast_kind.metadata.values {
-            match &m.kind {
-                MetadataValueKind::ForceAlign(n) => {
-                    if let Some(value) = self.translate_alignment(ast_decl.file_id, m.span, n) {
-                        if max_alignment <= value {
-                            max_alignment = value;
-                        } else {
-                            self.ctx.emit_error(
-                                ErrorKind::MISC_SEMANTIC_ERROR,
-                                std::iter::once(
-                                    Label::primary(ast_decl.file_id, m.span).with_message("This attribute tries to force the alignment of the struct")
-                                )
-                                .chain(
-                                    max_alignment_span.into_iter()
-                                        .map(|span| {
-                                            Label::secondary(ast_decl.file_id, span)
-                                                .with_message(format!("However the minimum alignment of this type is {max_alignment}"))
-                                    })
-                                ),
-                                Some("Alignment of struct cannot be forced to lower"),
-                            );
-                        }
+            if let MetadataValueKind::ForceAlign(n) = &m.kind {
+                if let Some(value) = self.translate_alignment(ast_decl.file_id, m.span, n) {
+                    if max_alignment <= value {
+                        max_alignment = value;
+                    } else {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            std::iter::once(Label::primary(ast_decl.file_id, m.span).with_message(
+                                "This attribute tries to force the alignment of the struct",
+                            ))
+                            .chain(
+                                max_alignment_span.into_iter().map(|span| {
+                                    Label::secondary(ast_decl.file_id, span).with_message(format!(
+                                    "However the minimum alignment of this type is {max_alignment}"
+                                ))
+                                }),
+                            ),
+                            Some("Alignment of struct cannot be forced to lower"),
+                        );
                     }
                 }
-                _ => (),
             }
         }
 
