@@ -257,6 +257,15 @@ impl Builder {
             self.write(&(offset - root.offset).to_le_bytes());
         }
         debug_assert_eq!(self.delayed_bytes, 0);
+        self.as_slice()
+    }
+
+    /// Returns a reference to the current data buffer.
+    ///
+    /// It will return the same slice as the one return by [`finish`], unless additional data has been appened afterwards.
+    ///
+    /// [`finish`]: Self::finish
+    pub fn as_slice(&self) -> &[u8] {
         self.inner.as_slice()
     }
 }
