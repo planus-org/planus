@@ -166,30 +166,24 @@ impl Builder {
         }
     }
 
-    #[cfg(not(feature = "vtable-cache"))]
     pub(crate) fn write_vtable(&mut self, vtable: &[u8]) -> usize {
         const VTABLE_ALIGNMENT: usize = 2;
         const VTABLE_ALIGNMENT_MASK: usize = VTABLE_ALIGNMENT - 1;
 
-        self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
+        #[cfg(feature = "vtable-cache")]
+        let hash = {
+            let hash = self.vtable_cache.hash(vtable);
+            if let Some(offset) = self.vtable_cache.get(self.inner.as_slice(), hash, vtable) {
+                return offset as usize;
+            }
+            hash
+        };
+
+        let offset = self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
         self.write(vtable);
-        self.inner.len()
-    }
-
-    #[cfg(feature = "vtable-cache")]
-    pub(crate) fn write_vtable(&mut self, vtable: &[u8]) -> usize {
-        const VTABLE_ALIGNMENT: usize = 2;
-        const VTABLE_ALIGNMENT_MASK: usize = VTABLE_ALIGNMENT - 1;
-
-        let hash = self.vtable_cache.hash(vtable);
-        if let Some(offset) = self.vtable_cache.get(self.inner.as_slice(), hash, vtable) {
-            offset as usize
-        } else {
-            let offset = self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
-            self.write(vtable);
-            self.vtable_cache.insert(hash, offset.try_into().unwrap());
-            offset
-        }
+        #[cfg(feature = "vtable-cache")]
+        self.vtable_cache.insert(hash, offset.try_into().unwrap());
+        offset
     }
 
     pub(crate) fn write(&mut self, buffer: &[u8]) {
