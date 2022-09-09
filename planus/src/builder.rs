@@ -26,7 +26,7 @@ pub struct Builder {
     #[cfg(feature = "string-cache")]
     pub(crate) string_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
     #[cfg(feature = "bytes-cache")]
-    bytes_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+    pub(crate) bytes_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
 
     // This is a bit complicated. The buffer has support for guaranteeing a
     // specific write gets a specific alignment. It has many writes and thus
@@ -107,64 +107,9 @@ impl Builder {
         }
     }
 
-    /// Serializes a slice of `u8` and returns the offset to it
-    ///
-    /// This is an specialized version the more generic [`create_vector`] method.
-    ///
-    /// If the `bytes-cache` feature has been enabled, then uses a cache to reuse slices
-    ///
-    /// [`create_vector`]: Self::create_vector
-    pub fn create_vector_u8(&mut self, v: &[u8]) -> Offset<[u8]> {
-        #[cfg(feature = "bytes-cache")]
-        {
-            let hash = self.bytes_cache.hash(v);
-            if let Some(offset) = self.bytes_cache.get(self.inner.as_slice(), hash, v) {
-                Offset {
-                    offset: offset as u32,
-                    phantom: PhantomData,
-                }
-            } else {
-                let offset = v.prepare(self);
-                self.bytes_cache.insert(hash, offset.offset);
-                offset
-            }
-        }
-        #[cfg(not(feature = "bytes-cache"))]
-        {
-            v.prepare(self)
-        }
-    }
-
-    /// Serializes a slice of `i8` and returns the offset to it
-    ///
-    /// This is an specialized version the more generic [`create_vector`] method.
-    ///
-    /// If the `bytes-cache` feature has been enabled, then uses a cache to reuse slices
-    ///
-    /// [`create_vector`]: Self::create_vector
-    pub fn create_vector_i8(&mut self, v: &[i8]) -> Offset<[i8]> {
-        #[cfg(feature = "bytes-cache")]
-        {
-            let v: &[u8] = unsafe { core::slice::from_raw_parts(v.as_ptr() as *const u8, v.len()) };
-            let hash = self.bytes_cache.hash(v);
-            if let Some(offset) = self.bytes_cache.get(self.inner.as_slice(), hash, v) {
-                Offset {
-                    offset: offset as u32,
-                    phantom: PhantomData,
-                }
-            } else {
-                let offset = v.prepare(self);
-                self.bytes_cache.insert(hash, offset.offset);
-                Offset {
-                    offset: offset.offset,
-                    phantom: PhantomData,
-                }
-            }
-        }
-        #[cfg(not(feature = "bytes-cache"))]
-        {
-            v.prepare(self)
-        }
+    /// Serializes a slice and returns the offset to it
+    pub fn create_string<T>(&mut self, v: impl WriteAsOffset<str>) -> Offset<str> {
+        v.prepare(self)
     }
 
     /// Serializes a slice and returns the offset to it

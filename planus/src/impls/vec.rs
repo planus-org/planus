@@ -4,8 +4,7 @@ use crate::{builder::Builder, traits::*, Offset};
 
 impl<T, P> WriteAsOffset<[P]> for Vec<T>
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Offset<[P]> {
@@ -15,8 +14,7 @@ where
 
 impl<T, P> WriteAs<Offset<[P]>> for Vec<T>
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 
@@ -28,8 +26,7 @@ where
 
 impl<T, P> WriteAsDefault<Offset<[P]>, ()> for Vec<T>
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 
@@ -45,8 +42,7 @@ where
 
 impl<T, P> WriteAsOptional<Offset<[P]>> for Vec<T>
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 

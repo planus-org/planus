@@ -128,7 +128,7 @@ mod root {
                     offset: usize,
                 ) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>
                 {
-                    let value = <i8 as ::planus::VectorRead>::from_buffer(buffer, offset);
+                    let value = *buffer.buffer.get_unchecked(offset) as i8;
                     let value: ::core::result::Result<Self, _> =
                         ::core::convert::TryInto::try_into(value);
                     value.map_err(|error_kind| {

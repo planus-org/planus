@@ -33,8 +33,7 @@ where
 
 impl<T, P> WriteAs<Offset<[P]>> for [T]
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 
@@ -45,8 +44,7 @@ where
 
 impl<T, P> WriteAsDefault<Offset<[P]>, ()> for [T]
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 
@@ -61,8 +59,7 @@ where
 
 impl<T, P> WriteAsOptional<Offset<[P]>> for [T]
 where
-    P: Primitive,
-    T: VectorWrite<P>,
+    [T]: WriteAsOffset<[P]>,
 {
     type Prepared = Offset<[P]>;
 
