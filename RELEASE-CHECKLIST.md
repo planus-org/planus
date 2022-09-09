@@ -10,3 +10,4 @@
 * Wait for CI and merge PR to main branch
 * Run `cargo publish` on main branch
 * Push tag and make a github release
+* Make an announcement on discord
