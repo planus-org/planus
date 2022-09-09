@@ -1,3 +1,5 @@
+use core::{marker::PhantomData, num::NonZeroUsize};
+
 use crate::{
     errors::{self, ErrorKind},
     impls::array_from_buffer,
@@ -5,7 +7,6 @@ use crate::{
     traits::VectorRead,
     TableRead,
 };
-use core::{marker::PhantomData, num::NonZeroUsize};
 
 /// A [`slice`]-like view into a serialized flatbuffer that deserializes on demand.
 pub struct Vector<'buf, T: ?Sized> {

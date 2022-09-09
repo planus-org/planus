@@ -1,5 +1,6 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset};
 use core::mem::MaybeUninit;
+
+use crate::{builder::Builder, traits::*, Cursor, Offset};
 
 impl<T, P: Primitive> WriteAsOffset<[P]> for [T]
 where

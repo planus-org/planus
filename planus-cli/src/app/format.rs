@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use clap::{Parser, ValueHint};
 
 use crate::ctx::Ctx;
-use clap::{Parser, ValueHint};
 
 /// Format .fbs files
 #[derive(Parser)]

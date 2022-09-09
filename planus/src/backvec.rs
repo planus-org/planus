@@ -129,6 +129,7 @@ impl Drop for BackVec {
 #[cfg(test)]
 mod tests {
     use alloc::vec::Vec;
+
     use rand::{thread_rng, Rng};
 
     use super::*;

@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use clap::{Parser, ValueHint};
 
 use crate::{ast_map::AstMap, ctx::Ctx, intermediate_language::translation::Translator};
-use clap::{Parser, ValueHint};
 
 /// Check validity of .fbs files
 #[derive(Parser)]

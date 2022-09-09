@@ -1,6 +1,7 @@
-use crate::{builder::Builder, traits::*, Cursor, Offset};
 use alloc::string::String;
 use core::mem::MaybeUninit;
+
+use crate::{builder::Builder, traits::*, Cursor, Offset};
 
 impl WriteAsOffset<str> for String {
     #[inline]
