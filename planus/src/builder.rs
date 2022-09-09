@@ -108,7 +108,7 @@ impl Builder {
     }
 
     /// Serializes a string and returns the offset to it
-    pub fn create_string<T>(&mut self, v: impl WriteAsOffset<str>) -> Offset<str> {
+    pub fn create_string(&mut self, v: impl WriteAsOffset<str>) -> Offset<str> {
         v.prepare(self)
     }
 
