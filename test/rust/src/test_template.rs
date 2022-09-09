@@ -39,7 +39,7 @@ fn test_serialize() {
             } else if cfg!(feature = "string-cache") && FILE_PATH.contains("string") {
                 dump_path.set_extension("string-cache.dump.txt");
                 bin_path.set_extension("string-cache.bin");
-            } else if cfg!(feature = "bytes-cache") && FILE_PATH.contains("bytes") {
+            } else if cfg!(feature = "bytes-cache") && FILE_PATH.contains("byte") {
                 dump_path.set_extension("bytes-cache.dump.txt");
                 bin_path.set_extension("bytes-cache.bin");
             } else {
