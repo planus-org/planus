@@ -1,0 +1,4 @@
+enum A: uint8 { X = 1, Y = 1 }
+enum B: uint8 { X = 1, Y, Z = 2 }
+enum C: uint8 { X, Y, Z = 1 }
+enum D: uint8 { X, Y = 0 }

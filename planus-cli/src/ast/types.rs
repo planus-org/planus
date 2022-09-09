@@ -304,10 +304,7 @@ impl MetadataValueKind {
     }
 
     pub fn accepted_on_enums(&self) -> bool {
-        matches!(
-            self,
-            Self::ForceAlign(_) | Self::BitFlags | Self::CsharpPartial | Self::Private,
-        )
+        matches!(self, Self::BitFlags | Self::CsharpPartial | Self::Private)
     }
 
     pub fn accepted_on_structs(&self) -> bool {

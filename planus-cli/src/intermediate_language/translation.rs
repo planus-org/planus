@@ -447,7 +447,7 @@ impl<'a> Translator<'a> {
                             .variants
                             .iter()
                             .enumerate()
-                            .find(|(_variant_index, (_key, value))| value == &s)
+                            .find(|(_variant_index, (_key, (_span, value)))| value == s)
                         {
                             return Some(Literal::EnumTag {
                                 variant_index,
@@ -1142,27 +1142,17 @@ impl<'a> Translator<'a> {
     }
 
     fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
-        let mut alignment = decl.type_.byte_size();
+        let alignment = decl.type_.byte_size();
         for m in &decl.metadata.values {
-            match &m.kind {
-                MetadataValueKind::ForceAlign(literal) => {
-                    if let Some(value) = self.translate_alignment(current_file_id, m.span, literal)
-                    {
-                        alignment = value;
-                    }
-                }
-                _ => {
-                    self.emit_metadata_support_error(
-                        current_file_id,
-                        m,
-                        "enums",
-                        m.kind.accepted_on_enums(),
-                    );
-                }
-            }
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "enums",
+                m.kind.accepted_on_enums(),
+            );
         }
 
-        let mut variants = IndexMap::new();
+        let mut variants: IndexMap<IntegerLiteral, (Span, String)> = IndexMap::new();
         let mut next_value = decl.type_.default_value();
         for (ident, variant) in decl.variants.iter() {
             let mut value = next_value;
@@ -1181,9 +1171,22 @@ impl<'a> Translator<'a> {
                 };
             }
             match variants.entry(value) {
-                Entry::Occupied(_) => panic!(),
+                Entry::Occupied(entry) => {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [
+                            Label::primary(current_file_id, entry.get().0)
+                                .with_message("First variant was here"),
+                            Label::primary(current_file_id, variant.span)
+                                .with_message("Second variant was here"),
+                        ],
+                        Some(&format!(
+                            "Enum uses the value {value} for multiple variants"
+                        )),
+                    );
+                }
                 Entry::Vacant(entry) => {
-                    entry.insert(name);
+                    entry.insert((variant.span, name));
                 }
             }
             next_value = value.next();

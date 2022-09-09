@@ -234,7 +234,7 @@ pub struct StructField {
 #[derive(Debug, Clone)]
 pub struct Enum {
     pub type_: ast::IntegerType,
-    pub variants: IndexMap<IntegerLiteral, String>,
+    pub variants: IndexMap<IntegerLiteral, (Span, String)>,
     pub alignment: u32,
 }
 

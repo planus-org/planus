@@ -1,0 +1,7 @@
+error: Metadata attribute does not make sense on enums
+  ┌─ test/files/invalid/enum_with_alignment.fbs:1:16
+  │
+1 │ enum A: uint8 (force_align: 1) { X, Y }
+  │                ^^^^^^^^^^^^^^
+
+Error: Bailing because of errors

@@ -1,0 +1,33 @@
+error: Enum uses the value 1 for multiple variants
+  ┌─ test/files/invalid/enum_overlap.fbs:1:17
+  │
+1 │ enum A: uint8 { X = 1, Y = 1 }
+  │                 ^^^^^^ ^^^^^ Second variant was here
+  │                 │       
+  │                 First variant was here
+
+error: Enum uses the value 2 for multiple variants
+  ┌─ test/files/invalid/enum_overlap.fbs:2:24
+  │
+2 │ enum B: uint8 { X = 1, Y, Z = 2 }
+  │                        ^^ ^^^^^ Second variant was here
+  │                        │   
+  │                        First variant was here
+
+error: Enum uses the value 1 for multiple variants
+  ┌─ test/files/invalid/enum_overlap.fbs:3:20
+  │
+3 │ enum C: uint8 { X, Y, Z = 1 }
+  │                    ^^ ^^^^^ Second variant was here
+  │                    │   
+  │                    First variant was here
+
+error: Enum uses the value 0 for multiple variants
+  ┌─ test/files/invalid/enum_overlap.fbs:4:17
+  │
+4 │ enum D: uint8 { X, Y = 0 }
+  │                 ^^ ^^^^^ Second variant was here
+  │                 │   
+  │                 First variant was here
+
+Error: Bailing because of errors
