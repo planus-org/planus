@@ -29,6 +29,7 @@ impl<'buf> TableRead<'buf> for &'buf [i8] {
 }
 
 impl WriteAsOffset<[u8]> for [u8] {
+    #[allow(clippy::let_and_return)]
     fn prepare(&self, builder: &mut Builder) -> Offset<[u8]> {
         #[cfg(feature = "bytes-cache")]
         let hash = {
@@ -76,6 +77,7 @@ impl WriteAsOffset<[u8]> for [u8] {
 }
 
 impl WriteAsOffset<[i8]> for [i8] {
+    #[allow(clippy::let_and_return)]
     fn prepare(&self, builder: &mut Builder) -> Offset<[i8]> {
         #[cfg(feature = "bytes-cache")]
         let hash = {

@@ -166,6 +166,7 @@ impl Builder {
         }
     }
 
+    #[allow(clippy::let_and_return)]
     pub(crate) fn write_vtable(&mut self, vtable: &[u8]) -> usize {
         const VTABLE_ALIGNMENT: usize = 2;
         const VTABLE_ALIGNMENT_MASK: usize = VTABLE_ALIGNMENT - 1;
