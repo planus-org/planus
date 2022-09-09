@@ -6,6 +6,7 @@ Planus – alternative flatbuffer implementation
 [![License](https://img.shields.io/crates/l/planus)](https://crates.io/crates/planus)
 [![Crates.io](https://img.shields.io/crates/v/planus)](https://crates.io/crates/planus)
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/planus)
+[![Discord](https://img.shields.io/discord/1011185439270510665.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/M5uJswg6Xd)
 
 
 Planus is an alternative compiler for [flatbuffers](https://google.github.io/flatbuffers/), an efficient cross platform serialization library.
@@ -50,6 +51,18 @@ planus rust -o <output_path.rs> <input_file.fbs>
 
 For a complete example, see [examples/rust](examples/rust).
 
+Community
+---------
+
+Before contributing or participating in discussions with the community, you should familiarize yourself with the [**Code of Conduct**](https://www.rust-lang.org/policies/code-of-conduct) we follow in this project.
+
+* [**Discord**](https://discord.gg/M5uJswg6Xd): Planus' official discord server.
+* [**GitHub Discussions**](https://github.com/planus-org/planus/discussions): The best place for complex discussions about planus.
+
+If you would like to contribute, please open an issue or pull request to discuss your idea.
+
+For more more open-ended questions or complex decisions, feel free to open a Github Discussion or ping the developers on Discord.
+
 
 Status of the implementation
 ----------------------------
@@ -77,7 +90,7 @@ Minimum Supported Rust Version (MSRV)
 
 Our current Minimum Supported Rust Version is 1.57.0. When adding features, we will follow these guidelines:
 
-* We will aim to support the latest four minor Rust versions. This gives you a 6 month window to upgrade your compiler.
+* We will aim to support the latest five minor Rust versions. This gives you a 6 month window to upgrade your compiler.
 * Any change to the MSRV will be accompanied with a minor version bump
 * While the crate is pre-1.0, this will be a change to the patch version.
 
