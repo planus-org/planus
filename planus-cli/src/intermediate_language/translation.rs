@@ -201,6 +201,30 @@ impl<'a> Translator<'a> {
         None
     }
 
+    fn translate_alignment(
+        &self,
+        file_id: FileId,
+        metadata_span: Span,
+        literal: &ast::IntegerLiteral,
+    ) -> Option<u32> {
+        let value = self.translate_integer_generic::<u32>(
+            file_id,
+            literal.span,
+            literal.is_negative,
+            &literal.value,
+        )?;
+        if value.is_power_of_two() {
+            Some(value)
+        } else {
+            self.ctx.emit_error(
+                ErrorKind::MISC_SEMANTIC_ERROR,
+                [Label::primary(file_id, metadata_span)],
+                Some("Alignment must be a power of two"),
+            );
+            None
+        }
+    }
+
     fn translate_integer(
         &self,
         file_id: FileId,
@@ -423,7 +447,7 @@ impl<'a> Translator<'a> {
                             .variants
                             .iter()
                             .enumerate()
-                            .find(|(_variant_index, (_key, value))| value == &s)
+                            .find(|(_variant_index, (_key, (_span, value)))| value == s)
                         {
                             return Some(Literal::EnumTag {
                                 variant_index,
@@ -498,13 +522,18 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         decl: &ast::Struct,
     ) -> Struct {
-        for m in &decl.metadata {
-            self.emit_metadata_support_error(
-                current_file_id,
-                m,
-                "structs",
-                m.kind.accepted_on_structs(),
-            );
+        for m in &decl.metadata.values {
+            match m.kind {
+                MetadataValueKind::ForceAlign(_) => (), // Handled elsewhere
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "structs",
+                        m.kind.accepted_on_structs(),
+                    );
+                }
+            }
         }
 
         let fields = decl
@@ -541,7 +570,7 @@ impl<'a> Translator<'a> {
             )
         }
 
-        for m in &field.metadata {
+        for m in &field.metadata.values {
             self.emit_metadata_support_error(
                 current_file_id,
                 m,
@@ -808,7 +837,7 @@ impl<'a> Translator<'a> {
         let mut deprecated = false;
         let mut vtable_index = *next_vtable_index;
 
-        for m in &field.metadata {
+        for m in &field.metadata.values {
             match &m.kind {
                 MetadataValueKind::Required => {
                     if type_.kind.is_scalar() {
@@ -972,7 +1001,7 @@ impl<'a> Translator<'a> {
         let mut next_vtable_index = 0u32;
         let mut max_vtable_index = 0u32;
 
-        for m in &decl.metadata {
+        for m in &decl.metadata.values {
             self.emit_metadata_support_error(
                 current_file_id,
                 m,
@@ -986,7 +1015,7 @@ impl<'a> Translator<'a> {
         let mut first_without_id = None;
         for field in decl.fields.values() {
             let mut cur_id = None;
-            for m in &field.metadata {
+            for m in &field.metadata.values {
                 if let MetadataValueKind::Id(_) = &m.kind {
                     if let Some(span) = cur_id {
                         self.ctx.emit_error(
@@ -1113,43 +1142,17 @@ impl<'a> Translator<'a> {
     }
 
     fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
-        let mut alignment = decl.type_.byte_size();
-        for m in &decl.metadata {
-            match &m.kind {
-                MetadataValueKind::ForceAlign(ast::IntegerLiteral {
-                    span,
-                    is_negative,
-                    value,
-                }) => {
-                    if let Some(value) = self.translate_integer_generic::<u32>(
-                        current_file_id,
-                        *span,
-                        *is_negative,
-                        value,
-                    ) {
-                        if value.is_power_of_two() {
-                            alignment = value;
-                        } else {
-                            self.ctx.emit_error(
-                                ErrorKind::MISC_SEMANTIC_ERROR,
-                                [Label::primary(current_file_id, m.span)],
-                                Some("Alignment must be a power of two"),
-                            )
-                        }
-                    }
-                }
-                _ => {
-                    self.emit_metadata_support_error(
-                        current_file_id,
-                        m,
-                        "enums",
-                        m.kind.accepted_on_enums(),
-                    );
-                }
-            }
+        let alignment = decl.type_.byte_size();
+        for m in &decl.metadata.values {
+            self.emit_metadata_support_error(
+                current_file_id,
+                m,
+                "enums",
+                m.kind.accepted_on_enums(),
+            );
         }
 
-        let mut variants = IndexMap::new();
+        let mut variants: IndexMap<IntegerLiteral, (Span, String)> = IndexMap::new();
         let mut next_value = decl.type_.default_value();
         for (ident, variant) in decl.variants.iter() {
             let mut value = next_value;
@@ -1168,9 +1171,22 @@ impl<'a> Translator<'a> {
                 };
             }
             match variants.entry(value) {
-                Entry::Occupied(_) => panic!(),
+                Entry::Occupied(entry) => {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [
+                            Label::primary(current_file_id, entry.get().0)
+                                .with_message("First variant was here"),
+                            Label::primary(current_file_id, variant.span)
+                                .with_message("Second variant was here"),
+                        ],
+                        Some(&format!(
+                            "Enum uses the value {value} for multiple variants"
+                        )),
+                    );
+                }
                 Entry::Vacant(entry) => {
-                    entry.insert(name);
+                    entry.insert((variant.span, name));
                 }
             }
             next_value = value.next();
@@ -1188,7 +1204,7 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         decl: &ast::Union,
     ) -> Union {
-        for m in &decl.metadata {
+        for m in &decl.metadata.values {
             self.emit_metadata_support_error(
                 current_file_id,
                 m,
@@ -1290,12 +1306,25 @@ impl<'a> Translator<'a> {
             };
         }
 
+        macro_rules! get_ast_decl {
+            () => {{
+                let ast_decl = &self.ast_declarations[index];
+                let ast_kind = if let ast::TypeDeclarationKind::Struct(decl) = &ast_decl.kind {
+                    decl
+                } else {
+                    panic!("BUG")
+                };
+                (ast_decl, ast_kind)
+            }};
+        }
+
         fn round_up(value: u32, alignment: u32) -> u32 {
             ((value + alignment - 1) / alignment) * alignment
         }
 
         let mut offset = 0;
         let mut max_alignment = 1;
+        let mut max_alignment_span = None;
         for field_id in 0..get_struct_decl!().fields.len() {
             let (cur_size, cur_alignment) = match &get_struct_decl!().fields[field_id].type_ {
                 SimpleType::Struct(index) | SimpleType::Enum(index) => {
@@ -1321,6 +1350,7 @@ impl<'a> Translator<'a> {
                 | SimpleType::Float(FloatType::F64) => (8, 8),
             };
 
+            let (_ast_decl, ast_kind) = get_ast_decl!();
             offset = round_up(offset, cur_alignment);
             let decl = get_struct_decl!();
             decl.fields[field_id].offset = offset;
@@ -1330,8 +1360,38 @@ impl<'a> Translator<'a> {
                     offset - decl.fields[field_id - 1].offset - decl.fields[field_id - 1].size;
             }
             offset += cur_size;
-            max_alignment = max_alignment.max(cur_alignment);
+            if max_alignment_span.is_none() || max_alignment < cur_alignment {
+                max_alignment_span = Some(ast_kind.fields[field_id].type_.span);
+                max_alignment = cur_alignment;
+            }
         }
+
+        let (ast_decl, ast_kind) = get_ast_decl!();
+        for m in &ast_kind.metadata.values {
+            if let MetadataValueKind::ForceAlign(n) = &m.kind {
+                if let Some(value) = self.translate_alignment(ast_decl.file_id, m.span, n) {
+                    if max_alignment <= value {
+                        max_alignment = value;
+                    } else {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            std::iter::once(Label::primary(ast_decl.file_id, m.span).with_message(
+                                "This attribute tries to force the alignment of the struct",
+                            ))
+                            .chain(
+                                max_alignment_span.into_iter().map(|span| {
+                                    Label::secondary(ast_decl.file_id, span).with_message(format!(
+                                    "However the minimum alignment of this type is {max_alignment}"
+                                ))
+                                }),
+                            ),
+                            Some("Alignment of struct cannot be forced to lower"),
+                        );
+                    }
+                }
+            }
+        }
+
         offset = round_up(offset, max_alignment);
         let decl = get_struct_decl!();
         if let Some((_, last_field)) = decl.fields.last_mut() {

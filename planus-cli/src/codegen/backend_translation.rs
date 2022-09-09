@@ -489,7 +489,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     variants: decl
                         .variants
                         .iter()
-                        .map(|(value, name)| {
+                        .map(|(value, (_span, name))| {
                             backend.generate_enum_variant(
                                 &mut DeclarationTranslationContext {
                                     declaration_names: DeclarationNames {

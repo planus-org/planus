@@ -1,7 +1,0 @@
-error: Metadata attribute is not currently supported on structs
-  ┌─ test/files/invalid/aligned.fbs:1:17
-  │
-1 │ struct Aligned (force_align: 16) {
-  │                 ^^^^^^^^^^^^^^^
-
-Error: Bailing because of errors

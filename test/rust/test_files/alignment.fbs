@@ -1,0 +1,15 @@
+struct NoAlign { v: uint8; }
+struct Align4 (force_align: 4) { v: uint8; }
+struct Align16 (force_align: 16) { v: uint8; }
+
+struct AlignmentStruct {
+  a: NoAlign;
+  b: Align4;
+  c: Align16;
+  d: NoAlign;
+}
+
+table Root {
+  values: [AlignmentStruct];
+  value: AlignmentStruct;
+}

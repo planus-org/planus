@@ -1,3 +1,5 @@
+use std::collections::{hash_map, HashMap};
+
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
 use indexmap::{map::Entry, IndexMap};
@@ -789,24 +791,47 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_metadata(&mut self, metadata: &Option<cst::Metadata<'_>>) -> Vec<MetadataValue> {
+    fn convert_metadata(&mut self, metadata: &Option<cst::Metadata<'_>>) -> MetadataMap {
         if let Some(metadata) = metadata {
             self.with_span(metadata.span, |self_| {
-                metadata
+                let mut seen: HashMap<MetadataValueKindKey, Span> = HashMap::new();
+                let values = metadata
                     .values
                     .iter()
-                    .flat_map(|value| self_.convert_metadata_value(value))
-                    .collect()
+                    .flat_map(|value| {
+                        let (key, value) = self_.convert_metadata_value(value)?;
+                        match seen.entry(key) {
+                            hash_map::Entry::Occupied(entry) => {
+                                self_.emit_error(
+                                    ErrorKind::MISC_SEMANTIC_ERROR,
+                                    [
+                                        Label::secondary(self_.schema.file_id, *entry.get())
+                                            .with_message("first attribute was here"),
+                                        Label::secondary(self_.schema.file_id, value.span)
+                                            .with_message("second attribute was here"),
+                                    ],
+                                    Some("cannot set the same attribute twice"),
+                                );
+                                None
+                            }
+                            hash_map::Entry::Vacant(entry) => {
+                                entry.insert(value.span);
+                                Some(value)
+                            }
+                        }
+                    })
+                    .collect();
+                MetadataMap { seen, values }
             })
         } else {
-            Vec::new()
+            MetadataMap::default()
         }
     }
 
     fn convert_metadata_value(
         &mut self,
         metadata_value: &cst::MetadataValue<'_>,
-    ) -> Option<MetadataValue> {
+    ) -> Option<(MetadataValueKindKey, MetadataValue)> {
         self.with_span(metadata_value.span, |self_| {
             // let key = self_.convert_ident(&metadata_value.key);
             let value = if let Some((_equals, assignment)) = &metadata_value.assignment {
@@ -830,7 +855,7 @@ impl<'ctx> CstConverter<'ctx> {
             let bail_span = value
                 .as_ref()
                 .map_or(metadata_value.span, |value| value.span);
-            let bail = || -> Option<MetadataValue> {
+            let bail = || -> Option<(MetadataValueKindKey, MetadataValue)> {
                 self_.emit_error(
                     ErrorKind::MISC_SEMANTIC_ERROR,
                     [Label::primary(self_.schema.file_id, bail_span)],
@@ -895,10 +920,13 @@ impl<'ctx> CstConverter<'ctx> {
                     _ => return bail(),
                 },
             };
-            Some(MetadataValue {
-                span: metadata_value.span,
-                kind,
-            })
+            Some((
+                key,
+                MetadataValue {
+                    span: metadata_value.span,
+                    kind,
+                },
+            ))
         })
     }
 

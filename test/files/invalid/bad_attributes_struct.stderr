@@ -454,12 +454,6 @@ error: Unknown attribute `blabla`
 26 │   blabla, blabla: 1, blabla: "", blabla: [],
    │                                  ^^^^^^
 
-error: Metadata attribute is not currently supported on structs
-  ┌─ test/files/invalid/bad_attributes_struct.fbs:2:16
-  │
-2 │   force_align, force_align: 1, force_align: "", force_align: [],
-  │                ^^^^^^^^^^^^^^^
-
 error: Metadata attribute does not make sense on structs (but is additionally not supported in planus)
   ┌─ test/files/invalid/bad_attributes_struct.fbs:3:3
   │

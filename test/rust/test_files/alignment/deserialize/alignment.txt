@@ -1,0 +1,50 @@
+RootRef {
+    values: Ok(
+        [
+            AlignmentStructRef {
+                a: NoAlignRef {
+                    v: 41,
+                },
+                b: Align4Ref {
+                    v: 42,
+                },
+                c: Align16Ref {
+                    v: 43,
+                },
+                d: NoAlignRef {
+                    v: 44,
+                },
+            },
+            AlignmentStructRef {
+                a: NoAlignRef {
+                    v: 45,
+                },
+                b: Align4Ref {
+                    v: 46,
+                },
+                c: Align16Ref {
+                    v: 47,
+                },
+                d: NoAlignRef {
+                    v: 48,
+                },
+            },
+        ],
+    ),
+    value: Ok(
+        AlignmentStructRef {
+            a: NoAlignRef {
+                v: 49,
+            },
+            b: Align4Ref {
+                v: 50,
+            },
+            c: Align16Ref {
+                v: 51,
+            },
+            d: NoAlignRef {
+                v: 52,
+            },
+        },
+    ),
+}

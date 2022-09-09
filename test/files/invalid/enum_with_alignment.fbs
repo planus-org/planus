@@ -1,0 +1,1 @@
+enum A: uint8 (force_align: 1) { X, Y }

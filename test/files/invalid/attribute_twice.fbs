@@ -1,0 +1,3 @@
+struct Foo (force_align: 4, force_align: 1) {
+  v: uint8;
+}

@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{cell::Cell, collections::HashMap};
 
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
@@ -78,9 +78,15 @@ pub enum TypeDeclarationKind {
     RpcService(RpcService),
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct MetadataMap {
+    pub seen: HashMap<MetadataValueKindKey, Span>,
+    pub values: Vec<MetadataValue>,
+}
+
 #[derive(Clone)]
 pub struct Struct {
-    pub metadata: Vec<MetadataValue>,
+    pub metadata: MetadataMap,
     pub fields: IndexMap<RawIdentifier, StructField>,
 }
 
@@ -90,12 +96,12 @@ pub struct StructField {
     pub ident: Identifier,
     pub type_: Type,
     pub assignment: Option<Literal>,
-    pub metadata: Vec<MetadataValue>,
+    pub metadata: MetadataMap,
 }
 
 #[derive(Clone)]
 pub struct Enum {
-    pub metadata: Vec<MetadataValue>,
+    pub metadata: MetadataMap,
     pub type_: IntegerType,
     pub type_span: Span,
     pub variants: IndexMap<RawIdentifier, EnumVariant>,
@@ -110,7 +116,7 @@ pub struct EnumVariant {
 
 #[derive(Clone)]
 pub struct Union {
-    pub metadata: Vec<MetadataValue>,
+    pub metadata: MetadataMap,
     pub variants: IndexMap<UnionKey, UnionVariant>,
 }
 
@@ -159,7 +165,7 @@ pub struct RpcMethod {
     pub ident: Identifier,
     pub argument_type: Type,
     pub return_type: Type,
-    pub metadata: Vec<MetadataValue>,
+    pub metadata: MetadataMap,
 }
 
 #[derive(Clone, Debug)]
@@ -198,6 +204,7 @@ pub enum MetadataValueKind {
     Idempotent,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MetadataValueKindKey {
     ForceAlign,
     BitFlags,
@@ -297,10 +304,7 @@ impl MetadataValueKind {
     }
 
     pub fn accepted_on_enums(&self) -> bool {
-        matches!(
-            self,
-            Self::ForceAlign(_) | Self::BitFlags | Self::CsharpPartial | Self::Private,
-        )
+        matches!(self, Self::BitFlags | Self::CsharpPartial | Self::Private)
     }
 
     pub fn accepted_on_structs(&self) -> bool {
