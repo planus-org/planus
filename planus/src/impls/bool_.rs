@@ -1,7 +1,8 @@
+use core::mem::MaybeUninit;
+
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
 };
-use core::mem::MaybeUninit;
 
 impl Primitive for bool {
     const ALIGNMENT: usize = 1;

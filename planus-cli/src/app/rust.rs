@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use clap::{Parser, ValueHint};
 
 use crate::codegen::rust::generate_code;
-use clap::{Parser, ValueHint};
 
 /// Generate rust code
 #[derive(Parser)]
