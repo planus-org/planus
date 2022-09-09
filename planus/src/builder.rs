@@ -107,7 +107,7 @@ impl Builder {
         }
     }
 
-    /// Serializes a slice and returns the offset to it
+    /// Serializes a string and returns the offset to it
     pub fn create_string<T>(&mut self, v: impl WriteAsOffset<str>) -> Offset<str> {
         v.prepare(self)
     }
