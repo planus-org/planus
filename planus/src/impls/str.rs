@@ -18,7 +18,7 @@ impl WriteAsOffset<str> for str {
                     .get(builder.inner.as_slice(), hash, self.as_bytes())
             {
                 return Offset {
-                    offset: offset as u32,
+                    offset,
                     phantom: core::marker::PhantomData,
                 };
             }
@@ -50,7 +50,9 @@ impl WriteAsOffset<str> for str {
         let offset = builder.current_offset();
 
         #[cfg(feature = "string-cache")]
-        builder.string_cache.insert(hash, offset.offset);
+        builder
+            .string_cache
+            .insert(hash, offset.offset, builder.inner.as_slice());
 
         offset
     }

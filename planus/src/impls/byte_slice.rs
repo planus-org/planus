@@ -39,7 +39,7 @@ impl WriteAsOffset<[u8]> for [u8] {
                 .get(builder.inner.as_slice(), hash, self)
             {
                 return Offset {
-                    offset: offset as u32,
+                    offset,
                     phantom: core::marker::PhantomData,
                 };
             }
@@ -70,7 +70,9 @@ impl WriteAsOffset<[u8]> for [u8] {
         let offset = builder.current_offset();
 
         #[cfg(feature = "bytes-cache")]
-        builder.bytes_cache.insert(hash, offset.offset);
+        builder
+            .bytes_cache
+            .insert(hash, offset.offset, builder.inner.as_slice());
 
         offset
     }
@@ -86,12 +88,11 @@ impl WriteAsOffset<[i8]> for [i8] {
             let hash = builder.bytes_cache.hash(v);
             if let Some(offset) = builder.bytes_cache.get(builder.inner.as_slice(), hash, v) {
                 return Offset {
-                    offset: offset as u32,
+                    offset,
                     phantom: core::marker::PhantomData,
                 };
-            } else {
-                hash
             }
+            hash
         };
 
         // SAFETY: We make sure to write the 4+len bytes inside the closure
@@ -115,13 +116,12 @@ impl WriteAsOffset<[i8]> for [i8] {
                 },
             )
         }
-        #[cfg(feature = "bytes-cache")]
-        builder.bytes_cache.insert(hash, builder.len() as u32);
-
         let offset = builder.current_offset();
 
         #[cfg(feature = "bytes-cache")]
-        builder.bytes_cache.insert(hash, offset.offset);
+        builder
+            .bytes_cache
+            .insert(hash, offset.offset, builder.inner.as_slice());
 
         offset
     }

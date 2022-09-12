@@ -183,7 +183,8 @@ impl Builder {
         let offset = self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
         self.write(vtable);
         #[cfg(feature = "vtable-cache")]
-        self.vtable_cache.insert(hash, offset.try_into().unwrap());
+        self.vtable_cache
+            .insert(hash, offset.try_into().unwrap(), self.inner.as_slice());
         offset
     }
 

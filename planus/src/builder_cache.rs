@@ -1,4 +1,5 @@
 use core::{
+    convert::TryInto,
     hash::{BuildHasher, Hash, Hasher},
     marker::PhantomData,
 };
@@ -6,26 +7,24 @@ use core::{
 use hashbrown::raw::RawTable;
 
 pub(crate) trait Cacheable {
-    fn slice_matches(serialized: &[u8], key: &[u8]) -> bool;
+    fn lookup(serialized: &[u8]) -> Option<&[u8]>;
 }
 
 pub(crate) struct VTable;
 
 impl Cacheable for VTable {
-    fn slice_matches(serialized: &[u8], key: &[u8]) -> bool {
-        serialized.starts_with(key)
+    fn lookup(serialized: &[u8]) -> Option<&[u8]> {
+        let length = u16::from_le_bytes(serialized.get(..2)?.try_into().ok()?);
+        serialized.get(..length as usize)
     }
 }
 
 pub(crate) struct ByteVec;
 
 impl Cacheable for ByteVec {
-    fn slice_matches(serialized: &[u8], key: &[u8]) -> bool {
-        serialized.get(..4).map_or(false, |serialized| {
-            serialized == (key.len() as u32).to_le_bytes()
-        }) && serialized
-            .get(4..)
-            .map_or(false, |serialized| serialized.starts_with(key))
+    fn lookup(serialized: &[u8]) -> Option<&[u8]> {
+        let length = u32::from_le_bytes(serialized.get(..4)?.try_into().ok()?);
+        serialized.get(4..4 + length as usize)
     }
 }
 
@@ -51,7 +50,7 @@ impl<C> core::fmt::Debug for Cache<C> {
     }
 }
 
-fn hash_one<H: BuildHasher, T: Hash>(hash_builder: &H, value: T) -> u64 {
+fn hash_one<H: BuildHasher>(hash_builder: &H, value: &[u8]) -> u64 {
     let mut hasher = hash_builder.build_hasher();
     value.hash(&mut hasher);
     hasher.finish()
@@ -65,22 +64,24 @@ impl<C: Cacheable> Cache<C> {
     pub(crate) fn get(&mut self, serialized_data: &[u8], key_hash: u64, key: &[u8]) -> Option<u32> {
         self.cache
             .get(key_hash, |back_offset| {
-                if let Some(offset) = serialized_data
+                serialized_data
                     .len()
                     .checked_sub((*back_offset).try_into().unwrap())
-                {
-                    C::slice_matches(&serialized_data[offset..], key)
-                } else {
-                    false
-                }
+                    .and_then(|offset| C::lookup(&serialized_data[offset..]))
+                    .map_or(false, |old_key| old_key == key)
             })
             .copied()
     }
 
     /// Should only be called if `get` returned `None`
-    pub(crate) fn insert(&mut self, key_hash: u64, back_offset: u32) {
-        self.cache
-            .insert(key_hash, back_offset, |v| hash_one(&self.hash_builder, v));
+    pub(crate) fn insert(&mut self, key_hash: u64, back_offset: u32, serialized_data: &[u8]) {
+        self.cache.insert(key_hash, back_offset, |back_offset| {
+            serialized_data
+                .len()
+                .checked_sub((*back_offset).try_into().unwrap())
+                .and_then(|offset| C::lookup(&serialized_data[offset..]))
+                .map_or(0, |old_key| hash_one(&self.hash_builder, old_key))
+        });
     }
 
     pub(crate) fn clear(&mut self) {
