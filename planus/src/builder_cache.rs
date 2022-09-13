@@ -17,7 +17,7 @@ pub(crate) trait GetCacheKey {
     fn get_cache_key(serialized: &[u8], offset: CacheOffset) -> Option<&[u8]> {
         serialized
             .len()
-            .checked_sub(offset.0.try_into().unwrap())
+            .checked_sub(offset.0.try_into().ok()?)
             .and_then(|offset| Self::get_cache_key_impl(&serialized[offset..]))
     }
 }
@@ -120,8 +120,15 @@ impl<C: GetCacheKey> Cache<C> {
     pub(crate) fn insert(&mut self, key_hash: u64, offset: CacheOffset, serialized_data: &[u8]) {
         self.cache
             .insert(key_hash, CacheOffset(offset.0), |back_offset| {
-                C::get_cache_key(serialized_data, *back_offset)
-                    .map_or(0, |old_key| hash_one(&self.hash_builder, old_key))
+                C::get_cache_key(serialized_data, *back_offset).map_or_else(
+                    || {
+                        #[cfg(debug_assertions)]
+                        panic!("BUG: It should always be possible to get the cache key");
+                        #[cfg(not(debug_assertions))]
+                        0
+                    },
+                    |old_key| hash_one(&self.hash_builder, old_key),
+                )
             });
     }
 
