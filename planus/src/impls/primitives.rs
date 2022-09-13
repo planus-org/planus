@@ -57,7 +57,12 @@ macro_rules! gen_primitive_types {
                 Ok(<$ty>::from_le_bytes(*buffer))
             }
         }
+    };
+}
 
+macro_rules! gen_primitive_types_with_vectors {
+    ($ty:ty, $size:expr) => {
+        gen_primitive_types!($ty, $size);
         impl<'buf> VectorRead<'buf> for $ty {
             const STRIDE: usize = $size;
             #[inline]
@@ -95,11 +100,11 @@ macro_rules! gen_primitive_types {
 
 gen_primitive_types!(i8, 1);
 gen_primitive_types!(u8, 1);
-gen_primitive_types!(i16, 2);
-gen_primitive_types!(u16, 2);
-gen_primitive_types!(i32, 4);
-gen_primitive_types!(u32, 4);
-gen_primitive_types!(i64, 8);
-gen_primitive_types!(u64, 8);
-gen_primitive_types!(f32, 4);
-gen_primitive_types!(f64, 8);
+gen_primitive_types_with_vectors!(i16, 2);
+gen_primitive_types_with_vectors!(u16, 2);
+gen_primitive_types_with_vectors!(i32, 4);
+gen_primitive_types_with_vectors!(u32, 4);
+gen_primitive_types_with_vectors!(i64, 8);
+gen_primitive_types_with_vectors!(u64, 8);
+gen_primitive_types_with_vectors!(f32, 4);
+gen_primitive_types_with_vectors!(f64, 8);

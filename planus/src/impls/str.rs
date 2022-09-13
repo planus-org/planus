@@ -7,9 +7,23 @@ use crate::{
 
 impl WriteAsOffset<str> for str {
     #[inline]
+    #[allow(clippy::let_and_return)]
     fn prepare(&self, builder: &mut Builder) -> Offset<str> {
+        #[cfg(feature = "string-cache")]
+        let hash = {
+            let hash = builder.string_cache.hash(self.as_bytes());
+            if let Some(offset) =
+                builder
+                    .string_cache
+                    .get(builder.inner.as_slice(), hash, self.as_bytes())
+            {
+                return offset.into();
+            }
+            hash
+        };
+
         let size_including_len_and_null = self.len().checked_add(5).unwrap();
-        // SAFETY: We make sure to write the 4+len+1 bytes inside the closure.
+        // SAFETY: We make sure to write the 4+len+1 bytes inside the closure
         unsafe {
             builder.write_with(
                 size_including_len_and_null,
@@ -30,7 +44,14 @@ impl WriteAsOffset<str> for str {
                 },
             )
         }
-        builder.current_offset()
+        let offset = builder.current_offset();
+
+        #[cfg(feature = "string-cache")]
+        builder
+            .string_cache
+            .insert(hash, offset.into(), builder.inner.as_slice());
+
+        offset
     }
 }
 

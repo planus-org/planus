@@ -104,10 +104,13 @@ script = '''
 script_runner = "bash"
 script_extension = "sh"
 script = '''
+    set -euo pipefail
     for dir in test/rust test/rust-compat; do
         pushd $dir
         for std in "" "std"; do
-            cargo test --features "${std}"
+            for cache in "" "vtable-cache string-cache bytes-cache"; do
+                cargo test --features "${std} ${cache}"
+            done
         done
         popd
     done
@@ -117,7 +120,8 @@ script = '''
 script_runner = "bash"
 script_extension = "sh"
 script = '''
-    pushd examples/rust
+    set -euo pipefail
+    cd examples/rust
     cargo test --no-default-features
     cargo test --all-features
 '''

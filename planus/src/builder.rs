@@ -15,7 +15,19 @@ use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
 /// builder.finish(weapon, None);
 /// ```
 pub struct Builder {
-    inner: BackVec,
+    pub(crate) inner: BackVec,
+
+    #[cfg(feature = "vtable-cache")]
+    vtable_cache: crate::builder_cache::Cache<crate::builder_cache::VTable>,
+
+    // byte slices and strings are sufficiently similar that they can share a
+    // cache type, but they cannot share the cache because strings need to be
+    // null byte terminated
+    #[cfg(feature = "string-cache")]
+    pub(crate) string_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+    #[cfg(feature = "bytes-cache")]
+    pub(crate) bytes_cache: crate::builder_cache::Cache<crate::builder_cache::ByteVec>,
+
     // This is a bit complicated. The buffer has support for guaranteeing a
     // specific write gets a specific alignment. It has many writes and thus
     // many promises, so how does keep track of this this across those promises, even
@@ -81,14 +93,39 @@ impl Builder {
             delayed_bytes: 0,
             alignment_mask: 0,
 
+            #[cfg(feature = "vtable-cache")]
+            vtable_cache: crate::builder_cache::Cache::default(),
+
+            #[cfg(feature = "string-cache")]
+            string_cache: crate::builder_cache::Cache::default(),
+
+            #[cfg(feature = "bytes-cache")]
+            bytes_cache: crate::builder_cache::Cache::default(),
+
             #[cfg(debug_assertions)]
             missing_bytes: 0,
         }
     }
 
+    /// Serializes a string and returns the offset to it
+    pub fn create_string(&mut self, v: impl WriteAsOffset<str>) -> Offset<str> {
+        v.prepare(self)
+    }
+
+    /// Serializes a slice and returns the offset to it
+    pub fn create_vector<T>(&mut self, v: impl WriteAsOffset<[T]>) -> Offset<[T]> {
+        v.prepare(self)
+    }
+
     /// Resets the builders internal state and clears the internal buffer.
     pub fn clear(&mut self) {
         self.inner.clear();
+        #[cfg(feature = "vtable-cache")]
+        self.vtable_cache.clear();
+        #[cfg(feature = "string-cache")]
+        self.string_cache.clear();
+        #[cfg(feature = "bytes-cache")]
+        self.bytes_cache.clear();
         self.delayed_bytes = 0;
         self.alignment_mask = 0;
         #[cfg(debug_assertions)]
@@ -97,8 +134,7 @@ impl Builder {
         }
     }
 
-    #[doc(hidden)]
-    pub fn prepare_write(&mut self, size: usize, alignment_mask: usize) {
+    pub(crate) fn prepare_write(&mut self, size: usize, alignment_mask: usize) -> usize {
         debug_assert!((alignment_mask + 1) & alignment_mask == 0); // Check that the alignment is a power of two
         #[cfg(debug_assertions)]
         debug_assert_eq!(self.missing_bytes, 0);
@@ -118,6 +154,8 @@ impl Builder {
         {
             self.missing_bytes = size;
         }
+
+        self.len() + size
     }
 
     #[doc(hidden)]
@@ -128,8 +166,28 @@ impl Builder {
         }
     }
 
-    #[doc(hidden)]
-    pub fn write(&mut self, buffer: &[u8]) {
+    pub(crate) fn write_vtable(&mut self, vtable: &[u8]) -> usize {
+        const VTABLE_ALIGNMENT: usize = 2;
+        const VTABLE_ALIGNMENT_MASK: usize = VTABLE_ALIGNMENT - 1;
+
+        #[cfg(feature = "vtable-cache")]
+        let hash = {
+            let hash = self.vtable_cache.hash(vtable);
+            if let Some(offset) = self.vtable_cache.get(self.inner.as_slice(), hash, vtable) {
+                return offset.into();
+            }
+            hash
+        };
+
+        let offset = self.prepare_write(vtable.len(), VTABLE_ALIGNMENT_MASK);
+        self.write(vtable);
+        #[cfg(feature = "vtable-cache")]
+        self.vtable_cache
+            .insert(hash, offset.try_into().unwrap(), self.inner.as_slice());
+        offset
+    }
+
+    pub(crate) fn write(&mut self, buffer: &[u8]) {
         #[cfg(debug_assertions)]
         {
             self.missing_bytes = self.missing_bytes.checked_sub(buffer.len()).unwrap();
@@ -146,32 +204,12 @@ impl Builder {
         alignment_mask: usize,
         f: impl FnOnce(u32, &mut [MaybeUninit<u8>]),
     ) {
-        self.prepare_write(size, alignment_mask);
-        let offset = (self.inner.len() + size) as u32;
+        let offset = self.prepare_write(size, alignment_mask) as u32;
         self.inner.extend_write(size, |bytes| f(offset, bytes));
         #[cfg(debug_assertions)]
         {
             self.missing_bytes = self.missing_bytes.checked_sub(size).unwrap();
         }
-    }
-
-    #[doc(hidden)]
-    pub fn get_buffer_position_and_prepare_write(
-        &mut self,
-        vtable_size: usize,
-        object_size: usize,
-        object_alignment_mask: usize,
-    ) -> usize {
-        debug_assert!((object_alignment_mask + 1) & object_alignment_mask == 0); // Check that the alignment is a power of two
-
-        const VTABLE_ALIGNMENT: usize = 2;
-        const VTABLE_ALIGNMENT_MASK: usize = VTABLE_ALIGNMENT - 1;
-        self.prepare_write(vtable_size + 4, VTABLE_ALIGNMENT_MASK);
-
-        let delayed_bytes = self.delayed_bytes.wrapping_sub(object_size) & self.alignment_mask;
-        let needed_padding = delayed_bytes & object_alignment_mask;
-
-        self.inner.len() + vtable_size + 4 + needed_padding + object_size + 4
     }
 
     /// Finish writing the internal buffer and return a byte slice of it.
@@ -205,20 +243,29 @@ impl Builder {
 
         if let Some(file_identifier) = file_identifier {
             // TODO: how does alignment interact with file identifiers? Is the alignment with out without the header?
-            self.prepare_write(
+            let offset = self.prepare_write(
                 8,
                 <Offset<T> as Primitive>::ALIGNMENT_MASK.max(self.alignment_mask),
-            );
-            self.write(&(4 + self.inner.len() as u32 - root.offset).to_le_bytes());
+            ) as u32;
+            self.write(&(offset - 4 - root.offset).to_le_bytes());
             self.write(&file_identifier);
         } else {
-            self.prepare_write(
+            let offset = self.prepare_write(
                 4,
                 <Offset<T> as Primitive>::ALIGNMENT_MASK.max(self.alignment_mask),
-            );
-            self.write(&(4 + self.inner.len() as u32 - root.offset).to_le_bytes());
+            ) as u32;
+            self.write(&(offset - root.offset).to_le_bytes());
         }
         debug_assert_eq!(self.delayed_bytes, 0);
+        self.as_slice()
+    }
+
+    /// Returns a reference to the current data buffer.
+    ///
+    /// It will return the same slice as the one return by [`finish`], unless additional data has been appened afterwards.
+    ///
+    /// [`finish`]: Self::finish
+    pub fn as_slice(&self) -> &[u8] {
         self.inner.as_slice()
     }
 }
@@ -249,9 +296,10 @@ mod tests {
                 }
                 let alignment: usize = 1 << (rng.gen::<u32>() % 5);
                 let alignment_mask = alignment - 1;
-                builder.prepare_write(size, alignment_mask);
+                let offset = builder.prepare_write(size, alignment_mask);
                 let len_before = builder.inner.len();
                 builder.write(slice);
+                assert_eq!(offset, builder.len());
                 assert!(builder.inner.len() < len_before + slice.len() + alignment);
                 back_offsets.push((builder.inner.len(), size, alignment));
             }

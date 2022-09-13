@@ -128,7 +128,7 @@ mod root {
                     offset: usize,
                 ) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>
                 {
-                    let value = <i8 as ::planus::VectorRead>::from_buffer(buffer, offset);
+                    let value = *buffer.buffer.get_unchecked(offset) as i8;
                     let value: ::core::result::Result<Self, _> =
                         ::core::convert::TryInto::try_into(value);
                     value.map_err(|error_kind| {
@@ -483,95 +483,91 @@ mod root {
                     field_path: impl ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 ) -> ::planus::Offset<Self> {
                     let prepared_pos = field_pos.prepare(builder);
-
                     let prepared_mana = field_mana.prepare(builder, &150);
-
                     let prepared_hp = field_hp.prepare(builder, &100);
-
                     let prepared_name = field_name.prepare(builder);
-
                     let prepared_inventory = field_inventory.prepare(builder);
-
                     let prepared_color = field_color.prepare(builder, &self::Color::Blue);
-
                     let prepared_weapons = field_weapons.prepare(builder);
-
                     let prepared_equipped = field_equipped.prepare(builder);
-
                     let prepared_path = field_path.prepare(builder);
 
-                    let mut table_writer =
-                        ::planus::table_writer::TableWriter::<24, 39>::new(builder);
-
+                    let mut table_writer: ::planus::table_writer::TableWriter<26> =
+                        ::core::default::Default::default();
                     if prepared_pos.is_some() {
-                        table_writer.calculate_size::<self::Vec3>(2);
-                    }
-                    if prepared_mana.is_some() {
-                        table_writer.calculate_size::<i16>(4);
-                    }
-                    if prepared_hp.is_some() {
-                        table_writer.calculate_size::<i16>(6);
+                        table_writer.write_entry::<self::Vec3>(0);
                     }
                     if prepared_name.is_some() {
-                        table_writer.calculate_size::<::planus::Offset<str>>(8);
+                        table_writer.write_entry::<::planus::Offset<str>>(3);
                     }
                     if prepared_inventory.is_some() {
-                        table_writer.calculate_size::<::planus::Offset<[u8]>>(12);
-                    }
-                    if prepared_color.is_some() {
-                        table_writer.calculate_size::<self::Color>(14);
+                        table_writer.write_entry::<::planus::Offset<[u8]>>(5);
                     }
                     if prepared_weapons.is_some() {
                         table_writer
-                            .calculate_size::<::planus::Offset<[::planus::Offset<self::Weapon>]>>(
-                                16,
-                            );
+                            .write_entry::<::planus::Offset<[::planus::Offset<self::Weapon>]>>(7);
                     }
                     if prepared_equipped.is_some() {
-                        table_writer.calculate_size::<u8>(18);
-                        table_writer.calculate_size::<::planus::Offset<self::Equipment>>(20);
+                        table_writer.write_entry::<::planus::Offset<self::Equipment>>(9);
                     }
                     if prepared_path.is_some() {
-                        table_writer.calculate_size::<::planus::Offset<[self::Vec3]>>(22);
+                        table_writer.write_entry::<::planus::Offset<[self::Vec3]>>(10);
                     }
-
-                    table_writer.finish_calculating();
+                    if prepared_mana.is_some() {
+                        table_writer.write_entry::<i16>(1);
+                    }
+                    if prepared_hp.is_some() {
+                        table_writer.write_entry::<i16>(2);
+                    }
+                    if prepared_color.is_some() {
+                        table_writer.write_entry::<self::Color>(6);
+                    }
+                    if prepared_equipped.is_some() {
+                        table_writer.write_entry::<u8>(8);
+                    }
 
                     unsafe {
-                        if let ::core::option::Option::Some(prepared_pos) = prepared_pos {
-                            table_writer.write::<_, _, 12>(0, &prepared_pos);
-                        }
-                        if let ::core::option::Option::Some(prepared_name) = prepared_name {
-                            table_writer.write::<_, _, 4>(3, &prepared_name);
-                        }
-                        if let ::core::option::Option::Some(prepared_inventory) = prepared_inventory
-                        {
-                            table_writer.write::<_, _, 4>(5, &prepared_inventory);
-                        }
-                        if let ::core::option::Option::Some(prepared_weapons) = prepared_weapons {
-                            table_writer.write::<_, _, 4>(7, &prepared_weapons);
-                        }
-                        if let ::core::option::Option::Some(prepared_equipped) = prepared_equipped {
-                            table_writer.write::<_, _, 4>(9, &prepared_equipped.offset());
-                        }
-                        if let ::core::option::Option::Some(prepared_path) = prepared_path {
-                            table_writer.write::<_, _, 4>(10, &prepared_path);
-                        }
-                        if let ::core::option::Option::Some(prepared_mana) = prepared_mana {
-                            table_writer.write::<_, _, 2>(1, &prepared_mana);
-                        }
-                        if let ::core::option::Option::Some(prepared_hp) = prepared_hp {
-                            table_writer.write::<_, _, 2>(2, &prepared_hp);
-                        }
-                        if let ::core::option::Option::Some(prepared_color) = prepared_color {
-                            table_writer.write::<_, _, 1>(6, &prepared_color);
-                        }
-                        if let ::core::option::Option::Some(prepared_equipped) = prepared_equipped {
-                            table_writer.write::<_, _, 1>(8, &prepared_equipped.tag());
-                        }
+                        table_writer.finish(builder, |object_writer| {
+                            if let ::core::option::Option::Some(prepared_pos) = prepared_pos {
+                                object_writer.write::<_, _, 12>(&prepared_pos);
+                            }
+                            if let ::core::option::Option::Some(prepared_name) = prepared_name {
+                                object_writer.write::<_, _, 4>(&prepared_name);
+                            }
+                            if let ::core::option::Option::Some(prepared_inventory) =
+                                prepared_inventory
+                            {
+                                object_writer.write::<_, _, 4>(&prepared_inventory);
+                            }
+                            if let ::core::option::Option::Some(prepared_weapons) = prepared_weapons
+                            {
+                                object_writer.write::<_, _, 4>(&prepared_weapons);
+                            }
+                            if let ::core::option::Option::Some(prepared_equipped) =
+                                prepared_equipped
+                            {
+                                object_writer.write::<_, _, 4>(&prepared_equipped.offset());
+                            }
+                            if let ::core::option::Option::Some(prepared_path) = prepared_path {
+                                object_writer.write::<_, _, 4>(&prepared_path);
+                            }
+                            if let ::core::option::Option::Some(prepared_mana) = prepared_mana {
+                                object_writer.write::<_, _, 2>(&prepared_mana);
+                            }
+                            if let ::core::option::Option::Some(prepared_hp) = prepared_hp {
+                                object_writer.write::<_, _, 2>(&prepared_hp);
+                            }
+                            if let ::core::option::Option::Some(prepared_color) = prepared_color {
+                                object_writer.write::<_, _, 1>(&prepared_color);
+                            }
+                            if let ::core::option::Option::Some(prepared_equipped) =
+                                prepared_equipped
+                            {
+                                object_writer.write::<_, _, 1>(&prepared_equipped.tag());
+                            }
+                        });
                     }
-
-                    table_writer.finish()
+                    builder.current_offset()
                 }
             }
 
@@ -849,31 +845,28 @@ mod root {
                     field_damage: impl ::planus::WriteAsDefault<i16, i16>,
                 ) -> ::planus::Offset<Self> {
                     let prepared_name = field_name.prepare(builder);
-
                     let prepared_damage = field_damage.prepare(builder, &0);
 
-                    let mut table_writer =
-                        ::planus::table_writer::TableWriter::<6, 6>::new(builder);
-
+                    let mut table_writer: ::planus::table_writer::TableWriter<8> =
+                        ::core::default::Default::default();
                     if prepared_name.is_some() {
-                        table_writer.calculate_size::<::planus::Offset<str>>(2);
+                        table_writer.write_entry::<::planus::Offset<str>>(0);
                     }
                     if prepared_damage.is_some() {
-                        table_writer.calculate_size::<i16>(4);
+                        table_writer.write_entry::<i16>(1);
                     }
-
-                    table_writer.finish_calculating();
 
                     unsafe {
-                        if let ::core::option::Option::Some(prepared_name) = prepared_name {
-                            table_writer.write::<_, _, 4>(0, &prepared_name);
-                        }
-                        if let ::core::option::Option::Some(prepared_damage) = prepared_damage {
-                            table_writer.write::<_, _, 2>(1, &prepared_damage);
-                        }
+                        table_writer.finish(builder, |object_writer| {
+                            if let ::core::option::Option::Some(prepared_name) = prepared_name {
+                                object_writer.write::<_, _, 4>(&prepared_name);
+                            }
+                            if let ::core::option::Option::Some(prepared_damage) = prepared_damage {
+                                object_writer.write::<_, _, 2>(&prepared_damage);
+                            }
+                        });
                     }
-
-                    table_writer.finish()
+                    builder.current_offset()
                 }
             }
 

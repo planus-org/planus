@@ -1,7 +1,0 @@
-RootRef {
-    value: Ok(
-        String(
-            "foo",
-        ),
-    ),
-}

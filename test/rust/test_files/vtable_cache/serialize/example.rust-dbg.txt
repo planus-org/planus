@@ -1,0 +1,40 @@
+RootRef {
+    inner: Ok(
+        [
+            Ok(
+                InnerRef {
+                    x: Ok(
+                        "eye",
+                    ),
+                },
+            ),
+            Ok(
+                InnerRef {
+                    x: Ok(
+                        "of",
+                    ),
+                },
+            ),
+            Ok(
+                InnerRef,
+            ),
+            Ok(
+                InnerRef {
+                    x: Ok(
+                        "the",
+                    ),
+                },
+            ),
+            Ok(
+                InnerRef,
+            ),
+            Ok(
+                InnerRef {
+                    x: Ok(
+                        "tiger",
+                    ),
+                },
+            ),
+        ],
+    ),
+}

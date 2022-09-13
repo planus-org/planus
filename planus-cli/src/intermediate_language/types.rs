@@ -189,7 +189,7 @@ pub struct Table {
     pub fields: IndexMap<String, TableField>,
     pub alignment_order: Vec<usize>,
     pub max_size: u32,
-    pub max_vtable_index: u32,
+    pub max_vtable_size: u32,
     pub max_alignment: u32,
 }
 
@@ -220,7 +220,6 @@ pub struct Struct {
     pub fields: IndexMap<String, StructField>,
     pub size: u32,
     pub alignment: u32,
-    pub vector_stride: u32,
 }
 
 #[derive(Debug)]
