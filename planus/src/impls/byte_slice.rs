@@ -38,10 +38,7 @@ impl WriteAsOffset<[u8]> for [u8] {
                 .bytes_cache
                 .get(builder.inner.as_slice(), hash, self)
             {
-                return Offset {
-                    offset,
-                    phantom: core::marker::PhantomData,
-                };
+                return offset.into();
             }
             hash
         };
@@ -72,7 +69,7 @@ impl WriteAsOffset<[u8]> for [u8] {
         #[cfg(feature = "bytes-cache")]
         builder
             .bytes_cache
-            .insert(hash, offset.offset, builder.inner.as_slice());
+            .insert(hash, offset.into(), builder.inner.as_slice());
 
         offset
     }
@@ -87,10 +84,7 @@ impl WriteAsOffset<[i8]> for [i8] {
                 unsafe { core::slice::from_raw_parts(self.as_ptr() as *const u8, self.len()) };
             let hash = builder.bytes_cache.hash(v);
             if let Some(offset) = builder.bytes_cache.get(builder.inner.as_slice(), hash, v) {
-                return Offset {
-                    offset,
-                    phantom: core::marker::PhantomData,
-                };
+                return offset.into();
             }
             hash
         };
@@ -121,7 +115,7 @@ impl WriteAsOffset<[i8]> for [i8] {
         #[cfg(feature = "bytes-cache")]
         builder
             .bytes_cache
-            .insert(hash, offset.offset, builder.inner.as_slice());
+            .insert(hash, offset.into(), builder.inner.as_slice());
 
         offset
     }

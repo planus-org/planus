@@ -501,7 +501,7 @@ mod root {
                     let prepared_path = field_path.prepare(builder);
 
                     let mut table_writer =
-                        ::planus::table_writer::TableWriter::<28, 43>::new(builder);
+                        ::planus::table_writer::TableWriter::<26, 43>::new(builder);
 
                     if prepared_pos.is_some() {
                         table_writer.calculate_size::<self::Vec3>(0);
@@ -855,7 +855,7 @@ mod root {
                     let prepared_damage = field_damage.prepare(builder, &0);
 
                     let mut table_writer =
-                        ::planus::table_writer::TableWriter::<10, 10>::new(builder);
+                        ::planus::table_writer::TableWriter::<8, 10>::new(builder);
 
                     if prepared_name.is_some() {
                         table_writer.calculate_size::<::planus::Offset<str>>(0);

@@ -174,7 +174,7 @@ impl Builder {
         let hash = {
             let hash = self.vtable_cache.hash(vtable);
             if let Some(offset) = self.vtable_cache.get(self.inner.as_slice(), hash, vtable) {
-                return offset as usize;
+                return offset.into();
             }
             hash
         };
