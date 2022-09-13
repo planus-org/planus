@@ -4,8 +4,6 @@ use core::{
     marker::PhantomData,
 };
 
-use hashbrown::raw::RawTable;
-
 use crate::Offset;
 
 #[derive(Copy, Clone, Debug)]
@@ -73,7 +71,7 @@ impl GetCacheKey for ByteVec {
 
 pub(crate) struct Cache<C> {
     _marker: PhantomData<C>,
-    cache: RawTable<CacheOffset>,
+    cache: hashbrown::raw::RawTable<CacheOffset>,
     hash_builder: hashbrown::hash_map::DefaultHashBuilder,
 }
 
