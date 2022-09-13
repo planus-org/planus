@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Add an `ENUM_VALUES` const to enums
 - \[Rust\]: Make `Vector` more similar to rust slices by adding more methods
 - \[Rust\]: Vectors of `uint8`/`int8` now deserialize directly to rust slices
-- \[Rust\]: Implement caching of vtables, hidden behind the `vtable-caching` feature flag (enabled by default)
+- \[Rust\]: Implement caching of vtables, byte-slices and strings, hidden
+  behind the `vtable-cache`, `bytes-cache` and `string-cache` feature flags
+  (they are enabled by default)
 - Update the `README` with information about our Discord server.
 
 ## [0.3.1] - 2022-06-15
