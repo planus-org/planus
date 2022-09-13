@@ -39,7 +39,7 @@ impl {{info.owned_name}} {
             {% endmatch %}
         {% endfor %}
 
-        let mut table_writer = ::planus::table_writer::TableWriter::<{{(max_vtable_index+4)*2}}, {{max_size}}>::new(builder);
+        let mut table_writer = ::planus::table_writer::TableWriter::<{{max_vtable_size}}, {{max_size}}>::new(builder);
 
         {% for field in fields.alignment_order() %}
             {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}

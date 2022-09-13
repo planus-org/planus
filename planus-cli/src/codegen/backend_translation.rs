@@ -29,7 +29,7 @@ pub enum BackendDeclaration<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendTable<B: ?Sized + Backend> {
-    pub max_vtable_index: u32,
+    pub max_vtable_size: u32,
     pub max_size: u32,
     pub max_alignment: u32,
     pub info: B::TableInfo,
@@ -530,7 +530,7 @@ pub fn run_backend<B: ?Sized + Backend>(
         let decl = match decl {
             DeclInfo::Enum(..) => continue,
             DeclInfo::Table(translated_decl, decl) => BackendDeclaration::Table(BackendTable {
-                max_vtable_index: decl.max_vtable_index,
+                max_vtable_size: decl.max_vtable_size,
                 max_size: decl.max_size,
                 max_alignment: decl.max_alignment,
                 info: translated_decl.clone(),

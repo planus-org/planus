@@ -806,7 +806,7 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         field: &ast::StructField,
         next_vtable_index: &mut u32,
-        max_vtable_index: &mut u32,
+        max_vtable_size: &mut u32,
         has_id_error: &mut bool,
     ) -> Option<TableField> {
         let type_ = self.translate_type(current_namespace, current_file_id, &field.type_)?;
@@ -911,13 +911,13 @@ impl<'a> Translator<'a> {
             }
         }
 
-        *max_vtable_index = (*max_vtable_index).max(vtable_index);
-
         if matches!(&type_.kind, TypeKind::Union(_)) {
             *next_vtable_index = vtable_index + 2;
         } else {
             *next_vtable_index = vtable_index + 1;
         }
+
+        *max_vtable_size = (*max_vtable_size).max(2 * *next_vtable_index + 4);
 
         let assign_mode = match (required, explicit_null, default_value) {
             (true, false, None) => AssignMode::Required,
@@ -995,7 +995,7 @@ impl<'a> Translator<'a> {
         decl: &ast::Struct,
     ) -> Table {
         let mut next_vtable_index = 0u32;
-        let mut max_vtable_index = 0u32;
+        let mut max_vtable_size = 4u32;
 
         for m in &decl.metadata.values {
             self.emit_metadata_support_error(
@@ -1063,7 +1063,7 @@ impl<'a> Translator<'a> {
                         current_file_id,
                         field,
                         &mut next_vtable_index,
-                        &mut max_vtable_index,
+                        &mut max_vtable_size,
                         &mut has_id_error,
                     )?,
                 ))
@@ -1132,7 +1132,7 @@ impl<'a> Translator<'a> {
             fields,
             alignment_order: Vec::new(),
             max_size: u32::MAX,
-            max_vtable_index,
+            max_vtable_size,
             max_alignment: u32::MAX,
         }
     }
