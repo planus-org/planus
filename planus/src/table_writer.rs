@@ -1,65 +1,92 @@
-use core::mem::MaybeUninit;
+use core::{
+    convert::TryInto,
+    mem::{self, MaybeUninit},
+};
 
-use crate::{Builder, Offset, Primitive, WriteAsPrimitive};
+use crate::{Builder, Primitive, WriteAsPrimitive};
 
-pub struct TableWriter<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize> {
-    builder: &'buf mut Builder,
-    vtable: [u8; VTABLE_MAX_BYTES],
-    object: [u8; OBJECT_MAX_BYTES],
+#[doc(hidden)]
+pub struct TableWriter<const VTABLE_MAX_BYTES: usize> {
+    vtable_buffer: [u8; VTABLE_MAX_BYTES],
     vtable_size: usize,
     object_size: usize,
-    object_offset: u32,
     object_alignment_mask: usize,
 }
 
-impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
-    TableWriter<'buf, VTABLE_MAX_BYTES, OBJECT_MAX_BYTES>
-{
-    #[inline]
-    pub fn new(builder: &'buf mut Builder) -> Self {
+impl<const VTABLE_MAX_BYTES: usize> Default for TableWriter<VTABLE_MAX_BYTES> {
+    fn default() -> Self {
         Self {
-            builder,
-            vtable: [0; VTABLE_MAX_BYTES], // including vtable size and object size
-            object: [0; OBJECT_MAX_BYTES], // including vtable offset
-            vtable_size: 4,                // for vtable size and object size
-            object_size: 4,                // for offset to vtable
-            object_offset: 0,              // set to the offset of the object once we know it
+            vtable_buffer: [0; VTABLE_MAX_BYTES], // including vtable size and object size
+            vtable_size: 4, // 4 bytes always needed for vtable and object sizes
+            object_size: 4, // 4 bytes always needed for vtable offset
             object_alignment_mask: i32::ALIGNMENT_MASK, // objects always contain a vtable offset, which is an i32 aligned
         }
     }
+}
 
+fn write_array<const N: usize, const M: usize>(buf: &mut [u8; N], offset: usize, data: [u8; M]) {
+    buf[offset..offset + M].copy_from_slice(&data)
+}
+
+impl<const VTABLE_MAX_BYTES: usize> TableWriter<VTABLE_MAX_BYTES> {
     /// # Safety
     ///
     /// Must be called in alignment order with the most-aligned object first
     #[inline]
-    pub fn calculate_size<P: Primitive>(&mut self, vtable_index: usize) {
+    pub fn write_entry<P: Primitive>(&mut self, vtable_index: usize) {
         self.object_alignment_mask = self.object_alignment_mask.max(P::ALIGNMENT_MASK);
 
-        self.vtable[vtable_index_to_offset(vtable_index)..][..2]
-            .copy_from_slice(&(self.object_size as u16).to_le_bytes());
+        let offset = 2 * (vtable_index + 2); // 2 bytes per index, skip the vtable size and object size
+
+        write_array(
+            &mut self.vtable_buffer,
+            offset,
+            (self.object_size as u16).to_le_bytes(),
+        );
 
         self.object_size += P::SIZE;
-
-        self.vtable_size = self.vtable_size.max(2 * (vtable_index + 1) + 4);
-        debug_assert!(self.vtable_size <= self.vtable.len());
+        self.vtable_size = self.vtable_size.max(offset + 2);
+        debug_assert!(self.vtable_size <= self.vtable_buffer.len());
     }
 
     #[inline]
-    pub fn finish_calculating(&mut self) {
-        self.vtable[0..2].copy_from_slice(&(self.vtable_size as u16).to_le_bytes());
-        self.vtable[2..4].copy_from_slice(&(self.object_size as u16).to_le_bytes());
+    pub unsafe fn finish(mut self, builder: &mut Builder, f: impl FnOnce(&mut ObjectWriter<'_>)) {
+        write_array(
+            &mut self.vtable_buffer,
+            0,
+            (self.vtable_size as u16).to_le_bytes(),
+        );
+        write_array(
+            &mut self.vtable_buffer,
+            2,
+            (self.object_size as u16).to_le_bytes(),
+        );
 
-        let vtable_offset = self.builder.write_vtable(&self.vtable[..self.vtable_size]);
-        self.object_offset =
-            self.builder
-                .prepare_write(self.object_size - 4, self.object_alignment_mask) as u32
-                + 4;
-        self.object[..4]
-            .copy_from_slice(&(vtable_offset as i32 - self.object_offset as i32).to_le_bytes());
-        // Reset to be able to re-use in the write function
-        self.object_size = 4;
+        let vtable_offset = builder.write_vtable(&self.vtable_buffer[..self.vtable_size]);
+
+        builder.write_with(
+            self.object_size - 4,
+            self.object_alignment_mask,
+            |offset, bytes| {
+                f(&mut ObjectWriter { offset, bytes });
+            },
+        );
+        builder.write_with(4, 0, |buffer_position, bytes| {
+            let len = (vtable_offset as i32 - buffer_position as i32)
+                .to_le_bytes()
+                .map(MaybeUninit::new);
+            bytes.copy_from_slice(&len);
+        });
     }
+}
 
+#[doc(hidden)]
+pub struct ObjectWriter<'a> {
+    offset: u32,
+    bytes: &'a mut [MaybeUninit<u8>],
+}
+
+impl<'a> ObjectWriter<'a> {
     /// # Safety
     ///
     /// Must be called in alignment order with the most-aligned object first
@@ -69,25 +96,12 @@ impl<'buf, const VTABLE_MAX_BYTES: usize, const OBJECT_MAX_BYTES: usize>
         value: &T,
     ) {
         assert_eq!(P::SIZE, SIZE);
-        debug_assert!(self.object_size + P::SIZE <= OBJECT_MAX_BYTES);
-        let slice = self.object.as_mut_ptr().cast::<u8>().add(self.object_size);
+        let (cur, remaining) = mem::take(&mut self.bytes).split_at_mut(P::SIZE);
+        self.bytes = remaining;
         value.write(
-            array_init_cursor::Cursor::new(&mut *(slice as *mut [MaybeUninit<u8>; SIZE])),
-            self.object_offset - self.object_size as u32,
+            array_init_cursor::Cursor::<'_, u8, SIZE>::new(cur.try_into().unwrap()),
+            self.offset,
         );
-        self.object_size += P::SIZE;
+        self.offset -= P::SIZE as u32;
     }
-
-    pub fn finish<T>(self) -> Offset<T> {
-        self.builder.write(&self.object[4..self.object_size]);
-        self.builder.prepare_write(4, i32::ALIGNMENT_MASK);
-        self.builder.write(&self.object[..4]);
-        let offset = self.builder.current_offset();
-        debug_assert_eq!(offset.offset, self.object_offset);
-        offset
-    }
-}
-
-fn vtable_index_to_offset(vtable_index: usize) -> usize {
-    2 * (vtable_index + 2) // 2 bytes per index, skip the vtable size and object size
 }

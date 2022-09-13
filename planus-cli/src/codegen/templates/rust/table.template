@@ -30,52 +30,61 @@ impl {{info.owned_name}} {
             field_{{ field.info.create_name }}: impl ::planus::{{ field.info.create_trait }},
         {% endfor %}
     ) -> ::planus::Offset<Self> {
-        {% for field in fields.declaration_order() -%}
-            {% match field.info.serialize_default %}
-            {% when Some with (serialize_default) %}
+        {%- for field in fields.declaration_order() -%}
+            {%- match field.info.serialize_default -%}
+            {%- when Some with (serialize_default) -%}
             let prepared_{{ field.info.create_name }} = field_{{ field.info.create_name }}.prepare(builder, {{ serialize_default }});
-            {% when None %}
+            {%- when None -%}
             let prepared_{{ field.info.create_name }} = field_{{ field.info.create_name }}.prepare(builder);
-            {% endmatch %}
-        {% endfor %}
+            {%- endmatch -%}
+        {%- endfor %}
 
-        let mut table_writer = ::planus::table_writer::TableWriter::<{{max_vtable_size}}, {{max_size}}>::new(builder);
+        {% if fields.is_empty() -%}
+        let table_writer: ::planus::table_writer::TableWriter::<{{max_vtable_size}}> = ::core::default::Default::default();
+        unsafe {
+            table_writer.finish(builder, |_table_writer| {});
+        }
+        {%- else -%}
 
+        let mut table_writer: ::planus::table_writer::TableWriter::<{{max_vtable_size}}> = ::core::default::Default::default();
         {% for field in fields.alignment_order() %}
             {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
             if prepared_{{field.info.create_name}}.is_some() {
             {%- endif -%}
                 {%- if field.field_type == BackendTableFieldType::UnionKey -%}
-                table_writer.calculate_size::<u8>({{field.vtable_index}});
+                table_writer.write_entry::<u8>({{field.vtable_index}});
                 {%- else -%}
-                table_writer.calculate_size::<{{field.info.vtable_type}}>({{field.vtable_index}});
+                table_writer.write_entry::<{{field.info.vtable_type}}>({{field.vtable_index}});
                 {%- endif -%}
             {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
             }
             {%- endif -%}
         {% endfor %}
 
-        table_writer.finish_calculating();
-
-        {% if !fields.is_empty() %}
         unsafe {
-            {% for field in fields.alignment_order() %}
-                {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
-                if let ::core::option::Option::Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
-                {%- endif -%}
-                    {%- match field.field_type -%}
-                    {%- when BackendTableFieldType::UnionKey -%} table_writer.write::<_, _, 1>(&prepared_{{field.info.create_name}}.tag());
-                    {%- when BackendTableFieldType::UnionValue -%} table_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}}.offset());
-                    {%- when BackendTableFieldType::Other -%} table_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}});
-                    {%- endmatch -%}
-                {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
-                }
-                {%- endif -%}
-            {% endfor %}
+            table_writer.finish(builder, |object_writer| {
+                {%- if fields.is_empty() -%}
+                let _ = object_writer;
+                {%- else -%}
+                {% for field in fields.alignment_order() %}
+                    {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
+                    if let ::core::option::Option::Some(prepared_{{field.info.create_name}}) = prepared_{{field.info.create_name}} {
+                    {%- endif -%}
+                        {%- match field.field_type -%}
+                        {%- when BackendTableFieldType::UnionKey -%} object_writer.write::<_, _, 1>(&prepared_{{field.info.create_name}}.tag());
+                        {%- when BackendTableFieldType::UnionValue -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}}.offset());
+                        {%- when BackendTableFieldType::Other -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}});
+                        {%- endmatch -%}
+                    {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
+                    }
+                    {%- endif -%}
+                {% endfor %}
+                {% endif %}
+            });
         }
-        {% endif %}
+        {%- endif -%}
 
-        table_writer.finish()
+        builder.current_offset()
     }
 }
 
