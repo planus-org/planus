@@ -49,6 +49,7 @@ pub struct TableField {
     pub serialize_default: Option<Cow<'static, str>>,
     pub deserialize_default: Option<Cow<'static, str>>,
     pub try_from_code: String,
+    pub is_copy: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -302,6 +303,7 @@ impl Backend for RustBackend {
         let owned_type;
         let vtable_type;
         let create_trait;
+        let is_copy;
         let primitive_size;
         let mut serialize_default: Option<Cow<'static, str>> = None;
         let mut deserialize_default: Option<Cow<'static, str>> = None;
@@ -336,6 +338,7 @@ impl Backend for RustBackend {
             ) => {
                 vtable_type =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                is_copy = true;
                 primitive_size = decl.size;
                 match &field.assign_mode {
                     AssignMode::Required => {
@@ -368,6 +371,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                is_copy = false;
                 primitive_size = 4;
                 vtable_type = format!("::planus::Offset<{}>", owned_name);
                 match &field.assign_mode {
@@ -418,6 +422,7 @@ impl Backend for RustBackend {
             ) => {
                 let owned_name =
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
+                is_copy = false;
                 primitive_size = 4;
                 vtable_type = format!("::planus::Offset<{}>", owned_name);
                 match &field.assign_mode {
@@ -442,6 +447,7 @@ impl Backend for RustBackend {
             ResolvedType::Enum(decl, info, relative_namespace, variants) => {
                 vtable_type =
                     format_relative_namespace(&relative_namespace, &info.name).to_string();
+                is_copy = true;
                 primitive_size = decl.type_.byte_size();
                 match &field.assign_mode {
                     AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) => {
@@ -574,9 +580,10 @@ impl Backend for RustBackend {
                     }
                 }
 
-                let offset_name = vector_offset_type(&*type_);
-                let read_name = vector_read_type(&*type_);
-                let owned_name = vector_owned_type(&*type_);
+                let offset_name = vector_offset_type(&type_);
+                let read_name = vector_read_type(&type_);
+                let owned_name = vector_owned_type(&type_);
+                is_copy = false;
                 primitive_size = 4;
                 vtable_type = format!("::planus::Offset<[{}]>", offset_name);
 
@@ -595,11 +602,11 @@ impl Backend for RustBackend {
                                 ::core::option::Option::None
                             }}
                         "#,
-                        try_into_func = vector_try_into_func(&*type_)
+                        try_into_func = vector_try_into_func(&type_)
                     ),
                     (_, false) => format!(
                         "value.{name}()?.{try_into_func}()?",
-                        try_into_func = vector_try_into_func(&*type_)
+                        try_into_func = vector_try_into_func(&type_)
                     ),
                 };
                 match &field.assign_mode {
@@ -636,6 +643,7 @@ impl Backend for RustBackend {
             }
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => {
+                is_copy = false;
                 primitive_size = 4;
                 vtable_type = "::planus::Offset<str>".to_string();
                 match &field.assign_mode {
@@ -667,6 +675,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Bool => {
+                is_copy = true;
                 primitive_size = 1;
                 vtable_type = "bool".to_string();
                 match &field.assign_mode {
@@ -688,6 +697,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Integer(typ) => {
+                is_copy = true;
                 primitive_size = typ.byte_size();
                 vtable_type = integer_type(&typ).to_string();
                 match &field.assign_mode {
@@ -709,6 +719,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Float(typ) => {
+                is_copy = true;
                 primitive_size = typ.byte_size();
                 vtable_type = float_type(&typ).to_string();
                 match &field.assign_mode {
@@ -743,6 +754,7 @@ impl Backend for RustBackend {
             serialize_default,
             deserialize_default,
             try_from_code,
+            is_copy,
         }
     }
 
@@ -937,7 +949,7 @@ fn float_type(type_: &FloatType) -> &'static str {
 
 pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     let output = Command::new("rustfmt")
-        .args(&[path.as_ref().as_os_str()])
+        .args([path.as_ref().as_os_str()])
         .output()?;
 
     if !output.stderr.is_empty() {

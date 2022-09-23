@@ -594,12 +594,12 @@ mod root {
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
                     Monster::create(
                         builder,
-                        &self.pos,
-                        &self.mana,
-                        &self.hp,
+                        self.pos,
+                        self.mana,
+                        self.hp,
                         &self.name,
                         &self.inventory,
-                        &self.color,
+                        self.color,
                         &self.weapons,
                         &self.equipped,
                         &self.path,
@@ -891,7 +891,7 @@ mod root {
 
             impl ::planus::WriteAsOffset<Weapon> for Weapon {
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
-                    Weapon::create(builder, &self.name, &self.damage)
+                    Weapon::create(builder, &self.name, self.damage)
                 }
             }
 

@@ -9,7 +9,7 @@ pub fn translate_files<P: AsRef<std::path::Path>>(
 ) -> types::Declarations {
     let mut ast_map = crate::ast_map::AstMap::default();
     for file in input_files {
-        if let Some(file_id) = ctx.add_file(&file, []) {
+        if let Some(file_id) = ctx.add_file(file, []) {
             ast_map.add_files_recursively(ctx, file_id);
         }
     }

@@ -68,7 +68,7 @@ fn generate_test_code(
             let flatc_generated = format!("{}_generated.rs", file_stem);
             if generate_flatc && is_main_crate {
                 assert!(Command::new("flatc")
-                    .args(&["--rust", "-o", out_dir])
+                    .args(["--rust", "-o", out_dir])
                     .arg(&file_path)
                     .status()
                     .context("Cannot run flatc")?

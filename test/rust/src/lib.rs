@@ -45,7 +45,7 @@ pub mod tests {
             let data = std::fs::read_to_string(path)?;
             similar_asserts::assert_eq!(data, new_val);
         } else {
-            std::fs::write(path, &new_val)?;
+            std::fs::write(path, new_val)?;
         }
 
         Ok(())

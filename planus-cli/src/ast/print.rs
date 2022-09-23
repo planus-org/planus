@@ -181,7 +181,7 @@ impl PrettyPrint for IntegerLiteral {
 }
 
 impl PrettyPrint for Literal {
-    fn print(&self, ctx: &Ctx) {
+    fn print(&self, _ctx: &Ctx) {
         match &self.kind {
             LiteralKind::Bool(value) => print!("{}", value),
             LiteralKind::Integer { is_negative, value } => {
@@ -209,7 +209,7 @@ impl PrettyPrint for Literal {
                     {
                         print!(", ");
                     }
-                    v.print(ctx);
+                    v.print(_ctx);
                 }
                 print!("]");
             }
