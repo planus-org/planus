@@ -349,7 +349,7 @@ pub fn generate_code<P: AsRef<Path>>(
 
     let res = super::templates::dot::Namespace(&output).render().unwrap();
 
-    let mut file = std::fs::File::create(&output_filename)?;
+    let mut file = std::fs::File::create(output_filename)?;
     file.write_all(res.as_bytes())?;
     file.flush()?;
 

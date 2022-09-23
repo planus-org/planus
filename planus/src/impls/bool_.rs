@@ -12,7 +12,7 @@ impl Primitive for bool {
 impl WriteAsPrimitive<bool> for bool {
     #[inline]
     fn write<const N: usize>(&self, cursor: Cursor<'_, N>, _buffer_position: u32) {
-        cursor.assert_size().finish([if *self { 1 } else { 0 }]);
+        cursor.assert_size().finish([u8::from(*self)]);
     }
 }
 

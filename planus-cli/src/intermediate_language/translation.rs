@@ -341,7 +341,6 @@ impl<'a> Translator<'a> {
 
     fn translate_literal(
         &self,
-        current_namespace: &AbsolutePath,
         current_file_id: FileId,
         literal: &ast::Literal,
         type_: &Type,
@@ -407,12 +406,7 @@ impl<'a> Translator<'a> {
             (LiteralKind::List(literals), Vector(type_)) => {
                 let mut out = Vec::new();
                 for literal in literals.iter() {
-                    out.push(self.translate_literal(
-                        current_namespace,
-                        current_file_id,
-                        literal,
-                        type_,
-                    )?);
+                    out.push(self.translate_literal(current_file_id, literal, type_)?);
                 }
                 Some(Literal::Vector(out))
             }
@@ -420,12 +414,7 @@ impl<'a> Translator<'a> {
                 if literals.len() == *size as usize {
                     let mut out = Vec::new();
                     for literal in literals.iter() {
-                        out.push(self.translate_literal(
-                            current_namespace,
-                            current_file_id,
-                            literal,
-                            type_,
-                        )?);
+                        out.push(self.translate_literal(current_file_id, literal, type_)?);
                     }
                     Some(Literal::Array(out))
                 } else {
@@ -818,8 +807,7 @@ impl<'a> Translator<'a> {
                 explicit_null = true;
                 default_value = None;
             } else {
-                default_value =
-                    self.translate_literal(current_namespace, current_file_id, assignment, &type_);
+                default_value = self.translate_literal(current_file_id, assignment, &type_);
                 if let Some(default_value) = &default_value {
                     self.check_valid_default_literal(
                         current_file_id,

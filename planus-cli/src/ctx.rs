@@ -196,7 +196,7 @@ impl Ctx {
         let path = self.get_filename(file_id);
         let mut path = PathBuf::from(path);
         path.push("..");
-        path.push(&relative);
+        path.push(relative);
         self.add_file(crate::util::normalize_path(&path), labels)
     }
 
