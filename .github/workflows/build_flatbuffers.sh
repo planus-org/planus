@@ -8,7 +8,7 @@ TMPDIR="$(mktemp -d /tmp/flatbuffers-XXXXXX)"
 
 cd $TMPDIR
 
-wget https://github.com/google/flatbuffers/archive/refs/tags/v2.0.0.tar.gz -O flatbuffers.tar.gz
+wget https://github.com/google/flatbuffers/archive/refs/tags/v22.9.29.tar.gz -O flatbuffers.tar.gz
 
 tar xfv flatbuffers.tar.gz
 cd flatbuffers-*
