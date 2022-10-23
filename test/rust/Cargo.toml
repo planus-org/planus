@@ -19,7 +19,7 @@ anyhow = "1.0.51"
 planus = { path = "../../planus", default-features = false, features = [
   "extra-validation",
 ] }
-flatbuffers = "2.0.0"
+flatbuffers = "=22.9.29"
 serde = { version = "1.0.132", default-features = false, features = ["derive"] }
 static_assertions = "1.1.0"
 

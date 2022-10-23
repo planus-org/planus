@@ -2,6 +2,7 @@ name: CI
 
 env:
   CARGO_TERM_COLOR: always
+  FLATBUFFER_VERSION: 22.9.29
 
 on:
   push:
@@ -72,7 +73,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/flatc
-          key: flatbuffers-${{ runner.os }}
+          key: flatbuffers-${{ runner.os }}-${{ env.FLATBUFFER_VERSION }}
       - name: Install flatbuffers
         if: steps.flatbuffers-cache.outputs.cache-hit != 'true'
         run: .github/workflows/build_flatbuffers.sh
