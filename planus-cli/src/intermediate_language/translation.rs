@@ -180,12 +180,10 @@ impl<'a> Translator<'a> {
                     return Some(result);
                 } else if seen_hints.insert((decl.file_id, decl.definition_span)) {
                     hints.push(
-                        Label::secondary(decl.file_id, decl.definition_span).with_message(
-                            &format!(
-                                "Perhaps you meant to include {}",
-                                self.ctx.get_filename(decl.file_id).display()
-                            ),
-                        ),
+                        Label::secondary(decl.file_id, decl.definition_span).with_message(format!(
+                            "Perhaps you meant to include {}",
+                            self.ctx.get_filename(decl.file_id).display()
+                        )),
                     );
                 }
             }
@@ -1262,14 +1260,14 @@ impl<'a> Translator<'a> {
                                 self.ast_declarations[a].file_id,
                                 self.ast_declarations[a].definition_span,
                             )
-                            .with_message(&(if a == b { format!(
+                            .with_message(if a == b { format!(
                                 "{} contains itself directly",
                                 self.ast_declarations.get_index(a).unwrap().0,
                             )} else {format!(
                                 "{} contains itself through {}",
                                 self.ast_declarations.get_index(a).unwrap().0,
                                 self.ast_declarations.get_index(b).unwrap().0
-                            )}))
+                            )})
                         }).take(1),
                     Some("Structs are not allowed to contain themselves, as it implies infinite size"),
                 );

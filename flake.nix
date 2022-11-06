@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
@@ -27,6 +27,9 @@
               extensions = [ "rust-src" ];
               targets = [ "x86_64-unknown-linux-gnu" ];
             })
+            # (rust-bin.beta.latest.default.override {
+            #   targets = [ "x86_64-unknown-linux-gnu" ];
+            # })
 
             bacon
             flatbuffers
