@@ -119,7 +119,7 @@ fn generate_test_code(
                 }
             }
 
-            std::fs::write(&code_file_full_path, code)
+            std::fs::write(code_file_full_path, code)
                 .with_context(|| format_err!("Cannot write the file {}", generated_full_path))?;
 
             // Generate glue code

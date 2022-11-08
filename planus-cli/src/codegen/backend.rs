@@ -168,6 +168,7 @@ impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Displa
                 write!(f, "{}", self_name)?;
             }
         }
+        #[allow(clippy::bool_to_int_with_if)]
         let skip = if self.output_shared_ancestor { 0 } else { 1 };
         let mut has_output = false;
         for (i, info) in self.value.path.iter().skip(skip).enumerate() {
