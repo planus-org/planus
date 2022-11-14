@@ -7,7 +7,7 @@ repository = "https://github.com/planus-org/planus"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
 readme = "../README.md"
-rust-version = "1.57"
+rust-version = "1.61"
 include = ["templates", "/src", "askama.toml", "build.rs"]
 description = "Command-line utility for planus."
 
