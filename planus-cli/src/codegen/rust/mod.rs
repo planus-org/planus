@@ -31,6 +31,7 @@ pub struct Namespace {
 pub struct Table {
     pub owned_name: String,
     pub ref_name: String,
+    pub builder_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
 }
@@ -208,6 +209,7 @@ impl Backend for RustBackend {
         Table {
             owned_name: reserve_type_name(decl_name, declaration_names),
             ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            builder_name: reserve_type_name(&format!("{}Builder", decl_name), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
         }

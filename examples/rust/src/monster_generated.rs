@@ -467,6 +467,11 @@ mod root {
             }
 
             impl Monster {
+                #[inline]
+                pub fn builder() -> MonsterBuilder<()> {
+                    MonsterBuilder(())
+                }
+
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
@@ -574,6 +579,7 @@ mod root {
             impl ::planus::WriteAs<::planus::Offset<Monster>> for Monster {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
                     ::planus::WriteAsOffset::prepare(self, builder)
                 }
@@ -582,6 +588,7 @@ mod root {
             impl ::planus::WriteAsOptional<::planus::Offset<Monster>> for Monster {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -591,6 +598,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Monster> for Monster {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
                     Monster::create(
                         builder,
@@ -607,22 +615,239 @@ mod root {
                 }
             }
 
+            /// Builder for the [Monster] type.
+            ///
+            /// Can be created using the [Monster::builder] method.
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
+            pub struct MonsterBuilder<State>(State);
+
+            impl MonsterBuilder<()> {
+                /// Setter for the [`pos` field](Monster#structfield.pos).
+                #[inline]
+                pub fn pos<T0>(self, value: T0) -> MonsterBuilder<(T0,)>
+                where
+                    T0: ::planus::WriteAsOptional<self::Vec3>,
+                {
+                    let () = self.0;
+                    MonsterBuilder((value,))
+                }
+            }
+
+            impl<T0> MonsterBuilder<(T0,)> {
+                /// Setter for the [`mana` field](Monster#structfield.mana).
+                #[inline]
+                pub fn mana<T1>(self, value: T1) -> MonsterBuilder<(T0, T1)>
+                where
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                {
+                    let (v0,) = self.0;
+                    MonsterBuilder((v0, value))
+                }
+            }
+
+            impl<T0, T1> MonsterBuilder<(T0, T1)> {
+                /// Setter for the [`hp` field](Monster#structfield.hp).
+                #[inline]
+                pub fn hp<T2>(self, value: T2) -> MonsterBuilder<(T0, T1, T2)>
+                where
+                    T2: ::planus::WriteAsDefault<i16, i16>,
+                {
+                    let (v0, v1) = self.0;
+                    MonsterBuilder((v0, v1, value))
+                }
+            }
+
+            impl<T0, T1, T2> MonsterBuilder<(T0, T1, T2)> {
+                /// Setter for the [`name` field](Monster#structfield.name).
+                #[inline]
+                pub fn name<T3>(self, value: T3) -> MonsterBuilder<(T0, T1, T2, T3)>
+                where
+                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                {
+                    let (v0, v1, v2) = self.0;
+                    MonsterBuilder((v0, v1, v2, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3> MonsterBuilder<(T0, T1, T2, T3)> {
+                /// Setter for the [`inventory` field](Monster#structfield.inventory).
+                #[inline]
+                pub fn inventory<T4>(self, value: T4) -> MonsterBuilder<(T0, T1, T2, T3, T4)>
+                where
+                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                {
+                    let (v0, v1, v2, v3) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4> MonsterBuilder<(T0, T1, T2, T3, T4)> {
+                /// Setter for the [`color` field](Monster#structfield.color).
+                #[inline]
+                pub fn color<T5>(self, value: T5) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5)>
+                where
+                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                {
+                    let (v0, v1, v2, v3, v4) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, v4, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4, T5> MonsterBuilder<(T0, T1, T2, T3, T4, T5)> {
+                /// Setter for the [`weapons` field](Monster#structfield.weapons).
+                #[inline]
+                pub fn weapons<T6>(self, value: T6) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6)>
+                where
+                    T6: ::planus::WriteAsOptional<
+                        ::planus::Offset<[::planus::Offset<self::Weapon>]>,
+                    >,
+                {
+                    let (v0, v1, v2, v3, v4, v5) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, v4, v5, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4, T5, T6> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6)> {
+                /// Setter for the [`equipped` field](Monster#structfield.equipped).
+                #[inline]
+                pub fn equipped<T7>(
+                    self,
+                    value: T7,
+                ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7)>
+                where
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                {
+                    let (v0, v1, v2, v3, v4, v5, v6) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4, T5, T6, T7> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7)> {
+                /// Setter for the [`path` field](Monster#structfield.path).
+                #[inline]
+                pub fn path<T8>(
+                    self,
+                    value: T8,
+                ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+                where
+                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                {
+                    let (v0, v1, v2, v3, v4, v5, v6, v7) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, v7, value))
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)> {
+                /// Finish writing the builder to get an [Offset](::planus::Offset) to a [Monster].
+                #[inline]
+                pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster>
+                where
+                    Self: ::planus::WriteAsOffset<Monster>,
+                {
+                    ::planus::WriteAsOffset::prepare(&self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<self::Vec3>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                    T2: ::planus::WriteAsDefault<i16, i16>,
+                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                > ::planus::WriteAs<::planus::Offset<Monster>>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+            {
+                type Prepared = ::planus::Offset<Monster>;
+
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
+                    ::planus::WriteAsOffset::prepare(self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<self::Vec3>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                    T2: ::planus::WriteAsDefault<i16, i16>,
+                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                > ::planus::WriteAsOptional<::planus::Offset<Monster>>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+            {
+                type Prepared = ::planus::Offset<Monster>;
+
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::Offset<Monster>> {
+                    ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<self::Vec3>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                    T2: ::planus::WriteAsDefault<i16, i16>,
+                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                > ::planus::WriteAsOffset<Monster>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+            {
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
+                    let (v0, v1, v2, v3, v4, v5, v6, v7, v8) = &self.0;
+                    Monster::create(builder, v0, v1, v2, v3, v4, v5, v6, v7, v8)
+                }
+            }
+
+            /// Reference to a deserialized [Monster].
             #[derive(Copy, Clone)]
             pub struct MonsterRef<'a>(::planus::table_reader::Table<'a>);
 
             impl<'a> MonsterRef<'a> {
+                /// Getter for the [`pos` field](Monster#structfield.pos).
+                #[inline]
                 pub fn pos(&self) -> ::planus::Result<::core::option::Option<self::Vec3Ref<'a>>> {
                     self.0.access(0, "Monster", "pos")
                 }
 
+                /// Getter for the [`mana` field](Monster#structfield.mana).
+                #[inline]
                 pub fn mana(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(1, "Monster", "mana")?.unwrap_or(150))
                 }
 
+                /// Getter for the [`hp` field](Monster#structfield.hp).
+                #[inline]
                 pub fn hp(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(2, "Monster", "hp")?.unwrap_or(100))
                 }
 
+                /// Getter for the [`name` field](Monster#structfield.name).
+                #[inline]
                 pub fn name(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
@@ -630,10 +855,14 @@ mod root {
                     self.0.access(3, "Monster", "name")
                 }
 
+                /// Getter for the [`inventory` field](Monster#structfield.inventory).
+                #[inline]
                 pub fn inventory(&self) -> ::planus::Result<::core::option::Option<&'a [u8]>> {
                     self.0.access(5, "Monster", "inventory")
                 }
 
+                /// Getter for the [`color` field](Monster#structfield.color).
+                #[inline]
                 pub fn color(&self) -> ::planus::Result<self::Color> {
                     ::core::result::Result::Ok(
                         self.0
@@ -642,6 +871,8 @@ mod root {
                     )
                 }
 
+                /// Getter for the [`weapons` field](Monster#structfield.weapons).
+                #[inline]
                 pub fn weapons(
                     &self,
                 ) -> ::planus::Result<
@@ -652,6 +883,8 @@ mod root {
                     self.0.access(7, "Monster", "weapons")
                 }
 
+                /// Getter for the [`equipped` field](Monster#structfield.equipped).
+                #[inline]
                 pub fn equipped(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<self::EquipmentRef<'a>>>
@@ -659,6 +892,8 @@ mod root {
                     self.0.access_union(8, "Monster", "equipped")
                 }
 
+                /// Getter for the [`path` field](Monster#structfield.path).
+                #[inline]
                 pub fn path(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Vec3Ref<'a>>>>
@@ -838,6 +1073,11 @@ mod root {
             }
 
             impl Weapon {
+                #[inline]
+                pub fn builder() -> WeaponBuilder<()> {
+                    WeaponBuilder(())
+                }
+
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
@@ -873,6 +1113,7 @@ mod root {
             impl ::planus::WriteAs<::planus::Offset<Weapon>> for Weapon {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
                     ::planus::WriteAsOffset::prepare(self, builder)
                 }
@@ -881,6 +1122,7 @@ mod root {
             impl ::planus::WriteAsOptional<::planus::Offset<Weapon>> for Weapon {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -890,15 +1132,111 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Weapon> for Weapon {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
                     Weapon::create(builder, &self.name, self.damage)
                 }
             }
 
+            /// Builder for the [Weapon] type.
+            ///
+            /// Can be created using the [Weapon::builder] method.
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
+            pub struct WeaponBuilder<State>(State);
+
+            impl WeaponBuilder<()> {
+                /// Setter for the [`name` field](Weapon#structfield.name).
+                #[inline]
+                pub fn name<T0>(self, value: T0) -> WeaponBuilder<(T0,)>
+                where
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                {
+                    let () = self.0;
+                    WeaponBuilder((value,))
+                }
+            }
+
+            impl<T0> WeaponBuilder<(T0,)> {
+                /// Setter for the [`damage` field](Weapon#structfield.damage).
+                #[inline]
+                pub fn damage<T1>(self, value: T1) -> WeaponBuilder<(T0, T1)>
+                where
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                {
+                    let (v0,) = self.0;
+                    WeaponBuilder((v0, value))
+                }
+            }
+
+            impl<T0, T1> WeaponBuilder<(T0, T1)> {
+                /// Finish writing the builder to get an [Offset](::planus::Offset) to a [Weapon].
+                #[inline]
+                pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon>
+                where
+                    Self: ::planus::WriteAsOffset<Weapon>,
+                {
+                    ::planus::WriteAsOffset::prepare(&self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAs<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
+            {
+                type Prepared = ::planus::Offset<Weapon>;
+
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
+                    ::planus::WriteAsOffset::prepare(self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAsOptional<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
+            {
+                type Prepared = ::planus::Offset<Weapon>;
+
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::Offset<Weapon>> {
+                    ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAsOffset<Weapon> for WeaponBuilder<(T0, T1)>
+            {
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
+                    let (v0, v1) = &self.0;
+                    Weapon::create(builder, v0, v1)
+                }
+            }
+
+            /// Reference to a deserialized [Weapon].
             #[derive(Copy, Clone)]
             pub struct WeaponRef<'a>(::planus::table_reader::Table<'a>);
 
             impl<'a> WeaponRef<'a> {
+                /// Getter for the [`name` field](Weapon#structfield.name).
+                #[inline]
                 pub fn name(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
@@ -906,6 +1244,8 @@ mod root {
                     self.0.access(0, "Weapon", "name")
                 }
 
+                /// Getter for the [`damage` field](Weapon#structfield.damage).
+                #[inline]
                 pub fn damage(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(1, "Weapon", "damage")?.unwrap_or(0))
                 }

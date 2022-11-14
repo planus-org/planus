@@ -50,7 +50,7 @@ pub const fn check_version_compatibility(s: &str) {
 /// returning this result type to avoid boilerplate error handling using
 /// the ? operator.
 ///
-/// [`Result`]: std::result::Result
+/// [`Result`]: core::result::Result
 pub type Result<T> = core::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;

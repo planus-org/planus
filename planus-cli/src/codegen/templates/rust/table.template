@@ -21,8 +21,12 @@ impl ::core::default::Default for {{ info.owned_name }} {
 }
 {% endif %}
 
-
 impl {{info.owned_name}} {
+    #[inline]
+    pub fn builder() -> {{ info.builder_name}}<()> {
+        {{ info.builder_name }}(())
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn create(
         builder: &mut ::planus::Builder,
@@ -91,6 +95,7 @@ impl {{info.owned_name}} {
 impl ::planus::WriteAs<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = ::planus::Offset<Self>;
 
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
         ::planus::WriteAsOffset::prepare(self, builder)
     }
@@ -99,12 +104,14 @@ impl ::planus::WriteAs<::planus::Offset<{{info.owned_name}}>> for {{info.owned_n
 impl ::planus::WriteAsOptional<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = ::planus::Offset<Self>;
 
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::Offset<{{info.owned_name}}>> {
         ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
     }
 }
 
 impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
         {{info.owned_name}}::create(
             builder,
@@ -119,11 +126,137 @@ impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
     }
 }
 
+/// Builder for the [{{info.owned_name}}] type.
+///
+/// Can be created using the [{{info.owned_name}}::builder] method.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+pub struct {{ info.builder_name }}<State>(State);
+
+{% for field in fields.declaration_order() -%}
+impl<
+    {% for i in 0..loop.index0 %}
+        T{{i}},
+    {% endfor %}
+> {{ info.builder_name}}
+<
+    (
+    {% for i in 0..loop.index0 %}
+        T{{i}},
+    {% endfor %}
+    )
+>
+{
+    /// Setter for the [`{{field.info.name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+    #[inline]
+    pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name}}<(
+    {% for i in 0..loop.index0 %}
+        T{{i}},
+    {% endfor %} T{{loop.index0}},
+    )>
+    where T{{loop.index0}}: ::planus::{{ field.info.create_trait }}
+    {
+        let (
+            {% for i in 0..loop.index0 %}
+                v{{i}},
+            {% endfor %}
+        ) = self.0;
+        {{ info.builder_name}}((
+            {% for i in 0..loop.index0 %}
+                v{{i}},
+            {% endfor %}
+            value,
+        ))
+    }
+}
+
+{% endfor %}
+
+impl<
+    {% for field in fields.declaration_order() %}
+        T{{ loop.index0 }},
+    {% endfor %}
+> {{ info.builder_name }}<(
+    {% for field in 0..fields.declaration_order().count() %}
+        T{{loop.index0}},
+    {% endfor %}
+)> {
+    /// Finish writing the builder to get an [Offset](::planus::Offset) to a [{{info.owned_name}}].
+    #[inline]
+    pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{ info.owned_name }}>
+        where Self: ::planus::WriteAsOffset<{{ info.owned_name }}>
+    {
+        ::planus::WriteAsOffset::prepare(&self, builder)
+    }
+}
+
+impl<
+    {% for field in fields.declaration_order() %}
+        T{{ loop.index0 }}: ::planus::{{ field.info.create_trait }},
+    {% endfor %}
+> ::planus::WriteAs<::planus::Offset<{{info.owned_name}}>> for {{ info.builder_name }}<(
+    {% for field in 0..fields.declaration_order().count() %}
+        T{{loop.index0}},
+    {% endfor %}
+)> {
+    type Prepared = ::planus::Offset<{{ info.owned_name }}>;
+
+    #[inline]
+    fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
+        ::planus::WriteAsOffset::prepare(self, builder)
+    }
+}
+
+impl<
+    {% for field in fields.declaration_order() %}
+        T{{ loop.index0 }}: ::planus::{{ field.info.create_trait }},
+    {% endfor %}
+> ::planus::WriteAsOptional<::planus::Offset<{{info.owned_name}}>> for {{ info.builder_name }}<(
+    {% for field in 0..fields.declaration_order().count() %}
+        T{{loop.index0}},
+    {% endfor %}
+)> {
+    type Prepared = ::planus::Offset<{{ info.owned_name }}>;
+
+    #[inline]
+    fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::Offset<{{info.owned_name}}>> {
+        ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
+    }
+}
+
+impl<
+    {% for field in fields.declaration_order() %}
+        T{{ loop.index0 }}: ::planus::{{ field.info.create_trait }},
+    {% endfor %}
+> ::planus::WriteAsOffset<{{info.owned_name}}> for {{ info.builder_name }}<(
+    {% for field in 0..fields.declaration_order().count() %}
+        T{{loop.index0}},
+    {% endfor %}
+)> {
+    #[inline]
+    fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
+        let (
+            {% for _ in fields.declaration_order() %}
+                v{{loop.index0}},
+            {% endfor %}
+        ) = &self.0;
+        {{ info.owned_name }}::create(
+            builder,
+            {% for _ in fields.declaration_order() %}
+            v{{loop.index0}},
+            {% endfor %}
+        )
+
+    }
+}
+
+/// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone)]
 pub struct {{info.ref_name}}<'a>(::planus::table_reader::Table<'a>);
 
 impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
+        /// Getter for the [`{{field.info.name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        #[inline]
         pub fn {{field.info.name}}(&self) -> ::planus::Result<{{field.info.read_type}}> {
             {% if field.info.deserialize_default.is_some() %} ::core::result::Result::Ok( {% endif %}
             {% if field.field_type == BackendTableFieldType::UnionValue %}
