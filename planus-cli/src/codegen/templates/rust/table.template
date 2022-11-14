@@ -29,7 +29,7 @@ impl {{info.owned_name}} {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn create(
+    fn create(
         builder: &mut ::planus::Builder,
         {% for field in fields.declaration_order() -%}
             field_{{ field.info.create_name }}: impl ::planus::{{ field.info.create_trait }},
@@ -130,7 +130,7 @@ impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
 /// Builder for serializing an instance of the [{{info.owned_name}}] type.
 ///
 /// Can be created using the [{{info.owned_name}}::builder] method.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+#[derive(Debug)]
 pub struct {{ info.builder_name }}<State>(State);
 
 {% for field in fields.declaration_order() -%}
@@ -149,18 +149,21 @@ impl<
 {
     /// Setter for the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
     #[inline]
-    pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name}}<(
+    #[allow(clippy::type_complexity)]
+    pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name }}<(
     {% for i in 0..loop.index0 %}
         T{{i}},
     {% endfor %} T{{loop.index0}},
     )>
     where T{{loop.index0}}: ::planus::{{ field.info.create_trait }}
     {
+        {% if loop.index0 != 0 %}
         let (
             {% for i in 0..loop.index0 %}
                 v{{i}},
             {% endfor %}
         ) = self.0;
+        {%- endif -%}
         {{ info.builder_name}}((
             {% for i in 0..loop.index0 %}
                 v{{i}},
@@ -168,6 +171,43 @@ impl<
             value,
         ))
     }
+
+    {% if field.info.has_default %}
+
+    /// Sets the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to the default value.
+    #[inline]
+    #[allow(clippy::type_complexity)]
+    pub fn {{ field.info.name_with_as }}_default(self) -> {{ info.builder_name}}<(
+
+    {% elseif field.info.optional %}
+
+    /// Sets the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to null.
+    #[inline]
+    #[allow(clippy::type_complexity)]
+    pub fn {{ field.info.name_with_as }}_null(self) -> {{ info.builder_name}}<(
+
+    {% endif %}
+
+    {% if field.info.has_default || field.info.optional %}
+    {% for i in 0..loop.index0 %}
+        T{{i}},
+    {% endfor %}
+    {% if field.info.has_default %}
+        ::planus::DefaultValue,
+    {% else %}
+        (),
+    {% endif %}
+    )>
+    {
+        self.{{ field.info.name }}(
+            {% if field.info.has_default %}
+                ::planus::DefaultValue
+            {% else %}
+                (),
+            {% endif %}
+        )
+    }
+    {% endif %}
 }
 
 {% endfor %}

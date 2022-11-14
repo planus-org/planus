@@ -40,6 +40,7 @@ pub struct Table {
 pub struct TableField {
     pub original_name: String,
     pub name: String,
+    pub name_with_as: String,
     pub primitive_size: u32,
     pub vtable_type: String,
     pub owned_type: String,
@@ -47,6 +48,8 @@ pub struct TableField {
     pub create_name: String,
     pub create_trait: String,
     pub required: bool,
+    pub optional: bool,
+    pub has_default: bool,
     pub impl_default_code: Cow<'static, str>,
     pub serialize_default: Option<Cow<'static, str>>,
     pub deserialize_default: Option<Cow<'static, str>>,
@@ -303,6 +306,7 @@ impl Backend for RustBackend {
             "name",
             &mut translation_context.declaration_names,
         );
+        let name_with_as = format!("{field_name}_as").to_snake_case();
         let create_name = reserve_field_name(
             field_name,
             "create_name",
@@ -753,6 +757,7 @@ impl Backend for RustBackend {
         TableField {
             original_name: field_name.to_string(),
             name,
+            name_with_as,
             primitive_size,
             vtable_type,
             owned_type,
@@ -760,6 +765,8 @@ impl Backend for RustBackend {
             create_name,
             create_trait,
             required: matches!(field.assign_mode, AssignMode::Required),
+            optional: matches!(field.assign_mode, AssignMode::Optional),
+            has_default: matches!(field.assign_mode, AssignMode::HasDefault(..)),
             impl_default_code,
             serialize_default,
             deserialize_default,

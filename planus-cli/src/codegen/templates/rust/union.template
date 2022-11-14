@@ -17,7 +17,7 @@ impl {{info.owned_name}} {
 
     {% for variant in variants -%}
     #[inline]
-    pub fn {{variant.create_name}}(
+    fn {{variant.create_name}}(
       builder: &mut ::planus::Builder,
       value: impl ::planus::{{variant.create_trait}},
     ) -> ::planus::UnionOffset<Self> {
@@ -58,7 +58,7 @@ impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}}
 /// Builder for serializing an instance of the [{{info.owned_name}}] type.
 ///
 /// Can be created using the [{{info.owned_name}}::builder] method.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+#[derive(Debug)]
 pub struct {{ info.builder_name }}<T>(T);
 
 impl {{ info.builder_name }}<::planus::Uninitialized> {
@@ -66,7 +66,8 @@ impl {{ info.builder_name }}<::planus::Uninitialized> {
     /// Creates an instance of the [`{{variant.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
     #[inline]
     pub fn {{variant.builder_name}}<T>(
-      value: T,
+        self,
+        value: T,
     ) -> {{ info.builder_name }}<::planus::Initialized<{{loop.index}}, T>>
         where T: ::planus::{{variant.create_trait}} {
         {{ info.builder_name }}(::planus::Initialized(value))
