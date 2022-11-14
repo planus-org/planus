@@ -183,6 +183,13 @@ mod root {
             }
 
             impl Equipment {
+                /// Creates a [EquipmentBuilder] for serializing an instance of this table.
+                #[inline]
+                pub fn builder() -> EquipmentBuilder<::planus::Uninitialized> {
+                    EquipmentBuilder(::planus::Uninitialized)
+                }
+
+                #[inline]
                 pub fn create_weapon(
                     builder: &mut ::planus::Builder,
                     value: impl ::planus::WriteAsOffset<self::Weapon>,
@@ -192,6 +199,7 @@ mod root {
             }
 
             impl ::planus::WriteAsUnion<Equipment> for Equipment {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
                     match self {
                         Self::Weapon(value) => Self::create_weapon(builder, value),
@@ -200,6 +208,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOptionalUnion<Equipment> for Equipment {
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -208,6 +217,74 @@ mod root {
                 }
             }
 
+            /// Builder for serializing an instance of the [Equipment] type.
+            ///
+            /// Can be created using the [Equipment::builder] method.
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
+            pub struct EquipmentBuilder<T>(T);
+
+            impl EquipmentBuilder<::planus::Uninitialized> {
+                /// Creates an instance of the [`Weapon` variant](Equipment#variant.Weapon).
+                #[inline]
+                pub fn weapon<T>(value: T) -> EquipmentBuilder<::planus::Initialized<1, T>>
+                where
+                    T: ::planus::WriteAsOffset<self::Weapon>,
+                {
+                    EquipmentBuilder(::planus::Initialized(value))
+                }
+            }
+
+            impl<const N: u8, T> EquipmentBuilder<::planus::Initialized<N, T>> {
+                /// Finish writing the builder to get an [UnionOffset](::planus::UnionOffset) to a serialized [Equipment].
+                #[inline]
+                pub fn finish(
+                    self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::planus::UnionOffset<Equipment>
+                where
+                    Self: ::planus::WriteAsUnion<Equipment>,
+                {
+                    ::planus::WriteAsUnion::prepare(&self, builder)
+                }
+            }
+
+            impl<T> ::planus::WriteAsUnion<Equipment> for EquipmentBuilder<::planus::Initialized<1, T>>
+            where
+                T: ::planus::WriteAsOffset<self::Weapon>,
+            {
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::planus::UnionOffset<Equipment> {
+                    ::planus::UnionOffset::new(1, (self.0).0.prepare(builder).downcast())
+                }
+            }
+
+            impl<T> ::planus::WriteAsOptionalUnion<Equipment> for EquipmentBuilder<::planus::Initialized<1, T>>
+            where
+                T: ::planus::WriteAsOffset<self::Weapon>,
+            {
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::UnionOffset<Equipment>> {
+                    ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
+                }
+            }
+
+            /// Reference to a deserialized [Equipment].
             #[derive(Copy, Clone, Debug)]
             pub enum EquipmentRef<'a> {
                 Weapon(self::WeaponRef<'a>),
@@ -267,6 +344,7 @@ mod root {
 
             #[allow(clippy::identity_op)]
             impl ::planus::WriteAsPrimitive<Vec3> for Vec3 {
+                #[inline]
                 fn write<const N: usize>(
                     &self,
                     cursor: ::planus::Cursor<'_, N>,
@@ -283,6 +361,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Vec3> for Vec3 {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Vec3> {
                     unsafe {
                         builder.write_with(12, 4, |buffer_position, bytes| {
@@ -303,6 +382,7 @@ mod root {
 
             impl ::planus::WriteAs<Vec3> for Vec3 {
                 type Prepared = Self;
+                #[inline]
                 fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
                     *self
                 }
@@ -310,6 +390,7 @@ mod root {
 
             impl ::planus::WriteAsOptional<Vec3> for Vec3 {
                 type Prepared = Self;
+                #[inline]
                 fn prepare(
                     &self,
                     _builder: &mut ::planus::Builder,
@@ -318,22 +399,29 @@ mod root {
                 }
             }
 
+            /// Reference to a deserialized [Vec3].
             #[derive(Copy, Clone)]
             pub struct Vec3Ref<'a>(::planus::ArrayWithStartOffset<'a, 12>);
 
             impl<'a> Vec3Ref<'a> {
+                /// Getter for the [`x` field](Vec3#structfield.x).
+                #[inline]
                 pub fn x(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(0).unwrap();
 
                     f32::from_le_bytes(*buffer.as_array())
                 }
 
+                /// Getter for the [`y` field](Vec3#structfield.y).
+                #[inline]
                 pub fn y(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(4).unwrap();
 
                     f32::from_le_bytes(*buffer.as_array())
                 }
 
+                /// Getter for the [`z` field](Vec3#structfield.z).
+                #[inline]
                 pub fn z(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(8).unwrap();
 
@@ -467,6 +555,7 @@ mod root {
             }
 
             impl Monster {
+                /// Creates a [MonsterBuilder] for serializing an instance of this table.
                 #[inline]
                 pub fn builder() -> MonsterBuilder<()> {
                     MonsterBuilder(())
@@ -615,7 +704,7 @@ mod root {
                 }
             }
 
-            /// Builder for the [Monster] type.
+            /// Builder for serializing an instance of the [Monster] type.
             ///
             /// Can be created using the [Monster::builder] method.
             #[derive(
@@ -748,7 +837,7 @@ mod root {
             }
 
             impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)> {
-                /// Finish writing the builder to get an [Offset](::planus::Offset) to a [Monster].
+                /// Finish writing the builder to get an [Offset](::planus::Offset) to a serialized [Monster].
                 #[inline]
                 pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster>
                 where
@@ -1073,6 +1162,7 @@ mod root {
             }
 
             impl Weapon {
+                /// Creates a [WeaponBuilder] for serializing an instance of this table.
                 #[inline]
                 pub fn builder() -> WeaponBuilder<()> {
                     WeaponBuilder(())
@@ -1138,7 +1228,7 @@ mod root {
                 }
             }
 
-            /// Builder for the [Weapon] type.
+            /// Builder for serializing an instance of the [Weapon] type.
             ///
             /// Can be created using the [Weapon::builder] method.
             #[derive(
@@ -1179,7 +1269,7 @@ mod root {
             }
 
             impl<T0, T1> WeaponBuilder<(T0, T1)> {
-                /// Finish writing the builder to get an [Offset](::planus::Offset) to a [Weapon].
+                /// Finish writing the builder to get an [Offset](::planus::Offset) to a serialized [Weapon].
                 #[inline]
                 pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon>
                 where

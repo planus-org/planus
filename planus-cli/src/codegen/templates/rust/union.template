@@ -9,7 +9,14 @@ pub enum {{ info.owned_name }}{
 
 {% if !variants.is_empty() %}
 impl {{info.owned_name}} {
+    /// Creates a [{{info.builder_name}}] for serializing an instance of this table.
+    #[inline]
+    pub fn builder() -> {{info.builder_name}}<::planus::Uninitialized> {
+        {{info.builder_name}}(::planus::Uninitialized)
+    }
+
     {% for variant in variants -%}
+    #[inline]
     pub fn {{variant.create_name}}(
       builder: &mut ::planus::Builder,
       value: impl ::planus::{{variant.create_trait}},
@@ -23,12 +30,14 @@ impl {{info.owned_name}} {
 
 {% if variants.is_empty() %}
 impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
         match *self {}
     }
 }
 {% else %}
 impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
         match self {
             {% for variant in variants -%}
@@ -40,11 +49,63 @@ impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
 {% endif %}
 
 impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::UnionOffset<Self>> {
         ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
     }
 }
 
+/// Builder for serializing an instance of the [{{info.owned_name}}] type.
+///
+/// Can be created using the [{{info.owned_name}}::builder] method.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+pub struct {{ info.builder_name }}<T>(T);
+
+impl {{ info.builder_name }}<::planus::Uninitialized> {
+    {% for variant in variants -%}
+    /// Creates an instance of the [`{{variant.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
+    #[inline]
+    pub fn {{variant.builder_name}}<T>(
+      value: T,
+    ) -> {{ info.builder_name }}<::planus::Initialized<{{loop.index}}, T>>
+        where T: ::planus::{{variant.create_trait}} {
+        {{ info.builder_name }}(::planus::Initialized(value))
+    }
+
+    {% endfor %}
+}
+
+impl<const N: u8, T> {{ info.builder_name }}<::planus::Initialized<N, T>> {
+    /// Finish writing the builder to get an [UnionOffset](::planus::UnionOffset) to a serialized [{{info.owned_name}}].
+    #[inline]
+    pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<{{ info.owned_name }}>
+        where Self: ::planus::WriteAsUnion<{{info.owned_name}}>
+    {
+        ::planus::WriteAsUnion::prepare(&self, builder)
+    }
+}
+
+{% for variant in variants -%}
+impl<T> ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.builder_name}}<::planus::Initialized<{{loop.index}}, T>>
+    where T: ::planus::{{variant.create_trait}}
+{
+    #[inline]
+    fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<{{info.owned_name}}> {
+        ::planus::UnionOffset::new({{loop.index}}, (self.0).0.prepare(builder).downcast())
+    }
+}
+
+impl<T> ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.builder_name}}<::planus::Initialized<{{loop.index}}, T>>
+    where T: ::planus::{{variant.create_trait}}
+{
+    #[inline]
+    fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::UnionOffset<{{info.owned_name}}>> {
+        ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
+    }
+}
+{% endfor %}
+
+/// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone, Debug
 {%- if info.should_do_infallible_conversion -%}
   , PartialEq, PartialOrd

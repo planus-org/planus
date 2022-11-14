@@ -58,6 +58,12 @@ pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 #[doc(hidden)]
 pub enum Void {}
 
+#[doc(hidden)]
+pub struct Uninitialized;
+
+#[doc(hidden)]
+pub struct Initialized<const N: u8, T>(pub T);
+
 impl From<Void> for crate::Error {
     fn from(v: Void) -> Self {
         match v {}

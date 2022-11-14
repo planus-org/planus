@@ -22,6 +22,7 @@ impl ::core::default::Default for {{ info.owned_name }} {
 {% endif %}
 
 impl {{info.owned_name}} {
+    /// Creates a [{{info.builder_name}}] for serializing an instance of this table.
     #[inline]
     pub fn builder() -> {{ info.builder_name}}<()> {
         {{ info.builder_name }}(())
@@ -126,7 +127,7 @@ impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
     }
 }
 
-/// Builder for the [{{info.owned_name}}] type.
+/// Builder for serializing an instance of the [{{info.owned_name}}] type.
 ///
 /// Can be created using the [{{info.owned_name}}::builder] method.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
@@ -146,7 +147,7 @@ impl<
     )
 >
 {
-    /// Setter for the [`{{field.info.name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+    /// Setter for the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
     #[inline]
     pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name}}<(
     {% for i in 0..loop.index0 %}
@@ -180,7 +181,7 @@ impl<
         T{{loop.index0}},
     {% endfor %}
 )> {
-    /// Finish writing the builder to get an [Offset](::planus::Offset) to a [{{info.owned_name}}].
+    /// Finish writing the builder to get an [Offset](::planus::Offset) to a serialized [{{info.owned_name}}].
     #[inline]
     pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{ info.owned_name }}>
         where Self: ::planus::WriteAsOffset<{{ info.owned_name }}>
@@ -255,7 +256,7 @@ pub struct {{info.ref_name}}<'a>(::planus::table_reader::Table<'a>);
 
 impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
-        /// Getter for the [`{{field.info.name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        /// Getter for the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
         #[inline]
         pub fn {{field.info.name}}(&self) -> ::planus::Result<{{field.info.read_type}}> {
             {% if field.info.deserialize_default.is_some() %} ::core::result::Result::Ok( {% endif %}

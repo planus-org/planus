@@ -38,6 +38,7 @@ pub struct Table {
 
 #[derive(Clone, Debug)]
 pub struct TableField {
+    pub original_name: String,
     pub name: String,
     pub primitive_size: u32,
     pub vtable_type: String,
@@ -64,6 +65,7 @@ pub struct Struct {
 
 #[derive(Clone, Debug)]
 pub struct StructField {
+    pub original_name: String,
     pub name: String,
     pub owned_type: String,
     pub getter_return_type: String,
@@ -85,6 +87,7 @@ pub struct EnumVariant {
 #[derive(Clone, Debug)]
 pub struct Union {
     pub owned_name: String,
+    pub builder_name: String,
     pub ref_name: String,
     pub ref_name_with_lifetime: String,
     pub should_do_eq: bool,
@@ -93,8 +96,10 @@ pub struct Union {
 
 #[derive(Clone, Debug)]
 pub struct UnionVariant {
+    pub original_name: String,
     pub create_name: String,
     pub create_trait: String,
+    pub builder_name: String,
     pub enum_name: String,
     pub owned_type: String,
     pub ref_type: String,
@@ -258,8 +263,10 @@ impl Backend for RustBackend {
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
         let ref_name = reserve_type_name(&format!("{}Ref", decl_name), declaration_names);
+        let builder_name = reserve_type_name(&format!("{}Builder", decl_name), declaration_names);
         Union {
             owned_name: reserve_type_name(decl_name, declaration_names),
+            builder_name,
             ref_name_with_lifetime: if decl.variants.is_empty() {
                 ref_name.clone()
             } else {
@@ -744,6 +751,7 @@ impl Backend for RustBackend {
             }
         }
         TableField {
+            original_name: field_name.to_string(),
             name,
             primitive_size,
             vtable_type,
@@ -823,6 +831,7 @@ impl Backend for RustBackend {
             _ => unreachable!(),
         }
         StructField {
+            original_name: field_name.to_string(),
             name,
             owned_type,
             getter_return_type,
@@ -860,6 +869,11 @@ impl Backend for RustBackend {
         let create_name = reserve_field_name(
             &format!("create_{}", key),
             "create_function",
+            &mut translation_context.declaration_names,
+        );
+        let builder_name = reserve_field_name(
+            key,
+            "builder_function",
             &mut translation_context.declaration_names,
         );
         let enum_name = reserve_rust_enum_variant_name(
@@ -908,8 +922,10 @@ impl Backend for RustBackend {
             _ => todo!(),
         }
         UnionVariant {
+            original_name: key.to_string(),
             create_name,
             enum_name,
+            builder_name,
             create_trait,
             owned_type,
             ref_type,
