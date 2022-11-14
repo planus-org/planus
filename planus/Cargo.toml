@@ -7,12 +7,12 @@ edition = "2021"
 readme = "README.md"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
-rust-version = "1.57"
+rust-version = "1.61"
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
 [dependencies]
 array-init-cursor = { version = "0.2.0", path = "../array-init-cursor" }
-hashbrown = { version = "0.12.3", optional = true, features = ["raw"] }
+hashbrown = { version = "0.13.1", optional = true, features = ["raw"] }
 
 [dev-dependencies]
 rand = "0.8.4"

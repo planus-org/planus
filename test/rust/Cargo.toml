@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 build = "build.rs"
-rust-version = "1.57"
+rust-version = "1.61"
 
 [features]
 default = []
