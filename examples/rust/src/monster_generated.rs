@@ -9,7 +9,6 @@ mod root {
             //!  Example IDL file for our monster's schema.
 
             ///  The possible monster colors
-
             #[derive(
                 Copy,
                 Clone,
@@ -181,7 +180,6 @@ mod root {
             }
 
             ///  Weapons or other equipment
-
             #[derive(
                 Clone,
                 Debug,
@@ -266,7 +264,6 @@ mod root {
             }
 
             ///  Vector in three dimensions
-
             #[derive(
                 Copy,
                 Clone,
@@ -477,7 +474,6 @@ mod root {
             }
 
             ///  An enemy in the game
-
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
@@ -890,7 +886,6 @@ mod root {
             }
 
             ///  A weapon is equipment that can be used for attacking
-
             #[derive(
                 Clone,
                 Debug,

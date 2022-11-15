@@ -1,6 +1,6 @@
 {% for docstring in docstrings.iter_strings() %}
 /// {{ docstring }}
-{% endfor %}
+{%- endfor %}
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize)]
@@ -8,7 +8,7 @@ pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
         {% for docstring in variant.docstrings.iter_strings() %}
         /// {{ docstring }}
-        {% endfor %}
+        {%- endfor %}
         {{ variant.enum_name }}({{ variant.owned_type }}),
     {% endfor %}
 }

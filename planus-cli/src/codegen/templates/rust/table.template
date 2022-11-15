@@ -1,6 +1,6 @@
 {% for docstring in docstrings.iter_strings() %}
 /// {{ docstring }}
-{% endfor %}
+{%- endfor %}
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize
@@ -9,7 +9,7 @@ pub struct {{ info.owned_name }}{
     {% for field in fields.declaration_order() -%}
         {% for docstring in field.docstrings.iter_strings() %}
         /// {{ docstring }}
-        {% endfor %}
+        {%- endfor %}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
     {%- endfor -%}
 }

@@ -1,6 +1,6 @@
 {% for docstring in docstrings.iter_strings() %}
 /// {{ docstring }}
-{% endfor %}
+{%- endfor %}
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
 {%- if !variants.is_empty() -%}
 #[repr({{info.repr_type}})]
@@ -9,7 +9,7 @@ pub enum {{ info.name }} {
     {% for variant in variants -%}
         {% for docstring in variant.docstrings.iter_strings() %}
         /// {{ docstring }}
-        {% endfor %}
+        {%- endfor %}
         {{ variant.name }} = {{ variant.value }},
     {% endfor %}
 }
