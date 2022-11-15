@@ -572,6 +572,12 @@ pub struct Docstring {
     pub value: String,
 }
 
+impl Docstrings {
+    pub fn iter_strings(&self) -> impl Iterator<Item = &str> {
+        self.0.iter().map(|docstring| docstring.value.as_str())
+    }
+}
+
 impl Type {
     pub fn to_string(&self, ctx: &Ctx) -> String {
         pub struct Fmt<F>(pub F)

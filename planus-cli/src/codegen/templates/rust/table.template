@@ -1,9 +1,15 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{% endfor %}
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize
 )]
 pub struct {{ info.owned_name }}{
     {% for field in fields.declaration_order() -%}
+        {% for docstring in field.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {% endfor %}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
     {%- endfor -%}
 }
@@ -21,8 +27,8 @@ impl ::core::default::Default for {{ info.owned_name }} {
 }
 {% endif %}
 
-
 impl {{info.owned_name}} {
+    /// Serializes a new instance of [{{info.owned_name}}].
     #[allow(clippy::too_many_arguments)]
     pub fn create(
         builder: &mut ::planus::Builder,
@@ -91,6 +97,7 @@ impl {{info.owned_name}} {
 impl ::planus::WriteAs<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = ::planus::Offset<Self>;
 
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
         ::planus::WriteAsOffset::prepare(self, builder)
     }
@@ -99,12 +106,14 @@ impl ::planus::WriteAs<::planus::Offset<{{info.owned_name}}>> for {{info.owned_n
 impl ::planus::WriteAsOptional<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Prepared = ::planus::Offset<Self>;
 
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::Offset<{{info.owned_name}}>> {
         ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
     }
 }
 
 impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
         {{info.owned_name}}::create(
             builder,
@@ -119,11 +128,14 @@ impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
     }
 }
 
+/// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone)]
 pub struct {{info.ref_name}}<'a>(::planus::table_reader::Table<'a>);
 
 impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
+        /// Getter for the [`{{field.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        #[inline]
         pub fn {{field.info.name}}(&self) -> ::planus::Result<{{field.info.read_type}}> {
             {% if field.info.deserialize_default.is_some() %} ::core::result::Result::Ok( {% endif %}
             {% if field.field_type == BackendTableFieldType::UnionValue %}
@@ -181,6 +193,7 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
 }
 
 impl<'a> ::planus::TableRead<'a> for {{info.ref_name}}<'a> {
+    #[inline]
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         ::core::result::Result::Ok(Self(::planus::table_reader::Table::from_buffer(buffer, offset)?))
     }
@@ -202,6 +215,7 @@ impl<'a> ::planus::VectorReadInner<'a> for {{info.ref_name}}<'a> {
 impl ::planus::VectorWrite<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Value = ::planus::Offset<{{info.owned_name}}>;
     const STRIDE: usize = 4;
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> Self::Value {
         ::planus::WriteAs::prepare(self, builder)
     }

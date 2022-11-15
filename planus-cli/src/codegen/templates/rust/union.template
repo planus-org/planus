@@ -1,8 +1,14 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{% endfor %}
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize)]
 pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
+        {% for docstring in variant.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {% endfor %}
         {{ variant.enum_name }}({{ variant.owned_type }}),
     {% endfor %}
 }
@@ -10,6 +16,8 @@ pub enum {{ info.owned_name }}{
 {% if !variants.is_empty() %}
 impl {{info.owned_name}} {
     {% for variant in variants -%}
+    /// Serializes a new instance of [{{info.owned_name}}] of the [`{{variant.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
+    #[inline]
     pub fn {{variant.create_name}}(
       builder: &mut ::planus::Builder,
       value: impl ::planus::{{variant.create_trait}},
@@ -23,12 +31,14 @@ impl {{info.owned_name}} {
 
 {% if variants.is_empty() %}
 impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
         match *self {}
     }
 }
 {% else %}
 impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
         match self {
             {% for variant in variants -%}
@@ -40,11 +50,13 @@ impl ::planus::WriteAsUnion<{{info.owned_name}}> for {{info.owned_name}} {
 {% endif %}
 
 impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::core::option::Option<::planus::UnionOffset<Self>> {
         ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
     }
 }
 
+/// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone, Debug
 {%- if info.should_do_infallible_conversion -%}
   , PartialEq, PartialOrd
@@ -59,6 +71,7 @@ pub enum {{ info.ref_name_with_lifetime }}{
 
 {% if variants.is_empty() %}
 impl ::core::convert::From<{{info.ref_name}}> for {{info.owned_name}} {
+    #[inline]
     fn from(value: {{info.ref_name}}) -> Self {
         match value {}
     }
@@ -97,6 +110,7 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
 
 {% if variants.is_empty() %}
 impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}} {
+    #[inline]
     fn from_buffer(_buffer: ::planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         ::core::result::Result::Err(::planus::errors::ErrorKind::UnknownUnionTag { tag })
     }

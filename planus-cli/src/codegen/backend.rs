@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-use crate::{ast, intermediate_language::types::*};
+use crate::{ast, codegen::backend_translation::BackendVariant, intermediate_language::types::*};
 
 pub type Keywords = HashSet<&'static str>;
 
@@ -198,7 +198,7 @@ pub enum ResolvedType<'a, B: ?Sized + Backend> {
         &'a Enum,
         &'a B::EnumInfo,
         RelativeNamespace<'a, B>,
-        &'a [B::EnumVariantInfo],
+        &'a [BackendVariant<B::EnumVariantInfo>],
     ),
     Union(&'a Union, &'a B::UnionInfo, RelativeNamespace<'a, B>),
     Vector(Box<ResolvedType<'a, B>>),

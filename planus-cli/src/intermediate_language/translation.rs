@@ -68,6 +68,12 @@ impl<'a> Translator<'a> {
             schema.file_id,
             schema.namespace.as_ref().map(|(span, _)| *span),
         ));
+        // TODO: Is there a better way to do this? Should we even allow docstrings
+        // for the same namespace in multiple places?
+        namespace
+            .docstrings
+            .0
+            .extend(schema.docstrings.0.iter().cloned());
 
         for decl in schema.type_declarations.values() {
             let name = self.ctx.resolve_identifier(decl.identifier.value);
@@ -431,7 +437,7 @@ impl<'a> Translator<'a> {
                             .variants
                             .iter()
                             .enumerate()
-                            .find(|(_variant_index, (_key, (_span, value)))| value == s)
+                            .find(|(_variant_index, (_key, variant))| &variant.name == s)
                         {
                             return Some(Literal::EnumTag {
                                 variant_index,
@@ -605,6 +611,7 @@ impl<'a> Translator<'a> {
                     offset: u32::MAX,
                     size: u32::MAX,
                     padding_after_field: u32::MAX,
+                    docstrings: field.docstrings.clone(),
                 },
             )),
             TypeKind::Array(_, _) => {
@@ -652,6 +659,7 @@ impl<'a> Translator<'a> {
             definition_span: decl.definition_span,
             file_id: current_file_id,
             kind,
+            docstrings: decl.docstrings.clone(),
         }
     }
 
@@ -938,6 +946,7 @@ impl<'a> Translator<'a> {
             object_alignment_mask: u32::MAX,
             object_alignment: u32::MAX,
             deprecated,
+            docstrings: field.docstrings.clone(),
         })
     }
 
@@ -1134,7 +1143,7 @@ impl<'a> Translator<'a> {
             );
         }
 
-        let mut variants: IndexMap<IntegerLiteral, (Span, String)> = IndexMap::new();
+        let mut variants: IndexMap<IntegerLiteral, EnumVariant> = IndexMap::new();
         let mut next_value = decl.type_.default_value();
         for (ident, variant) in decl.variants.iter() {
             let mut value = next_value;
@@ -1157,7 +1166,7 @@ impl<'a> Translator<'a> {
                     self.ctx.emit_error(
                         ErrorKind::MISC_SEMANTIC_ERROR,
                         [
-                            Label::primary(current_file_id, entry.get().0)
+                            Label::primary(current_file_id, entry.get().span)
                                 .with_message("First variant was here"),
                             Label::primary(current_file_id, variant.span)
                                 .with_message("Second variant was here"),
@@ -1168,7 +1177,11 @@ impl<'a> Translator<'a> {
                     );
                 }
                 Entry::Vacant(entry) => {
-                    entry.insert((variant.span, name));
+                    entry.insert(EnumVariant {
+                        span: variant.span,
+                        name,
+                        docstrings: variant.docstrings.clone(),
+                    });
                 }
             }
             next_value = value.next();
@@ -1219,7 +1232,13 @@ impl<'a> Translator<'a> {
                     }
                 };
 
-                Some((name, UnionVariant { type_ }))
+                Some((
+                    name,
+                    UnionVariant {
+                        type_,
+                        docstrings: variant.docstrings.clone(),
+                    },
+                ))
             })
             .collect();
         Union { variants }
