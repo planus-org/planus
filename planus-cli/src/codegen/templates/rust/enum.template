@@ -7,7 +7,7 @@
 {%- endif -%}
 pub enum {{ info.name }} {
     {% for variant in variants -%}
-        {% for docstring in variant.docstrings.iter_strings() %}
+        {%- for docstring in variant.docstrings.iter_strings() -%}
         /// {{ docstring }}
         {%- endfor %}
         {{ variant.name }} = {{ variant.value }},

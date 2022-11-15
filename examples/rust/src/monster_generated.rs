@@ -25,10 +25,8 @@ mod root {
             pub enum Color {
                 ///  Should be rendered the same color as blood
                 Red = 0,
-
                 ///  Any green will do
                 Green = 1,
-
                 ///  Must be `#89CFF0`
                 Blue = 2,
             }
