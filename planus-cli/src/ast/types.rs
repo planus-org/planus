@@ -16,6 +16,7 @@ pub struct Identifier {
 
 pub struct Schema {
     pub file_id: FileId,
+    pub docstrings: Docstrings,
 
     // the spans are where the include definitions were
     pub native_includes: Vec<StringLiteral>,
@@ -36,6 +37,7 @@ impl Schema {
     pub fn new(file_id: FileId) -> Self {
         Self {
             file_id,
+            docstrings: Default::default(),
             namespace: Default::default(),
             native_includes: Default::default(),
             includes: Default::default(),
@@ -67,6 +69,7 @@ pub struct Declaration {
     pub definition_span: Span,
     pub identifier: Identifier,
     pub kind: TypeDeclarationKind,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone)]
@@ -97,6 +100,7 @@ pub struct StructField {
     pub type_: Type,
     pub assignment: Option<Literal>,
     pub metadata: MetadataMap,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone)]
@@ -112,6 +116,7 @@ pub struct EnumVariant {
     pub span: Span,
     pub ident: Identifier,
     pub value: Option<IntegerLiteral>,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone)]
@@ -152,6 +157,7 @@ pub struct UnionVariant {
     pub span: Span,
     pub ident: Option<Identifier>,
     pub type_: Type,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone)]
@@ -166,6 +172,7 @@ pub struct RpcMethod {
     pub argument_type: Type,
     pub return_type: Type,
     pub metadata: MetadataMap,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone, Debug)]
@@ -552,6 +559,15 @@ pub struct IntegerLiteral {
 
 #[derive(Clone, Debug)]
 pub struct StringLiteral {
+    pub span: Span,
+    pub value: String,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Docstrings(pub Vec<Docstring>);
+
+#[derive(Clone, Debug)]
+pub struct Docstring {
     pub span: Span,
     pub value: String,
 }
