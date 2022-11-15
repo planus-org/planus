@@ -447,7 +447,7 @@ impl<'ctx> CstConverter<'ctx> {
             }
             cst::DeclarationKind::Attribute(decl) => {
                 self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(&decl.attribute.token_meta());
+                self.disallow_docstrings(decl.attribute.token_meta());
                 self.disallow_docstrings(&decl.semicolon.token_metadata);
 
                 let attribute = self.convert_attribute(&decl.attribute);
