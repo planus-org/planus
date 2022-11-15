@@ -221,6 +221,7 @@ mod root {
             ///
             /// Can be created using the [Equipment::builder] method.
             #[derive(Debug)]
+            #[must_use]
             pub struct EquipmentBuilder<T>(T);
 
             impl EquipmentBuilder<::planus::Uninitialized> {
@@ -698,6 +699,7 @@ mod root {
             ///
             /// Can be created using the [Monster::builder] method.
             #[derive(Debug)]
+            #[must_use]
             pub struct MonsterBuilder<State>(State);
 
             impl MonsterBuilder<()> {
@@ -1285,6 +1287,7 @@ mod root {
             ///
             /// Can be created using the [Weapon::builder] method.
             #[derive(Debug)]
+            #[must_use]
             pub struct WeaponBuilder<State>(State);
 
             impl WeaponBuilder<()> {

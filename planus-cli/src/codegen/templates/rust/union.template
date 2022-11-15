@@ -59,6 +59,7 @@ impl ::planus::WriteAsOptionalUnion<{{info.owned_name}}> for {{info.owned_name}}
 ///
 /// Can be created using the [{{info.owned_name}}::builder] method.
 #[derive(Debug)]
+#[must_use]
 pub struct {{ info.builder_name }}<T>(T);
 
 impl {{ info.builder_name }}<::planus::Uninitialized> {

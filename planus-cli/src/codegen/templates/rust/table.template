@@ -131,6 +131,7 @@ impl ::planus::WriteAsOffset<{{info.owned_name}}> for {{info.owned_name}} {
 ///
 /// Can be created using the [{{info.owned_name}}::builder] method.
 #[derive(Debug)]
+#[must_use]
 pub struct {{ info.builder_name }}<State>(State);
 
 {% for field in fields.declaration_order() -%}
@@ -275,11 +276,13 @@ impl<
 )> {
     #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
+        {% if fields.declaration_order().count() != 0 %}
         let (
             {% for _ in fields.declaration_order() %}
                 v{{loop.index0}},
             {% endfor %}
         ) = &self.0;
+        {%- endif -%}
         {{ info.owned_name }}::create(
             builder,
             {% for _ in fields.declaration_order() %}
