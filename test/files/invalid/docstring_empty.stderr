@@ -1,0 +1,13 @@
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_empty.fbs:2:1
+  │
+2 │ /// Bad1
+  │ ^^^^^^^^
+
+error: Inner doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_empty.fbs:3:1
+  │
+3 │ //! Bad2
+  │ ^^^^^^^^
+
+Error: Bailing because of errors

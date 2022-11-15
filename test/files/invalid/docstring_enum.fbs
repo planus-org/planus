@@ -1,0 +1,29 @@
+//! Okay
+/// Okay
+//! Bad1
+/// Okay
+enum /// Bad2
+/// Bad3
+Foo /// Bad4
+/// Bad5
+: /// Bad6
+/// Bad7
+uint8 /// Bad8
+/// Bad9
+{ /// Bad10
+  //! Bad11
+  /// Okay
+  x /// Bad12
+  /// Bad13
+  = /// Bad14
+  /// Bad15
+  0 /// Bad16
+  /// Bad17
+  , /// Bad18
+  //! Bad19
+  /// Okay
+  y /// Bad20
+/// Bad21
+} /// Bad22
+/// Bad23
+//! Bad24

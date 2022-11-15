@@ -9,7 +9,7 @@ use crate::{
     cst,
     ctx::Ctx,
     error::ErrorKind,
-    lexer::{CommentKind, TokenMetadata},
+    lexer::{Comment, CommentKind, TokenMetadata},
 };
 
 struct CstConverter<'ctx> {
@@ -29,6 +29,7 @@ pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
     for decl in &schema.declarations {
         converter.convert_declaration(decl);
     }
+    converter.handle_invalid_docstrings(&schema.end_of_stream.token_metadata);
     converter.schema
 }
 
@@ -370,9 +371,9 @@ impl<'ctx> CstConverter<'ctx> {
     ) -> Option<Declaration> {
         match declaration {
             cst::DeclarationKind::Include(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(&decl.path.token_metadata);
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.path.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_include();
                 let lit = self.convert_string_literal(&decl.path);
@@ -380,9 +381,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::NativeInclude(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(&decl.path.token_metadata);
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.path.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_include();
                 let lit = self.convert_string_literal(&decl.path);
@@ -390,9 +391,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::Namespace(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_many_docstrings(decl.namespace.token_metas());
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_many_invalid_docstrings(decl.namespace.token_metas());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_namespace();
                 if self.schema.namespace.is_none() {
@@ -404,9 +405,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::RootType(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_many_docstrings(decl.root_type.kind.token_metas());
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_many_invalid_docstrings(decl.root_type.kind.token_metas());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_root_type();
                 if self.schema.root_type.is_none() {
@@ -418,9 +419,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::FileExtension(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(&decl.file_extension.token_metadata);
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.file_extension.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_file_extension();
                 if self.schema.file_extension.is_none() {
@@ -432,9 +433,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::FileIdentifier(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(&decl.file_identifier.token_metadata);
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.file_identifier.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 self.check_file_identifier();
                 if self.schema.file_identifier.is_none() {
@@ -446,9 +447,9 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::Attribute(decl) => {
-                self.disallow_docstrings(&decl.keyword.token_metadata);
-                self.disallow_docstrings(decl.attribute.token_meta());
-                self.disallow_docstrings(&decl.semicolon.token_metadata);
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(decl.attribute.token_meta());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
 
                 let attribute = self.convert_attribute(&decl.attribute);
                 self.schema.attributes.push(attribute);
@@ -520,12 +521,12 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_table(&mut self, decl: &cst::TableDeclaration<'_>) -> Declaration {
         let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
-        self.disallow_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&decl.start_brace.token_metadata);
-        self.disallow_docstrings(&decl.end_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
 
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
@@ -570,12 +571,12 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_struct(&mut self, decl: &cst::StructDeclaration<'_>) -> Declaration {
         let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
-        self.disallow_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&decl.start_brace.token_metadata);
-        self.disallow_docstrings(&decl.end_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
 
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
@@ -620,16 +621,16 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_field(&mut self, field: &cst::FieldDeclaration<'_>) -> StructField {
         let docstrings = self.convert_docstrings(&field.ident.token_metadata);
-        self.disallow_docstrings(&field.colon.token_metadata);
-        self.disallow_many_docstrings(field.type_.kind.token_metas());
+        self.handle_invalid_docstrings(&field.colon.token_metadata);
+        self.handle_many_invalid_docstrings(field.type_.kind.token_metas());
         if let Some((eq, expr)) = &field.assignment {
-            self.disallow_docstrings(&eq.token_metadata);
-            self.disallow_many_docstrings(expr.kind.token_metas());
+            self.handle_invalid_docstrings(&eq.token_metadata);
+            self.handle_many_invalid_docstrings(expr.kind.token_metas());
         }
         if let Some(metadata) = &field.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&field.semicolon.token_metadata);
+        self.handle_invalid_docstrings(&field.semicolon.token_metadata);
 
         StructField {
             span: field.span,
@@ -646,16 +647,16 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_enum(&mut self, decl: &cst::EnumDeclaration<'_>) -> Declaration {
         let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
-        self.disallow_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some((colon, type_)) = &decl.type_ {
-            self.disallow_docstrings(&colon.token_metadata);
-            self.disallow_many_docstrings(type_.kind.token_metas());
+            self.handle_invalid_docstrings(&colon.token_metadata);
+            self.handle_many_invalid_docstrings(type_.kind.token_metas());
         }
         if let Some(metadata) = &decl.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&decl.start_brace.token_metadata);
-        self.disallow_docstrings(&decl.end_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
 
         let identifier = self.convert_ident(&decl.ident);
         let type_ = if let Some((_colon, type_)) = &decl.type_ {
@@ -735,11 +736,11 @@ impl<'ctx> CstConverter<'ctx> {
     fn convert_enum_variant(&mut self, variant: &cst::EnumValDeclaration<'_>) -> EnumVariant {
         let docstrings = self.convert_docstrings(&variant.ident.token_metadata);
         if let Some((eq, value)) = &variant.assignment {
-            self.disallow_docstrings(&eq.token_metadata);
-            self.disallow_many_docstrings(value.kind.token_metas());
+            self.handle_invalid_docstrings(&eq.token_metadata);
+            self.handle_many_invalid_docstrings(value.kind.token_metas());
         }
         if let Some(comma) = &variant.comma {
-            self.disallow_docstrings(&comma.token_metadata);
+            self.handle_invalid_docstrings(&comma.token_metadata);
         }
 
         let ident = self.convert_ident(&variant.ident);
@@ -758,12 +759,12 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_union(&mut self, decl: &cst::UnionDeclaration<'_>) -> Declaration {
         let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
-        self.disallow_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&decl.start_brace.token_metadata);
-        self.disallow_docstrings(&decl.end_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
 
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
@@ -833,15 +834,15 @@ impl<'ctx> CstConverter<'ctx> {
         let docstrings;
         if let Some((name, colon)) = &variant.name {
             docstrings = self.convert_docstrings(&name.token_metadata);
-            self.disallow_docstrings(&colon.token_metadata);
+            self.handle_invalid_docstrings(&colon.token_metadata);
         } else {
             docstrings = self.convert_docstrings(type_metas.next().unwrap());
         }
 
-        self.disallow_many_docstrings(type_metas);
+        self.handle_many_invalid_docstrings(type_metas);
 
         if let Some(comma) = &variant.comma {
-            self.disallow_docstrings(&comma.token_metadata);
+            self.handle_invalid_docstrings(&comma.token_metadata);
         }
 
         let ident = if let Some((name, _colon)) = &variant.name {
@@ -859,9 +860,9 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_rpc_service(&mut self, decl: &cst::RpcServiceDeclaration<'_>) -> Declaration {
         let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
-        self.disallow_docstrings(&decl.ident.token_metadata);
-        self.disallow_docstrings(&decl.start_brace.token_metadata);
-        self.disallow_docstrings(&decl.end_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
 
         let identifier = self.convert_ident(&decl.ident);
         let mut methods: IndexMap<RawIdentifier, RpcMethod> = IndexMap::new();
@@ -906,15 +907,15 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_rpc_method(&mut self, method: &cst::RpcMethod<'_>) -> RpcMethod {
         let docstrings = self.convert_docstrings(&method.ident.token_metadata);
-        self.disallow_docstrings(&method.start_paren.token_metadata);
-        self.disallow_many_docstrings(method.argument_type.kind.token_metas());
-        self.disallow_docstrings(&method.end_paren.token_metadata);
-        self.disallow_docstrings(&method.colon.token_metadata);
-        self.disallow_many_docstrings(method.return_type.kind.token_metas());
+        self.handle_invalid_docstrings(&method.start_paren.token_metadata);
+        self.handle_many_invalid_docstrings(method.argument_type.kind.token_metas());
+        self.handle_invalid_docstrings(&method.end_paren.token_metadata);
+        self.handle_invalid_docstrings(&method.colon.token_metadata);
+        self.handle_many_invalid_docstrings(method.return_type.kind.token_metas());
         if let Some(metadata) = &method.metadata {
-            self.disallow_many_docstrings(metadata.token_metas());
+            self.handle_many_invalid_docstrings(metadata.token_metas());
         }
-        self.disallow_docstrings(&method.semicolon.token_metadata);
+        self.handle_invalid_docstrings(&method.semicolon.token_metadata);
 
         RpcMethod {
             span: method.span,
@@ -1098,7 +1099,7 @@ impl<'ctx> CstConverter<'ctx> {
                                 Some(concat!(
                                     "Inner doc comments (those starting with `//!`) are only allowed ",
                                     "at the beginning of the file and are used to document the namespace. ",
-                                    "If you meant to write a normal doc comment, you write those with `///`."
+                                    "If you meant to write a normal doc comment, those start with `///`."
                                 )),
                             );
                         }
@@ -1107,48 +1108,58 @@ impl<'ctx> CstConverter<'ctx> {
             }
         }
         self.allow_outer_docstrings = false;
+        if let Some(comment) = &token_metadata.post_comment {
+            self.handle_invalid_docstring(comment);
+        }
         Docstrings(out)
     }
 
-    fn disallow_docstrings(&mut self, token_metadata: &TokenMetadata<'_>) {
-        for block in &token_metadata.pre_comment_blocks {
-            for comment in &block.0 {
-                match comment.kind {
-                    CommentKind::Comment => continue,
-                    CommentKind::OuterDocstring => {
-                        self.emit_error(
-                            ErrorKind::MISC_SEMANTIC_ERROR,
-                            [Label::primary(self.schema.file_id, comment.span)],
-                            Some("Doc comments are not meaningful here."),
-                        );
-                        self.allow_outer_docstrings = false;
-                    }
-                    CommentKind::InnerDocstring => {
-                        if self.allow_outer_docstrings {
-                            self.schema.docstrings.0.push(Docstring {
-                                span: comment.span,
-                                value: comment.content.to_owned(),
-                            });
-                        } else {
-                            self.emit_error(
-                                ErrorKind::MISC_SEMANTIC_ERROR,
-                                [Label::primary(self.schema.file_id, comment.span)],
-                                Some("Inner doc comments are not meaningful here."),
-                            );
-                        }
-                    }
+    fn handle_invalid_docstring(&mut self, comment: &Comment<'_>) {
+        match comment.kind {
+            CommentKind::Comment => (),
+            CommentKind::OuterDocstring => {
+                self.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(self.schema.file_id, comment.span)],
+                    Some("Doc comments are not meaningful here."),
+                );
+                self.allow_outer_docstrings = false;
+            }
+            CommentKind::InnerDocstring => {
+                if self.allow_outer_docstrings {
+                    self.schema.docstrings.0.push(Docstring {
+                        span: comment.span,
+                        value: comment.content.to_owned(),
+                    });
+                } else {
+                    self.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(self.schema.file_id, comment.span)],
+                        Some("Inner doc comments are not meaningful here."),
+                    );
                 }
             }
         }
-        self.allow_outer_docstrings = false;
     }
 
-    fn disallow_many_docstrings<'a, I: IntoIterator<Item = &'a TokenMetadata<'a>>>(
+    fn handle_invalid_docstrings(&mut self, token_metadata: &TokenMetadata<'_>) {
+        for block in &token_metadata.pre_comment_blocks {
+            for comment in &block.0 {
+                self.handle_invalid_docstring(comment);
+            }
+        }
+        self.allow_outer_docstrings = false;
+        if let Some(comment) = &token_metadata.post_comment {
+            self.handle_invalid_docstring(comment);
+        }
+    }
+
+    fn handle_many_invalid_docstrings<'a, I: IntoIterator<Item = &'a TokenMetadata<'a>>>(
         &mut self,
         token_metadatas: I,
     ) {
         for token_metadata in token_metadatas {
-            self.disallow_docstrings(token_metadata);
+            self.handle_invalid_docstrings(token_metadata);
         }
     }
 }

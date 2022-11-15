@@ -1,0 +1,109 @@
+error: Inner doc comments (those starting with `//!`) are only allowed at the beginning of the file and are used to document the namespace. If you meant to write a normal doc comment, those start with `///`.
+  ┌─ test/files/invalid/docstring_struct.fbs:3:1
+  │
+3 │ //! Bad1
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_struct.fbs:5:8
+  │
+5 │ struct /// Bad2
+  │        ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_struct.fbs:6:1
+  │
+6 │ /// Bad3
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_struct.fbs:7:5
+  │
+7 │ Foo /// Bad4
+  │     ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_struct.fbs:8:1
+  │
+8 │ /// Bad5
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_struct.fbs:9:3
+  │
+9 │ { /// Bad6
+  │   ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:19:1
+   │
+19 │ /// Bad15
+   │ ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:20:3
+   │
+20 │ } /// Bad16
+   │   ^^^^^^^^^
+
+error: Inner doc comments (those starting with `//!`) are only allowed at the beginning of the file and are used to document the namespace. If you meant to write a normal doc comment, those start with `///`.
+   ┌─ test/files/invalid/docstring_struct.fbs:10:3
+   │
+10 │   //! Bad7
+   │   ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:12:5
+   │
+12 │   x /// Bad8
+   │     ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:13:3
+   │
+13 │   /// Bad9
+   │   ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:14:5
+   │
+14 │   : /// Bad10
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:15:3
+   │
+15 │   /// Bad11
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:16:9
+   │
+16 │   uint8 /// Bad12
+   │         ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:17:3
+   │
+17 │   /// Bad13
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:18:5
+   │
+18 │   ; /// Bad14
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:21:1
+   │
+21 │ /// Bad17
+   │ ^^^^^^^^^
+
+error: Inner doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_struct.fbs:22:1
+   │
+22 │ //! Bad18
+   │ ^^^^^^^^^
+
+Error: Bailing because of errors
