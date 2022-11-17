@@ -67,7 +67,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Flatbuffers binary cache
         id: flatbuffers-cache
         uses: actions/cache@v3
