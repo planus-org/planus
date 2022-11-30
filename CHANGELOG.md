@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (they are enabled by default)
 - \[Rust\]: Bump the Minimum Support Rust Version (MSRV) to 1.61.0.
 - Update the `README` with information about our Discord server.
+- \[Rust\]: Add license files to crates
 
 ## [0.3.1] - 2022-06-15
 ### Added
