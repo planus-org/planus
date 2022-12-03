@@ -520,7 +520,16 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_table(&mut self, decl: &cst::TableDeclaration<'_>) -> Declaration {
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        let default_docstring = if let Some(namespace) = &self.schema.namespace {
+            format!(
+                "The table `{}` in the namespace `{}`",
+                decl.ident.ident,
+                namespace.1.to_string(self.ctx)
+            )
+        } else {
+            format!("The table `{}`", decl.ident.ident)
+        };
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -534,7 +543,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         for field in &decl.fields {
             self.with_span(field.span, |self_| {
-                let field = self_.convert_field(field);
+                let field = self_.convert_field(field, decl.ident.ident, true);
                 let identifier = field.ident;
                 match fields.entry(identifier.value) {
                     Entry::Occupied(entry) => {
@@ -570,7 +579,16 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_struct(&mut self, decl: &cst::StructDeclaration<'_>) -> Declaration {
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        let default_docstring = if let Some(namespace) = &self.schema.namespace {
+            format!(
+                "The struct `{}` in the namespace `{}`",
+                decl.ident.ident,
+                namespace.1.to_string(self.ctx)
+            )
+        } else {
+            format!("The struct `{}`", decl.ident.ident)
+        };
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -584,7 +602,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         for field in &decl.fields {
             self.with_span(field.span, |self_| {
-                let field = self_.convert_field(field);
+                let field = self_.convert_field(field, decl.ident.ident, false);
                 let identifier = field.ident;
                 match fields.entry(identifier.value) {
                     Entry::Occupied(entry) => {
@@ -619,8 +637,19 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_field(&mut self, field: &cst::FieldDeclaration<'_>) -> StructField {
-        let docstrings = self.convert_docstrings(&field.ident.token_metadata);
+    fn convert_field(
+        &mut self,
+        field: &cst::FieldDeclaration<'_>,
+        parent_ident: &str,
+        is_table: bool,
+    ) -> StructField {
+        let default_docstring = format!(
+            "The field `{}` in on the {} `{}`",
+            field.ident.ident,
+            if is_table { "table" } else { "struct" },
+            parent_ident
+        );
+        let docstrings = self.convert_docstrings(&field.ident.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&field.colon.token_metadata);
         self.handle_many_invalid_docstrings(field.type_.kind.token_metas());
         if let Some((eq, expr)) = &field.assignment {
@@ -646,7 +675,16 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_enum(&mut self, decl: &cst::EnumDeclaration<'_>) -> Declaration {
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        let default_docstring = if let Some(namespace) = &self.schema.namespace {
+            format!(
+                "The enum `{}` in the namespace `{}`",
+                decl.ident.ident,
+                namespace.1.to_string(self.ctx)
+            )
+        } else {
+            format!("The enum `{}`", decl.ident.ident)
+        };
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some((colon, type_)) = &decl.type_ {
             self.handle_invalid_docstrings(&colon.token_metadata);
@@ -687,7 +725,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         for variant in &decl.declarations {
             self.with_span(variant.span, |self_| {
-                let variant = self_.convert_enum_variant(variant);
+                let variant = self_.convert_enum_variant(variant, decl.ident.ident);
                 let identifier = variant.ident;
                 match variants.entry(variant.ident.value) {
                     Entry::Occupied(entry) => {
@@ -733,8 +771,16 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_enum_variant(&mut self, variant: &cst::EnumValDeclaration<'_>) -> EnumVariant {
-        let docstrings = self.convert_docstrings(&variant.ident.token_metadata);
+    fn convert_enum_variant(
+        &mut self,
+        variant: &cst::EnumValDeclaration<'_>,
+        parent_ident: &str,
+    ) -> EnumVariant {
+        let default_docstring = format!(
+            "The variant `{}` in on the enum `{}`",
+            variant.ident.ident, parent_ident
+        );
+        let docstrings = self.convert_docstrings(&variant.ident.token_metadata, default_docstring);
         if let Some((eq, value)) = &variant.assignment {
             self.handle_invalid_docstrings(&eq.token_metadata);
             self.handle_many_invalid_docstrings(value.kind.token_metas());
@@ -758,7 +804,16 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_union(&mut self, decl: &cst::UnionDeclaration<'_>) -> Declaration {
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        let default_docstring = if let Some(namespace) = &self.schema.namespace {
+            format!(
+                "The union `{}` in the namespace `{}`",
+                decl.ident.ident,
+                namespace.1.to_string(self.ctx)
+            )
+        } else {
+            format!("The union `{}`", decl.ident.ident)
+        };
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -773,7 +828,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         for variant in &decl.declarations {
             self.with_span(variant.span, |self_| {
-                let variant = self_.convert_union_variant(variant);
+                let variant = self_.convert_union_variant(variant, decl.ident.ident);
                 let key = variant
                     .ident
                     .map(|ident| UnionKey::Identifier(ident.value))
@@ -828,15 +883,28 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_union_variant(&mut self, variant: &cst::UnionValDeclaration<'_>) -> UnionVariant {
+    fn convert_union_variant(
+        &mut self,
+        variant: &cst::UnionValDeclaration<'_>,
+        parent_ident: &str,
+    ) -> UnionVariant {
         let mut type_metas = variant.type_.kind.token_metas();
 
         let docstrings;
         if let Some((name, colon)) = &variant.name {
-            docstrings = self.convert_docstrings(&name.token_metadata);
+            let default_docstring = format!(
+                "The variant `{}` in on the union `{}`",
+                name.ident, parent_ident
+            );
+            docstrings = self.convert_docstrings(&name.token_metadata, default_docstring);
             self.handle_invalid_docstrings(&colon.token_metadata);
         } else {
-            docstrings = self.convert_docstrings(type_metas.next().unwrap());
+            // TODO: This is very bad documentation
+            let default_docstring = format!(
+                "The variant of type `{:?}` in on the union `{}`",
+                variant.type_.kind, parent_ident
+            );
+            docstrings = self.convert_docstrings(type_metas.next().unwrap(), default_docstring);
         }
 
         self.handle_many_invalid_docstrings(type_metas);
@@ -859,7 +927,16 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_rpc_service(&mut self, decl: &cst::RpcServiceDeclaration<'_>) -> Declaration {
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        let default_docstring = if let Some(namespace) = &self.schema.namespace {
+            format!(
+                "The rpc service `{}` in the namespace `{}`",
+                decl.ident.ident,
+                namespace.1.to_string(self.ctx)
+            )
+        } else {
+            format!("The rpc service `{}`", decl.ident.ident)
+        };
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
         self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
@@ -869,7 +946,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         for method in &decl.methods {
             self.with_span(method.span, |self_| {
-                let method = self_.convert_rpc_method(method);
+                let method = self_.convert_rpc_method(method, decl.ident.ident);
                 let identifier = method.ident;
                 match methods.entry(identifier.value) {
                     Entry::Occupied(entry) => {
@@ -905,8 +982,12 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_rpc_method(&mut self, method: &cst::RpcMethod<'_>) -> RpcMethod {
-        let docstrings = self.convert_docstrings(&method.ident.token_metadata);
+    fn convert_rpc_method(&mut self, method: &cst::RpcMethod<'_>, parent_ident: &str) -> RpcMethod {
+        let default_docstring = format!(
+            "The method `{}` in on the service `{}`",
+            method.ident.ident, parent_ident
+        );
+        let docstrings = self.convert_docstrings(&method.ident.token_metadata, default_docstring);
         self.handle_invalid_docstrings(&method.start_paren.token_metadata);
         self.handle_many_invalid_docstrings(method.argument_type.kind.token_metas());
         self.handle_invalid_docstrings(&method.end_paren.token_metadata);
@@ -1073,7 +1154,11 @@ impl<'ctx> CstConverter<'ctx> {
         }
     }
 
-    fn convert_docstrings(&mut self, token_metadata: &TokenMetadata<'_>) -> Docstrings {
+    fn convert_docstrings(
+        &mut self,
+        token_metadata: &TokenMetadata<'_>,
+        default_docstring: String,
+    ) -> Docstrings {
         let mut out = Vec::new();
         for block in &token_metadata.pre_comment_blocks {
             for comment in &block.0 {
@@ -1088,7 +1173,7 @@ impl<'ctx> CstConverter<'ctx> {
                     }
                     CommentKind::InnerDocstring => {
                         if self.allow_outer_docstrings {
-                            self.schema.docstrings.0.push(Docstring {
+                            self.schema.docstrings.docstrings.push(Docstring {
                                 span: comment.span,
                                 value: comment.content.to_owned(),
                             });
@@ -1111,7 +1196,10 @@ impl<'ctx> CstConverter<'ctx> {
         if let Some(comment) = &token_metadata.post_comment {
             self.handle_invalid_docstring(comment);
         }
-        Docstrings(out)
+        Docstrings {
+            docstrings: out,
+            default_docstring,
+        }
     }
 
     fn handle_invalid_docstring(&mut self, comment: &Comment<'_>) {
@@ -1127,7 +1215,7 @@ impl<'ctx> CstConverter<'ctx> {
             }
             CommentKind::InnerDocstring => {
                 if self.allow_outer_docstrings {
-                    self.schema.docstrings.0.push(Docstring {
+                    self.schema.docstrings.docstrings.push(Docstring {
                         span: comment.span,
                         value: comment.content.to_owned(),
                     });

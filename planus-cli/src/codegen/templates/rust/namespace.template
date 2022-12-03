@@ -4,14 +4,17 @@ pub use root::*;
 
 const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
 #[no_implicit_prelude]
 mod root {
 {%- else -%}
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
 pub mod {{info.name}} {
 {%- endif -%}
-    {% for docstring in docstrings.iter_strings() %}
-    //! {{ docstring }}
-    {% endfor %}
     {%- for child in children -%}
         {{- Namespace(child) -}}
 

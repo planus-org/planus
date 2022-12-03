@@ -70,15 +70,7 @@ impl PrettyPrint for Schema {
 
 impl PrettyPrint for NamespacePath {
     fn print(&self, ctx: &Ctx) {
-        let mut first = true;
-        for &symbol in &self.parts {
-            if first {
-                first = false;
-            } else {
-                print!(".");
-            }
-            print!("{}", ctx.resolve_identifier(symbol));
-        }
+        print!("{}", self.to_string(ctx));
     }
 }
 

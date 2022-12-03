@@ -393,6 +393,27 @@ pub struct NamespacePath {
     pub parts: Vec<RawIdentifier>,
 }
 
+impl NamespacePath {
+    pub fn format(&self, mut out: impl std::fmt::Write, ctx: &Ctx) -> std::fmt::Result {
+        let mut first = true;
+        for &symbol in &self.parts {
+            if first {
+                first = false;
+            } else {
+                write!(out, ".")?;
+            }
+            write!(out, "{}", ctx.resolve_identifier(symbol))?;
+        }
+        Ok(())
+    }
+
+    pub fn to_string(&self, ctx: &Ctx) -> String {
+        let mut out = String::new();
+        self.format(&mut out, ctx).unwrap();
+        out
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Type {
     pub span: Span,
@@ -564,7 +585,10 @@ pub struct StringLiteral {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Docstrings(pub Vec<Docstring>);
+pub struct Docstrings {
+    pub docstrings: Vec<Docstring>,
+    pub default_docstring: String,
+}
 
 #[derive(Clone, Debug)]
 pub struct Docstring {
@@ -574,7 +598,13 @@ pub struct Docstring {
 
 impl Docstrings {
     pub fn iter_strings(&self) -> impl Iterator<Item = &str> {
-        self.0.iter().map(|docstring| docstring.value.as_str())
+        self.docstrings
+            .iter()
+            .map(|docstring| docstring.value.as_str())
+            .chain(
+                (self.docstrings.is_empty() && !self.default_docstring.is_empty())
+                    .then(|| self.default_docstring.as_str()),
+            )
     }
 }
 

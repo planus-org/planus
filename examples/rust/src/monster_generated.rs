@@ -2,12 +2,13 @@ pub use root::*;
 
 const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 
+/// The root namespace
 #[no_implicit_prelude]
 mod root {
+    /// The namespace `MyGame`
     pub mod my_game {
+        ///  Example IDL file for our monster's schema.
         pub mod sample {
-            //!  Example IDL file for our monster's schema.
-
             ///  The possible monster colors
             #[derive(
                 Copy,
@@ -25,8 +26,10 @@ mod root {
             pub enum Color {
                 ///  Should be rendered the same color as blood
                 Red = 0,
+
                 ///  Any green will do
                 Green = 1,
+
                 ///  Must be `#89CFF0`
                 Blue = 2,
             }
