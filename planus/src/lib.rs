@@ -58,6 +58,25 @@ pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 #[doc(hidden)]
 pub enum Void {}
 
+#[doc(hidden)]
+/// Used in the union-builders in generated code
+pub struct Uninitialized;
+
+#[doc(hidden)]
+/// Used in the union-builders in generated code
+pub struct Initialized<const N: u8, T>(pub T);
+
+#[doc(hidden)]
+/// Used in the tables-builders in generated code
+pub struct DefaultValue;
+
+impl<P: Primitive, D: ?Sized> WriteAsDefault<P, D> for DefaultValue {
+    type Prepared = Void;
+    fn prepare(&self, _builder: &mut Builder, _default: &D) -> Option<Self::Prepared> {
+        None
+    }
+}
+
 impl From<Void> for crate::Error {
     fn from(v: Void) -> Self {
         match v {}

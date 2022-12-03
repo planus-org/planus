@@ -257,8 +257,7 @@ pub struct BackendStructField<F> {
     pub size: u32,
     pub padding_after_field: u32,
     pub info: F,
-    pub original_name: String,
-    pub docstrings: Docstrings,
+    pub name_and_docs: NameAndDocstrings,
 }
 
 fn translate_type_index<'a, B: ?Sized + Backend>(
@@ -616,8 +615,10 @@ pub fn run_backend<B: ?Sized + Backend>(
                             offset: field.offset,
                             padding_after_field: field.padding_after_field,
                             size: field.size,
-                            original_name: field_name.clone(),
-                            docstrings: field.docstrings.clone(),
+                            name_and_docs: NameAndDocstrings {
+                                original_name: field_name.clone(),
+                                docstrings: field.docstrings.clone(),
+                            },
                         }
                     })
                     .collect(),

@@ -41,6 +41,14 @@ enum TypeDescription {
 //  3) do topological sort of all structs to get sizes
 //  4) use this information to update all sizes
 
+fn default_docstring_for_namespace(path: &AbsolutePath) -> String {
+    if path == &AbsolutePath::ROOT_PATH {
+        "The root namespace".to_string()
+    } else {
+        format!("The namespace `{}`", path)
+    }
+}
+
 impl<'a> Translator<'a> {
     pub fn new(ctx: &'a Ctx, reachability: SortedMap<FileId, SortedSet<FileId>>) -> Self {
         Self {
@@ -70,8 +78,9 @@ impl<'a> Translator<'a> {
         ));
         namespace
             .docstrings
-            .0
-            .extend(schema.docstrings.0.iter().cloned());
+            .docstrings
+            .extend(schema.docstrings.docstrings.iter().cloned());
+        namespace.docstrings.default_docstring = default_docstring_for_namespace(&namespace_path);
 
         for decl in schema.type_declarations.values() {
             let name = self.ctx.resolve_identifier(decl.identifier.value);
@@ -127,10 +136,12 @@ impl<'a> Translator<'a> {
                 Entry::Vacant(entry) => {
                     namespace_path = entry.key().clone();
                     let next_namespace_index = entry.index();
+                    let entry = entry.insert(Default::default());
                     entry
-                        .insert(Default::default())
                         .child_namespaces
                         .insert(last, NamespaceIndex(namespace_index));
+                    entry.docstrings.default_docstring =
+                        default_docstring_for_namespace(&namespace_path);
                     namespace_index = next_namespace_index;
                 }
             }

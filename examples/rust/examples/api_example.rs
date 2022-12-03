@@ -55,27 +55,29 @@ fn main() {
     let monster_offset = monster.prepare(&mut builder);
     let _finished_data = builder.finish(monster_offset, None);
 
-    // To avoid using the rust heap for objects and additionally allow sharing of data, use `create` methods instead:
+    // To avoid using the rust heap for objects and additionally allow sharing of data, use the builder API instead:
     let weapons = [
-        Weapon::create(&mut builder, "Sword", 3),
-        Weapon::create(&mut builder, "Axe", 5),
+        Weapon::builder()
+            .name("Sword")
+            .damage(3)
+            .finish(&mut builder),
+        Weapon::builder().name("Axe").damage(5).finish(&mut builder),
     ];
-    let equipped = Equipment::create_weapon(&mut builder, weapons[1]);
-    let monster = Monster::create(
-        &mut builder,
-        Vec3 {
+    let equipped = Equipment::builder().weapon(weapons[1]).finish(&mut builder);
+    let monster = Monster::builder()
+        .pos(Vec3 {
             x: 1.0,
             y: 2.0,
             z: 3.0,
-        },
-        150,
-        80,
-        "Orc",
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        Color::Red,
-        weapons,
-        equipped,
-        [
+        })
+        .mana(150)
+        .hp(80)
+        .name("Orc")
+        .inventory([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        .color(Color::Red)
+        .weapons(weapons)
+        .equipped(equipped)
+        .path([
             Vec3 {
                 x: 1.0,
                 y: 2.0,
@@ -86,8 +88,8 @@ fn main() {
                 y: 5.0,
                 z: 6.0,
             },
-        ],
-    );
+        ])
+        .finish(&mut builder);
 
     let finished_data = builder.finish(monster, None);
 

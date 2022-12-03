@@ -31,6 +31,7 @@ pub struct Namespace {
 pub struct Table {
     pub owned_name: String,
     pub ref_name: String,
+    pub builder_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
 }
@@ -38,6 +39,7 @@ pub struct Table {
 #[derive(Clone, Debug)]
 pub struct TableField {
     pub name: String,
+    pub name_with_as: String,
     pub primitive_size: u32,
     pub vtable_type: String,
     pub owned_type: String,
@@ -45,6 +47,8 @@ pub struct TableField {
     pub create_name: String,
     pub create_trait: String,
     pub required: bool,
+    pub optional: bool,
+    pub has_default: bool,
     pub impl_default_code: Cow<'static, str>,
     pub serialize_default: Option<Cow<'static, str>>,
     pub deserialize_default: Option<Cow<'static, str>>,
@@ -84,6 +88,7 @@ pub struct EnumVariant {
 #[derive(Clone, Debug)]
 pub struct Union {
     pub owned_name: String,
+    pub builder_name: String,
     pub ref_name: String,
     pub ref_name_with_lifetime: String,
     pub should_do_eq: bool,
@@ -94,6 +99,7 @@ pub struct Union {
 pub struct UnionVariant {
     pub create_name: String,
     pub create_trait: String,
+    pub builder_name: String,
     pub enum_name: String,
     pub owned_type: String,
     pub ref_type: String,
@@ -208,6 +214,7 @@ impl Backend for RustBackend {
         Table {
             owned_name: reserve_type_name(decl_name, declaration_names),
             ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            builder_name: reserve_type_name(&format!("{}Builder", decl_name), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
         }
@@ -256,8 +263,10 @@ impl Backend for RustBackend {
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
         let ref_name = reserve_type_name(&format!("{}Ref", decl_name), declaration_names);
+        let builder_name = reserve_type_name(&format!("{}Builder", decl_name), declaration_names);
         Union {
             owned_name: reserve_type_name(decl_name, declaration_names),
+            builder_name,
             ref_name_with_lifetime: if decl.variants.is_empty() {
                 ref_name.clone()
             } else {
@@ -294,6 +303,7 @@ impl Backend for RustBackend {
             "name",
             &mut translation_context.declaration_names,
         );
+        let name_with_as = format!("{field_name}_as").to_snake_case();
         let create_name = reserve_field_name(
             field_name,
             "create_name",
@@ -743,6 +753,7 @@ impl Backend for RustBackend {
         }
         TableField {
             name,
+            name_with_as,
             primitive_size,
             vtable_type,
             owned_type,
@@ -750,6 +761,8 @@ impl Backend for RustBackend {
             create_name,
             create_trait,
             required: matches!(field.assign_mode, AssignMode::Required),
+            optional: matches!(field.assign_mode, AssignMode::Optional),
+            has_default: matches!(field.assign_mode, AssignMode::HasDefault(..)),
             impl_default_code,
             serialize_default,
             deserialize_default,
@@ -860,6 +873,11 @@ impl Backend for RustBackend {
             "create_function",
             &mut translation_context.declaration_names,
         );
+        let builder_name = reserve_field_name(
+            key,
+            "builder_function",
+            &mut translation_context.declaration_names,
+        );
         let enum_name = reserve_rust_enum_variant_name(
             key,
             "variant_name",
@@ -908,6 +926,7 @@ impl Backend for RustBackend {
         UnionVariant {
             create_name,
             enum_name,
+            builder_name,
             create_trait,
             owned_type,
             ref_type,
