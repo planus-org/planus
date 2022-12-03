@@ -70,7 +70,7 @@ pub struct {{ info.builder_name }}<T>(T);
 
 impl {{ info.builder_name }}<::planus::Uninitialized> {
     {% for variant in variants -%}
-    /// Creates an instance of the [`{{variant.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
+    /// Creates an instance of the [`{{variant.name_and_docs.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
     #[inline]
     pub fn {{variant.builder_name}}<T>(
         self,

@@ -154,7 +154,7 @@ impl<
     )
 >
 {
-    /// Setter for the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+    /// Setter for the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name }}<(
@@ -181,14 +181,14 @@ impl<
 
     {% if field.info.has_default %}
 
-    /// Sets the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to the default value.
+    /// Sets the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to the default value.
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name_with_as }}_default(self) -> {{ info.builder_name}}<(
 
     {% elseif field.info.optional %}
 
-    /// Sets the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to null.
+    /// Sets the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to null.
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name_with_as }}_null(self) -> {{ info.builder_name}}<(

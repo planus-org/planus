@@ -38,7 +38,6 @@ pub struct Table {
 
 #[derive(Clone, Debug)]
 pub struct TableField {
-    pub original_name: String,
     pub name: String,
     pub name_with_as: String,
     pub primitive_size: u32,
@@ -68,7 +67,6 @@ pub struct Struct {
 
 #[derive(Clone, Debug)]
 pub struct StructField {
-    pub original_name: String,
     pub name: String,
     pub owned_type: String,
     pub getter_return_type: String,
@@ -99,7 +97,6 @@ pub struct Union {
 
 #[derive(Clone, Debug)]
 pub struct UnionVariant {
-    pub original_name: String,
     pub create_name: String,
     pub create_trait: String,
     pub builder_name: String,
@@ -755,7 +752,6 @@ impl Backend for RustBackend {
             }
         }
         TableField {
-            original_name: field_name.to_string(),
             name,
             name_with_as,
             primitive_size,
@@ -838,7 +834,6 @@ impl Backend for RustBackend {
             _ => unreachable!(),
         }
         StructField {
-            original_name: field_name.to_string(),
             name,
             owned_type,
             getter_return_type,
@@ -929,7 +924,6 @@ impl Backend for RustBackend {
             _ => todo!(),
         }
         UnionVariant {
-            original_name: key.to_string(),
             create_name,
             enum_name,
             builder_name,

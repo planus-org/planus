@@ -8,7 +8,7 @@
 )]
 pub struct {{ info.owned_name }} {
     {% for field in fields -%}
-        {% for docstring in field.docstrings.iter_strings() %}
+        {% for docstring in field.name_and_docs.docstrings.iter_strings() %}
         /// {{ docstring }}
         {%- endfor %}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
@@ -79,7 +79,7 @@ pub struct {{ info.ref_name }}<'a>(::planus::ArrayWithStartOffset<'a, {{ size }}
 
 impl<'a> {{ info.ref_name }}<'a> {
     {% for field in fields %}
-        /// Getter for the [`{{field.info.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        /// Getter for the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
         pub fn {{ field.info.name }}(&self) -> {{ field.info.getter_return_type }} {
             let buffer = self.0.advance_as_array::<{{field.size}}>({{field.offset}}).unwrap();
             {% if field.info.getter_return_type.starts_with("planus::Result<") %}
