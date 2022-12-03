@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
 - \[Rust\]: Added more `impl`s for union and struct references
 - \[Rust\]: Add an `ENUM_VALUES` const to enums
 - \[Rust\]: Make `Vector` more similar to rust slices by adding more methods
@@ -13,9 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   behind the `vtable-cache`, `bytes-cache` and `string-cache` feature flags
   (they are enabled by default)
 - \[Rust\]: Bump the Minimum Support Rust Version (MSRV) to 1.61.0.
+- \[Rust\]: Add license files to crates
+- \[Rust\]: Implement a builder pattern for serializing tables and unions
 - Add support for docstrings, and add them to the Rust output.
 - Update the `README` with information about our Discord server.
-- \[Rust\]: Add license files to crates
+
+### Removed
+- \[Rust\]: The old ways of serializing tables and unions using `create`-functions have been removed.
 
 ## [0.3.1] - 2022-06-15
 ### Added
