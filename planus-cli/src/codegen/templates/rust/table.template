@@ -158,13 +158,13 @@ impl<
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name }}<T{{loop.index0}}>(self, value: T{{loop.index0}}) -> {{ info.builder_name }}<(
-    {% for i in 0..loop.index0 %}
+    {% for i in 0..=loop.index0 %}
         T{{i}},
-    {% endfor %} T{{loop.index0}},
+    {% endfor %}
     )>
     where T{{loop.index0}}: ::planus::{{ field.info.create_trait }}
     {
-        {% if loop.index0 != 0 %}
+        {% if !loop.first %}
         let (
             {% for i in 0..loop.index0 %}
                 v{{i}},
@@ -180,39 +180,32 @@ impl<
     }
 
     {% if field.info.has_default %}
-
     /// Sets the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to the default value.
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name_with_as }}_default(self) -> {{ info.builder_name}}<(
+        {% for i in 0..loop.index0 %}
+            T{{i}},
+        {% endfor %}
+        ::planus::DefaultValue,
+    )>
+    {
+        self.{{ field.info.name }}(::planus::DefaultValue)
+    }
+    {% endif %}
 
-    {% elseif field.info.optional %}
-
+    {% if field.info.optional %}
     /// Sets the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}) to null.
     #[inline]
     #[allow(clippy::type_complexity)]
     pub fn {{ field.info.name_with_as }}_null(self) -> {{ info.builder_name}}<(
-
-    {% endif %}
-
-    {% if field.info.has_default || field.info.optional %}
-    {% for i in 0..loop.index0 %}
-        T{{i}},
-    {% endfor %}
-    {% if field.info.has_default %}
-        ::planus::DefaultValue,
-    {% else %}
+        {% for i in 0..loop.index0 %}
+            T{{i}},
+        {% endfor %}
         (),
-    {% endif %}
     )>
     {
-        self.{{ field.info.name }}(
-            {% if field.info.has_default %}
-                ::planus::DefaultValue
-            {% else %}
-                (),
-            {% endif %}
-        )
+        self.{{ field.info.name }}(())
     }
     {% endif %}
 }
@@ -292,10 +285,9 @@ impl<
         {{ info.owned_name }}::create(
             builder,
             {% for _ in fields.declaration_order() %}
-            v{{loop.index0}},
+                v{{loop.index0}},
             {% endfor %}
         )
-
     }
 }
 
