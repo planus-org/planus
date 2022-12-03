@@ -1,0 +1,11 @@
+//! Okay
+/// Bad1
+//! Bad2
+/// Bad3
+file_extension /// Bad4
+/// Bad5
+"foo" /// Bad6
+/// Bad7
+; /// Bad8
+/// Bad9
+//! Bad10

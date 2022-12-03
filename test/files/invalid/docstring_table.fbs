@@ -1,0 +1,60 @@
+//! Okay
+/// Okay
+//! Bad1
+/// Okay
+table /// Bad2
+/// Bad3
+Foo /// Bad4
+/// Bad5
+{ /// Bad6
+  //! Bad7
+  /// Okay
+  x /// Bad8
+  /// Bad9
+  : /// Bad10
+  /// Bad11
+  uint8 /// Bad12
+  /// Bad13
+  = /// Bad14
+  /// Bad15
+  1 /// Bad16
+  /// Bad17
+  ; /// Bad18
+  //! Bad19
+  /// Okay
+  y /// Bad20
+  /// Bad21
+  : /// Bad22
+  /// Bad23
+  [ /// Bad24
+  /// Bad25
+  uint8 /// Bad26
+  /// Bad27
+  ] /// Bad28
+  /// Bad29
+  = /// Bad30
+  /// Bad31
+  [ /// Bad32
+  /// Bad33
+  ] /// Bad34
+  /// Bad35
+  ; /// Bad36
+  //! Bad37
+  /// Okay
+  z /// Bad38
+  /// Bad39
+  : /// Bad40
+  /// Bad41
+  Foo /// Bad42
+  /// Bad43
+  ( /// Bad44
+  /// Bad45
+  required /// Bad46
+  /// Bad47
+  ) /// Bad48
+  /// Bad49
+  ; /// Bad50
+/// Bad51
+} /// Bad52
+/// Bad53
+//! Bad54

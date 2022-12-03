@@ -1,8 +1,14 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize)]
 pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
+        {% for docstring in variant.name_and_docs.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {%- endfor %}
         {{ variant.enum_name }}({{ variant.owned_type }}),
     {% endfor %}
 }
@@ -122,6 +128,7 @@ pub enum {{ info.ref_name_with_lifetime }}{
 
 {% if variants.is_empty() %}
 impl ::core::convert::From<{{info.ref_name}}> for {{info.owned_name}} {
+    #[inline]
     fn from(value: {{info.ref_name}}) -> Self {
         match value {}
     }
@@ -160,6 +167,7 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
 
 {% if variants.is_empty() %}
 impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}} {
+    #[inline]
     fn from_buffer(_buffer: ::planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         ::core::result::Result::Err(::planus::errors::ErrorKind::UnknownUnionTag { tag })
     }

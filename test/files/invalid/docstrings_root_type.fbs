@@ -1,0 +1,12 @@
+//! Okay
+/// Bad1
+//! Bad2
+/// Bad3
+root_type /// Bad4
+/// Bad5
+Foo /// Bad6
+/// Bad7
+; /// Bad8
+//! Bad9
+
+table Foo {}
