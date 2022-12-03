@@ -68,8 +68,6 @@ impl<'a> Translator<'a> {
             schema.file_id,
             schema.namespace.as_ref().map(|(span, _)| *span),
         ));
-        // TODO: Is there a better way to do this? Should we even allow docstrings
-        // for the same namespace in multiple places?
         namespace
             .docstrings
             .0
@@ -1565,10 +1563,6 @@ impl AbsolutePath {
     pub fn from_ctx(ctx: &Ctx, parts: &[ast::RawIdentifier]) -> Self {
         let path = parts.iter().map(|&s| ctx.resolve_identifier(s)).collect();
         Self(path)
-    }
-
-    pub fn get_relative_to(&self, _other: &AbsolutePath) -> RelativePath {
-        todo!()
     }
 }
 

@@ -6,7 +6,7 @@
 ::serde::Serialize, ::serde::Deserialize)]
 pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
-        {% for docstring in variant.docstrings.iter_strings() %}
+        {% for docstring in variant.name_and_docs.docstrings.iter_strings() %}
         /// {{ docstring }}
         {%- endfor %}
         {{ variant.enum_name }}({{ variant.owned_type }}),
@@ -16,7 +16,7 @@ pub enum {{ info.owned_name }}{
 {% if !variants.is_empty() %}
 impl {{info.owned_name}} {
     {% for variant in variants -%}
-    /// Serializes a new instance of [{{info.owned_name}}] of the [`{{variant.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
+    /// Serializes a new instance of [{{info.owned_name}}] of the [`{{variant.name_and_docs.original_name}}` variant]({{info.owned_name}}#variant.{{variant.enum_name}}).
     #[inline]
     pub fn {{variant.create_name}}(
       builder: &mut ::planus::Builder,

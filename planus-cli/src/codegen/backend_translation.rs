@@ -71,9 +71,14 @@ pub struct BackendRpcService<B: ?Sized + Backend> {
 }
 
 #[derive(Debug, Clone)]
-pub struct BackendVariant<V> {
-    pub docstrings: Docstrings,
+pub struct NameAndDocstrings {
     pub original_name: String,
+    pub docstrings: Docstrings,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendVariant<V> {
+    pub name_and_docs: NameAndDocstrings,
     pub variant: V,
 }
 
@@ -86,7 +91,7 @@ impl<V> std::ops::Deref for BackendVariant<V> {
 }
 #[derive(Debug, Clone)]
 pub struct BackendTableFields<F> {
-    fields: VecMap<(String, Docstrings, F)>,
+    fields: VecMap<(NameAndDocstrings, F)>,
     declaration_order: Vec<(usize, u32, BackendTableFieldType)>,
     alignment_order: Vec<(usize, u32, BackendTableFieldType)>,
 }
@@ -142,8 +147,10 @@ impl<F> BackendTableFields<F> {
                 (
                     index,
                     (
-                        field_name.clone(),
-                        field.docstrings.clone(),
+                        NameAndDocstrings {
+                            original_name: field_name.clone(),
+                            docstrings: field.docstrings.clone(),
+                        },
                         backend.generate_table_field(
                             translation_context,
                             translated_decl,
@@ -182,9 +189,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    original_name: &self.fields[index].0,
-                    docstrings: &self.fields[index].1,
-                    info: &self.fields[index].2,
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -197,9 +203,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    original_name: &self.fields[index].0,
-                    docstrings: &self.fields[index].1,
-                    info: &self.fields[index].2,
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -211,9 +216,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    original_name: &self.fields[index].0,
-                    docstrings: &self.fields[index].1,
-                    info: &self.fields[index].2,
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -237,8 +241,7 @@ pub struct BackendTableField<'a, F> {
     pub field_type: BackendTableFieldType,
     pub vtable_index: u32,
     pub info: &'a F,
-    pub original_name: &'a str,
-    pub docstrings: &'a Docstrings,
+    pub name_and_docs: &'a NameAndDocstrings,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -525,8 +528,10 @@ pub fn run_backend<B: ?Sized + Backend>(
                         .variants
                         .iter()
                         .map(|(value, variant)| BackendVariant {
-                            docstrings: variant.docstrings.clone(),
-                            original_name: variant.name.clone(),
+                            name_and_docs: NameAndDocstrings {
+                                original_name: variant.name.clone(),
+                                docstrings: variant.docstrings.clone(),
+                            },
                             variant: backend.generate_enum_variant(
                                 &mut DeclarationTranslationContext {
                                     declaration_names: DeclarationNames {
@@ -633,8 +638,10 @@ pub fn run_backend<B: ?Sized + Backend>(
                             &decl_path.clone_pop(),
                         );
                         BackendVariant {
-                            docstrings: variant.docstrings.clone(),
-                            original_name: name.clone(),
+                            name_and_docs: NameAndDocstrings {
+                                original_name: name.clone(),
+                                docstrings: variant.docstrings.clone(),
+                            },
                             variant: backend.generate_union_variant(
                                 &mut translation_context,
                                 translated_decl,

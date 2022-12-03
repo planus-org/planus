@@ -7,7 +7,7 @@
 )]
 pub struct {{ info.owned_name }}{
     {% for field in fields.declaration_order() -%}
-        {% for docstring in field.docstrings.iter_strings() %}
+        {% for docstring in field.name_and_docs.docstrings.iter_strings() %}
         /// {{ docstring }}
         {%- endfor %}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
@@ -134,7 +134,7 @@ pub struct {{info.ref_name}}<'a>(::planus::table_reader::Table<'a>);
 
 impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
-        /// Getter for the [`{{field.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        /// Getter for the [`{{field.name_and_docs.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
         #[inline]
         pub fn {{field.info.name}}(&self) -> ::planus::Result<{{field.info.read_type}}> {
             {% if field.info.deserialize_default.is_some() %} ::core::result::Result::Ok( {% endif %}
