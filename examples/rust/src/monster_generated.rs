@@ -6,6 +6,9 @@ const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 mod root {
     pub mod my_game {
         pub mod sample {
+            //!  Example IDL file for our monster's schema.
+
+            ///  The possible monster colors
             #[derive(
                 Copy,
                 Clone,
@@ -20,8 +23,11 @@ mod root {
             )]
             #[repr(i8)]
             pub enum Color {
+                ///  Should be rendered the same color as blood
                 Red = 0,
+                ///  Any green will do
                 Green = 1,
+                ///  Must be `#89CFF0`
                 Blue = 2,
             }
 
@@ -32,6 +38,7 @@ mod root {
 
             impl ::core::convert::TryFrom<i8> for Color {
                 type Error = ::planus::errors::UnknownEnumTagKind;
+                #[inline]
                 fn try_from(
                     value: i8,
                 ) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind>
@@ -50,6 +57,7 @@ mod root {
             }
 
             impl ::core::convert::From<Color> for i8 {
+                #[inline]
                 fn from(value: Color) -> Self {
                     value as i8
                 }
@@ -110,6 +118,7 @@ mod root {
             }
 
             impl<'buf> ::planus::TableRead<'buf> for Color {
+                #[inline]
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'buf>,
                     offset: usize,
@@ -146,6 +155,7 @@ mod root {
 
                 type Value = Self;
 
+                #[inline]
                 fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
                     *self
                 }
@@ -167,6 +177,7 @@ mod root {
                 }
             }
 
+            ///  Weapons or other equipment
             #[derive(
                 Clone,
                 Debug,
@@ -179,10 +190,13 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub enum Equipment {
+                ///  Equipment of the weapon-type
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
             }
 
             impl Equipment {
+                /// Serializes a new instance of [Equipment] of the [`Weapon` variant](Equipment#variant.Weapon).
+                #[inline]
                 pub fn create_weapon(
                     builder: &mut ::planus::Builder,
                     value: impl ::planus::WriteAsOffset<self::Weapon>,
@@ -192,6 +206,7 @@ mod root {
             }
 
             impl ::planus::WriteAsUnion<Equipment> for Equipment {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
                     match self {
                         Self::Weapon(value) => Self::create_weapon(builder, value),
@@ -200,6 +215,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOptionalUnion<Equipment> for Equipment {
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -208,6 +224,7 @@ mod root {
                 }
             }
 
+            /// Reference to a deserialized [Equipment].
             #[derive(Copy, Clone, Debug)]
             pub enum EquipmentRef<'a> {
                 Weapon(self::WeaponRef<'a>),
@@ -244,6 +261,7 @@ mod root {
                 }
             }
 
+            ///  Vector in three dimensions
             #[derive(
                 Copy,
                 Clone,
@@ -255,8 +273,13 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub struct Vec3 {
+                ///  East-west direction
                 pub x: f32,
+
+                ///  North-south direction
                 pub y: f32,
+
+                ///  Up-down direction
                 pub z: f32,
             }
 
@@ -267,6 +290,7 @@ mod root {
 
             #[allow(clippy::identity_op)]
             impl ::planus::WriteAsPrimitive<Vec3> for Vec3 {
+                #[inline]
                 fn write<const N: usize>(
                     &self,
                     cursor: ::planus::Cursor<'_, N>,
@@ -283,6 +307,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Vec3> for Vec3 {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Vec3> {
                     unsafe {
                         builder.write_with(12, 4, |buffer_position, bytes| {
@@ -303,6 +328,7 @@ mod root {
 
             impl ::planus::WriteAs<Vec3> for Vec3 {
                 type Prepared = Self;
+                #[inline]
                 fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
                     *self
                 }
@@ -310,6 +336,7 @@ mod root {
 
             impl ::planus::WriteAsOptional<Vec3> for Vec3 {
                 type Prepared = Self;
+                #[inline]
                 fn prepare(
                     &self,
                     _builder: &mut ::planus::Builder,
@@ -318,22 +345,29 @@ mod root {
                 }
             }
 
+            /// Reference to a deserialized [Vec3].
             #[derive(Copy, Clone)]
             pub struct Vec3Ref<'a>(::planus::ArrayWithStartOffset<'a, 12>);
 
             impl<'a> Vec3Ref<'a> {
+                /// Getter for the [`x` field](Vec3#structfield.x).
+                #[inline]
                 pub fn x(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(0).unwrap();
 
                     f32::from_le_bytes(*buffer.as_array())
                 }
 
+                /// Getter for the [`y` field](Vec3#structfield.y).
+                #[inline]
                 pub fn y(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(4).unwrap();
 
                     f32::from_le_bytes(*buffer.as_array())
                 }
 
+                /// Getter for the [`z` field](Vec3#structfield.z).
+                #[inline]
                 pub fn z(&self) -> f32 {
                     let buffer = self.0.advance_as_array::<4>(8).unwrap();
 
@@ -388,6 +422,7 @@ mod root {
             }
 
             impl<'a> ::planus::TableRead<'a> for Vec3Ref<'a> {
+                #[inline]
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
@@ -400,6 +435,7 @@ mod root {
             impl<'a> ::planus::VectorRead<'a> for Vec3Ref<'a> {
                 const STRIDE: usize = 12;
 
+                #[inline]
                 unsafe fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
@@ -413,6 +449,7 @@ mod root {
 
                 type Value = Vec3;
 
+                #[inline]
                 fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
                     *self
                 }
@@ -434,18 +471,28 @@ mod root {
                 }
             }
 
+            ///  An enemy in the game
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
             pub struct Monster {
+                ///  Position in the world
                 pub pos: ::core::option::Option<self::Vec3>,
+                ///  Amount of mana left
                 pub mana: i16,
+                ///  Amount of hp left
                 pub hp: i16,
+                ///  Name of monster
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
+                ///  Inventory of monster
                 pub inventory: ::core::option::Option<::planus::alloc::vec::Vec<u8>>,
+                ///  Color of the monster's skin
                 pub color: self::Color,
+                ///  List of all weapons
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
+                ///  Currently equiped item
                 pub equipped: ::core::option::Option<self::Equipment>,
+                ///  The projected path of the monster
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
             }
 
@@ -467,6 +514,7 @@ mod root {
             }
 
             impl Monster {
+                /// Serializes a new instance of [Monster].
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
@@ -574,6 +622,7 @@ mod root {
             impl ::planus::WriteAs<::planus::Offset<Monster>> for Monster {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
                     ::planus::WriteAsOffset::prepare(self, builder)
                 }
@@ -582,6 +631,7 @@ mod root {
             impl ::planus::WriteAsOptional<::planus::Offset<Monster>> for Monster {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -591,6 +641,7 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Monster> for Monster {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
                     Monster::create(
                         builder,
@@ -607,22 +658,31 @@ mod root {
                 }
             }
 
+            /// Reference to a deserialized [Monster].
             #[derive(Copy, Clone)]
             pub struct MonsterRef<'a>(::planus::table_reader::Table<'a>);
 
             impl<'a> MonsterRef<'a> {
+                /// Getter for the [`pos` field](Monster#structfield.pos).
+                #[inline]
                 pub fn pos(&self) -> ::planus::Result<::core::option::Option<self::Vec3Ref<'a>>> {
                     self.0.access(0, "Monster", "pos")
                 }
 
+                /// Getter for the [`mana` field](Monster#structfield.mana).
+                #[inline]
                 pub fn mana(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(1, "Monster", "mana")?.unwrap_or(150))
                 }
 
+                /// Getter for the [`hp` field](Monster#structfield.hp).
+                #[inline]
                 pub fn hp(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(2, "Monster", "hp")?.unwrap_or(100))
                 }
 
+                /// Getter for the [`name` field](Monster#structfield.name).
+                #[inline]
                 pub fn name(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
@@ -630,10 +690,14 @@ mod root {
                     self.0.access(3, "Monster", "name")
                 }
 
+                /// Getter for the [`inventory` field](Monster#structfield.inventory).
+                #[inline]
                 pub fn inventory(&self) -> ::planus::Result<::core::option::Option<&'a [u8]>> {
                     self.0.access(5, "Monster", "inventory")
                 }
 
+                /// Getter for the [`color` field](Monster#structfield.color).
+                #[inline]
                 pub fn color(&self) -> ::planus::Result<self::Color> {
                     ::core::result::Result::Ok(
                         self.0
@@ -642,6 +706,8 @@ mod root {
                     )
                 }
 
+                /// Getter for the [`weapons` field](Monster#structfield.weapons).
+                #[inline]
                 pub fn weapons(
                     &self,
                 ) -> ::planus::Result<
@@ -652,6 +718,8 @@ mod root {
                     self.0.access(7, "Monster", "weapons")
                 }
 
+                /// Getter for the [`equipped` field](Monster#structfield.equipped).
+                #[inline]
                 pub fn equipped(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<self::EquipmentRef<'a>>>
@@ -659,6 +727,8 @@ mod root {
                     self.0.access_union(8, "Monster", "equipped")
                 }
 
+                /// Getter for the [`path` field](Monster#structfield.path).
+                #[inline]
                 pub fn path(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Vec3Ref<'a>>>>
@@ -744,6 +814,7 @@ mod root {
             }
 
             impl<'a> ::planus::TableRead<'a> for MonsterRef<'a> {
+                #[inline]
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
@@ -775,6 +846,7 @@ mod root {
             impl ::planus::VectorWrite<::planus::Offset<Monster>> for Monster {
                 type Value = ::planus::Offset<Monster>;
                 const STRIDE: usize = 4;
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> Self::Value {
                     ::planus::WriteAs::prepare(self, builder)
                 }
@@ -811,6 +883,7 @@ mod root {
                 }
             }
 
+            ///  A weapon is equipment that can be used for attacking
             #[derive(
                 Clone,
                 Debug,
@@ -823,7 +896,9 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub struct Weapon {
+                ///  The name of the weapon
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
+                ///  The damage of the weapon
                 pub damage: i16,
             }
 
@@ -838,6 +913,7 @@ mod root {
             }
 
             impl Weapon {
+                /// Serializes a new instance of [Weapon].
                 #[allow(clippy::too_many_arguments)]
                 pub fn create(
                     builder: &mut ::planus::Builder,
@@ -873,6 +949,7 @@ mod root {
             impl ::planus::WriteAs<::planus::Offset<Weapon>> for Weapon {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
                     ::planus::WriteAsOffset::prepare(self, builder)
                 }
@@ -881,6 +958,7 @@ mod root {
             impl ::planus::WriteAsOptional<::planus::Offset<Weapon>> for Weapon {
                 type Prepared = ::planus::Offset<Self>;
 
+                #[inline]
                 fn prepare(
                     &self,
                     builder: &mut ::planus::Builder,
@@ -890,15 +968,19 @@ mod root {
             }
 
             impl ::planus::WriteAsOffset<Weapon> for Weapon {
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
                     Weapon::create(builder, &self.name, self.damage)
                 }
             }
 
+            /// Reference to a deserialized [Weapon].
             #[derive(Copy, Clone)]
             pub struct WeaponRef<'a>(::planus::table_reader::Table<'a>);
 
             impl<'a> WeaponRef<'a> {
+                /// Getter for the [`name` field](Weapon#structfield.name).
+                #[inline]
                 pub fn name(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
@@ -906,6 +988,8 @@ mod root {
                     self.0.access(0, "Weapon", "name")
                 }
 
+                /// Getter for the [`damage` field](Weapon#structfield.damage).
+                #[inline]
                 pub fn damage(&self) -> ::planus::Result<i16> {
                     ::core::result::Result::Ok(self.0.access(1, "Weapon", "damage")?.unwrap_or(0))
                 }
@@ -939,6 +1023,7 @@ mod root {
             }
 
             impl<'a> ::planus::TableRead<'a> for WeaponRef<'a> {
+                #[inline]
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
@@ -970,6 +1055,7 @@ mod root {
             impl ::planus::VectorWrite<::planus::Offset<Weapon>> for Weapon {
                 type Value = ::planus::Offset<Weapon>;
                 const STRIDE: usize = 4;
+                #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> Self::Value {
                     ::planus::WriteAs::prepare(self, builder)
                 }

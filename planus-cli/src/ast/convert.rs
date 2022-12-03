@@ -4,12 +4,19 @@ use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
 use indexmap::{map::Entry, IndexMap};
 
-use crate::{ast::*, cst, ctx::Ctx, error::ErrorKind};
+use crate::{
+    ast::*,
+    cst,
+    ctx::Ctx,
+    error::ErrorKind,
+    lexer::{Comment, CommentKind, TokenMetadata},
+};
 
 struct CstConverter<'ctx> {
     pub schema: Schema,
     pub ctx: &'ctx Ctx,
     pub current_span: Span,
+    pub allow_outer_docstrings: bool,
 }
 
 pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
@@ -17,10 +24,12 @@ pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
         schema: Schema::new(file_id),
         ctx,
         current_span: schema.span,
+        allow_outer_docstrings: true,
     };
     for decl in &schema.declarations {
         converter.convert_declaration(decl);
     }
+    converter.handle_invalid_docstrings(&schema.end_of_stream.token_metadata);
     converter.schema
 }
 
@@ -30,6 +39,7 @@ impl<'ctx> CstConverter<'ctx> {
             .errors_seen
             .set(self.schema.errors_seen.get() | error_type);
     }
+
     fn emit_error(
         &self,
         error_type: ErrorKind,
@@ -361,18 +371,30 @@ impl<'ctx> CstConverter<'ctx> {
     ) -> Option<Declaration> {
         match declaration {
             cst::DeclarationKind::Include(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.path.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_include();
                 let lit = self.convert_string_literal(&decl.path);
                 self.schema.includes.push(lit);
                 None
             }
             cst::DeclarationKind::NativeInclude(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.path.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_include();
                 let lit = self.convert_string_literal(&decl.path);
                 self.schema.native_includes.push(lit);
                 None
             }
             cst::DeclarationKind::Namespace(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_many_invalid_docstrings(decl.namespace.token_metas());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_namespace();
                 if self.schema.namespace.is_none() {
                     self.schema.namespace = Some((
@@ -383,6 +405,10 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::RootType(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_many_invalid_docstrings(decl.root_type.kind.token_metas());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_root_type();
                 if self.schema.root_type.is_none() {
                     self.schema.root_type = Some((
@@ -393,6 +419,10 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::FileExtension(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.file_extension.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_file_extension();
                 if self.schema.file_extension.is_none() {
                     self.schema.file_extension = Some((
@@ -403,6 +433,10 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::FileIdentifier(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(&decl.file_identifier.token_metadata);
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 self.check_file_identifier();
                 if self.schema.file_identifier.is_none() {
                     self.schema.file_identifier = Some((
@@ -413,6 +447,10 @@ impl<'ctx> CstConverter<'ctx> {
                 None
             }
             cst::DeclarationKind::Attribute(decl) => {
+                self.handle_invalid_docstrings(&decl.keyword.token_metadata);
+                self.handle_invalid_docstrings(decl.attribute.token_meta());
+                self.handle_invalid_docstrings(&decl.semicolon.token_metadata);
+
                 let attribute = self.convert_attribute(&decl.attribute);
                 self.schema.attributes.push(attribute);
                 None
@@ -482,6 +520,14 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_table(&mut self, decl: &cst::TableDeclaration<'_>) -> Declaration {
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        if let Some(metadata) = &decl.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
+
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
         let mut fields: IndexMap<RawIdentifier, StructField> = IndexMap::new();
@@ -515,6 +561,7 @@ impl<'ctx> CstConverter<'ctx> {
         }
         Declaration {
             file_id: self.schema.file_id,
+            docstrings,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
             definition_span: decl.keyword.span.merge(decl.ident.span),
             identifier,
@@ -523,6 +570,14 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_struct(&mut self, decl: &cst::StructDeclaration<'_>) -> Declaration {
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        if let Some(metadata) = &decl.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
+
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
         let mut fields: IndexMap<RawIdentifier, StructField> = IndexMap::new();
@@ -556,6 +611,7 @@ impl<'ctx> CstConverter<'ctx> {
         }
         Declaration {
             file_id: self.schema.file_id,
+            docstrings,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
             definition_span: decl.keyword.span.merge(decl.ident.span),
             identifier,
@@ -564,9 +620,22 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_field(&mut self, field: &cst::FieldDeclaration<'_>) -> StructField {
+        let docstrings = self.convert_docstrings(&field.ident.token_metadata);
+        self.handle_invalid_docstrings(&field.colon.token_metadata);
+        self.handle_many_invalid_docstrings(field.type_.kind.token_metas());
+        if let Some((eq, expr)) = &field.assignment {
+            self.handle_invalid_docstrings(&eq.token_metadata);
+            self.handle_many_invalid_docstrings(expr.kind.token_metas());
+        }
+        if let Some(metadata) = &field.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&field.semicolon.token_metadata);
+
         StructField {
             span: field.span,
             ident: self.convert_ident(&field.ident),
+            docstrings,
             type_: self.convert_type(&field.type_),
             assignment: field
                 .assignment
@@ -577,6 +646,18 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_enum(&mut self, decl: &cst::EnumDeclaration<'_>) -> Declaration {
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        if let Some((colon, type_)) = &decl.type_ {
+            self.handle_invalid_docstrings(&colon.token_metadata);
+            self.handle_many_invalid_docstrings(type_.kind.token_metas());
+        }
+        if let Some(metadata) = &decl.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
+
         let identifier = self.convert_ident(&decl.ident);
         let type_ = if let Some((_colon, type_)) = &decl.type_ {
             self.convert_type_to_integer_type(type_)
@@ -635,6 +716,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         Declaration {
             file_id: self.schema.file_id,
+            docstrings,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
             definition_span,
             identifier,
@@ -652,6 +734,15 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_enum_variant(&mut self, variant: &cst::EnumValDeclaration<'_>) -> EnumVariant {
+        let docstrings = self.convert_docstrings(&variant.ident.token_metadata);
+        if let Some((eq, value)) = &variant.assignment {
+            self.handle_invalid_docstrings(&eq.token_metadata);
+            self.handle_many_invalid_docstrings(value.kind.token_metas());
+        }
+        if let Some(comma) = &variant.comma {
+            self.handle_invalid_docstrings(&comma.token_metadata);
+        }
+
         let ident = self.convert_ident(&variant.ident);
         let value = if let Some((_equals, assignment)) = &variant.assignment {
             self.convert_expr_to_integer_literal(assignment)
@@ -662,10 +753,19 @@ impl<'ctx> CstConverter<'ctx> {
             span: variant.span,
             ident,
             value,
+            docstrings,
         }
     }
 
     fn convert_union(&mut self, decl: &cst::UnionDeclaration<'_>) -> Declaration {
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        if let Some(metadata) = &decl.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
+
         let identifier = self.convert_ident(&decl.ident);
         let metadata = self.convert_metadata(&decl.metadata);
 
@@ -719,6 +819,7 @@ impl<'ctx> CstConverter<'ctx> {
         }
 
         Declaration {
+            docstrings,
             file_id: self.schema.file_id,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
             definition_span: decl.keyword.span.merge(decl.ident.span),
@@ -728,6 +829,22 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_union_variant(&mut self, variant: &cst::UnionValDeclaration<'_>) -> UnionVariant {
+        let mut type_metas = variant.type_.kind.token_metas();
+
+        let docstrings;
+        if let Some((name, colon)) = &variant.name {
+            docstrings = self.convert_docstrings(&name.token_metadata);
+            self.handle_invalid_docstrings(&colon.token_metadata);
+        } else {
+            docstrings = self.convert_docstrings(type_metas.next().unwrap());
+        }
+
+        self.handle_many_invalid_docstrings(type_metas);
+
+        if let Some(comma) = &variant.comma {
+            self.handle_invalid_docstrings(&comma.token_metadata);
+        }
+
         let ident = if let Some((name, _colon)) = &variant.name {
             Some(self.convert_ident(name))
         } else {
@@ -737,10 +854,16 @@ impl<'ctx> CstConverter<'ctx> {
             span: variant.span,
             ident,
             type_: self.convert_type(&variant.type_),
+            docstrings,
         }
     }
 
     fn convert_rpc_service(&mut self, decl: &cst::RpcServiceDeclaration<'_>) -> Declaration {
+        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata);
+        self.handle_invalid_docstrings(&decl.ident.token_metadata);
+        self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
+        self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
+
         let identifier = self.convert_ident(&decl.ident);
         let mut methods: IndexMap<RawIdentifier, RpcMethod> = IndexMap::new();
 
@@ -774,6 +897,7 @@ impl<'ctx> CstConverter<'ctx> {
 
         Declaration {
             file_id: self.schema.file_id,
+            docstrings,
             full_span: decl.keyword.span.merge(decl.end_brace.span),
             definition_span: decl.keyword.span.merge(decl.ident.span),
             identifier,
@@ -782,8 +906,20 @@ impl<'ctx> CstConverter<'ctx> {
     }
 
     fn convert_rpc_method(&mut self, method: &cst::RpcMethod<'_>) -> RpcMethod {
+        let docstrings = self.convert_docstrings(&method.ident.token_metadata);
+        self.handle_invalid_docstrings(&method.start_paren.token_metadata);
+        self.handle_many_invalid_docstrings(method.argument_type.kind.token_metas());
+        self.handle_invalid_docstrings(&method.end_paren.token_metadata);
+        self.handle_invalid_docstrings(&method.colon.token_metadata);
+        self.handle_many_invalid_docstrings(method.return_type.kind.token_metas());
+        if let Some(metadata) = &method.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+        }
+        self.handle_invalid_docstrings(&method.semicolon.token_metadata);
+
         RpcMethod {
             span: method.span,
+            docstrings,
             ident: self.convert_ident(&method.ident),
             argument_type: self.convert_type(&method.argument_type),
             return_type: self.convert_type(&method.return_type),
@@ -934,6 +1070,96 @@ impl<'ctx> CstConverter<'ctx> {
         Identifier {
             span: ident.span,
             value: self.ctx.intern(ident.ident),
+        }
+    }
+
+    fn convert_docstrings(&mut self, token_metadata: &TokenMetadata<'_>) -> Docstrings {
+        let mut out = Vec::new();
+        for block in &token_metadata.pre_comment_blocks {
+            for comment in &block.0 {
+                match comment.kind {
+                    CommentKind::Comment => continue,
+                    CommentKind::OuterDocstring => {
+                        out.push(Docstring {
+                            span: comment.span,
+                            value: comment.content.to_owned(),
+                        });
+                        self.allow_outer_docstrings = false;
+                    }
+                    CommentKind::InnerDocstring => {
+                        if self.allow_outer_docstrings {
+                            self.schema.docstrings.0.push(Docstring {
+                                span: comment.span,
+                                value: comment.content.to_owned(),
+                            });
+                        } else {
+                            self.emit_error(
+                                ErrorKind::FILE_ORDER,
+                                [Label::primary(self.schema.file_id, comment.span)],
+                                Some(concat!(
+                                    "Inner doc comments (those starting with `//!`) are only allowed ",
+                                    "at the beginning of the file and are used to document the namespace. ",
+                                    "If you meant to write a normal doc comment, those start with `///`."
+                                )),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        self.allow_outer_docstrings = false;
+        if let Some(comment) = &token_metadata.post_comment {
+            self.handle_invalid_docstring(comment);
+        }
+        Docstrings(out)
+    }
+
+    fn handle_invalid_docstring(&mut self, comment: &Comment<'_>) {
+        match comment.kind {
+            CommentKind::Comment => (),
+            CommentKind::OuterDocstring => {
+                self.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(self.schema.file_id, comment.span)],
+                    Some("Doc comments are not meaningful here."),
+                );
+                self.allow_outer_docstrings = false;
+            }
+            CommentKind::InnerDocstring => {
+                if self.allow_outer_docstrings {
+                    self.schema.docstrings.0.push(Docstring {
+                        span: comment.span,
+                        value: comment.content.to_owned(),
+                    });
+                } else {
+                    self.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(self.schema.file_id, comment.span)],
+                        Some("Inner doc comments are not meaningful here."),
+                    );
+                }
+            }
+        }
+    }
+
+    fn handle_invalid_docstrings(&mut self, token_metadata: &TokenMetadata<'_>) {
+        for block in &token_metadata.pre_comment_blocks {
+            for comment in &block.0 {
+                self.handle_invalid_docstring(comment);
+            }
+        }
+        self.allow_outer_docstrings = false;
+        if let Some(comment) = &token_metadata.post_comment {
+            self.handle_invalid_docstring(comment);
+        }
+    }
+
+    fn handle_many_invalid_docstrings<'a, I: IntoIterator<Item = &'a TokenMetadata<'a>>>(
+        &mut self,
+        token_metadatas: I,
+    ) {
+        for token_metadata in token_metadatas {
+            self.handle_invalid_docstrings(token_metadata);
         }
     }
 }

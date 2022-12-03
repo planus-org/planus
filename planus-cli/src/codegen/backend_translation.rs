@@ -4,6 +4,7 @@ use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, ResolvedType,
 };
 use crate::{
+    ast::Docstrings,
     codegen::backend::{DeclInfo, Keywords, Names, RelativeNamespace},
     intermediate_language::types::{
         AbsolutePath, DeclarationIndex, DeclarationKind, Declarations, NamespaceIndex, SimpleType,
@@ -16,6 +17,7 @@ pub struct BackendNamespace<B: ?Sized + Backend> {
     pub info: B::NamespaceInfo,
     pub children: Vec<BackendNamespace<B>>,
     pub declarations: Vec<BackendDeclaration<B>>,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +31,7 @@ pub enum BackendDeclaration<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendTable<B: ?Sized + Backend> {
+    pub docstrings: Docstrings,
     pub max_vtable_size: u32,
     pub max_size: u32,
     pub max_alignment: u32,
@@ -38,6 +41,7 @@ pub struct BackendTable<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendStruct<B: ?Sized + Backend> {
+    pub docstrings: Docstrings,
     pub size: u32,
     pub alignment: u32,
     pub info: B::StructInfo,
@@ -46,26 +50,48 @@ pub struct BackendStruct<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendEnum<B: ?Sized + Backend> {
+    pub docstrings: Docstrings,
     pub size: u32,
     pub info: B::EnumInfo,
-    pub variants: Vec<B::EnumVariantInfo>,
+    pub variants: Vec<BackendVariant<B::EnumVariantInfo>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BackendUnion<B: ?Sized + Backend> {
+    pub docstrings: Docstrings,
     pub info: B::UnionInfo,
-    pub variants: Vec<B::UnionVariantInfo>,
+    pub variants: Vec<BackendVariant<B::UnionVariantInfo>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BackendRpcService<B: ?Sized + Backend> {
+    pub docstrings: Docstrings,
     pub info: B::RpcServiceInfo,
     pub methods: Vec<B::RpcMethodInfo>,
 }
 
 #[derive(Debug, Clone)]
+pub struct NameAndDocstrings {
+    pub original_name: String,
+    pub docstrings: Docstrings,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackendVariant<V> {
+    pub name_and_docs: NameAndDocstrings,
+    pub variant: V,
+}
+
+impl<V> std::ops::Deref for BackendVariant<V> {
+    type Target = V;
+
+    fn deref(&self) -> &V {
+        &self.variant
+    }
+}
+#[derive(Debug, Clone)]
 pub struct BackendTableFields<F> {
-    fields: VecMap<F>,
+    fields: VecMap<(NameAndDocstrings, F)>,
     declaration_order: Vec<(usize, u32, BackendTableFieldType)>,
     alignment_order: Vec<(usize, u32, BackendTableFieldType)>,
 }
@@ -120,13 +146,19 @@ impl<F> BackendTableFields<F> {
                 );
                 (
                     index,
-                    backend.generate_table_field(
-                        translation_context,
-                        translated_decl,
-                        decl,
-                        field_name,
-                        field,
-                        translated_type,
+                    (
+                        NameAndDocstrings {
+                            original_name: field_name.clone(),
+                            docstrings: field.docstrings.clone(),
+                        },
+                        backend.generate_table_field(
+                            translation_context,
+                            translated_decl,
+                            decl,
+                            field_name,
+                            field,
+                            translated_type,
+                        ),
                     ),
                 )
             })
@@ -157,7 +189,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    info: &self.fields[index],
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -170,7 +203,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    info: &self.fields[index],
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -182,7 +216,8 @@ impl<F> BackendTableFields<F> {
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
                     vtable_index,
-                    info: &self.fields[index],
+                    name_and_docs: &self.fields[index].0,
+                    info: &self.fields[index].1,
                 },
             )
     }
@@ -206,6 +241,7 @@ pub struct BackendTableField<'a, F> {
     pub field_type: BackendTableFieldType,
     pub vtable_index: u32,
     pub info: &'a F,
+    pub name_and_docs: &'a NameAndDocstrings,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -221,6 +257,8 @@ pub struct BackendStructField<F> {
     pub size: u32,
     pub padding_after_field: u32,
     pub info: F,
+    pub original_name: String,
+    pub docstrings: Docstrings,
 }
 
 fn translate_type_index<'a, B: ?Sized + Backend>(
@@ -355,6 +393,7 @@ fn make_recursive_structure<B: ?Sized + Backend>(
         info: current_translated_namespace,
         children,
         declarations: translated_declarations,
+        docstrings: current_namespace.docstrings.clone(),
     }
 }
 
@@ -488,8 +527,12 @@ pub fn run_backend<B: ?Sized + Backend>(
                     variants: decl
                         .variants
                         .iter()
-                        .map(|(value, (_span, name))| {
-                            backend.generate_enum_variant(
+                        .map(|(value, variant)| BackendVariant {
+                            name_and_docs: NameAndDocstrings {
+                                original_name: variant.name.clone(),
+                                docstrings: variant.docstrings.clone(),
+                            },
+                            variant: backend.generate_enum_variant(
                                 &mut DeclarationTranslationContext {
                                     declaration_names: DeclarationNames {
                                         global_names,
@@ -501,11 +544,12 @@ pub fn run_backend<B: ?Sized + Backend>(
                                 },
                                 translated_decl,
                                 decl,
-                                name,
+                                &variant.name,
                                 value,
-                            )
+                            ),
                         })
                         .collect(),
+                    docstrings: (orig_decl.1).docstrings.clone(),
                 }),
             );
         }
@@ -543,6 +587,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     decl_path,
                     translated_decl,
                 ),
+                docstrings: (orig_decl.1).docstrings.clone(),
             }),
             DeclInfo::Struct(translated_decl, decl) => BackendDeclaration::Struct(BackendStruct {
                 size: decl.size,
@@ -571,9 +616,12 @@ pub fn run_backend<B: ?Sized + Backend>(
                             offset: field.offset,
                             padding_after_field: field.padding_after_field,
                             size: field.size,
+                            original_name: field_name.clone(),
+                            docstrings: field.docstrings.clone(),
                         }
                     })
                     .collect(),
+                docstrings: (orig_decl.1).docstrings.clone(),
             }),
             DeclInfo::Union(translated_decl, decl) => BackendDeclaration::Union(BackendUnion {
                 info: translated_decl.clone(),
@@ -589,17 +637,24 @@ pub fn run_backend<B: ?Sized + Backend>(
                             &variant.type_,
                             &decl_path.clone_pop(),
                         );
-                        backend.generate_union_variant(
-                            &mut translation_context,
-                            translated_decl,
-                            decl,
-                            name,
-                            index as u8,
-                            variant,
-                            translated_type,
-                        )
+                        BackendVariant {
+                            name_and_docs: NameAndDocstrings {
+                                original_name: name.clone(),
+                                docstrings: variant.docstrings.clone(),
+                            },
+                            variant: backend.generate_union_variant(
+                                &mut translation_context,
+                                translated_decl,
+                                decl,
+                                name,
+                                index as u8,
+                                variant,
+                                translated_type,
+                            ),
+                        }
                     })
                     .collect(),
+                docstrings: (orig_decl.1).docstrings.clone(),
             }),
             DeclInfo::RpcService(_translated_decl, _decl) => todo!(),
         };

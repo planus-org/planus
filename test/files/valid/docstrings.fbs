@@ -1,0 +1,25 @@
+//! Namespace docstring
+
+/// Table docstring
+table Table {
+  /// Field docstring
+  x: uint8;
+}
+
+/// Struct docstring
+struct Struct {
+  /// Field docstring
+  x: uint8;
+}
+
+/// Enum docstring
+enum Enum: uint8 {
+  /// Variant docstring
+  x
+}
+
+/// Union docstring
+union Union {
+  /// Variant docstring
+  Table
+}

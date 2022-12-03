@@ -3,5 +3,6 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "rust-analyzer.imports.granularity.enforce": true,
-  "rust-analyzer.imports.prefix": "crate"
+  "rust-analyzer.imports.prefix": "crate",
+  "cSpell.enabled": false
 }

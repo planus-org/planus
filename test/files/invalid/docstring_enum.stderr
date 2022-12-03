@@ -1,0 +1,145 @@
+error: Inner doc comments (those starting with `//!`) are only allowed at the beginning of the file and are used to document the namespace. If you meant to write a normal doc comment, those start with `///`.
+  ┌─ test/files/invalid/docstring_enum.fbs:3:1
+  │
+3 │ //! Bad1
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_enum.fbs:5:6
+  │
+5 │ enum /// Bad2
+  │      ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_enum.fbs:6:1
+  │
+6 │ /// Bad3
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_enum.fbs:7:5
+  │
+7 │ Foo /// Bad4
+  │     ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_enum.fbs:8:1
+  │
+8 │ /// Bad5
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstring_enum.fbs:9:3
+  │
+9 │ : /// Bad6
+  │   ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:10:1
+   │
+10 │ /// Bad7
+   │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:11:7
+   │
+11 │ uint8 /// Bad8
+   │       ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:12:1
+   │
+12 │ /// Bad9
+   │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:13:3
+   │
+13 │ { /// Bad10
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:26:1
+   │
+26 │ /// Bad21
+   │ ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:27:3
+   │
+27 │ } /// Bad22
+   │   ^^^^^^^^^
+
+error: Inner doc comments (those starting with `//!`) are only allowed at the beginning of the file and are used to document the namespace. If you meant to write a normal doc comment, those start with `///`.
+   ┌─ test/files/invalid/docstring_enum.fbs:14:3
+   │
+14 │   //! Bad11
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:16:5
+   │
+16 │   x /// Bad12
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:17:3
+   │
+17 │   /// Bad13
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:18:5
+   │
+18 │   = /// Bad14
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:19:3
+   │
+19 │   /// Bad15
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:20:5
+   │
+20 │   0 /// Bad16
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:21:3
+   │
+21 │   /// Bad17
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:22:5
+   │
+22 │   , /// Bad18
+   │     ^^^^^^^^^
+
+error: Inner doc comments (those starting with `//!`) are only allowed at the beginning of the file and are used to document the namespace. If you meant to write a normal doc comment, those start with `///`.
+   ┌─ test/files/invalid/docstring_enum.fbs:23:3
+   │
+23 │   //! Bad19
+   │   ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:25:5
+   │
+25 │   y /// Bad20
+   │     ^^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:28:1
+   │
+28 │ /// Bad23
+   │ ^^^^^^^^^
+
+error: Inner doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstring_enum.fbs:29:1
+   │
+29 │ //! Bad24
+   │ ^^^^^^^^^
+
+Error: Bailing because of errors

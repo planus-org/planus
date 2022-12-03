@@ -3,7 +3,7 @@ use std::{collections::BTreeSet, fmt::Display};
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
 
-use crate::ast;
+use crate::ast::{self, Docstrings};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct AbsolutePath(pub Vec<String>);
@@ -163,6 +163,7 @@ impl Declarations {
 pub struct Namespace {
     /// The span is where the namespace path is defined
     pub spans: Vec<(FileId, Option<Span>)>,
+    pub docstrings: Docstrings,
     pub child_namespaces: IndexMap<String, NamespaceIndex>,
     pub declaration_ids: IndexMap<String, DeclarationIndex>,
 }
@@ -173,6 +174,7 @@ pub struct Declaration {
     pub file_id: FileId,
     pub namespace_id: NamespaceIndex,
     pub kind: DeclarationKind,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug)]
@@ -206,6 +208,7 @@ pub struct TableField {
     pub object_alignment_mask: u32,
     pub object_alignment: u32,
     pub deprecated: bool,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Clone, Debug)]
@@ -228,13 +231,21 @@ pub struct StructField {
     pub offset: u32,
     pub size: u32,
     pub padding_after_field: u32,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug, Clone)]
 pub struct Enum {
     pub type_: ast::IntegerType,
-    pub variants: IndexMap<IntegerLiteral, (Span, String)>,
+    pub variants: IndexMap<IntegerLiteral, EnumVariant>,
     pub alignment: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct EnumVariant {
+    pub span: Span,
+    pub name: String,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug)]
@@ -245,6 +256,7 @@ pub struct Union {
 #[derive(Debug)]
 pub struct UnionVariant {
     pub type_: Type,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug)]

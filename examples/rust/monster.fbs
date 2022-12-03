@@ -1,33 +1,62 @@
-
-// Example IDL file for our monster's schema.
+//! Example IDL file for our monster's schema.
 
 namespace MyGame.Sample;
 
-enum Color:byte { Red = 0, Green, Blue = 2 }
+/// The possible monster colors
+enum Color:byte {
+  /// Should be rendered the same color as blood
+  Red = 0,
+  /// Any green will do
+  Green,
+  /// Must be `#89CFF0`
+  Blue = 2
+}
 
-union Equipment { Weapon } // Optionally add more tables.
+/// Weapons or other equipment
+union Equipment {
+  /// Equipment of the weapon-type
+  Weapon
+  // Optionally add more tables.
+}
 
+/// Vector in three dimensions
 struct Vec3 {
+  /// East-west direction
   x:float;
+  /// North-south direction
   y:float;
+  /// Up-down direction
   z:float;
 }
 
+/// An enemy in the game
 table Monster {
-  pos:Vec3; // Struct.
+  /// Position in the world
+  pos:Vec3;
+  /// Amount of mana left
   mana:short = 150;
+  /// Amount of hp left
   hp:short = 100;
+  /// Name of monster
   name:string;
   friendly:bool = false (deprecated);
-  inventory:[ubyte];  // Vector of scalars.
-  color:Color = Blue; // Enum.
-  weapons:[Weapon];   // Vector of tables.
-  equipped:Equipment; // Union.
-  path:[Vec3];        // Vector of structs.
+  /// Inventory of monster
+  inventory:[ubyte];
+  /// Color of the monster's skin
+  color:Color = Blue;
+  /// List of all weapons
+  weapons:[Weapon];
+  /// Currently equiped item
+  equipped:Equipment;
+  /// The projected path of the monster
+  path:[Vec3];
 }
 
+/// A weapon is equipment that can be used for attacking
 table Weapon {
+  /// The name of the weapon
   name:string;
+  /// The damage of the weapon
   damage:short;
 }
 

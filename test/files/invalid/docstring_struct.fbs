@@ -1,0 +1,22 @@
+//! Okay
+/// Okay
+//! Bad1
+/// Okay
+struct /// Bad2
+/// Bad3
+Foo /// Bad4
+/// Bad5
+{ /// Bad6
+  //! Bad7
+  /// Okay
+  x /// Bad8
+  /// Bad9
+  : /// Bad10
+  /// Bad11
+  uint8 /// Bad12
+  /// Bad13
+  ; /// Bad14
+/// Bad15
+} /// Bad16
+/// Bad17
+//! Bad18

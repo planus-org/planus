@@ -9,6 +9,9 @@ mod root {
 {%- else -%}
 pub mod {{info.name}} {
 {%- endif -%}
+    {% for docstring in docstrings.iter_strings() %}
+    //! {{ docstring }}
+    {% endfor %}
     {%- for child in children -%}
         {{- Namespace(child) -}}
 

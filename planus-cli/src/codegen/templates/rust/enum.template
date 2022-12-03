@@ -1,9 +1,15 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
 {%- if !variants.is_empty() -%}
 #[repr({{info.repr_type}})]
 {%- endif -%}
 pub enum {{ info.name }} {
     {% for variant in variants -%}
+        {%- for docstring in variant.name_and_docs.docstrings.iter_strings() -%}
+        /// {{ docstring }}
+        {%- endfor %}
         {{ variant.name }} = {{ variant.value }},
     {% endfor %}
 }
@@ -17,6 +23,7 @@ impl {{ info.name }} {
 
 impl ::core::convert::TryFrom<{{info.repr_type}}> for {{info.name}} {
     type Error = ::planus::errors::UnknownEnumTagKind;
+    #[inline]
     fn try_from(value: {{info.repr_type}}) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind> {
         #[allow(clippy::match_single_binding)]
         match value {
@@ -30,6 +37,7 @@ impl ::core::convert::TryFrom<{{info.repr_type}}> for {{info.name}} {
 }
 
 impl ::core::convert::From<{{info.name}}> for {{info.repr_type}} {
+    #[inline]
     fn from(value: {{info.name}}) -> Self {
         value as {{info.repr_type}}
     }
@@ -79,6 +87,7 @@ impl ::planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
 }
 
 impl<'buf> ::planus::TableRead<'buf> for {{ info.name }} {
+    #[inline]
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'buf>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         let n: {{ info.repr_type }} = ::planus::TableRead::from_buffer(buffer, offset)?;
         ::core::result::Result::Ok(::core::convert::TryInto::try_into(n)?)
@@ -114,6 +123,7 @@ impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
 
     type Value = Self;
 
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
         *self
     }

@@ -1,3 +1,6 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 {% if info.should_do_default %}Default, {% endif %}
@@ -5,6 +8,9 @@
 )]
 pub struct {{ info.owned_name }} {
     {% for field in fields -%}
+        {% for docstring in field.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {%- endfor %}
         pub {{ field.info.name }}: {{ field.info.owned_type }},
     {% endfor %}
 }
@@ -16,6 +22,7 @@ impl ::planus::Primitive for {{ info.owned_name }} {
 
 #[allow(clippy::identity_op)]
 impl ::planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }} {
+    #[inline]
     fn write<const N: usize>(&self, cursor: ::planus::Cursor<'_, N>, buffer_position: u32) {
         {% for field in fields -%}
             let (cur, cursor) = cursor.split::<{{ field.size }} , {{ size - field.offset - field.size }}>();
@@ -29,6 +36,7 @@ impl ::planus::WriteAsPrimitive<{{ info.owned_name }}> for {{ info.owned_name }}
 }
 
 impl ::planus::WriteAsOffset<{{ info.owned_name }}> for {{ info.owned_name }} {
+    #[inline]
     fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<{{info.owned_name}}> {
         unsafe {
             builder.write_with(
@@ -51,6 +59,7 @@ impl ::planus::WriteAsOffset<{{ info.owned_name }}> for {{ info.owned_name }} {
 
 impl ::planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
         *self
     }
@@ -58,16 +67,20 @@ impl ::planus::WriteAs<{{ info.owned_name }}> for {{ info.owned_name }} {
 
 impl ::planus::WriteAsOptional<{{ info.owned_name }}> for {{ info.owned_name }} {
     type Prepared = Self;
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> ::core::option::Option<Self> {
         ::core::option::Option::Some(*self)
     }
 }
 
+/// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone)]
 pub struct {{ info.ref_name }}<'a>(::planus::ArrayWithStartOffset<'a, {{ size }}>);
 
 impl<'a> {{ info.ref_name }}<'a> {
     {% for field in fields %}
+        /// Getter for the [`{{field.original_name}}` field]({{info.owned_name}}#structfield.{{field.info.name}}).
+        #[inline]
         pub fn {{ field.info.name }}(&self) -> {{ field.info.getter_return_type }} {
             let buffer = self.0.advance_as_array::<{{field.size}}>({{field.offset}}).unwrap();
             {% if field.info.getter_return_type.starts_with("planus::Result<") %}
@@ -190,6 +203,7 @@ impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_nam
 {%- endif %}
 
 impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
+    #[inline]
     fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         let buffer = buffer.advance_as_array::<{{size}}>(offset)?;
         ::core::result::Result::Ok(Self(buffer))
@@ -199,6 +213,7 @@ impl<'a> ::planus::TableRead<'a> for {{ info.ref_name }}<'a> {
 impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
     const STRIDE: usize = {{ size }};
 
+    #[inline]
     unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, offset: usize) -> Self {
         Self(buffer.unchecked_advance_as_array(offset))
     }
@@ -209,6 +224,7 @@ impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
 
     type Value = {{ info.owned_name }};
 
+    #[inline]
     fn prepare(&self, _builder: &mut ::planus::Builder) -> Self::Value {
         *self
     }

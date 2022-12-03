@@ -1,0 +1,67 @@
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:2:1
+  │
+2 │ /// Bad1
+  │ ^^^^^^^^
+
+error: Inner doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:3:1
+  │
+3 │ //! Bad2
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:4:1
+  │
+4 │ /// Bad3
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:5:11
+  │
+5 │ attribute /// Bad4
+  │           ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:6:1
+  │
+6 │ /// Bad5
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:7:7
+  │
+7 │ "foo" /// Bad6
+  │       ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:8:1
+  │
+8 │ /// Bad7
+  │ ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+  ┌─ test/files/invalid/docstrings_attribute.fbs:9:3
+  │
+9 │ ; /// Bad8
+  │   ^^^^^^^^
+
+error: Doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstrings_attribute.fbs:10:1
+   │
+10 │ /// Bad9
+   │ ^^^^^^^^
+
+error: Inner doc comments are not meaningful here.
+   ┌─ test/files/invalid/docstrings_attribute.fbs:11:1
+   │
+11 │ //! Bad10
+   │ ^^^^^^^^^
+
+error: User attributes are not supported
+  ┌─ test/files/invalid/docstrings_attribute.fbs:7:1
+  │
+7 │ "foo" /// Bad6
+  │ ^^^^^
+
+Error: Bailing because of errors

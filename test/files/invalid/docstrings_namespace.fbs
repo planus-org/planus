@@ -1,0 +1,15 @@
+//! Okay
+/// Bad1
+//! Bad2
+/// Bad3
+namespace /// Bad4
+/// Bad5
+A /// Bad6
+/// Bad7
+. /// Bad8
+/// Bad9
+B /// Bad10
+/// Bad11
+; /// Bad12
+/// Bad13
+//! Bad14

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   behind the `vtable-cache`, `bytes-cache` and `string-cache` feature flags
   (they are enabled by default)
 - \[Rust\]: Bump the Minimum Support Rust Version (MSRV) to 1.61.0.
+- Add support for docstrings, and add them to the Rust output.
 - Update the `README` with information about our Discord server.
 - \[Rust\]: Add license files to crates
 
