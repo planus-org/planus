@@ -1,9 +1,9 @@
-check_type!(Example => { });
-check_type!(Example => create(&mut planus::Builder) : planus::Offset<Example>);
+check_type!(Empty => { });
+check_type!(Empty => create(&mut planus::Builder) : planus::Offset<Empty>);
 
-check_type!(+['a] ExampleRef<'a> => impl planus::ReadAsRoot<'a>);
+check_type!(+['a] EmptyRef<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    Example: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
-    ExampleRef: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
+    Empty: !Copy + Clone + Debug + Eq + Ord + Hash + Default,
+    EmptyRef: Copy + Clone + Debug + !Eq + !Ord + !Hash + !Default + {TryInto<Empty>} + !{Into<Empty>},
 );

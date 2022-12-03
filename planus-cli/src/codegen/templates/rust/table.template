@@ -35,7 +35,7 @@ impl {{info.owned_name}} {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn create(
+    pub fn create(
         builder: &mut ::planus::Builder,
         {% for field in fields.declaration_order() -%}
             field_{{ field.info.create_name }}: impl ::planus::{{ field.info.create_trait }},

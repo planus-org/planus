@@ -202,7 +202,7 @@ mod root {
                 }
 
                 #[inline]
-                fn create_weapon(
+                pub fn create_weapon(
                     builder: &mut ::planus::Builder,
                     value: impl ::planus::WriteAsOffset<self::Weapon>,
                 ) -> ::planus::UnionOffset<Self> {
@@ -581,7 +581,7 @@ mod root {
                 }
 
                 #[allow(clippy::too_many_arguments)]
-                fn create(
+                pub fn create(
                     builder: &mut ::planus::Builder,
                     field_pos: impl ::planus::WriteAsOptional<self::Vec3>,
                     field_mana: impl ::planus::WriteAsDefault<i16, i16>,
@@ -1257,7 +1257,7 @@ mod root {
                 }
 
                 #[allow(clippy::too_many_arguments)]
-                fn create(
+                pub fn create(
                     builder: &mut ::planus::Builder,
                     field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
                     field_damage: impl ::planus::WriteAsDefault<i16, i16>,

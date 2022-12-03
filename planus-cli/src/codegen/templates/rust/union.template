@@ -23,7 +23,7 @@ impl {{info.owned_name}} {
 
     {% for variant in variants -%}
     #[inline]
-    fn {{variant.create_name}}(
+    pub fn {{variant.create_name}}(
       builder: &mut ::planus::Builder,
       value: impl ::planus::{{variant.create_trait}},
     ) -> ::planus::UnionOffset<Self> {
