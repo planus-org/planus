@@ -133,13 +133,13 @@ pub struct Whitespace {
 impl<'input> std::fmt::Debug for Token<'input> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Ident(s) => write!(f, "identifier {:?}", s),
-            Token::Symbol(sym) => write!(f, "{:?}", sym),
-            Token::Keyword(keyword) => write!(f, "{:?}", keyword),
-            Token::StringLiteral(s) => write!(f, "string literal {:?}", s),
-            Token::IntegerLiteral(s) => write!(f, "integer literal {:?}", s),
-            Token::FloatLiteral(s) => write!(f, "float literal {:?}", s),
-            Token::Comment(s) => write!(f, "comment {:?}", s),
+            Token::Ident(s) => write!(f, "identifier {s:?}"),
+            Token::Symbol(sym) => write!(f, "{sym:?}"),
+            Token::Keyword(keyword) => write!(f, "{keyword:?}"),
+            Token::StringLiteral(s) => write!(f, "string literal {s:?}"),
+            Token::IntegerLiteral(s) => write!(f, "integer literal {s:?}"),
+            Token::FloatLiteral(s) => write!(f, "float literal {s:?}"),
+            Token::Comment(s) => write!(f, "comment {s:?}"),
             Token::Newline => write!(f, "newline"),
             Token::UnexpectedToken => write!(f, "unexpected token"),
             Token::EndOfStream => write!(f, "end-of-stream token"),
@@ -303,7 +303,7 @@ mod tests {
         ];
 
         for (actual, expected) in lexer.zip(expected.iter()) {
-            println!("{:?}", actual);
+            println!("{actual:?}");
             assert_eq!(&actual, expected);
         }
     }

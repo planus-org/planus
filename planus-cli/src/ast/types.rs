@@ -649,7 +649,7 @@ impl Type {
             TypeKind::Array { inner_type, size } => {
                 write!(f, "[")?;
                 inner_type.fmt(ctx, f)?;
-                write!(f, ": {}]", size)?;
+                write!(f, ": {size}]")?;
                 Ok(())
             }
             TypeKind::Path(path) => path.fmt(ctx, f),

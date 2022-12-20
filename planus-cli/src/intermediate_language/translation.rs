@@ -45,7 +45,7 @@ fn default_docstring_for_namespace(path: &AbsolutePath) -> String {
     if path == &AbsolutePath::ROOT_PATH {
         "The root namespace".to_string()
     } else {
-        format!("The namespace `{}`", path)
+        format!("The namespace `{path}`")
     }
 }
 
@@ -180,8 +180,7 @@ impl<'a> Translator<'a> {
                                     .with_message("Service was defined here"),
                             ],
                             Some(&format!(
-                                "Cannot use the RpcService {} in a type context",
-                                path
+                                "Cannot use the RpcService {path} in a type context"
                             )),
                         );
                         return None;
@@ -459,7 +458,7 @@ impl<'a> Translator<'a> {
                 self.ctx.emit_error(
                     ErrorKind::TYPE_ERROR,
                     std::iter::once(Label::primary(current_file_id, literal.span)),
-                    Some(&format!("Unknown constant {:?}", s)),
+                    Some(&format!("Unknown constant {s:?}")),
                 );
                 None
             }
@@ -978,10 +977,10 @@ impl<'a> Translator<'a> {
         works_upstream: bool,
     ) {
         let msg = match (works_upstream, m.kind.is_supported()) {
-            (true, true) => format!("Metadata attribute is not currently supported on {}", kind),
+            (true, true) => format!("Metadata attribute is not currently supported on {kind}"),
             (true, false) => "Metadata attribute is not currently supported".to_string(),
-            (false, true) => format!("Metadata attribute does not make sense on {}", kind),
-            (false, false) => format!("Metadata attribute does not make sense on {} (but is additionally not supported in planus)", kind),
+            (false, true) => format!("Metadata attribute does not make sense on {kind}"),
+            (false, false) => format!("Metadata attribute does not make sense on {kind} (but is additionally not supported in planus)"),
         };
 
         self.ctx.emit_error(
@@ -1090,8 +1089,7 @@ impl<'a> Translator<'a> {
                                 .with_message("Second id assignment was here"),
                         ],
                         Some(&format!(
-                            "Overlapping id assignments for id {}",
-                            vtable_index
+                            "Overlapping id assignments for id {vtable_index}"
                         )),
                     );
                     has_id_error = true;
@@ -1111,8 +1109,7 @@ impl<'a> Translator<'a> {
             if key != next_expected_id {
                 let msg = if key == next_expected_id + 1 {
                     format!(
-                        "Table contains non-consecutive ids. Missing id {}",
-                        next_expected_id
+                        "Table contains non-consecutive ids. Missing id {next_expected_id}"
                     )
                 } else {
                     format!(

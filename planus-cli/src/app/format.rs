@@ -26,7 +26,7 @@ impl Command {
             } else {
                 let mut s = String::new();
                 crate::cst::pretty_print(ctx.get_source(file_id), &parsed, &mut s)?;
-                print!("{}", s);
+                print!("{s}");
             }
         }
         Ok(())

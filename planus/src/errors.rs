@@ -62,11 +62,11 @@ impl core::fmt::Display for ErrorKind {
             ErrorKind::InvalidOffset => write!(f, "Invalid offset"),
             ErrorKind::InvalidLength => write!(f, "Invalid length"),
             ErrorKind::UnknownEnumTag { source } => source.fmt(f),
-            ErrorKind::UnknownUnionTag { tag } => write!(f, "Unknown union (tag = {})", tag),
+            ErrorKind::UnknownUnionTag { tag } => write!(f, "Unknown union (tag = {tag})"),
             ErrorKind::InvalidVtableLength { length } => {
-                write!(f, "Invalid vtable length (length = {})", length)
+                write!(f, "Invalid vtable length (length = {length})")
             }
-            ErrorKind::InvalidUtf8 { source } => write!(f, "Invalid utf-8: {}", source),
+            ErrorKind::InvalidUtf8 { source } => write!(f, "Invalid utf-8: {source}"),
             ErrorKind::MissingRequired => write!(f, "Missing required field"),
             ErrorKind::MissingNullTerminator => write!(f, "Missing null terminator"),
         }

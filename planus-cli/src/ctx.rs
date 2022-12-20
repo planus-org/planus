@@ -131,7 +131,7 @@ impl Ctx {
                 token: (start, token, end),
             } => {
                 span = Span::new(*start, *end);
-                msg = format!("unexpected token {:?}", token);
+                msg = format!("unexpected token {token:?}");
             }
             ParseError::User { error } => {
                 span = error.span;
@@ -165,7 +165,7 @@ impl Ctx {
                         self.emit_error(
                             ErrorKind::DECLARATION_PARSE_ERROR,
                             labels,
-                            Some(&format!("Could not read file {:?}: {}", path, e)),
+                            Some(&format!("Could not read file {path:?}: {e}")),
                         );
                         None
                     }

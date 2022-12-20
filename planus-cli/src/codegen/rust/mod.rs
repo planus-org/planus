@@ -213,8 +213,8 @@ impl Backend for RustBackend {
         let decl_name = decl_name.0.last().unwrap();
         Table {
             owned_name: reserve_type_name(decl_name, declaration_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
-            builder_name: reserve_type_name(&format!("{}Builder", decl_name), declaration_names),
+            ref_name: reserve_type_name(&format!("{decl_name}Ref"), declaration_names),
+            builder_name: reserve_type_name(&format!("{decl_name}Builder"), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
         }
@@ -231,7 +231,7 @@ impl Backend for RustBackend {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
             owned_name: reserve_type_name(decl_name, declaration_names),
-            ref_name: reserve_type_name(&format!("{}Ref", decl_name), declaration_names),
+            ref_name: reserve_type_name(&format!("{decl_name}Ref"), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
             should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
@@ -262,15 +262,15 @@ impl Backend for RustBackend {
         decl: &crate::intermediate_language::types::Union,
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
-        let ref_name = reserve_type_name(&format!("{}Ref", decl_name), declaration_names);
-        let builder_name = reserve_type_name(&format!("{}Builder", decl_name), declaration_names);
+        let ref_name = reserve_type_name(&format!("{decl_name}Ref"), declaration_names);
+        let builder_name = reserve_type_name(&format!("{decl_name}Builder"), declaration_names);
         Union {
             owned_name: reserve_type_name(decl_name, declaration_names),
             builder_name,
             ref_name_with_lifetime: if decl.variants.is_empty() {
                 ref_name.clone()
             } else {
-                format!("{}<'a>", ref_name)
+                format!("{ref_name}<'a>")
             },
             ref_name,
             should_do_eq: self.eq_analysis[decl_id.0],
@@ -326,13 +326,11 @@ impl Backend for RustBackend {
                     }} else {{
                         ::core::option::Option::None
                     }}
-                "#,
-                name = name
+                "#
             )
         } else {
             format!(
-                "::core::convert::TryInto::try_into(value.{name}()?)?",
-                name = name
+                "::core::convert::TryInto::try_into(value.{name}()?)?"
             )
         };
 
@@ -357,15 +355,15 @@ impl Backend for RustBackend {
                             format_relative_namespace(&relative_namespace, ref_name)
                         );
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAs<{}>", owned_type);
+                        create_trait = format!("WriteAs<{owned_type}>");
                     }
                     AssignMode::Optional => {
                         read_type = format!(
                             "::core::option::Option<{}<'a>>",
                             format_relative_namespace(&relative_namespace, ref_name)
                         );
-                        owned_type = format!("::core::option::Option<{}>", vtable_type);
-                        create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        owned_type = format!("::core::option::Option<{vtable_type}>");
+                        create_trait = format!("WriteAsOptional<{vtable_type}>");
                     }
                     _ => unreachable!(),
                 }
@@ -383,18 +381,17 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
                 is_copy = false;
                 primitive_size = 4;
-                vtable_type = format!("::planus::Offset<{}>", owned_name);
+                vtable_type = format!("::planus::Offset<{owned_name}>");
                 match &field.assign_mode {
                     AssignMode::Required => {
                         read_type = format!(
                             "{}<'a>",
                             format_relative_namespace(&relative_namespace, ref_name)
                         );
-                        owned_type = format!("::planus::alloc::boxed::Box<{}>", owned_name);
-                        create_trait = format!("WriteAs<{}>", vtable_type);
+                        owned_type = format!("::planus::alloc::boxed::Box<{owned_name}>");
+                        create_trait = format!("WriteAs<{vtable_type}>");
                         try_from_code = format!(
-                            "::planus::alloc::boxed::Box::new(::core::convert::TryInto::try_into(value.{name}()?)?)",
-                            name = name
+                            "::planus::alloc::boxed::Box::new(::core::convert::TryInto::try_into(value.{name}()?)?)"
                         );
                     }
                     AssignMode::Optional => {
@@ -403,10 +400,9 @@ impl Backend for RustBackend {
                             format_relative_namespace(&relative_namespace, ref_name)
                         );
                         owned_type = format!(
-                            "::core::option::Option<::planus::alloc::boxed::Box<{}>>",
-                            owned_name
+                            "::core::option::Option<::planus::alloc::boxed::Box<{owned_name}>>"
                         );
-                        create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        create_trait = format!("WriteAsOptional<{vtable_type}>");
                         try_from_code = format!(
                             r#"
                                 if let ::core::option::Option::Some({name}) = value.{name}()? {{
@@ -414,8 +410,7 @@ impl Backend for RustBackend {
                                 }} else {{
                                     ::core::option::Option::None
                                 }}
-                            "#,
-                            name = name
+                            "#
                         );
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
@@ -434,22 +429,22 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, owned_name).to_string();
                 is_copy = false;
                 primitive_size = 4;
-                vtable_type = format!("::planus::Offset<{}>", owned_name);
+                vtable_type = format!("::planus::Offset<{owned_name}>");
                 match &field.assign_mode {
                     AssignMode::Required => {
                         read_type =
                             format_relative_namespace(&relative_namespace, ref_name_with_lifetime)
                                 .to_string();
                         owned_type = owned_name.clone();
-                        create_trait = format!("WriteAsUnion<{}>", owned_name);
+                        create_trait = format!("WriteAsUnion<{owned_name}>");
                     }
                     AssignMode::Optional => {
                         read_type = format!(
                             "::core::option::Option<{}>",
                             format_relative_namespace(&relative_namespace, ref_name_with_lifetime)
                         );
-                        owned_type = format!("::core::option::Option<{}>", owned_name);
-                        create_trait = format!("WriteAsOptionalUnion<{}>", owned_name);
+                        owned_type = format!("::core::option::Option<{owned_name}>");
+                        create_trait = format!("WriteAsOptionalUnion<{owned_name}>");
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
@@ -463,7 +458,7 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
+                        create_trait = format!("WriteAsDefault<{owned_type}, {owned_type}>");
 
                         impl_default_code =
                             format!("{}::{}", owned_type, variants[*variant_index].name).into();
@@ -473,9 +468,9 @@ impl Backend for RustBackend {
                         deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
-                        read_type = format!("::core::option::Option<{}>", vtable_type);
+                        read_type = format!("::core::option::Option<{vtable_type}>");
                         owned_type = read_type.clone();
-                        create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        create_trait = format!("WriteAsOptional<{vtable_type}>");
                     }
                     AssignMode::HasDefault(..) => todo!(),
                     AssignMode::Required => todo!(),
@@ -595,7 +590,7 @@ impl Backend for RustBackend {
                 let owned_name = vector_owned_type(&type_);
                 is_copy = false;
                 primitive_size = 4;
-                vtable_type = format!("::planus::Offset<[{}]>", offset_name);
+                vtable_type = format!("::planus::Offset<[{offset_name}]>");
 
                 let is_byte_slice = matches!(
                     &*type_,
@@ -622,21 +617,20 @@ impl Backend for RustBackend {
                 match &field.assign_mode {
                     AssignMode::Required => {
                         read_type = read_name;
-                        owned_type = format!("::planus::alloc::vec::Vec<{}>", owned_name);
-                        create_trait = format!("WriteAs<{}>", vtable_type);
+                        owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
+                        create_trait = format!("WriteAs<{vtable_type}>");
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{read_name}>",);
                         owned_type = format!(
-                            "::core::option::Option<::planus::alloc::vec::Vec<{}>>",
-                            owned_name
+                            "::core::option::Option<::planus::alloc::vec::Vec<{owned_name}>>"
                         );
-                        create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        create_trait = format!("WriteAsOptional<{vtable_type}>");
                     }
                     AssignMode::HasDefault(Literal::Vector(v)) if v.is_empty() => {
                         read_type = read_name;
-                        owned_type = format!("::planus::alloc::vec::Vec<{}>", owned_name);
-                        create_trait = format!("WriteAsDefault<{}, ()>", vtable_type);
+                        owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
+                        create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
 
                         serialize_default = Some("&()".into());
                         deserialize_default = Some(
@@ -677,8 +671,8 @@ impl Backend for RustBackend {
                             "WriteAsDefault<::planus::Offset<::core::primitive::str>, ::core::primitive::str>"
                                 .to_string();
 
-                        impl_default_code = format!("::core::convert::Into::into({:?})", s).into();
-                        serialize_default = Some(format!("{:?}", s).into());
+                        impl_default_code = format!("::core::convert::Into::into({s:?})").into();
+                        serialize_default = Some(format!("{s:?}").into());
                         deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
@@ -693,8 +687,8 @@ impl Backend for RustBackend {
                         read_type = "bool".to_string();
                         owned_type = "bool".to_string();
                         create_trait = "WriteAsDefault<bool, bool>".to_string();
-                        impl_default_code = format!("{}", lit).into();
-                        serialize_default = Some(format!("&{}", lit).into());
+                        impl_default_code = format!("{lit}").into();
+                        serialize_default = Some(format!("&{lit}").into());
                         deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
@@ -714,15 +708,15 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Int(lit)) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
-                        impl_default_code = format!("{}", lit).into();
-                        serialize_default = Some(format!("&{}", lit).into());
+                        create_trait = format!("WriteAsDefault<{owned_type}, {owned_type}>");
+                        impl_default_code = format!("{lit}").into();
+                        serialize_default = Some(format!("&{lit}").into());
                         deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
-                        read_type = format!("::core::option::Option<{}>", vtable_type);
+                        read_type = format!("::core::option::Option<{vtable_type}>");
                         owned_type = read_type.clone();
-                        create_trait = format!("WriteAsOptional<{}>", vtable_type);
+                        create_trait = format!("WriteAsOptional<{vtable_type}>");
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                     AssignMode::Required => todo!(),
@@ -736,13 +730,13 @@ impl Backend for RustBackend {
                     AssignMode::HasDefault(Literal::Float(lit)) => {
                         read_type = vtable_type.clone();
                         owned_type = vtable_type.clone();
-                        create_trait = format!("WriteAsDefault<{}, {}>", owned_type, owned_type);
-                        impl_default_code = format!("{}", lit).into();
-                        serialize_default = Some(format!("&{}", lit).into());
+                        create_trait = format!("WriteAsDefault<{owned_type}, {owned_type}>");
+                        impl_default_code = format!("{lit}").into();
+                        serialize_default = Some(format!("&{lit}").into());
                         deserialize_default = Some(impl_default_code.clone());
                     }
                     AssignMode::Optional => {
-                        read_type = format!("::core::option::Option<{}>", vtable_type);
+                        read_type = format!("::core::option::Option<{vtable_type}>");
                         owned_type = read_type.clone();
                         create_trait = format!("WriteAsOptional<{}>", float_type(&typ));
                     }
@@ -794,14 +788,13 @@ impl Backend for RustBackend {
                 owned_type =
                     format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
                 let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
-                getter_return_type = format!("{}<'a>", ref_name);
-                getter_code = format!("{}(buffer)", ref_name);
+                getter_return_type = format!("{ref_name}<'a>");
+                getter_code = format!("{ref_name}(buffer)");
             }
             ResolvedType::Enum(decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
                 getter_return_type = format!(
-                    "::core::result::Result<{}, ::planus::errors::UnknownEnumTag>",
-                    owned_type
+                    "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
                 );
                 getter_code = format!(
                     r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
@@ -824,12 +817,12 @@ impl Backend for RustBackend {
             ResolvedType::Integer(typ) => {
                 owned_type = integer_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
+                getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
             }
             ResolvedType::Float(typ) => {
                 owned_type = float_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
-                getter_code = format!("{}::from_le_bytes(*buffer.as_array())", owned_type);
+                getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
             }
             _ => unreachable!(),
         }
@@ -854,7 +847,7 @@ impl Backend for RustBackend {
 
         EnumVariant {
             name,
-            value: format!("{}", value),
+            value: format!("{value}"),
         }
     }
 
@@ -869,7 +862,7 @@ impl Backend for RustBackend {
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
         let create_name = reserve_field_name(
-            &format!("create_{}", key),
+            &format!("create_{key}"),
             "create_function",
             &mut translation_context.declaration_names,
         );
