@@ -572,7 +572,7 @@ impl Backend for RustBackend {
                         ResolvedType::Float(type_) => format!("::planus::Vector<'a, {}>", float_type(type_)),
                     }
                 }
-                fn vector_try_into_func<'a>(type_: &ResolvedType<'a, RustBackend>) -> &'static str {
+                fn vector_try_into_func(type_: &ResolvedType<'_, RustBackend>) -> &'static str {
                     match type_ {
                         ResolvedType::Table(..)
                         | ResolvedType::Enum(..)
