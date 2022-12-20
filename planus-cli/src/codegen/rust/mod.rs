@@ -329,9 +329,7 @@ impl Backend for RustBackend {
                 "#
             )
         } else {
-            format!(
-                "::core::convert::TryInto::try_into(value.{name}()?)?"
-            )
+            format!("::core::convert::TryInto::try_into(value.{name}()?)?")
         };
 
         match resolved_type {

@@ -1088,9 +1088,7 @@ impl<'a> Translator<'a> {
                             Label::primary(current_file_id, span)
                                 .with_message("Second id assignment was here"),
                         ],
-                        Some(&format!(
-                            "Overlapping id assignments for id {vtable_index}"
-                        )),
+                        Some(&format!("Overlapping id assignments for id {vtable_index}")),
                     );
                     has_id_error = true;
                 }
@@ -1108,9 +1106,7 @@ impl<'a> Translator<'a> {
         for &key in seen_vtable_ids.keys() {
             if key != next_expected_id {
                 let msg = if key == next_expected_id + 1 {
-                    format!(
-                        "Table contains non-consecutive ids. Missing id {next_expected_id}"
-                    )
+                    format!("Table contains non-consecutive ids. Missing id {next_expected_id}")
                 } else {
                     format!(
                         "Table contains non-consecutive ids. Missing ids {}..{}",
