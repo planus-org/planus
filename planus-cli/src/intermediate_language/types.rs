@@ -39,9 +39,9 @@ impl std::fmt::Display for AbsolutePath {
         for part in &self.0 {
             if first {
                 first = false;
-                write!(f, "{}", part)?;
+                write!(f, "{part}")?;
             } else {
-                write!(f, ".{}", part)?;
+                write!(f, ".{part}")?;
             }
         }
         Ok(())
@@ -392,24 +392,24 @@ impl IntegerLiteral {
 impl Display for Literal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Literal::Bool(v) => write!(f, "{}", v),
-            Literal::String(v) => write!(f, "{}", v),
-            Literal::Int(v) => write!(f, "{}", v),
-            Literal::Float(v) => write!(f, "{}", v),
+            Literal::Bool(v) => write!(f, "{v}"),
+            Literal::String(v) => write!(f, "{v}"),
+            Literal::Int(v) => write!(f, "{v}"),
+            Literal::Float(v) => write!(f, "{v}"),
             Literal::Array(vs) | Literal::Vector(vs) => {
                 write!(f, "[")?;
                 let mut first = true;
                 for v in vs {
                     if !first {
-                        write!(f, ", {}", v)?;
+                        write!(f, ", {v}")?;
                     } else {
                         first = false;
-                        write!(f, "{}", v)?;
+                        write!(f, "{v}")?;
                     }
                 }
                 write!(f, "]")
             }
-            Literal::EnumTag { value, .. } => write!(f, "{}", value),
+            Literal::EnumTag { value, .. } => write!(f, "{value}"),
         }
     }
 }
@@ -417,14 +417,14 @@ impl Display for Literal {
 impl Display for IntegerLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            IntegerLiteral::U8(v) => write!(f, "{}", v),
-            IntegerLiteral::I8(v) => write!(f, "{}", v),
-            IntegerLiteral::U16(v) => write!(f, "{}", v),
-            IntegerLiteral::I16(v) => write!(f, "{}", v),
-            IntegerLiteral::U32(v) => write!(f, "{}", v),
-            IntegerLiteral::I32(v) => write!(f, "{}", v),
-            IntegerLiteral::U64(v) => write!(f, "{}", v),
-            IntegerLiteral::I64(v) => write!(f, "{}", v),
+            IntegerLiteral::U8(v) => write!(f, "{v}"),
+            IntegerLiteral::I8(v) => write!(f, "{v}"),
+            IntegerLiteral::U16(v) => write!(f, "{v}"),
+            IntegerLiteral::I16(v) => write!(f, "{v}"),
+            IntegerLiteral::U32(v) => write!(f, "{v}"),
+            IntegerLiteral::I32(v) => write!(f, "{v}"),
+            IntegerLiteral::U64(v) => write!(f, "{v}"),
+            IntegerLiteral::I64(v) => write!(f, "{v}"),
         }
     }
 }
@@ -438,8 +438,8 @@ pub enum FloatLiteral {
 impl Display for FloatLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FloatLiteral::F32(v) => write!(f, "{:?}", v),
-            FloatLiteral::F64(v) => write!(f, "{:?}", v),
+            FloatLiteral::F32(v) => write!(f, "{v:?}"),
+            FloatLiteral::F64(v) => write!(f, "{v:?}"),
         }
     }
 }

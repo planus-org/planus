@@ -55,7 +55,7 @@ impl<'keywords> Names<'keywords> {
             return value;
         }
 
-        let mut value = format!("{}{}", value, padding);
+        let mut value = format!("{value}{padding}");
         while !self.try_reserve(binding_kind, &value) {
             value.push(padding);
         }
@@ -165,7 +165,7 @@ impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Displa
         }
         if self.value.ascend_count == 0 {
             if let Some(self_name) = self.self_name {
-                write!(f, "{}", self_name)?;
+                write!(f, "{self_name}")?;
             }
         }
         #[allow(clippy::bool_to_int_with_if)]

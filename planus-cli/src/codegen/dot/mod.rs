@@ -255,7 +255,7 @@ impl Backend for DotBackend {
                 AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }),
                 ResolvedType::Enum(_, _, _, variants),
             ) => format!("default {}", variants[*variant_index].name).into(),
-            (AssignMode::HasDefault(default), _) => format!("default {}", default).into(),
+            (AssignMode::HasDefault(default), _) => format!("default {default}").into(),
         };
 
         TableField {
@@ -297,7 +297,7 @@ impl Backend for DotBackend {
     ) -> EnumVariant {
         EnumVariant {
             name: key.to_string(),
-            value: format!("{}", value),
+            value: format!("{value}"),
         }
     }
 

@@ -86,7 +86,7 @@ impl PrettyPrint for Type {
             TypeKind::Array { inner_type, size } => {
                 print!("[");
                 inner_type.print(ctx);
-                print!("; {}]", size);
+                print!("; {size}]");
             }
             TypeKind::Path(path) => path.print(ctx),
             TypeKind::Invalid => print!("#invalid_type"),
@@ -175,22 +175,22 @@ impl PrettyPrint for IntegerLiteral {
 impl PrettyPrint for Literal {
     fn print(&self, _ctx: &Ctx) {
         match &self.kind {
-            LiteralKind::Bool(value) => print!("{}", value),
+            LiteralKind::Bool(value) => print!("{value}"),
             LiteralKind::Integer { is_negative, value } => {
                 if *is_negative {
-                    print!("-{}", value);
+                    print!("-{value}");
                 } else {
-                    print!("{}", value);
+                    print!("{value}");
                 }
             }
             LiteralKind::Float { is_negative, value } => {
                 if *is_negative {
-                    print!("-{}", value);
+                    print!("-{value}");
                 } else {
-                    print!("{}", value);
+                    print!("{value}");
                 }
             }
-            LiteralKind::String(s) => print!("{:?}", s),
+            LiteralKind::String(s) => print!("{s:?}"),
             LiteralKind::List(l) => {
                 print!("[");
                 let mut first = true;
@@ -206,7 +206,7 @@ impl PrettyPrint for Literal {
                 print!("]");
             }
             LiteralKind::Null => print!("null"),
-            LiteralKind::Constant(s) => print!("{}", s),
+            LiteralKind::Constant(s) => print!("{s}"),
         }
     }
 }
@@ -387,7 +387,7 @@ impl PrettyPrint for Attribute {
     fn print(&self, ctx: &Ctx) {
         match &self.kind {
             AttributeKind::Identifier(symbol) => print!("{}", ctx.resolve_identifier(*symbol)),
-            AttributeKind::String(s) => print!("{:?}", s),
+            AttributeKind::String(s) => print!("{s:?}"),
         }
     }
 }

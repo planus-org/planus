@@ -111,7 +111,7 @@ fn print_equipment(monster: MonsterRef<'_>) -> Result<(), planus::Error> {
         match equipped {
             EquipmentRef::Weapon(weapon) => {
                 // All generated types implement Debug
-                println!("{:?}", weapon);
+                println!("{weapon:?}");
             }
         }
     }

@@ -19,8 +19,8 @@ pub fn hexdump_flatbuffer_table(buf: &[u8]) -> String {
 
     assert!(vtable_end <= obj_start || obj_end <= vtable_start);
 
-    writeln!(out, "obj    @ 0x{:02x}..0x{:02x}", obj_start, obj_end).unwrap();
-    writeln!(out, "vtable @ 0x{:02x}..0x{:02x}", vtable_start, vtable_end).unwrap();
+    writeln!(out, "obj    @ 0x{obj_start:02x}..0x{obj_end:02x}").unwrap();
+    writeln!(out, "vtable @ 0x{vtable_start:02x}..0x{vtable_end:02x}").unwrap();
 
     let mut fields = vec![(obj_end, usize::max_value())];
     for (i, field_offset) in buf[vtable_start + 4..vtable_end]
@@ -44,11 +44,11 @@ pub fn hexdump_flatbuffer_table(buf: &[u8]) -> String {
         .collect::<Vec<_>>();
     fields.sort_unstable();
     for (i, start, end) in fields {
-        writeln!(out, "field[{}] @ 0x{:02x}..0x{:02x}:", i, start, end).unwrap();
+        writeln!(out, "field[{i}] @ 0x{start:02x}..0x{end:02x}:").unwrap();
         for chunk in buf[start..end].chunks(8) {
             write!(out, " ").unwrap();
             for b in chunk {
-                write!(out, " {:02x}", b).unwrap();
+                write!(out, " {b:02x}").unwrap();
             }
             writeln!(out).unwrap();
         }

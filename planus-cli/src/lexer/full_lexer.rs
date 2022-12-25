@@ -210,7 +210,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         for token in tokens {
-            println!("{:?}", token);
+            println!("{token:?}");
         }
     }
 }
