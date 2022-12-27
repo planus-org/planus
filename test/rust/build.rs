@@ -6,6 +6,8 @@ use color_eyre::{
 };
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+
     println!("cargo:rerun-if-changed=build.rs");
 
     let out_dir = env::var("OUT_DIR").unwrap();
