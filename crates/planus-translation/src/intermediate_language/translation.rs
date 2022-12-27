@@ -3,7 +3,10 @@ use std::collections::{btree_map, BTreeMap, HashSet};
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
 use indexmap::{map::Entry, IndexMap};
-use planus_types::ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath};
+use planus_types::{
+    ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath},
+    intermediate::*,
+};
 
 use crate::{
     ctx::Ctx,
@@ -11,7 +14,6 @@ use crate::{
     intermediate_language::checks::compatibility,
     util::sorted_map::{SortedMap, SortedSet},
 };
-use planus_types::intermediate::*;
 
 pub struct Translator<'a> {
     ctx: &'a Ctx,

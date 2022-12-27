@@ -1,8 +1,9 @@
-use planus_types::{ast, intermediate::*};
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
 };
+
+use planus_types::{ast, intermediate::*};
 
 use crate::backend_translation::BackendVariant;
 

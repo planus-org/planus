@@ -1,5 +1,6 @@
-use planus_types::intermediate::{Declaration, DeclarationIndex, Declarations};
 use std::collections::{HashSet, VecDeque};
+
+use planus_types::intermediate::{Declaration, DeclarationIndex, Declarations};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum WasChanged {

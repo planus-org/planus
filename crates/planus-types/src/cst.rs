@@ -1,6 +1,5 @@
 use codespan::{ByteIndex, Span};
 use lalrpop_util::ErrorRecovery;
-
 use planus_lexer::{LexicalError, TokenMetadata, TokenWithMetadata};
 
 #[derive(Clone, Debug, Eq, PartialEq)]

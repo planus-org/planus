@@ -1,7 +1,8 @@
-use crate::analysis::{DeclarationAnalysis, WasChanged};
 use planus_types::intermediate::{
     AssignMode, Declaration, DeclarationIndex, DeclarationKind, Declarations, SimpleType, TypeKind,
 };
+
+use crate::analysis::{DeclarationAnalysis, WasChanged};
 
 pub struct DefaultAnalysis;
 impl DeclarationAnalysis for DefaultAnalysis {
