@@ -16,7 +16,7 @@ bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
 anyhow = "1.0.51"
-planus = { path = "../../planus", default-features = false, features = [
+planus = { path = "../../crates/planus", default-features = false, features = [
   "extra-validation",
 ] }
 flatbuffers = "=22.10.26"
@@ -25,7 +25,7 @@ static_assertions = "1.1.0"
 
 [build-dependencies]
 anyhow = "1.0.51"
-planus-cli = { path = "../../planus-cli" }
+planus-cli = { path = "../../crates/planus-cli" }
 
 [dev-dependencies]
 criterion = "0.4"

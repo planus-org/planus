@@ -1,10 +1,3 @@
 [workspace]
 
-members = [
-    "array-init-cursor",
-    "examples/rust",
-    "planus",
-    "planus-cli",
-    "test/rust",
-    "test/rust-compat",
-]
+members = ["crates/*", "examples/rust", "test/rust", "test/rust-compat"]
