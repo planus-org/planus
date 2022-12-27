@@ -3,13 +3,25 @@ pub use root::*;
 const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 
 /// The root namespace
+///
+/// Generated from these locations:
+/// * File `examples/rust/monster.fbs`
 #[no_implicit_prelude]
 mod root {
     /// The namespace `MyGame`
+    ///
+    /// Generated from these locations:
+    /// * File `examples/rust/monster.fbs`
     pub mod my_game {
         ///  Example IDL file for our monster's schema.
+        ///
+        /// Generated from these locations:
+        /// * File `examples/rust/monster.fbs`
         pub mod sample {
             ///  The possible monster colors
+            ///
+            /// Generated from these locations:
+            /// * Enum `Color` in the file `examples/rust/monster.fbs:6`
             #[derive(
                 Copy,
                 Clone,
@@ -25,18 +37,12 @@ mod root {
             #[repr(i8)]
             pub enum Color {
                 ///  Should be rendered the same color as blood
-                ///
-                /// Generated from these locations:
                 Red = 0,
 
                 ///  Any green will do
-                ///
-                /// Generated from these locations:
                 Green = 1,
 
                 ///  Must be `#89CFF0`
-                ///
-                /// Generated from these locations:
                 Blue = 2,
             }
 
@@ -187,6 +193,9 @@ mod root {
             }
 
             ///  Weapons or other equipment
+            ///
+            /// Generated from these locations:
+            /// * Union `Equipment` in the file `examples/rust/monster.fbs:16`
             #[derive(
                 Clone,
                 Debug,
@@ -200,8 +209,6 @@ mod root {
             )]
             pub enum Equipment {
                 ///  Equipment of the weapon-type
-                ///
-                /// Generated from these locations:
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
             }
 
@@ -336,6 +343,9 @@ mod root {
             }
 
             ///  Vector in three dimensions
+            ///
+            /// Generated from these locations:
+            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:23`
             #[derive(
                 Copy,
                 Clone,
@@ -348,18 +358,12 @@ mod root {
             )]
             pub struct Vec3 {
                 ///  East-west direction
-                ///
-                /// Generated from these locations:
                 pub x: f32,
 
                 ///  North-south direction
-                ///
-                /// Generated from these locations:
                 pub y: f32,
 
                 ///  Up-down direction
-                ///
-                /// Generated from these locations:
                 pub z: f32,
             }
 
@@ -549,45 +553,30 @@ mod root {
             }
 
             ///  An enemy in the game
+            ///
+            /// Generated from these locations:
+            /// * Table `Monster` in the file `examples/rust/monster.fbs:33`
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
             pub struct Monster {
                 ///  Position in the world
-                ///
-                /// Generated from these locations:
                 pub pos: ::core::option::Option<self::Vec3>,
                 ///  Amount of mana left
-                ///
-                /// Generated from these locations:
                 pub mana: i16,
                 ///  Amount of hp left
-                ///
-                /// Generated from these locations:
                 pub hp: i16,
                 ///  Name of monster
-                ///
-                /// Generated from these locations:
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
                 ///  Inventory of monster
-                ///
-                /// Generated from these locations:
                 pub inventory: ::core::option::Option<::planus::alloc::vec::Vec<u8>>,
                 ///  Color of the monster's skin
-                ///
-                /// Generated from these locations:
                 pub color: self::Color,
                 ///  List of all weapons
-                ///
-                /// Generated from these locations:
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
                 ///  Currently equiped item
-                ///
-                /// Generated from these locations:
                 pub equipped: ::core::option::Option<self::Equipment>,
                 ///  The projected path of the monster
-                ///
-                /// Generated from these locations:
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
             }
 
@@ -1256,6 +1245,9 @@ mod root {
             }
 
             ///  A weapon is equipment that can be used for attacking
+            ///
+            /// Generated from these locations:
+            /// * Table `Weapon` in the file `examples/rust/monster.fbs:56`
             #[derive(
                 Clone,
                 Debug,
@@ -1269,12 +1261,8 @@ mod root {
             )]
             pub struct Weapon {
                 ///  The name of the weapon
-                ///
-                /// Generated from these locations:
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
                 ///  The damage of the weapon
-                ///
-                /// Generated from these locations:
                 pub damage: i16,
             }
 
