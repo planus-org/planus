@@ -159,13 +159,24 @@ impl Declarations {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Namespace {
     /// The span is where the namespace path is defined
     pub spans: Vec<(FileId, Option<Span>)>,
     pub docstrings: Docstrings,
     pub child_namespaces: IndexMap<String, NamespaceIndex>,
     pub declaration_ids: IndexMap<String, DeclarationIndex>,
+}
+
+impl Default for Namespace {
+    fn default() -> Self {
+        Self {
+            spans: Default::default(),
+            docstrings: Docstrings::new(None),
+            child_namespaces: Default::default(),
+            declaration_ids: Default::default(),
+        }
+    }
 }
 
 #[derive(Debug)]

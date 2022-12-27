@@ -20,8 +20,9 @@ struct CstConverter<'ctx> {
 }
 
 pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
+    let location = format!("* File `{}`", ctx.get_filename(file_id).display());
     let mut converter = CstConverter {
-        schema: Schema::new(file_id),
+        schema: Schema::new(file_id, location),
         ctx,
         current_span: schema.span,
         allow_outer_docstrings: true,
@@ -529,7 +530,11 @@ impl<'ctx> CstConverter<'ctx> {
         } else {
             format!("The table `{}`", decl.ident.ident)
         };
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
+        let docstrings = self.convert_docstrings(
+            &decl.keyword.token_metadata,
+            default_docstring,
+            Some(("Table", decl.ident.ident, decl.keyword.span)),
+        );
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -588,7 +593,11 @@ impl<'ctx> CstConverter<'ctx> {
         } else {
             format!("The struct `{}`", decl.ident.ident)
         };
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
+        let docstrings = self.convert_docstrings(
+            &decl.keyword.token_metadata,
+            default_docstring,
+            Some(("Struct", decl.ident.ident, decl.keyword.span)),
+        );
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -649,7 +658,8 @@ impl<'ctx> CstConverter<'ctx> {
             if is_table { "table" } else { "struct" },
             parent_ident
         );
-        let docstrings = self.convert_docstrings(&field.ident.token_metadata, default_docstring);
+        let docstrings =
+            self.convert_docstrings(&field.ident.token_metadata, default_docstring, None);
         self.handle_invalid_docstrings(&field.colon.token_metadata);
         self.handle_many_invalid_docstrings(field.type_.kind.token_metas());
         if let Some((eq, expr)) = &field.assignment {
@@ -684,7 +694,11 @@ impl<'ctx> CstConverter<'ctx> {
         } else {
             format!("The enum `{}`", decl.ident.ident)
         };
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
+        let docstrings = self.convert_docstrings(
+            &decl.keyword.token_metadata,
+            default_docstring,
+            Some(("Enum", decl.ident.ident, decl.keyword.span)),
+        );
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some((colon, type_)) = &decl.type_ {
             self.handle_invalid_docstrings(&colon.token_metadata);
@@ -780,7 +794,8 @@ impl<'ctx> CstConverter<'ctx> {
             "The variant `{}` in on the enum `{}`",
             variant.ident.ident, parent_ident
         );
-        let docstrings = self.convert_docstrings(&variant.ident.token_metadata, default_docstring);
+        let docstrings =
+            self.convert_docstrings(&variant.ident.token_metadata, default_docstring, None);
         if let Some((eq, value)) = &variant.assignment {
             self.handle_invalid_docstrings(&eq.token_metadata);
             self.handle_many_invalid_docstrings(value.kind.token_metas());
@@ -813,7 +828,11 @@ impl<'ctx> CstConverter<'ctx> {
         } else {
             format!("The union `{}`", decl.ident.ident)
         };
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
+        let docstrings = self.convert_docstrings(
+            &decl.keyword.token_metadata,
+            default_docstring,
+            Some(("Union", decl.ident.ident, decl.keyword.span)),
+        );
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         if let Some(metadata) = &decl.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
@@ -896,7 +915,7 @@ impl<'ctx> CstConverter<'ctx> {
                 "The variant `{}` in on the union `{}`",
                 name.ident, parent_ident
             );
-            docstrings = self.convert_docstrings(&name.token_metadata, default_docstring);
+            docstrings = self.convert_docstrings(&name.token_metadata, default_docstring, None);
             self.handle_invalid_docstrings(&colon.token_metadata);
         } else {
             // TODO: This is very bad documentation
@@ -904,7 +923,8 @@ impl<'ctx> CstConverter<'ctx> {
                 "The variant of type `{:?}` in on the union `{}`",
                 variant.type_.kind, parent_ident
             );
-            docstrings = self.convert_docstrings(type_metas.next().unwrap(), default_docstring);
+            docstrings =
+                self.convert_docstrings(type_metas.next().unwrap(), default_docstring, None);
         }
 
         self.handle_many_invalid_docstrings(type_metas);
@@ -936,7 +956,11 @@ impl<'ctx> CstConverter<'ctx> {
         } else {
             format!("The rpc service `{}`", decl.ident.ident)
         };
-        let docstrings = self.convert_docstrings(&decl.keyword.token_metadata, default_docstring);
+        let docstrings = self.convert_docstrings(
+            &decl.keyword.token_metadata,
+            default_docstring,
+            Some(("RPC Service", decl.ident.ident, decl.keyword.span)),
+        );
         self.handle_invalid_docstrings(&decl.ident.token_metadata);
         self.handle_invalid_docstrings(&decl.start_brace.token_metadata);
         self.handle_invalid_docstrings(&decl.end_brace.token_metadata);
@@ -987,7 +1011,8 @@ impl<'ctx> CstConverter<'ctx> {
             "The method `{}` in on the service `{}`",
             method.ident.ident, parent_ident
         );
-        let docstrings = self.convert_docstrings(&method.ident.token_metadata, default_docstring);
+        let docstrings =
+            self.convert_docstrings(&method.ident.token_metadata, default_docstring, None);
         self.handle_invalid_docstrings(&method.start_paren.token_metadata);
         self.handle_many_invalid_docstrings(method.argument_type.kind.token_metas());
         self.handle_invalid_docstrings(&method.end_paren.token_metadata);
@@ -1158,7 +1183,18 @@ impl<'ctx> CstConverter<'ctx> {
         &mut self,
         token_metadata: &TokenMetadata<'_>,
         default_docstring: String,
+        location: Option<(&str, &str, Span)>,
     ) -> Docstrings {
+        let locations = location.map_or(Vec::new(), |(decl_type, ident, decl_span)| {
+            vec![format!(
+                "* {} `{}` in the file `{}:{}`",
+                decl_type,
+                ident,
+                self.ctx.get_filename(self.schema.file_id).display(),
+                self.ctx.get_line_number(self.schema.file_id, decl_span),
+            )]
+        });
+
         let mut out = Vec::new();
         for block in &token_metadata.pre_comment_blocks {
             for comment in &block.0 {
@@ -1199,6 +1235,7 @@ impl<'ctx> CstConverter<'ctx> {
         Docstrings {
             docstrings: out,
             default_docstring,
+            locations,
         }
     }
 

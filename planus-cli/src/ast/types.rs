@@ -34,10 +34,10 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub fn new(file_id: FileId) -> Self {
+    pub fn new(file_id: FileId, location: String) -> Self {
         Self {
             file_id,
-            docstrings: Default::default(),
+            docstrings: Docstrings::new(Some(location)),
             namespace: Default::default(),
             native_includes: Default::default(),
             includes: Default::default(),
@@ -584,10 +584,11 @@ pub struct StringLiteral {
     pub value: String,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Docstrings {
     pub docstrings: Vec<Docstring>,
     pub default_docstring: String,
+    pub locations: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -597,13 +598,33 @@ pub struct Docstring {
 }
 
 impl Docstrings {
+    pub fn new(location: Option<String>) -> Self {
+        Self {
+            docstrings: Default::default(),
+            default_docstring: Default::default(),
+            locations: location.into_iter().collect(),
+        }
+    }
+
     pub fn iter_strings(&self) -> impl Iterator<Item = &str> {
+        // TODO: Make this mess part of the template logic instead
         self.docstrings
             .iter()
             .map(|docstring| docstring.value.as_str())
             .chain(
                 (self.docstrings.is_empty() && !self.default_docstring.is_empty())
                     .then(|| self.default_docstring.as_str()),
+            )
+            .chain(
+                self.locations
+                    .is_empty()
+                    .then_some(
+                        ["", "Generated from these locations:"]
+                            .into_iter()
+                            .chain(self.locations.iter().map(|s| s.as_str())),
+                    )
+                    .into_iter()
+                    .flatten(),
             )
     }
 }

@@ -25,12 +25,18 @@ mod root {
             #[repr(i8)]
             pub enum Color {
                 ///  Should be rendered the same color as blood
+                ///
+                /// Generated from these locations:
                 Red = 0,
 
                 ///  Any green will do
+                ///
+                /// Generated from these locations:
                 Green = 1,
 
                 ///  Must be `#89CFF0`
+                ///
+                /// Generated from these locations:
                 Blue = 2,
             }
 
@@ -194,6 +200,8 @@ mod root {
             )]
             pub enum Equipment {
                 ///  Equipment of the weapon-type
+                ///
+                /// Generated from these locations:
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
             }
 
@@ -340,12 +348,18 @@ mod root {
             )]
             pub struct Vec3 {
                 ///  East-west direction
+                ///
+                /// Generated from these locations:
                 pub x: f32,
 
                 ///  North-south direction
+                ///
+                /// Generated from these locations:
                 pub y: f32,
 
                 ///  Up-down direction
+                ///
+                /// Generated from these locations:
                 pub z: f32,
             }
 
@@ -540,22 +554,40 @@ mod root {
             )]
             pub struct Monster {
                 ///  Position in the world
+                ///
+                /// Generated from these locations:
                 pub pos: ::core::option::Option<self::Vec3>,
                 ///  Amount of mana left
+                ///
+                /// Generated from these locations:
                 pub mana: i16,
                 ///  Amount of hp left
+                ///
+                /// Generated from these locations:
                 pub hp: i16,
                 ///  Name of monster
+                ///
+                /// Generated from these locations:
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
                 ///  Inventory of monster
+                ///
+                /// Generated from these locations:
                 pub inventory: ::core::option::Option<::planus::alloc::vec::Vec<u8>>,
                 ///  Color of the monster's skin
+                ///
+                /// Generated from these locations:
                 pub color: self::Color,
                 ///  List of all weapons
+                ///
+                /// Generated from these locations:
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
                 ///  Currently equiped item
+                ///
+                /// Generated from these locations:
                 pub equipped: ::core::option::Option<self::Equipment>,
                 ///  The projected path of the monster
+                ///
+                /// Generated from these locations:
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
             }
 
@@ -1237,8 +1269,12 @@ mod root {
             )]
             pub struct Weapon {
                 ///  The name of the weapon
+                ///
+                /// Generated from these locations:
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
                 ///  The damage of the weapon
+                ///
+                /// Generated from these locations:
                 pub damage: i16,
             }
 

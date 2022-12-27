@@ -4,7 +4,7 @@ use std::{
     sync::RwLock,
 };
 
-use codespan::{ByteIndex, FileId, Files, Span};
+use codespan::{ByteIndex, FileId, Files, LineNumber, Span};
 use codespan_reporting::{
     diagnostic::{Diagnostic, Label, Severity},
     term::{
@@ -214,5 +214,9 @@ impl Ctx {
 
     pub fn get_filename(&self, file_id: FileId) -> &Path {
         self.files.name(file_id).as_ref()
+    }
+
+    pub fn get_line_number(&self, file_id: FileId, span: Span) -> LineNumber {
+        self.files.line_index(file_id, span.start()).number()
     }
 }
