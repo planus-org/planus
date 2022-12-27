@@ -3,8 +3,6 @@ use std::collections::HashMap;
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
 
-use crate::ctx::Ctx;
-
 pub type RawIdentifier = string_interner::DefaultSymbol;
 pub type Interner = string_interner::StringInterner;
 
@@ -390,27 +388,6 @@ pub struct NamespacePath {
     pub parts: Vec<RawIdentifier>,
 }
 
-impl NamespacePath {
-    pub fn format(&self, mut out: impl std::fmt::Write, ctx: &Ctx) -> std::fmt::Result {
-        let mut first = true;
-        for &symbol in &self.parts {
-            if first {
-                first = false;
-            } else {
-                write!(out, ".")?;
-            }
-            write!(out, "{}", ctx.resolve_identifier(symbol))?;
-        }
-        Ok(())
-    }
-
-    pub fn to_string(&self, ctx: &Ctx) -> String {
-        let mut out = String::new();
-        self.format(&mut out, ctx).unwrap();
-        out
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Type {
     pub span: Span,
@@ -622,70 +599,5 @@ impl Docstrings {
                     .into_iter()
                     .flatten(),
             )
-    }
-}
-
-impl Type {
-    pub fn to_string(&self, ctx: &Ctx) -> String {
-        pub struct Fmt<F>(pub F)
-        where
-            F: Fn(&mut std::fmt::Formatter) -> std::fmt::Result;
-
-        impl<F> std::fmt::Debug for Fmt<F>
-        where
-            F: Fn(&mut std::fmt::Formatter) -> std::fmt::Result,
-        {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                (self.0)(f)
-            }
-        }
-
-        format!("{:?}", Fmt(|f| self.fmt(ctx, f)))
-    }
-
-    fn fmt(&self, ctx: &Ctx, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
-            TypeKind::Builtin(BuiltinType::Bool) => write!(f, "bool"),
-            TypeKind::Builtin(BuiltinType::String) => write!(f, "string"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::U8)) => write!(f, "uint8"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::U16)) => write!(f, "uint16"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::U32)) => write!(f, "uint32"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::U64)) => write!(f, "uint64"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::I8)) => write!(f, "int8"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::I16)) => write!(f, "int16"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::I32)) => write!(f, "int32"),
-            TypeKind::Builtin(BuiltinType::Integer(IntegerType::I64)) => write!(f, "int64"),
-            TypeKind::Builtin(BuiltinType::Float(FloatType::F32)) => write!(f, "float32"),
-            TypeKind::Builtin(BuiltinType::Float(FloatType::F64)) => write!(f, "float64"),
-            TypeKind::Vector { inner_type } => {
-                write!(f, "[")?;
-                inner_type.fmt(ctx, f)?;
-                write!(f, "]")?;
-                Ok(())
-            }
-            TypeKind::Array { inner_type, size } => {
-                write!(f, "[")?;
-                inner_type.fmt(ctx, f)?;
-                write!(f, ": {size}]")?;
-                Ok(())
-            }
-            TypeKind::Path(path) => path.fmt(ctx, f),
-            TypeKind::Invalid => write!(f, "!"),
-        }
-    }
-}
-
-impl NamespacePath {
-    fn fmt(&self, ctx: &Ctx, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut first = true;
-        for &part in &self.parts {
-            if first {
-                write!(f, "{}", ctx.resolve_identifier(part))?;
-            } else {
-                write!(f, ".{}", ctx.resolve_identifier(part))?;
-            }
-            first = false
-        }
-        Ok(())
     }
 }

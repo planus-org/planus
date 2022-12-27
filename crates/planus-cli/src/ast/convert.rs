@@ -35,12 +35,6 @@ pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
 }
 
 impl<'ctx> CstConverter<'ctx> {
-    fn add_error(&self, error_type: ErrorKind) {
-        self.schema
-            .errors_seen
-            .set(self.schema.errors_seen.get() | error_type);
-    }
-
     fn emit_error(
         &self,
         error_type: ErrorKind,
@@ -48,13 +42,11 @@ impl<'ctx> CstConverter<'ctx> {
         msg: Option<&str>,
     ) {
         self.ctx.emit_error(error_type, labels, msg);
-        self.add_error(error_type);
     }
 
     fn emit_simple_error<T>(&mut self, error_type: ErrorKind, msg: &str) -> Option<T> {
         self.ctx
             .emit_simple_error(error_type, self.schema.file_id, self.current_span, msg);
-        self.add_error(error_type);
         None
     }
 
@@ -461,10 +453,7 @@ impl<'ctx> CstConverter<'ctx> {
             cst::DeclarationKind::Enum(decl) => Some(self.convert_enum(decl)),
             cst::DeclarationKind::Union(decl) => Some(self.convert_union(decl)),
             cst::DeclarationKind::RpcService(decl) => Some(self.convert_rpc_service(decl)),
-            cst::DeclarationKind::Invalid(_) => {
-                self.add_error(ErrorKind::DECLARATION_PARSE_ERROR);
-                None
-            }
+            cst::DeclarationKind::Invalid(_) => None,
         }
     }
 
