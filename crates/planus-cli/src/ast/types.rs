@@ -391,22 +391,17 @@ pub struct NamespacePath {
 }
 
 impl NamespacePath {
-    pub fn format(&self, mut out: impl std::fmt::Write, ctx: &Ctx) -> std::fmt::Result {
+    pub fn to_string(&self, ctx: &Ctx) -> String {
+        let mut out = String::new();
         let mut first = true;
         for &symbol in &self.parts {
             if first {
                 first = false;
             } else {
-                write!(out, ".")?;
+                out.push('.');
             }
-            write!(out, "{}", ctx.resolve_identifier(symbol))?;
+            out.push_str(&ctx.resolve_identifier(symbol));
         }
-        Ok(())
-    }
-
-    pub fn to_string(&self, ctx: &Ctx) -> String {
-        let mut out = String::new();
-        self.format(&mut out, ctx).unwrap();
         out
     }
 }
