@@ -1,7 +1,7 @@
 use std::{env, fmt::Write, fs, process::Command};
 
 use color_eyre::{
-    eyre::{bail, eyre, Context},
+    eyre::{bail, eyre, WrapErr},
     Result,
 };
 
@@ -53,7 +53,7 @@ fn generate_test_code(
     let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust-test";
 
     for entry in std::fs::read_dir(in_dir).wrap_err_with(|| eyre!("Cannot read dir: {}", in_dir))? {
-        let entry = entry.context("Error doing readdir")?;
+        let entry = entry.wrap_err("Error doing readdir")?;
         let file_path = entry.path();
         if !file_path.is_dir()
             && file_path
@@ -81,7 +81,7 @@ fn generate_test_code(
                     .args(["--rust", "-o", out_dir])
                     .arg(&file_path)
                     .status()
-                    .context("Cannot run flatc")?
+                    .wrap_err("Cannot run flatc")?
                     .success());
             }
 
@@ -129,7 +129,7 @@ fn generate_test_code(
             }
 
             std::fs::write(code_file_full_path, code)
-                .with_context(|| eyre!("Cannot write the file {}", generated_full_path))?;
+                .wrap_err_with(|| eyre!("Cannot write the file {}", generated_full_path))?;
 
             // Generate glue code
             writeln!(mod_code, "pub mod {code_module_name};").unwrap();
@@ -137,7 +137,7 @@ fn generate_test_code(
     }
 
     std::fs::write(format!("{out_dir}/mod.rs"), mod_code)
-        .context("Cannot write the api glue code")?;
+        .wrap_err("Cannot write the api glue code")?;
 
     Ok(())
 }
