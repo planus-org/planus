@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct SortedMap<K, V>(pub Vec<(K, V)>);
 

@@ -66,7 +66,7 @@ fn generate_test_code(
             let generated = format!("{file_stem}_planus_generated.rs");
             let generated_full_path = format!("{out_dir}/{generated}");
             let Some(declarations) =
-                planus_translation::intermediate_language::translate_files(&[&file_path])
+                planus_translation::translate_files(&[&file_path])
             else {
                 bail!("Cannot translate code for {}", file_path.display())
             };

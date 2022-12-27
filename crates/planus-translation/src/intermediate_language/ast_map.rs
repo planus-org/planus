@@ -13,10 +13,6 @@ pub struct AstMap {
 }
 
 impl AstMap {
-    pub fn get_file(&self, file_id: FileId) -> Option<&Schema> {
-        Some(&self.asts.get(&file_id)?.0)
-    }
-
     pub fn add_files_recursively(&mut self, ctx: &mut Ctx, file_id: FileId) {
         let mut queue = vec![file_id];
 

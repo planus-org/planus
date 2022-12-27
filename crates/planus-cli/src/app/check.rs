@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::ExitCode};
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
 
-use planus_translation::intermediate_language::translate_files;
+use planus_translation::translate_files;
 
 /// Check validity of .fbs files
 #[derive(Parser)]

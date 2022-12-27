@@ -1,7 +1,7 @@
 use codespan::{ByteIndex, Span};
 use lalrpop_util::ErrorRecovery;
 
-use planus_lexer::{error::LexicalError, TokenMetadata, TokenWithMetadata};
+use planus_lexer::{LexicalError, TokenMetadata, TokenWithMetadata};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ParseError<'input> {

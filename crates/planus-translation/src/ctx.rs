@@ -15,7 +15,7 @@ use codespan_reporting::{
 };
 use indexmap::IndexMap;
 use lalrpop_util::ParseError;
-use planus_lexer::{error::LexicalError, Lexer, TokenWithMetadata};
+use planus_lexer::{Lexer, LexicalError, TokenWithMetadata};
 use planus_types::{
     ast::{self, BuiltinType, FloatType, IntegerType, Interner, RawIdentifier, Type, TypeKind},
     cst,
@@ -23,11 +23,6 @@ use planus_types::{
 };
 
 use crate::error::ErrorKind;
-
-pub struct FullSpan {
-    pub file_id: FileId,
-    pub span: Span,
-}
 
 pub struct Ctx {
     files: Files<String>,

@@ -1,5 +1,5 @@
 use planus_types::cst::*;
-use planus_lexer::{error::LexicalError, Token, TokenWithMetadata, TokenMetadata, Symbol, Keyword};
+use planus_lexer::{LexicalError, Token, TokenWithMetadata, TokenMetadata, Symbol, Keyword};
 use super::grammar_helper::*;
 use crate::ctx::Ctx;
 use codespan::FileId;
