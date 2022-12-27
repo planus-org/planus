@@ -3,13 +3,25 @@ pub use root::*;
 const _: () = ::planus::check_version_compatibility("planus-0.3.1");
 
 /// The root namespace
+///
+/// Generated from these locations:
+/// * File `examples/rust/monster.fbs`
 #[no_implicit_prelude]
 mod root {
     /// The namespace `MyGame`
+    ///
+    /// Generated from these locations:
+    /// * File `examples/rust/monster.fbs`
     pub mod my_game {
         ///  Example IDL file for our monster's schema.
+        ///
+        /// Generated from these locations:
+        /// * File `examples/rust/monster.fbs`
         pub mod sample {
             ///  The possible monster colors
+            ///
+            /// Generated from these locations:
+            /// * Enum `Color` in the file `examples/rust/monster.fbs:6`
             #[derive(
                 Copy,
                 Clone,
@@ -181,6 +193,9 @@ mod root {
             }
 
             ///  Weapons or other equipment
+            ///
+            /// Generated from these locations:
+            /// * Union `Equipment` in the file `examples/rust/monster.fbs:16`
             #[derive(
                 Clone,
                 Debug,
@@ -328,6 +343,9 @@ mod root {
             }
 
             ///  Vector in three dimensions
+            ///
+            /// Generated from these locations:
+            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:23`
             #[derive(
                 Copy,
                 Clone,
@@ -535,6 +553,9 @@ mod root {
             }
 
             ///  An enemy in the game
+            ///
+            /// Generated from these locations:
+            /// * Table `Monster` in the file `examples/rust/monster.fbs:33`
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
@@ -1224,6 +1245,9 @@ mod root {
             }
 
             ///  A weapon is equipment that can be used for attacking
+            ///
+            /// Generated from these locations:
+            /// * Table `Weapon` in the file `examples/rust/monster.fbs:56`
             #[derive(
                 Clone,
                 Debug,

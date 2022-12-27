@@ -80,6 +80,10 @@ impl<'a> Translator<'a> {
             .docstrings
             .docstrings
             .extend(schema.docstrings.docstrings.iter().cloned());
+        namespace
+            .docstrings
+            .locations
+            .extend(schema.docstrings.locations.iter().cloned());
         namespace.docstrings.default_docstring = default_docstring_for_namespace(&namespace_path);
 
         for decl in schema.type_declarations.values() {
@@ -136,7 +140,11 @@ impl<'a> Translator<'a> {
                 Entry::Vacant(entry) => {
                     namespace_path = entry.key().clone();
                     let next_namespace_index = entry.index();
-                    let entry = entry.insert(Default::default());
+                    let entry = entry.insert(Namespace::default());
+                    entry.docstrings.locations.push(format!(
+                        "* File `{}`",
+                        self.ctx.get_filename(schema.file_id).display()
+                    ));
                     entry
                         .child_namespaces
                         .insert(last, NamespaceIndex(namespace_index));

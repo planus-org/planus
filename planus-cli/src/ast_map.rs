@@ -112,9 +112,15 @@ mod tests {
             (file_id3, file_id2, file_id1),
         ] {
             let mut asts = SortedMap::new();
-            asts.insert(file_id1, (Schema::new(file_id1), vec![file_id2]));
-            asts.insert(file_id2, (Schema::new(file_id2), vec![file_id3]));
-            asts.insert(file_id3, (Schema::new(file_id3), vec![]));
+            asts.insert(
+                file_id1,
+                (Schema::new(file_id1, String::new()), vec![file_id2]),
+            );
+            asts.insert(
+                file_id2,
+                (Schema::new(file_id2, String::new()), vec![file_id3]),
+            );
+            asts.insert(file_id3, (Schema::new(file_id3, String::new()), vec![]));
             let reachability = AstMap { asts }.reachability();
             let mut file_id1_reach = [file_id1, file_id2, file_id3];
             let mut file_id2_reach = [file_id2, file_id3];
