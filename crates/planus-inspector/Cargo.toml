@@ -1,0 +1,17 @@
+[package]
+name = "planus-inspector"
+version = "0.3.1"
+edition = "2021"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/planus-org/planus"
+keywords = ["flatbuffers", "serialization", "zero-copy"]
+categories = ["encoding", "data-structures", "memory-management"]
+rust-version = "1.61"
+description = "Internal library for planus."
+
+[dependencies]
+planus-buffer-inspection = { version = "0.3.1", path = "../planus-buffer-inspection" }
+planus-types = { version = "0.3.1", path = "../planus-types" }
+tui = "0.19.0"
+crossterm = "0.25"
+color-eyre = "0.6.2"
