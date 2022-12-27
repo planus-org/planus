@@ -1,3 +1,10 @@
+//! Library for doing code generation for types from [`planus_types`].
+//!
+//! This library is an internal implementation
+//! detail of [planus-cli](https://docs.rs/planus-cli).
+//!
+//! Feel free to use it, however there are no stability guarantees.
+
 use askama::Template;
 use planus_types::intermediate::Declarations;
 

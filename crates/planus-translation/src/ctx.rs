@@ -15,7 +15,7 @@ use codespan_reporting::{
 };
 use indexmap::IndexMap;
 use lalrpop_util::ParseError;
-use planus_lexer::{Lexer, LexicalError, TokenWithMetadata};
+use planus_lexer::{LexicalError, TokenWithMetadata};
 use planus_types::{
     ast::{
         BuiltinType, FloatType, IntegerType, Interner, NamespacePath, RawIdentifier, Type, TypeKind,
@@ -174,7 +174,7 @@ impl Ctx {
     }
 
     pub fn parse_file(&self, file_id: FileId) -> Option<cst::Schema<'_>> {
-        let lexer = Lexer::new(self.files.source(file_id));
+        let lexer = planus_lexer::lexer(self.files.source(file_id));
         let parser = crate::parser::SchemaParser::new();
         let parsed = parser.parse(file_id, self, lexer);
         match parsed {
