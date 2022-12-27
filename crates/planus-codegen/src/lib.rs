@@ -4,12 +4,12 @@ use crate::{
     analysis::run_analysis, backend_translation::run_backend, dot::DotBackend, rust::RustBackend,
 };
 
-pub mod analysis;
-pub mod backend;
-pub mod backend_translation;
-pub mod dot;
-pub mod rust;
-pub mod templates;
+mod analysis;
+mod backend;
+mod backend_translation;
+mod dot;
+mod rust;
+mod templates;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CodegenError {
