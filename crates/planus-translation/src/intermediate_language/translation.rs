@@ -3,15 +3,15 @@ use std::collections::{btree_map, BTreeMap, HashSet};
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
 use indexmap::{map::Entry, IndexMap};
+use planus_types::ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath};
 
-use super::types::*;
 use crate::{
-    ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath},
     ctx::Ctx,
     error::ErrorKind,
     intermediate_language::checks::compatibility,
     util::sorted_map::{SortedMap, SortedSet},
 };
+use planus_types::intermediate::*;
 
 pub struct Translator<'a> {
     ctx: &'a Ctx,
@@ -64,7 +64,7 @@ impl<'a> Translator<'a> {
     pub fn add_schema(&mut self, schema: &ast::Schema) {
         compatibility::check_ast(self.ctx, schema);
         let mut namespace_path = if let Some((_span, path)) = &schema.namespace {
-            AbsolutePath::from_ctx(self.ctx, &path.parts)
+            self.ctx.absolute_path_from_parts(&path.parts)
         } else {
             AbsolutePath::ROOT_PATH
         };
@@ -162,7 +162,7 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         namespace_path: &NamespacePath,
     ) -> Option<TypeKind> {
-        let absolute_path = AbsolutePath::from_ctx(self.ctx, &namespace_path.parts);
+        let absolute_path = self.ctx.absolute_path_from_parts(&namespace_path.parts);
         let mut relative_path = current_namespace.clone();
         relative_path.0.extend(absolute_path.0.iter().cloned());
         let mut hints: Vec<Label<FileId>> = Vec::new();
@@ -365,7 +365,7 @@ impl<'a> Translator<'a> {
         literal: &ast::Literal,
         type_: &Type,
     ) -> Option<Literal> {
-        use crate::intermediate_language::types::{SimpleType::*, TypeKind::*};
+        use planus_types::intermediate::{SimpleType::*, TypeKind::*};
 
         match (&literal.kind, &type_.kind) {
             (LiteralKind::Bool(value), SimpleType(Bool)) => Some(Literal::Bool(*value)),
@@ -1154,7 +1154,7 @@ impl<'a> Translator<'a> {
         }
 
         let mut variants: IndexMap<IntegerLiteral, EnumVariant> = IndexMap::new();
-        let mut next_value = decl.type_.default_value();
+        let mut next_value = IntegerLiteral::default_value_from_type(&decl.type_);
         for (ident, variant) in decl.variants.iter() {
             let mut value = next_value;
             let name = self.ctx.resolve_identifier(*ident);
@@ -1567,55 +1567,6 @@ impl<'a> Translator<'a> {
                 })
                 .next(),
             _ => unreachable!(),
-        }
-    }
-}
-
-impl AbsolutePath {
-    pub fn from_ctx(ctx: &Ctx, parts: &[ast::RawIdentifier]) -> Self {
-        let path = parts.iter().map(|&s| ctx.resolve_identifier(s)).collect();
-        Self(path)
-    }
-}
-
-impl<'a> From<&'a ast::BuiltinType> for TypeKind {
-    fn from(value: &ast::BuiltinType) -> TypeKind {
-        match value {
-            ast::BuiltinType::Bool => TypeKind::SimpleType(SimpleType::Bool),
-            ast::BuiltinType::Integer(typ) => TypeKind::SimpleType(SimpleType::Integer(*typ)),
-            ast::BuiltinType::Float(typ) => TypeKind::SimpleType(SimpleType::Float(*typ)),
-            ast::BuiltinType::String => TypeKind::String,
-        }
-    }
-}
-
-impl ast::IntegerType {
-    pub fn default_value(&self) -> IntegerLiteral {
-        match self {
-            ast::IntegerType::U8 => IntegerLiteral::U8(0),
-            ast::IntegerType::U16 => IntegerLiteral::U16(0),
-            ast::IntegerType::U32 => IntegerLiteral::U32(0),
-            ast::IntegerType::U64 => IntegerLiteral::U64(0),
-            ast::IntegerType::I8 => IntegerLiteral::I8(0),
-            ast::IntegerType::I16 => IntegerLiteral::I16(0),
-            ast::IntegerType::I32 => IntegerLiteral::I32(0),
-            ast::IntegerType::I64 => IntegerLiteral::I64(0),
-        }
-    }
-}
-
-impl IntegerLiteral {
-    #[must_use]
-    pub fn next(&self) -> IntegerLiteral {
-        match self {
-            IntegerLiteral::U8(n) => IntegerLiteral::U8(n.wrapping_add(1)),
-            IntegerLiteral::I8(n) => IntegerLiteral::I8(n.wrapping_add(1)),
-            IntegerLiteral::U16(n) => IntegerLiteral::U16(n.wrapping_add(1)),
-            IntegerLiteral::I16(n) => IntegerLiteral::I16(n.wrapping_add(1)),
-            IntegerLiteral::U32(n) => IntegerLiteral::U32(n.wrapping_add(1)),
-            IntegerLiteral::I32(n) => IntegerLiteral::I32(n.wrapping_add(1)),
-            IntegerLiteral::U64(n) => IntegerLiteral::U64(n.wrapping_add(1)),
-            IntegerLiteral::I64(n) => IntegerLiteral::I64(n.wrapping_add(1)),
         }
     }
 }

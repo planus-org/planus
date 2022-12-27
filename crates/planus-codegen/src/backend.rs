@@ -1,9 +1,10 @@
+use planus_types::{ast, intermediate::*};
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
 };
 
-use crate::{ast, codegen::backend_translation::BackendVariant, intermediate_language::types::*};
+use crate::backend_translation::BackendVariant;
 
 pub type Keywords = HashSet<&'static str>;
 

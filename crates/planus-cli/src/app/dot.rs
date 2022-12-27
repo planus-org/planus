@@ -1,9 +1,9 @@
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
-use anyhow::Result;
 use clap::{Parser, ValueHint};
-
-use crate::codegen::dot::generate_code;
+use color_eyre::{eyre::bail, Result};
+use planus_codegen::generate_dot;
+use planus_translation::intermediate_language::translate_files;
 
 /// Generate a dot graph
 #[derive(Parser)]
@@ -19,7 +19,16 @@ pub struct Command {
 
 impl Command {
     pub fn run(self, _options: super::AppOptions) -> Result<()> {
-        generate_code(&self.files, &self.output_filename)?;
+        let Some(declarations) = translate_files(&self.files)
+            else {
+                bail!("Bailing because of errors")
+            };
+
+        let res = generate_dot(&declarations);
+
+        let mut file = std::fs::File::create(&self.output_filename)?;
+        file.write_all(res.as_bytes())?;
+        file.flush()?;
 
         Ok(())
     }

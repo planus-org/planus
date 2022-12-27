@@ -28,7 +28,7 @@ pub enum Command {
 pub struct AppOptions {}
 
 impl App {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub fn run(self) -> color_eyre::Result<()> {
         match self.command {
             Command::Dot(command) => command.run(self.app_options)?,
             Command::Rust(command) => command.run(self.app_options)?,

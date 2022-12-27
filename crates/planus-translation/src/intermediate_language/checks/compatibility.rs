@@ -1,6 +1,7 @@
 use codespan_reporting::diagnostic::Label;
+use planus_types::ast;
 
-use crate::{ast, ctx::Ctx, error::ErrorKind};
+use crate::{ctx::Ctx, error::ErrorKind};
 
 pub fn check_ast(ctx: &Ctx, schema: &ast::Schema) {
     for native_include in &schema.native_includes {

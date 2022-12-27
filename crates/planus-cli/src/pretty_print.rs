@@ -1,11 +1,8 @@
 use codespan::Span;
-
-use crate::{
-    cst::{
-        AttributeKind, Declaration, DeclarationKind, EnumValDeclaration, Expr, FieldDeclaration,
-        Metadata, NamespacePath, RpcMethod, Schema, StringLiteral, Type, UnionValDeclaration,
-    },
-    lexer::{Comment, CommentBlock, TokenMetadata, TokenWithMetadata},
+use planus_lexer::{Comment, CommentBlock, TokenMetadata, TokenWithMetadata};
+use planus_types::cst::{
+    self, AttributeKind, Declaration, DeclarationKind, EnumValDeclaration, Expr, FieldDeclaration,
+    Metadata, NamespacePath, RpcMethod, Schema, StringLiteral, Type, UnionValDeclaration,
 };
 
 const INDENT_STRING: &str = "    ";
@@ -593,19 +590,19 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
 
     fn write_type(&mut self, decl: &Type<'_>) -> Result<(), std::fmt::Error> {
         match &decl.kind {
-            crate::cst::TypeKind::Vector(typ) => {
+            cst::TypeKind::Vector(typ) => {
                 self.write_str("[")?;
                 self.write_type(&typ.inner_type)?;
                 self.write_str("]")?;
             }
-            crate::cst::TypeKind::Array(typ) => {
+            cst::TypeKind::Array(typ) => {
                 self.write_str("[")?;
                 self.write_type(&typ.inner_type)?;
                 self.write_str(": ")?;
                 self.write_expr(&typ.size)?;
                 self.write_str("]")?;
             }
-            crate::cst::TypeKind::Path(path) => {
+            cst::TypeKind::Path(path) => {
                 self.write_namespace_path(path)?;
             }
         }
@@ -614,11 +611,11 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
 
     fn write_expr(&mut self, decl: &Expr<'_>) -> Result<(), std::fmt::Error> {
         match &decl.kind {
-            crate::cst::ExprKind::Ident(ident) => self.write_str(ident.ident),
-            crate::cst::ExprKind::Integer(literal) => self.write_str(literal.value),
-            crate::cst::ExprKind::Float(literal) => self.write_str(literal.value),
-            crate::cst::ExprKind::String(literal) => self.write_span(literal.span),
-            crate::cst::ExprKind::List(literal) => {
+            cst::ExprKind::Ident(ident) => self.write_str(ident.ident),
+            cst::ExprKind::Integer(literal) => self.write_str(literal.value),
+            cst::ExprKind::Float(literal) => self.write_str(literal.value),
+            cst::ExprKind::String(literal) => self.write_span(literal.span),
+            cst::ExprKind::List(literal) => {
                 self.write_str("[")?;
                 let mut first = true;
                 for value in &literal.values {
@@ -631,7 +628,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 self.write_str("]")?;
                 Ok(())
             }
-            crate::cst::ExprKind::Signed { sign, inner } => {
+            cst::ExprKind::Signed { sign, inner } => {
                 self.write_str(if sign.is_negative { "-" } else { "+" })?;
                 self.write_expr(inner)
             }

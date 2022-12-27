@@ -1,16 +1,16 @@
+use planus_types::{
+    ast::Docstrings,
+    intermediate::{
+        AbsolutePath, DeclarationIndex, DeclarationKind, Declarations, NamespaceIndex, SimpleType,
+        Type, TypeKind,
+    },
+};
 use vec_map::VecMap;
 
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, ResolvedType,
 };
-use crate::{
-    ast::Docstrings,
-    codegen::backend::{DeclInfo, Keywords, Names, RelativeNamespace},
-    intermediate_language::types::{
-        AbsolutePath, DeclarationIndex, DeclarationKind, Declarations, NamespaceIndex, SimpleType,
-        Type, TypeKind,
-    },
-};
+use crate::backend::{DeclInfo, Keywords, Names, RelativeNamespace};
 
 #[derive(Debug, Clone)]
 pub struct BackendNamespace<B: ?Sized + Backend> {
@@ -103,7 +103,7 @@ impl<F> BackendTableFields<F> {
         backend: &mut B,
         translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
         full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
-        decl: &'a crate::intermediate_language::types::Table,
+        decl: &'a planus_types::intermediate::Table,
         decl_path: &AbsolutePath,
         translated_decl: &B::TableInfo,
     ) -> BackendTableFields<<B as Backend>::TableFieldInfo> {

@@ -494,3 +494,45 @@ impl RpcService {
         children.into_iter().collect()
     }
 }
+
+impl IntegerLiteral {
+    pub fn default_value_from_type(type_: &crate::ast::IntegerType) -> Self {
+        match type_ {
+            crate::ast::IntegerType::U8 => Self::U8(0),
+            crate::ast::IntegerType::U16 => Self::U16(0),
+            crate::ast::IntegerType::U32 => Self::U32(0),
+            crate::ast::IntegerType::U64 => Self::U64(0),
+            crate::ast::IntegerType::I8 => Self::I8(0),
+            crate::ast::IntegerType::I16 => Self::I16(0),
+            crate::ast::IntegerType::I32 => Self::I32(0),
+            crate::ast::IntegerType::I64 => Self::I64(0),
+        }
+    }
+
+    #[must_use]
+    pub fn next(&self) -> Self {
+        match self {
+            Self::U8(n) => Self::U8(n.wrapping_add(1)),
+            Self::I8(n) => Self::I8(n.wrapping_add(1)),
+            Self::U16(n) => Self::U16(n.wrapping_add(1)),
+            Self::I16(n) => Self::I16(n.wrapping_add(1)),
+            Self::U32(n) => Self::U32(n.wrapping_add(1)),
+            Self::I32(n) => Self::I32(n.wrapping_add(1)),
+            Self::U64(n) => Self::U64(n.wrapping_add(1)),
+            Self::I64(n) => Self::I64(n.wrapping_add(1)),
+        }
+    }
+}
+
+impl<'a> From<&'a crate::ast::BuiltinType> for TypeKind {
+    fn from(value: &crate::ast::BuiltinType) -> TypeKind {
+        match value {
+            crate::ast::BuiltinType::Bool => TypeKind::SimpleType(SimpleType::Bool),
+            crate::ast::BuiltinType::Integer(typ) => {
+                TypeKind::SimpleType(SimpleType::Integer(*typ))
+            }
+            crate::ast::BuiltinType::Float(typ) => TypeKind::SimpleType(SimpleType::Float(*typ)),
+            crate::ast::BuiltinType::String => TypeKind::String,
+        }
+    }
+}

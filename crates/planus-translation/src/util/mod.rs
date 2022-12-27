@@ -32,7 +32,3 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     }
     ret
 }
-
-pub fn align_up(value: u32, alignment: u32) -> u32 {
-    ((value + alignment - 1) / alignment) * alignment
-}

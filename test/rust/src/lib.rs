@@ -15,7 +15,7 @@ mod table_reader;
 pub mod tests {
     use std::path::Path;
 
-    use anyhow::Result;
+    use color_eyre::Result;
 
     pub fn compare_regenerate_file(
         path: impl AsRef<Path>,

@@ -1,6 +1,9 @@
 use std::{env, fmt::Write, fs, process::Command};
 
-use anyhow::{format_err, Context, Result};
+use color_eyre::{
+    eyre::{bail, eyre, Context},
+    Result,
+};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=build.rs");
@@ -38,7 +41,7 @@ fn generate_test_code(
     template: Option<&str>,
     generate_flatc: bool,
 ) -> Result<()> {
-    fs::create_dir_all(out_dir).with_context(|| format_err!("Cannot create dir: {}", out_dir))?;
+    fs::create_dir_all(out_dir).wrap_err_with(|| eyre!("Cannot create dir: {}", out_dir))?;
 
     let mut mod_code = String::new();
 
@@ -47,9 +50,7 @@ fn generate_test_code(
     // I could think of, but it's still not pretty.
     let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust-test";
 
-    for entry in
-        std::fs::read_dir(in_dir).with_context(|| format_err!("Cannot read dir: {}", in_dir))?
-    {
+    for entry in std::fs::read_dir(in_dir).wrap_err_with(|| eyre!("Cannot read dir: {}", in_dir))? {
         let entry = entry.context("Error doing readdir")?;
         let file_path = entry.path();
         if !file_path.is_dir()
@@ -62,8 +63,15 @@ fn generate_test_code(
             // Generate planus code
             let generated = format!("{file_stem}_planus_generated.rs");
             let generated_full_path = format!("{out_dir}/{generated}");
-            planus_cli::codegen::rust::generate_code(&[&file_path], &generated_full_path)
-                .with_context(|| format_err!("Cannot generate code for {}", file_path.display()))?;
+            let Some(declarations) =
+                planus_translation::intermediate_language::translate_files(&[&file_path])
+            else {
+                bail!("Cannot translate code for {}", file_path.display())
+            };
+            let code = planus_codegen::generate_rust(&declarations)
+                .wrap_err_with(|| eyre!("Cannot codegen for {}", file_path.display()))?;
+            std::fs::write(&generated_full_path, code)
+                .wrap_err_with(|| eyre!("Cannot write output to {}", generated_full_path))?;
 
             let flatc_generated = format!("{file_stem}_generated.rs");
             if generate_flatc && is_main_crate {
@@ -119,7 +127,7 @@ fn generate_test_code(
             }
 
             std::fs::write(code_file_full_path, code)
-                .with_context(|| format_err!("Cannot write the file {}", generated_full_path))?;
+                .with_context(|| eyre!("Cannot write the file {}", generated_full_path))?;
 
             // Generate glue code
             writeln!(mod_code, "pub mod {code_module_name};").unwrap();

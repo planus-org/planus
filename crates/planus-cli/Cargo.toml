@@ -11,35 +11,17 @@ rust-version = "1.61"
 include = ["templates", "/src", "askama.toml", "build.rs"]
 description = "Command-line utility for planus."
 
+[[bin]]
+name = "planus"
+path = "src/main.rs"
+
 [dependencies]
-anyhow = "1.0.40"
+planus-codegen = { version = "0.3.1", path = "../planus-codegen" }
+planus-translation = { version = "0.3.1", path = "../planus-translation" }
+planus-lexer = { version = "0.3.1", path = "../planus-lexer" }
+planus-types = { version = "0.3.1", path = "../planus-types" }
 askama = "0.11"
-atty = "0.2.14"
-bitflags = "1.2.1"
 clap = { version = "3.2.10", features = ["derive", "deprecated"] }
 clap_complete = "3.0.6"
 codespan = "0.11.1"
-codespan-reporting = "0.11.1"
-derive_more = "0.99.14"
-heck = "0.4.0"
-indexmap = "1.7.0"
-lalrpop-util = "0.19.5"
-logos = "0.12.0"
-num-traits = "0.2.14"
-random_color = "0.6.1"
-regex = "1.5.4"
-string-interner = "0.14.0"
-thiserror = "1.0.24"
-vec_map = "0.8.2"
-
-[build-dependencies]
-derive_more = "0.99.14"
-lalrpop = "0.19.5"
-
-[dev-dependencies]
-rand = "0.8.4"
-
-[lib]
-
-[[bin]]
-name = "planus"
+color-eyre = "0.6.2"

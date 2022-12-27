@@ -1,18 +1,14 @@
-use std::{borrow::Cow, io::Write, path::Path};
+use std::borrow::Cow;
 
-use askama::Template;
+use planus_types::intermediate::{AssignMode, DeclarationIndex, Literal};
 
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, ResolvedType,
 };
-use crate::{
-    ctx::Ctx,
-    intermediate_language::types::{AssignMode, DeclarationIndex, Literal},
-};
 
 #[derive(Debug, Clone)]
 pub struct DotBackend {
-    color_seed: u64,
+    pub color_seed: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -145,8 +141,8 @@ impl Backend for DotBackend {
     fn generate_namespace(
         &mut self,
         _namespace_names: &mut NamespaceNames<'_, '_>,
-        namespace_name: &crate::intermediate_language::types::AbsolutePath,
-        _namespace: &crate::intermediate_language::types::Namespace,
+        namespace_name: &planus_types::intermediate::AbsolutePath,
+        _namespace: &planus_types::intermediate::Namespace,
     ) -> Namespace {
         Namespace {
             is_root: namespace_name.0.is_empty(),
@@ -158,8 +154,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Table,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::Table,
     ) -> Table {
         Table {
             decl_id,
@@ -172,8 +168,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Struct,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::Struct,
     ) -> Struct {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
@@ -187,8 +183,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        decl: &crate::intermediate_language::types::Enum,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        decl: &planus_types::intermediate::Enum,
     ) -> Enum {
         Enum {
             decl_id,
@@ -202,8 +198,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Union,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::Union,
     ) -> Union {
         Union {
             decl_id,
@@ -216,8 +212,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::RpcService,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::RpcService,
     ) -> RpcService {
         RpcService {
             decl_id,
@@ -229,9 +225,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::TableInfo,
-        _parent: &crate::intermediate_language::types::Table,
+        _parent: &planus_types::intermediate::Table,
         field_name: &str,
-        field: &crate::intermediate_language::types::TableField,
+        field: &planus_types::intermediate::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -272,9 +268,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::StructInfo,
-        _parent: &crate::intermediate_language::types::Struct,
+        _parent: &planus_types::intermediate::Struct,
         field_name: &str,
-        _field: &crate::intermediate_language::types::StructField,
+        _field: &planus_types::intermediate::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -291,9 +287,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::EnumInfo,
-        _parent: &crate::intermediate_language::types::Enum,
+        _parent: &planus_types::intermediate::Enum,
         key: &str,
-        value: &crate::intermediate_language::types::IntegerLiteral,
+        value: &planus_types::intermediate::IntegerLiteral,
     ) -> EnumVariant {
         EnumVariant {
             name: key.to_string(),
@@ -305,10 +301,10 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::UnionInfo,
-        _parent: &crate::intermediate_language::types::Union,
+        _parent: &planus_types::intermediate::Union,
         key: &str,
         _index: u8,
-        _value: &crate::intermediate_language::types::UnionVariant,
+        _value: &planus_types::intermediate::UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -325,33 +321,10 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::RpcServiceInfo,
-        _parent: &crate::intermediate_language::types::RpcService,
+        _parent: &planus_types::intermediate::RpcService,
         _method_name: &str,
-        _method: &crate::intermediate_language::types::RpcMethod,
+        _method: &planus_types::intermediate::RpcMethod,
     ) -> RpcMethod {
         todo!()
     }
-}
-
-pub fn generate_code<P: AsRef<Path>>(
-    input_files: &[P],
-    output_filename: &Path,
-) -> anyhow::Result<()> {
-    let mut ctx = Ctx::default();
-    let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
-
-    if ctx.has_errors() {
-        anyhow::bail!("Bailing because of errors")
-    }
-
-    let output =
-        super::backend_translation::run_backend(&mut DotBackend { color_seed: 0 }, &declarations);
-
-    let res = super::templates::dot::Namespace(&output).render().unwrap();
-
-    let mut file = std::fs::File::create(output_filename)?;
-    file.write_all(res.as_bytes())?;
-    file.flush()?;
-
-    Ok(())
 }

@@ -1,9 +1,6 @@
-use crate::intermediate_language::{
-    analysis::{DeclarationAnalysis, WasChanged},
-    types::{
-        AssignMode, Declaration, DeclarationIndex, DeclarationKind, Declarations, SimpleType,
-        TypeKind,
-    },
+use crate::analysis::{DeclarationAnalysis, WasChanged};
+use planus_types::intermediate::{
+    AssignMode, Declaration, DeclarationIndex, DeclarationKind, Declarations, SimpleType, TypeKind,
 };
 
 pub struct DefaultAnalysis;

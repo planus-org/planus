@@ -20,5 +20,6 @@ planus = { path = "../../crates/planus", default-features = false, features = [
 serde = { version = "1.0.132", default-features = false, features = ["derive"] }
 
 [build-dependencies]
-anyhow = "1.0.51"
-planus-cli = { path = "../../crates/planus-cli" }
+color-eyre = "0.6.2"
+planus-codegen = { path = "../../crates/planus-codegen" }
+planus-translation = { path = "../../crates/planus-translation" }

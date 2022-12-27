@@ -19,6 +19,7 @@ use planus_lexer::{error::LexicalError, Lexer, TokenWithMetadata};
 use planus_types::{
     ast::{self, BuiltinType, FloatType, IntegerType, Interner, RawIdentifier, Type, TypeKind},
     cst,
+    intermediate::AbsolutePath,
 };
 
 use crate::error::ErrorKind;
@@ -252,12 +253,12 @@ impl Ctx {
                 TypeKind::Builtin(BuiltinType::Float(FloatType::F64)) => out.push_str("float64"),
                 TypeKind::Vector { inner_type } => {
                     out.push('[');
-                    format_type(ctx, &*inner_type, out);
+                    format_type(ctx, inner_type, out);
                     out.push(']');
                 }
                 TypeKind::Array { inner_type, size } => {
                     out.push('[');
-                    format_type(ctx, &*inner_type, out);
+                    format_type(ctx, inner_type, out);
                     out.push_str(&format!(": {size}]"));
                 }
                 TypeKind::Path(path) => {
@@ -272,5 +273,10 @@ impl Ctx {
         let mut res = String::new();
         format_type(self, type_, &mut res);
         res
+    }
+
+    pub fn absolute_path_from_parts(&self, parts: &[ast::RawIdentifier]) -> AbsolutePath {
+        let path = parts.iter().map(|&s| self.resolve_identifier(s)).collect();
+        AbsolutePath(path)
     }
 }

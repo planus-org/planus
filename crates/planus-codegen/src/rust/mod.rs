@@ -1,25 +1,27 @@
-mod analysis;
+pub mod analysis;
 
-use std::{borrow::Cow, io::Write, path::Path, process::Command};
+use std::{
+    borrow::Cow,
+    io::Write,
+    process::{Command, Stdio},
+};
 
-use askama::Template;
 use heck::{ToSnakeCase, ToUpperCamelCase};
+use planus_types::{
+    ast::{FloatType, IntegerType},
+    intermediate::{AssignMode, DeclarationIndex, Literal},
+};
 
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, RelativeNamespace,
     ResolvedType,
 };
-use crate::{
-    ast::{FloatType, IntegerType},
-    ctx::Ctx,
-    intermediate_language::types::{AssignMode, DeclarationIndex, Literal},
-};
 
 #[derive(Debug, Clone)]
 pub struct RustBackend {
-    default_analysis: Vec<bool>,
-    eq_analysis: Vec<bool>,
-    infallible_analysis: Vec<bool>,
+    pub default_analysis: Vec<bool>,
+    pub eq_analysis: Vec<bool>,
+    pub infallible_analysis: Vec<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -193,8 +195,8 @@ impl Backend for RustBackend {
     fn generate_namespace(
         &mut self,
         namespace_names: &mut NamespaceNames<'_, '_>,
-        namespace_name: &crate::intermediate_language::types::AbsolutePath,
-        _namespace: &crate::intermediate_language::types::Namespace,
+        namespace_name: &planus_types::intermediate::AbsolutePath,
+        _namespace: &planus_types::intermediate::Namespace,
     ) -> Namespace {
         let name = namespace_name.0.last().map_or_else(String::new, |name| {
             reserve_module_name(name, namespace_names)
@@ -207,8 +209,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Table,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::Table,
     ) -> Table {
         let decl_name = decl_name.0.last().unwrap();
         Table {
@@ -225,8 +227,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::Struct,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::Struct,
     ) -> Struct {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
@@ -243,8 +245,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        decl: &crate::intermediate_language::types::Enum,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        decl: &planus_types::intermediate::Enum,
     ) -> Enum {
         let decl_name = decl_name.0.last().unwrap();
         Enum {
@@ -258,8 +260,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &crate::intermediate_language::types::AbsolutePath,
-        decl: &crate::intermediate_language::types::Union,
+        decl_name: &planus_types::intermediate::AbsolutePath,
+        decl: &planus_types::intermediate::Union,
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
         let ref_name = reserve_type_name(&format!("{decl_name}Ref"), declaration_names);
@@ -283,8 +285,8 @@ impl Backend for RustBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _decl_id: DeclarationIndex,
-        _decl_name: &crate::intermediate_language::types::AbsolutePath,
-        _decl: &crate::intermediate_language::types::RpcService,
+        _decl_name: &planus_types::intermediate::AbsolutePath,
+        _decl: &planus_types::intermediate::RpcService,
     ) -> RpcService {
         RpcService {}
     }
@@ -293,9 +295,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::TableInfo,
-        _parent: &crate::intermediate_language::types::Table,
+        _parent: &planus_types::intermediate::Table,
         field_name: &str,
-        field: &crate::intermediate_language::types::TableField,
+        field: &planus_types::intermediate::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
         let name = reserve_field_name(
@@ -767,9 +769,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::StructInfo,
-        _parent: &crate::intermediate_language::types::Struct,
+        _parent: &planus_types::intermediate::Struct,
         field_name: &str,
-        _field: &crate::intermediate_language::types::StructField,
+        _field: &planus_types::intermediate::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
         let name = reserve_field_name(
@@ -836,9 +838,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::EnumInfo,
-        _parent: &crate::intermediate_language::types::Enum,
+        _parent: &planus_types::intermediate::Enum,
         key: &str,
-        value: &crate::intermediate_language::types::IntegerLiteral,
+        value: &planus_types::intermediate::IntegerLiteral,
     ) -> EnumVariant {
         let name =
             reserve_rust_enum_variant_name(key, "name", &mut translation_context.declaration_names);
@@ -853,10 +855,10 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::UnionInfo,
-        _parent: &crate::intermediate_language::types::Union,
+        _parent: &planus_types::intermediate::Union,
         key: &str,
         _index: u8,
-        _value: &crate::intermediate_language::types::UnionVariant,
+        _value: &planus_types::intermediate::UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
         let create_name = reserve_field_name(
@@ -929,9 +931,9 @@ impl Backend for RustBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::RpcServiceInfo,
-        _parent: &crate::intermediate_language::types::RpcService,
+        _parent: &planus_types::intermediate::RpcService,
         _method_name: &str,
-        _method: &crate::intermediate_language::types::RpcMethod,
+        _method: &planus_types::intermediate::RpcMethod,
     ) -> RpcMethod {
         todo!()
     }
@@ -957,47 +959,32 @@ fn float_type(type_: &FloatType) -> &'static str {
     }
 }
 
-pub fn format_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
-    let output = Command::new("rustfmt")
-        .args([path.as_ref().as_os_str()])
-        .output()?;
+pub fn format_string(s: &str) -> Result<String, crate::CodegenError> {
+    let mut child = Command::new("rustfmt")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
 
-    if !output.stderr.is_empty() {
-        println!("{}", String::from_utf8(output.stderr).unwrap());
+    {
+        let child_stdin = child.stdin.as_mut().unwrap();
+        child_stdin.write_all(s.as_bytes())?;
     }
 
-    Ok(())
-}
+    let output = child.wait_with_output()?;
 
-pub fn generate_code(
-    input_files: &[impl AsRef<Path>],
-    output_filename: impl AsRef<Path>,
-) -> anyhow::Result<()> {
-    let mut ctx = Ctx::default();
-    let declarations = crate::intermediate_language::translate_files(&mut ctx, input_files);
-    let default_analysis = declarations.run_analysis(&mut analysis::DefaultAnalysis);
-    let eq_analysis = declarations.run_analysis(&mut analysis::EqAnalysis);
-    let infallible_analysis =
-        declarations.run_analysis(&mut analysis::InfallibleConversionAnalysis);
-
-    if ctx.has_errors() {
-        anyhow::bail!("Bailing because of errors")
+    if output.status.success() && output.stderr.is_empty() {
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    } else if output.stderr.is_empty() {
+        Err(crate::CodegenError::Other(format!(
+            "rustfmt failed with exit code {}",
+            output.status
+        )))
+    } else {
+        Err(crate::CodegenError::Other(format!(
+            "rustfmt failed with exit code {} and message:\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).into_owned(),
+        )))
     }
-
-    let output = super::backend_translation::run_backend(
-        &mut RustBackend {
-            default_analysis,
-            eq_analysis,
-            infallible_analysis,
-        },
-        &declarations,
-    );
-
-    let res = super::templates::rust::Namespace(&output).render().unwrap();
-    let mut file = std::fs::File::create(&output_filename)?;
-    file.write_all(res.as_bytes())?;
-    file.flush()?;
-
-    format_file(output_filename)?;
-    Ok(())
 }

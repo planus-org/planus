@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
 use clap::{Parser, ValueHint};
+use color_eyre::{eyre::bail, Result};
+use planus_translation::ctx::Ctx;
 
-use crate::ctx::Ctx;
+use crate::pretty_print;
 
 /// Format .fbs files
 #[derive(Parser)]
@@ -22,10 +23,10 @@ impl Command {
         let file_id = ctx.add_file(&self.file, []).unwrap();
         if let Some(parsed) = ctx.parse_file(file_id) {
             if ctx.has_errors() && !self.ignore_errors {
-                anyhow::bail!("Bailing because of errors");
+                bail!("Bailing because of errors");
             } else {
                 let mut s = String::new();
-                crate::cst::pretty_print(ctx.get_source(file_id), &parsed, &mut s)?;
+                pretty_print::pretty_print(ctx.get_source(file_id), &parsed, &mut s)?;
                 print!("{s}");
             }
         }

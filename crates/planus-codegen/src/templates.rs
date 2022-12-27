@@ -17,7 +17,7 @@ macro_rules! template_module {
     ($name:ident, $backend:ty, [$namespace:literal, $struct:literal, $table:literal, $enum:literal, $union:literal, $rpc_service:literal]) => {
         pub mod $name {
             #[allow(unused_imports)]
-            use crate::codegen::backend_translation::{
+            use crate::backend_translation::{
                 BackendDeclaration, BackendEnum, BackendNamespace, BackendRpcService,
                 BackendStruct, BackendTable, BackendTableFieldType, BackendUnion,
             };
@@ -34,7 +34,7 @@ macro_rules! template_module {
 
 template_module!(
     rust,
-    crate::codegen::rust::RustBackend,
+    crate::rust::RustBackend,
     [
         "rust/namespace.template",
         "rust/struct.template",
@@ -47,7 +47,7 @@ template_module!(
 
 template_module!(
     dot,
-    crate::codegen::dot::DotBackend,
+    crate::dot::DotBackend,
     [
         "dot/namespace.template",
         "dot/struct.template",

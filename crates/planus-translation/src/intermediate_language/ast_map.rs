@@ -1,8 +1,8 @@
 use codespan::FileId;
 use codespan_reporting::diagnostic::Label;
+use planus_types::ast::Schema;
 
 use crate::{
-    ast::Schema,
     ctx::Ctx,
     util::sorted_map::{sorted_map, SortedMap, SortedSet},
 };
@@ -25,7 +25,7 @@ impl AstMap {
                 sorted_map::Entry::Occupied(_) => continue,
                 sorted_map::Entry::Vacant(entry) => {
                     if let Some(cst) = ctx.parse_file(file_id) {
-                        let ast = crate::ast::convert::convert(ctx, file_id, cst);
+                        let ast = crate::ast_convert::convert(ctx, file_id, cst);
                         let dependencies = ast
                             .includes
                             .iter()
