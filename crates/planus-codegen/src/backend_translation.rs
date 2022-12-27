@@ -2,7 +2,7 @@ use planus_types::{
     ast::Docstrings,
     intermediate::{
         AbsolutePath, DeclarationIndex, DeclarationKind, Declarations, NamespaceIndex, SimpleType,
-        Type, TypeKind,
+        Table, Type, TypeKind,
     },
 };
 use vec_map::VecMap;
@@ -104,7 +104,7 @@ impl<F> BackendTableFields<F> {
         backend: &mut B,
         translation_context: &mut DeclarationTranslationContext<'a, '_, B>,
         full_translated_decls: &'a VecMap<BackendDeclaration<B>>,
-        decl: &'a planus_types::intermediate::Table,
+        decl: &'a Table,
         decl_path: &AbsolutePath,
         translated_decl: &B::TableInfo,
     ) -> BackendTableFields<<B as Backend>::TableFieldInfo> {

@@ -1,4 +1,5 @@
 use askama::Template;
+use planus_types::intermediate::Declarations;
 
 use crate::{
     analysis::run_analysis, backend_translation::run_backend, dot::DotBackend, rust::RustBackend,
@@ -19,9 +20,7 @@ pub enum CodegenError {
     Other(String),
 }
 
-pub fn generate_rust(
-    declarations: &planus_types::intermediate::Declarations,
-) -> Result<String, CodegenError> {
+pub fn generate_rust(declarations: &Declarations) -> Result<String, CodegenError> {
     let default_analysis = run_analysis(declarations, &mut rust::analysis::DefaultAnalysis);
     let eq_analysis = run_analysis(declarations, &mut rust::analysis::EqAnalysis);
     let infallible_analysis = run_analysis(
@@ -41,7 +40,7 @@ pub fn generate_rust(
     Ok(res)
 }
 
-pub fn generate_dot(declarations: &planus_types::intermediate::Declarations) -> String {
+pub fn generate_dot(declarations: &Declarations) -> String {
     let output = run_backend(&mut DotBackend { color_seed: 0 }, declarations);
     let res = templates::dot::Namespace(&output).render().unwrap();
     res

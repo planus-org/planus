@@ -17,7 +17,9 @@ use indexmap::IndexMap;
 use lalrpop_util::ParseError;
 use planus_lexer::{Lexer, LexicalError, TokenWithMetadata};
 use planus_types::{
-    ast::{self, BuiltinType, FloatType, IntegerType, Interner, RawIdentifier, Type, TypeKind},
+    ast::{
+        BuiltinType, FloatType, IntegerType, Interner, NamespacePath, RawIdentifier, Type, TypeKind,
+    },
     cst,
     intermediate::AbsolutePath,
 };
@@ -217,7 +219,7 @@ impl Ctx {
         self.files.line_index(file_id, span.start()).number()
     }
 
-    pub fn format_namespace_path(&self, namespace_path: &ast::NamespacePath) -> String {
+    pub fn format_namespace_path(&self, namespace_path: &NamespacePath) -> String {
         let mut out = String::new();
         let mut first = true;
         for &symbol in &namespace_path.parts {
@@ -270,7 +272,7 @@ impl Ctx {
         res
     }
 
-    pub fn absolute_path_from_parts(&self, parts: &[ast::RawIdentifier]) -> AbsolutePath {
+    pub fn absolute_path_from_parts(&self, parts: &[RawIdentifier]) -> AbsolutePath {
         let path = parts.iter().map(|&s| self.resolve_identifier(s)).collect();
         AbsolutePath(path)
     }

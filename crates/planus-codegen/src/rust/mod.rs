@@ -9,7 +9,7 @@ use std::{
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{AssignMode, DeclarationIndex, Literal},
+    intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal},
 };
 
 use super::backend::{
@@ -195,8 +195,8 @@ impl Backend for RustBackend {
     fn generate_namespace(
         &mut self,
         namespace_names: &mut NamespaceNames<'_, '_>,
-        namespace_name: &planus_types::intermediate::AbsolutePath,
-        _namespace: &planus_types::intermediate::Namespace,
+        namespace_name: &AbsolutePath,
+        _namespace: &intermediate::Namespace,
     ) -> Namespace {
         let name = namespace_name.0.last().map_or_else(String::new, |name| {
             reserve_module_name(name, namespace_names)
@@ -209,8 +209,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::Table,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::Table,
     ) -> Table {
         let decl_name = decl_name.0.last().unwrap();
         Table {
@@ -227,8 +227,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::Struct,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::Struct,
     ) -> Struct {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
@@ -245,8 +245,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        decl: &planus_types::intermediate::Enum,
+        decl_name: &AbsolutePath,
+        decl: &intermediate::Enum,
     ) -> Enum {
         let decl_name = decl_name.0.last().unwrap();
         Enum {
@@ -260,8 +260,8 @@ impl Backend for RustBackend {
         declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        decl: &planus_types::intermediate::Union,
+        decl_name: &AbsolutePath,
+        decl: &intermediate::Union,
     ) -> Union {
         let decl_name = decl_name.0.last().unwrap();
         let ref_name = reserve_type_name(&format!("{decl_name}Ref"), declaration_names);
@@ -285,8 +285,8 @@ impl Backend for RustBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         _decl_id: DeclarationIndex,
-        _decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::RpcService,
+        _decl_name: &AbsolutePath,
+        _decl: &intermediate::RpcService,
     ) -> RpcService {
         RpcService {}
     }
@@ -295,9 +295,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::TableInfo,
-        _parent: &planus_types::intermediate::Table,
+        _parent: &intermediate::Table,
         field_name: &str,
-        field: &planus_types::intermediate::TableField,
+        field: &intermediate::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
         let name = reserve_field_name(
@@ -769,9 +769,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         parent_info: &Self::StructInfo,
-        _parent: &planus_types::intermediate::Struct,
+        _parent: &intermediate::Struct,
         field_name: &str,
-        _field: &planus_types::intermediate::StructField,
+        _field: &intermediate::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
         let name = reserve_field_name(
@@ -838,9 +838,9 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::EnumInfo,
-        _parent: &planus_types::intermediate::Enum,
+        _parent: &intermediate::Enum,
         key: &str,
-        value: &planus_types::intermediate::IntegerLiteral,
+        value: &intermediate::IntegerLiteral,
     ) -> EnumVariant {
         let name =
             reserve_rust_enum_variant_name(key, "name", &mut translation_context.declaration_names);
@@ -855,10 +855,10 @@ impl Backend for RustBackend {
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::UnionInfo,
-        _parent: &planus_types::intermediate::Union,
+        _parent: &intermediate::Union,
         key: &str,
         _index: u8,
-        _value: &planus_types::intermediate::UnionVariant,
+        _value: &intermediate::UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
         let create_name = reserve_field_name(
@@ -931,9 +931,9 @@ impl Backend for RustBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::RpcServiceInfo,
-        _parent: &planus_types::intermediate::RpcService,
+        _parent: &intermediate::RpcService,
         _method_name: &str,
-        _method: &planus_types::intermediate::RpcMethod,
+        _method: &intermediate::RpcMethod,
     ) -> RpcMethod {
         todo!()
     }

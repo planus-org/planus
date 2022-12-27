@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use planus_types::intermediate::{AssignMode, DeclarationIndex, Literal};
+use planus_types::intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal};
 
 use super::backend::{
     Backend, DeclarationNames, DeclarationTranslationContext, NamespaceNames, ResolvedType,
@@ -141,8 +141,8 @@ impl Backend for DotBackend {
     fn generate_namespace(
         &mut self,
         _namespace_names: &mut NamespaceNames<'_, '_>,
-        namespace_name: &planus_types::intermediate::AbsolutePath,
-        _namespace: &planus_types::intermediate::Namespace,
+        namespace_name: &AbsolutePath,
+        _namespace: &intermediate::Namespace,
     ) -> Namespace {
         Namespace {
             is_root: namespace_name.0.is_empty(),
@@ -154,8 +154,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::Table,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::Table,
     ) -> Table {
         Table {
             decl_id,
@@ -168,8 +168,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::Struct,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::Struct,
     ) -> Struct {
         let decl_name = decl_name.0.last().unwrap();
         Struct {
@@ -183,8 +183,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        decl: &planus_types::intermediate::Enum,
+        decl_name: &AbsolutePath,
+        decl: &intermediate::Enum,
     ) -> Enum {
         Enum {
             decl_id,
@@ -198,8 +198,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::Union,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::Union,
     ) -> Union {
         Union {
             decl_id,
@@ -212,8 +212,8 @@ impl Backend for DotBackend {
         _declaration_names: &mut DeclarationNames<'_, '_>,
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
-        decl_name: &planus_types::intermediate::AbsolutePath,
-        _decl: &planus_types::intermediate::RpcService,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::RpcService,
     ) -> RpcService {
         RpcService {
             decl_id,
@@ -225,9 +225,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::TableInfo,
-        _parent: &planus_types::intermediate::Table,
+        _parent: &intermediate::Table,
         field_name: &str,
-        field: &planus_types::intermediate::TableField,
+        field: &intermediate::TableField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> TableField {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -268,9 +268,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::StructInfo,
-        _parent: &planus_types::intermediate::Struct,
+        _parent: &intermediate::Struct,
         field_name: &str,
-        _field: &planus_types::intermediate::StructField,
+        _field: &intermediate::StructField,
         resolved_type: ResolvedType<'_, Self>,
     ) -> StructField {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -287,9 +287,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::EnumInfo,
-        _parent: &planus_types::intermediate::Enum,
+        _parent: &intermediate::Enum,
         key: &str,
-        value: &planus_types::intermediate::IntegerLiteral,
+        value: &intermediate::IntegerLiteral,
     ) -> EnumVariant {
         EnumVariant {
             name: key.to_string(),
@@ -301,10 +301,10 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::UnionInfo,
-        _parent: &planus_types::intermediate::Union,
+        _parent: &intermediate::Union,
         key: &str,
         _index: u8,
-        _value: &planus_types::intermediate::UnionVariant,
+        _value: &intermediate::UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> UnionVariant {
         let (type_, type_ref) = get_name(&resolved_type);
@@ -321,9 +321,9 @@ impl Backend for DotBackend {
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
         _parent_info: &Self::RpcServiceInfo,
-        _parent: &planus_types::intermediate::RpcService,
+        _parent: &intermediate::RpcService,
         _method_name: &str,
-        _method: &planus_types::intermediate::RpcMethod,
+        _method: &intermediate::RpcMethod,
     ) -> RpcMethod {
         todo!()
     }
