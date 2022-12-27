@@ -616,8 +616,7 @@ impl Docstrings {
                     .then(|| self.default_docstring.as_str()),
             )
             .chain(
-                self.locations
-                    .is_empty()
+                (!self.locations.is_empty())
                     .then_some(
                         ["", "Generated from these locations:"]
                             .into_iter()
