@@ -3,13 +3,6 @@ use lalrpop_util::ErrorRecovery;
 
 use planus_lexer::{error::LexicalError, TokenMetadata, TokenWithMetadata};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum CommentKind {
-    Comment,
-    InnerDocstring,
-    OuterDocstring,
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ParseError<'input> {
     pub span: Span,
