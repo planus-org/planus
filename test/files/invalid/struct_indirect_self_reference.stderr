@@ -10,4 +10,3 @@ error: Structs are not allowed to contain themselves, as it implies infinite siz
 6 │ struct Bar {
   │ ---------- Bar contains itself through Foo
 
-Error: Bailing because of errors

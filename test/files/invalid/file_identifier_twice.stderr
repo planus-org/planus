@@ -6,4 +6,3 @@ error: Cannot set file_identifier twice
 2 │ file_identifier "FOO2";
   │ ^^^^^^^^^^^^^^^^^^^^^^^ additional declaration was here
 
-Error: Bailing because of errors

@@ -6,4 +6,3 @@ error: Cannot set root_type twice
 6 │ root_type Y;
   │ ^^^^^^^^^^^^ additional declaration was here
 
-Error: Bailing because of errors

@@ -4,4 +4,3 @@ error: expecting integer literal
 2 │   X = "hello"
   │       ^^^^^^^
 
-Error: Bailing because of errors

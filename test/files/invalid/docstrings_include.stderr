@@ -64,4 +64,3 @@ error: Could not read file "test/files/invalid/foo": No such file or directory (
 7 │ "foo" /// Bad6
   │ ^^^^^
 
-Error: Bailing because of errors

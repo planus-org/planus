@@ -4,4 +4,3 @@ error: Structs are not allowed to contain themselves, as it implies infinite siz
 1 │ struct Foo {
   │ ---------- Foo contains itself directly
 
-Error: Bailing because of errors

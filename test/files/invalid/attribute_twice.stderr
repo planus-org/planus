@@ -6,4 +6,3 @@ error: cannot set the same attribute twice
   │             │                
   │             first attribute was here
 
-Error: Bailing because of errors

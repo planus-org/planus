@@ -10,4 +10,3 @@ error: Inner doc comments are not meaningful here.
 3 │ //! Bad2
   │ ^^^^^^^^
 
-Error: Bailing because of errors

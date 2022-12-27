@@ -7,4 +7,3 @@ error: Cannot have namespace declaration after the first type declaration
 3 │ namespace Foo;
   │ -------------- namespace declaration was here
 
-Error: Bailing because of errors

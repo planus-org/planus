@@ -6,4 +6,3 @@ error: Cannot set namespace twice
 2 │ namespace B;
   │ ------------ additional declaration was here
 
-Error: Bailing because of errors

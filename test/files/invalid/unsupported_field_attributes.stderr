@@ -10,4 +10,3 @@ error: Metadata attribute is not currently supported
 3 │   v1: uint8 (key);
   │              ^^^
 
-Error: Bailing because of errors

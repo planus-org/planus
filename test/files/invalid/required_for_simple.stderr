@@ -6,4 +6,3 @@ error: Unsupported required attribute
   │      │       
   │      only non-scalar types support the 'required' attribute
 
-Error: Bailing because of errors

@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, ValueHint};
-use color_eyre::{eyre::bail, Result};
+use color_eyre::Result;
 
 use planus_translation::intermediate_language::translate_files;
 
@@ -13,11 +13,11 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(self, _options: super::AppOptions) -> Result<()> {
+    pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
         if translate_files(&self.files).is_none() {
-            bail!("Bailing because of errors");
+            Ok(ExitCode::FAILURE)
+        } else {
+            Ok(ExitCode::SUCCESS)
         }
-
-        Ok(())
     }
 }

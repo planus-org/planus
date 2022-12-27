@@ -1,7 +1,7 @@
-use std::{io::Write, path::PathBuf};
+use std::{io::Write, path::PathBuf, process::ExitCode};
 
 use clap::{Parser, ValueHint};
-use color_eyre::{eyre::bail, Result};
+use color_eyre::Result;
 use planus_codegen::generate_dot;
 use planus_translation::intermediate_language::translate_files;
 
@@ -18,11 +18,11 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(self, _options: super::AppOptions) -> Result<()> {
+    pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
         let Some(declarations) = translate_files(&self.files)
-            else {
-                bail!("Bailing because of errors")
-            };
+        else {
+            return Ok(ExitCode::FAILURE)
+        };
 
         let res = generate_dot(&declarations);
 
@@ -30,6 +30,6 @@ impl Command {
         file.write_all(res.as_bytes())?;
         file.flush()?;
 
-        Ok(())
+        Ok(ExitCode::SUCCESS)
     }
 }

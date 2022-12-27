@@ -4,4 +4,3 @@ error: unrecognized token `;`, expected one of ":", "]"
 2 │   x: [bool; 4];
   │           ^
 
-Error: Bailing because of errors

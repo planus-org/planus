@@ -4,4 +4,3 @@ error: unrecognized token `identifier "blabla"`, expected one of "attribute", "e
 1 │ blabla "foo";
   │ ^^^^^^
 
-Error: Bailing because of errors

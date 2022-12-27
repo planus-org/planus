@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, ValueHint};
-use color_eyre::{eyre::bail, Result};
+use color_eyre::Result;
 use planus_translation::ctx::Ctx;
 
 use crate::pretty_print;
@@ -18,18 +18,18 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(self, _options: super::AppOptions) -> Result<()> {
+    pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
         let mut ctx = Ctx::default();
         let file_id = ctx.add_file(&self.file, []).unwrap();
         if let Some(parsed) = ctx.parse_file(file_id) {
             if ctx.has_errors() && !self.ignore_errors {
-                bail!("Bailing because of errors");
+                return Ok(ExitCode::FAILURE);
             } else {
                 let mut s = String::new();
                 pretty_print::pretty_print(ctx.get_source(file_id), &parsed, &mut s)?;
                 print!("{s}");
             }
         }
-        Ok(())
+        Ok(ExitCode::SUCCESS)
     }
 }

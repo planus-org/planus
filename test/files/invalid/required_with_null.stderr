@@ -6,4 +6,3 @@ error: Cannot setup field as both required and optional
   │               │      
   │               field was declared optional here
 
-Error: Bailing because of errors

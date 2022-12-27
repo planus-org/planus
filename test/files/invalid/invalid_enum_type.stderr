@@ -4,4 +4,3 @@ error: expected a primitive integer type
 1 │ enum Foo: string {}
   │           ^^^^^^
 
-Error: Bailing because of errors

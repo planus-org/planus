@@ -106,4 +106,3 @@ error: Inner doc comments are not meaningful here.
 22 │ //! Bad18
    │ ^^^^^^^^^
 
-Error: Bailing because of errors

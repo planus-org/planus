@@ -4,4 +4,3 @@ error: Metadata attribute does not make sense on enums
 1 │ enum A: uint8 (force_align: 1) { X, Y }
   │                ^^^^^^^^^^^^^^
 
-Error: Bailing because of errors

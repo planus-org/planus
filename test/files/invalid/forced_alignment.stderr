@@ -36,4 +36,3 @@ error: Alignment of struct cannot be forced to lower
 22 │   value: Inner;
    │          ----- However the minimum alignment of this type is 8
 
-Error: Bailing because of errors

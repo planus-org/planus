@@ -28,4 +28,3 @@ error: Cannot use prefix sign on constants
 6 │   x4: float = +Hello;
   │               ^^^^^^
 
-Error: Bailing because of errors

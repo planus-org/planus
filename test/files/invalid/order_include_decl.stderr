@@ -6,4 +6,3 @@ error: Cannot have includes after the first type declaration
 2 │ include "/dev/null";
   │ -------------------- include was here
 
-Error: Bailing because of errors
