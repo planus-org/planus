@@ -26,6 +26,7 @@ pub enum BackendDeclaration<B: ?Sized + Backend> {
     Struct(BackendStruct<B>),
     Enum(BackendEnum<B>),
     Union(BackendUnion<B>),
+    #[allow(dead_code)]
     RpcService(BackendRpcService<B>),
 }
 
@@ -178,21 +179,6 @@ impl<F> BackendTableFields<F> {
             declaration_order,
             alignment_order,
         }
-    }
-
-    pub fn declaration_order_with_union_keys(
-        &self,
-    ) -> impl Iterator<Item = BackendTableField<'_, F>> {
-        self.declaration_order
-            .iter()
-            .map(
-                move |&(index, vtable_index, field_type)| BackendTableField {
-                    field_type,
-                    vtable_index,
-                    name_and_docs: &self.fields[index].0,
-                    info: &self.fields[index].1,
-                },
-            )
     }
 
     pub fn declaration_order(&self) -> impl Iterator<Item = BackendTableField<'_, F>> {
