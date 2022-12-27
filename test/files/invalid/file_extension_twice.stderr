@@ -6,4 +6,3 @@ error: Cannot set file_extension twice
 2 │ file_extension "BAR";
   │ ^^^^^^^^^^^^^^^^^^^^^ additional declaration was here
 
-Error: Bailing because of errors

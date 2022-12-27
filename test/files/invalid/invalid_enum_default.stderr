@@ -4,4 +4,3 @@ error:
 4 │   x: Foo = 18;
   │            ^^ Expression does not map to a valid enum variant
 
-Error: Bailing because of errors

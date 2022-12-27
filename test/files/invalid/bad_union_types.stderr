@@ -88,4 +88,3 @@ error: Unsupported type
 16 │   string,
    │   ^^^^^^ Strings in unions without variant names are not supported
 
-Error: Bailing because of errors

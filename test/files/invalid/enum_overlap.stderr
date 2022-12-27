@@ -30,4 +30,3 @@ error: Enum uses the value 0 for multiple variants
   │                 │   
   │                 First variant was here
 
-Error: Bailing because of errors

@@ -4,4 +4,3 @@ error: Invalid escape sequence
 2 │   x: string = "\xjj";
   │                ^^
 
-Error: Bailing because of errors

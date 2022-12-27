@@ -58,4 +58,3 @@ error: Inner doc comments are not meaningful here.
 11 │ //! Bad10
    │ ^^^^^^^^^
 
-Error: Bailing because of errors

@@ -4,4 +4,3 @@ error: unrecognized token `integer literal "7"`, expected one of string
 1 │ include 7;
   │         ^
 
-Error: Bailing because of errors

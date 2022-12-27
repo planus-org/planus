@@ -4,4 +4,3 @@ error: Unsupported type
 3 │   foos: [Foo];
   │          ^^^ Unions in vectors are not currently supported
 
-Error: Bailing because of errors

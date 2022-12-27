@@ -60,4 +60,3 @@ error: Rpc services are not currently supported
 28 │ rpc_service A5 {
    │ ^^^^^^^^^^^^^^
 
-Error: Bailing because of errors

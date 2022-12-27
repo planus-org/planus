@@ -112,4 +112,3 @@ error: Inner doc comments (those starting with `//!`) are only allowed at the be
 24 │ //! Bad19
    │ ^^^^^^^^^
 
-Error: Bailing because of errors

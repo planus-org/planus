@@ -9,4 +9,3 @@ error: Unknown type
 1 │ table Bar {}
   │ --------- Perhaps you meant to include test/files/invalid/helpers/include_hint_helper2.fbs
 
-Error: Bailing because of errors

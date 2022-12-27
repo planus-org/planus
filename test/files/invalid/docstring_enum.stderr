@@ -142,4 +142,3 @@ error: Inner doc comments are not meaningful here.
 29 │ //! Bad24
    │ ^^^^^^^^^
 
-Error: Bailing because of errors

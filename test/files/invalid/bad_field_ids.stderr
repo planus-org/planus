@@ -78,4 +78,3 @@ error: Integer is out of range for type u32 (range is [0; 4294967295])
 55 │     y: int32 (id: 999999999999999999999);
    │                   ^^^^^^^^^^^^^^^^^^^^^
 
-Error: Bailing because of errors

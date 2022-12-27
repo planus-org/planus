@@ -4,4 +4,3 @@ error: Unknown type
 2 │   foo: hello;
   │        ^^^^^
 
-Error: Bailing because of errors

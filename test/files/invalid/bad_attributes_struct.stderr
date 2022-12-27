@@ -592,4 +592,3 @@ error: Metadata attribute does not make sense on structs (but is additionally no
 25 │   idempotent, idempotent: 1, idempotent: "", idempotent: [],
    │   ^^^^^^^^^^^
 
-Error: Bailing because of errors

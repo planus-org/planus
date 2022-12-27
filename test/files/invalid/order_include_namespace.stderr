@@ -6,4 +6,3 @@ error: Cannot have includes after the namespace has been set
 2 │ include "/dev/null";
   │ -------------------- include was here
 
-Error: Bailing because of errors

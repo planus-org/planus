@@ -14,11 +14,12 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-planus = { path = "../../planus", default-features = false, features = [
+planus = { path = "../../crates/planus", default-features = false, features = [
   "extra-validation",
 ] }
 serde = { version = "1.0.132", default-features = false, features = ["derive"] }
 
 [build-dependencies]
-anyhow = "1.0.51"
-planus-cli = { path = "../../planus-cli" }
+color-eyre = "0.6.2"
+planus-codegen = { path = "../../crates/planus-codegen" }
+planus-translation = { path = "../../crates/planus-translation" }

@@ -16,4 +16,3 @@ error: Unsupported type
 4 │   z: [[Foo]];
   │       ^^^^^ Vectors in vectors are not currently supported
 
-Error: Bailing because of errors

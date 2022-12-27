@@ -14,4 +14,3 @@ error: Overlapping declarations
 1 │ namespace Foo.Bar;
   │ ------------------ namespace was defined here
 
-Error: Bailing because of errors

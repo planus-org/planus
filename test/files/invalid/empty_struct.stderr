@@ -4,4 +4,3 @@ error: Empty structs are not supported
 1 │ struct X {}
   │ ^^^^^^^^
 
-Error: Bailing because of errors

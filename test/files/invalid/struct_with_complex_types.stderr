@@ -28,4 +28,3 @@ error: Arrays are not currently supported in planus
 6 │   x4: [bool: 4];
   │       ^^^^^^^^^
 
-Error: Bailing because of errors

@@ -16,4 +16,3 @@ error: Integer is out of range for type i8 (range is [-128; 127])
 10 │   X = 128
    │       ^^^
 
-Error: Bailing because of errors

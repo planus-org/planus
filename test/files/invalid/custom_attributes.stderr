@@ -4,4 +4,3 @@ error: User attributes are not supported
 1 │ attribute "priority";
   │           ^^^^^^^^^^
 
-Error: Bailing because of errors

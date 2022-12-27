@@ -7,4 +7,3 @@ error: Enum declarations must have a representation-type
   │         Type should be inserted here
   │         Hint: Try inserting `: [integer type]`
 
-Error: Bailing because of errors

@@ -4,4 +4,3 @@ error: Arrays are not currently supported in planus
 2 │   x: [uint8: 1];
   │      ^^^^^^^^^^
 
-Error: Bailing because of errors

@@ -64,4 +64,3 @@ error: User attributes are not supported
 7 │ "foo" /// Bad6
   │ ^^^^^
 
-Error: Bailing because of errors

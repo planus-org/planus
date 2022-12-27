@@ -1,0 +1,17 @@
+[package]
+name = "planus-types"
+version = "0.3.1"
+edition = "2021"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/planus-org/planus"
+keywords = ["flatbuffers", "serialization", "zero-copy"]
+categories = ["encoding", "data-structures", "memory-management"]
+rust-version = "1.61"
+description = "Internal type library for planus."
+
+[dependencies]
+planus-lexer = { version = "0.3.1", path = "../planus-lexer" }
+codespan = "0.11.1"
+lalrpop-util = "0.19.5"
+indexmap = "1.7.0"
+string-interner = "0.14.0"

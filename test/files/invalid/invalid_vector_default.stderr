@@ -4,4 +4,3 @@ error: Unsupported default value
 2 │     x:[int32] = [1];
   │                 ^^^ Vectors only support default values of null or the empty list
 
-Error: Bailing because of errors

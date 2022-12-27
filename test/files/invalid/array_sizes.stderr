@@ -22,4 +22,3 @@ error: Arrays are not currently supported in planus
 3 │   y: [bool: 99999999999999999];
   │      ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Error: Bailing because of errors

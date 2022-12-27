@@ -4,4 +4,3 @@ error:
 2 │   x: uint8 = 1;
   │              ^ Struct fields cannot have default values
 
-Error: Bailing because of errors

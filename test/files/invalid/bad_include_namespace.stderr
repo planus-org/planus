@@ -9,4 +9,3 @@ error: Overlapping declarations
 3 │ table Foo {}
   │ --------- second definition was here
 
-Error: Bailing because of errors

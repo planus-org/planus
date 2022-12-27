@@ -10,4 +10,3 @@ error: Array literal does not have the correct length
 2 │   x: [uint8: 3] = [0, 1, 2, 3];
   │                   ^^^^^^^^^^^^
 
-Error: Bailing because of errors

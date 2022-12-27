@@ -4,4 +4,3 @@ error: Unsupported type
 2 │   x: [bool: 3];
   │      ^^^^^^^^^ Arrays in tables are not supported
 
-Error: Bailing because of errors

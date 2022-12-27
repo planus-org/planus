@@ -13,4 +13,3 @@ error: Cannot use the RpcService Bar in a type context
 5 │ rpc_service Bar {
   │ --------------- Service was defined here
 
-Error: Bailing because of errors

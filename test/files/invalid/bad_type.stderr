@@ -28,4 +28,3 @@ error:
 6 │   x4: uint8 = "string";
   │               ^^^^^^^^ Expression not of the correct type
 
-Error: Bailing because of errors
