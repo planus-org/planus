@@ -1,61 +1,42 @@
-use std::collections::BTreeMap;
-
 use planus_types::intermediate::{DeclarationIndex, Declarations, Type, TypeKind};
 
-type ObjectIndex = usize;
-type ByteIndex = usize;
+pub type ObjectIndex = usize;
+pub type ByteIndex = usize;
 
-struct TreeState<T> {
-    data: T,
-    unfolded: bool,
-    children: Option<Vec<TreeState<T>>>,
-}
+pub struct Error;
 
-struct ViewState<'a> {
-    all_objects: Vec<Object<'a>>,
-    current_gui_root_object: ObjectIndex,
-    byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
-    parents: BTreeMap<ObjectIndex, ObjectIndex>,
+pub struct InspectableBuffer<'a> {
+    pub declarations: &'a Declarations,
+    pub buffer: &'a [u8],
 }
 
 #[derive(Copy, Clone)]
-struct ObjectMetadata<'a> {
-    declarations: &'a Declarations,
-    buffer: &'a [u8],
-    offset: usize,
+pub struct Object<'a> {
+    pub offset: usize,
+    pub type_: &'a Type,
 }
 
 #[derive(Copy, Clone)]
-struct Object<'a> {
-    metadata: ObjectMetadata<'a>,
-    type_: &'a Type,
+pub struct TableObject {
+    pub offset: usize,
+    pub declaration_index: DeclarationIndex,
 }
 
-#[derive(Copy, Clone)]
-struct TableObject<'a> {
-    metadata: ObjectMetadata<'a>,
-    declaration_index: DeclarationIndex,
+impl<'a> InspectableBuffer<'a> {
+    pub fn get_root_object(&self, root_type_index: DeclarationIndex) -> Result<Object<'a>, Error> {
+        todo!()
+    }
 }
 
 impl<'a> Object<'a> {
-    pub fn new(declarations: &'a Declarations, buffer: &'a [u8], root_type_index: usize) -> Self {
-        todo!()
-    }
-
-    pub fn as_table(self) -> Option<TableObject<'a>> {
+    pub fn as_table(self) -> Option<TableObject> {
         if let TypeKind::Table(declaration_index) = self.type_.kind {
             Some(TableObject {
-                metadata: self.metadata,
+                offset: self.offset,
                 declaration_index,
             })
         } else {
             None
         }
-    }
-}
-
-impl<'a> TableObject<'a> {
-    pub fn get_field(&self, name: &str) -> Result<Option<Object<'a>> {
-        let declaration = &self.metadata.declarations.declarations[self.declaration_index];
     }
 }
