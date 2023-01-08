@@ -1,4 +1,4 @@
-use std::{io, io::Write, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
+use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
 
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
@@ -39,6 +39,7 @@ fn main() -> Result<ExitCode> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    // Fix terminal on panic while preserving the message
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |x| {
         let mut stdout = io::stdout();
@@ -56,13 +57,15 @@ fn main() -> Result<ExitCode> {
     );
     let res = run_inspector(&mut terminal, inspector, tick_rate);
 
+    // Cleanup and display errors if any
     cleanup_terminal(terminal.backend_mut().deref_mut())?;
 
     if let Err(err) = res {
-        println!("{:?}", err)
+        println!("{:?}", err);
+        Ok(ExitCode::FAILURE)
+    } else {
+        Ok(ExitCode::SUCCESS)
     }
-
-    Ok(ExitCode::SUCCESS)
 }
 
 fn cleanup_terminal(stdout: &mut impl std::io::Write) -> Result<()> {
