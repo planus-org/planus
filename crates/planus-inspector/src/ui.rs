@@ -1,4 +1,4 @@
-use planus_buffer_inspection::{object_info::ObjectName, object_mapping::ObjectIndex};
+use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -32,7 +32,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .get::<1>(inspector.cursor_pos);
     for search_result in search_results {
         let allocation = search_result.result.last().unwrap();
-        if allocation.object == ObjectIndex::MAX {
+        if allocation.object.is_none() {
             continue;
         }
         ranges.push(allocation.start..allocation.end);
@@ -84,14 +84,15 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     ];
     for search_result in search_results {
         for allocation in search_result.result {
-            if allocation.object == ObjectIndex::MAX {
+            let Some(object_index) = allocation.object
+            else {
                 continue;
-            }
+            };
             let range = format!("{}-{}", allocation.start, allocation.end);
             let (object, _object_allocation_index) = inspector
                 .object_mapping
                 .all_objects
-                .get_index(allocation.object)
+                .get_index(object_index)
                 .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
             text.extend_from_slice(&[
                 Spans::from(Span::raw(object.resolve_name(&inspector.buffer))),

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use indexmap::{map::Entry, IndexMap};
 use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
@@ -6,7 +6,7 @@ use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 use crate::{
     allocations::{AllocationIndex, Allocations},
     children::{Byterange, Children},
-    InspectableFlatbuffer, Object, OffsetObject,
+    ByteIndex, InspectableFlatbuffer, Object, OffsetObject,
 };
 
 pub type ObjectIndex = usize;
@@ -14,6 +14,7 @@ pub type ObjectIndex = usize;
 pub struct ObjectMapping<'a> {
     pub root_object: OffsetObject<'a>,
     pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
+    pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
     pub allocations: Allocations,
     pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
 }
@@ -35,15 +36,13 @@ impl<'a> InspectableFlatbuffer<'a> {
 
         let mut result = ObjectMapping {
             root_object,
+            vtable_locations: Default::default(),
             all_objects: Default::default(),
             allocations: Default::default(),
             parents: Default::default(),
         };
 
-        let buffer_allocation_index =
-            result
-                .allocations
-                .allocate(ObjectIndex::MAX, 0, self.buffer.len());
+        let buffer_allocation_index = result.allocations.allocate(None, 0, self.buffer.len());
 
         let root_allocation_index =
             result.handle_node(Object::Offset(root_object), self, buffer_allocation_index);
@@ -64,6 +63,7 @@ impl<'a> ObjectMapping<'a> {
     ) -> AllocationIndex {
         let object_index;
         let allocation_index;
+
         match self.all_objects.entry(object) {
             Entry::Occupied(entry) => {
                 return *entry.get();
@@ -71,9 +71,9 @@ impl<'a> ObjectMapping<'a> {
             Entry::Vacant(entry) => {
                 object_index = entry.index();
                 let range = object.byterange(buffer);
-                allocation_index = self
-                    .allocations
-                    .allocate(object_index, range.start, range.end);
+                allocation_index =
+                    self.allocations
+                        .allocate(Some(object_index), range.start, range.end);
                 entry.insert(allocation_index);
             }
         }

@@ -103,7 +103,7 @@ impl<'a> Children<'a> for TableObject {
             Cow::Borrowed("vtable"),
             Object::Offset(OffsetObject {
                 offset: self.offset,
-                kind: crate::OffsetObjectKind::VTable,
+                kind: crate::OffsetObjectKind::VTable(self.declaration),
             }),
         ))
         .chain(field_iter);

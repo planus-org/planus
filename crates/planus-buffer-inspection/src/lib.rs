@@ -130,7 +130,7 @@ pub struct OffsetObject<'a> {
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum OffsetObjectKind<'a> {
-    VTable,
+    VTable(DeclarationIndex),
     Table(DeclarationIndex),
     Vector(&'a Type),
     String,
@@ -139,6 +139,7 @@ pub enum OffsetObjectKind<'a> {
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct VTableObject {
     pub offset: ByteIndex,
+    pub declaration: DeclarationIndex,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -215,7 +216,7 @@ pub struct StringObject {
 
 impl<'a> OffsetObject<'a> {
     pub fn get_byte_index(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<ByteIndex> {
-        let res = if matches!(self.kind, OffsetObjectKind::VTable) {
+        let res = if matches!(self.kind, OffsetObjectKind::VTable(_)) {
             self.offset
                 .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
                 .ok_or_else(|| Error)?
@@ -228,7 +229,10 @@ impl<'a> OffsetObject<'a> {
     pub fn get_inner(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
         let offset = self.get_byte_index(buffer)?;
         match self.kind {
-            OffsetObjectKind::VTable => Ok(Object::VTable(VTableObject { offset })),
+            OffsetObjectKind::VTable(declaration) => Ok(Object::VTable(VTableObject {
+                declaration,
+                offset,
+            })),
             OffsetObjectKind::Table(declaration) => Ok(Object::Table(TableObject {
                 offset,
                 declaration,
@@ -275,6 +279,7 @@ impl TableObject {
             .unwrap();
 
         Ok(VTableObject {
+            declaration: self.declaration,
             offset: vtable_offset,
         })
     }

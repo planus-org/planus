@@ -13,10 +13,10 @@ pub struct Allocations {
 
 #[derive(Debug)]
 pub struct Allocation {
-    pub object: ObjectIndex,
+    pub object: Option<ObjectIndex>,
     pub start: AllocationStart,
     pub end: AllocationEnd,
-    pub parent: Option<AllocationIndex>,
+    pub parents: Vec<AllocationIndex>,
     // Invariant: None of the allocation ranges can overlap
     pub children: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren)>,
 }
@@ -54,17 +54,23 @@ impl AllocationChildren {
     }
 }
 
-#[derive(Clone)]
-pub struct SearchResult<'a, const N: usize> {
-    pub result: heapless::Vec<&'a Allocation, N>,
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SearchResult<T, const N: usize> {
+    pub result: heapless::Vec<T, N>,
 }
 
-impl<'a, const N: usize> SearchResult<'a, N> {
-    fn push(&mut self, allocation: &'a Allocation) {
+impl<T, const N: usize> SearchResult<T, N> {
+    fn push(&mut self, object: T) {
         if self.result.is_full() {
             self.result.remove(0);
         }
-        self.result.push(allocation).unwrap();
+        let _ = self.result.push(object);
+    }
+
+    fn map<U>(self, f: impl FnMut(T) -> U) -> SearchResult<U, N> {
+        SearchResult {
+            result: self.result.into_iter().map(f).collect(),
+        }
     }
 }
 
@@ -80,14 +86,17 @@ impl Interval {
 }
 
 impl Allocations {
-    pub fn get<'a, const N: usize>(&'a self, offset: ByteIndex) -> Vec<SearchResult<N>> {
+    pub fn get<'a, const N: usize>(
+        &'a self,
+        offset: ByteIndex,
+    ) -> Vec<SearchResult<&'a Allocation, N>> {
         let mut out = Vec::new();
 
         let root_allocation = &self.allocations[0];
         let mut initial_state = SearchResult {
             result: heapless::Vec::new(),
         };
-        initial_state.result.push(root_allocation).unwrap();
+        initial_state.result.push(0).unwrap();
 
         let mut todo = vec![(root_allocation, initial_state)];
 
@@ -99,7 +108,7 @@ impl Allocations {
                     match children {
                         AllocationChildren::Unique(child_index) => {
                             let child = &self.allocations[*child_index];
-                            state.push(child);
+                            state.push(*child_index);
                             todo.push((child, state));
                             continue;
                         }
@@ -107,7 +116,7 @@ impl Allocations {
                             for child_index in children {
                                 let child = &self.allocations[*child_index];
                                 let mut state = state.clone();
-                                state.push(child);
+                                state.push(*child_index);
                                 todo.push((child, state));
                             }
                             continue;
@@ -119,12 +128,16 @@ impl Allocations {
             out.push(state);
         }
 
-        out
+        out.sort();
+        out.dedup();
+        out.into_iter()
+            .map(|r| r.map(|index| &self.allocations[index]))
+            .collect()
     }
 
     pub fn allocate(
         &mut self,
-        object: ObjectIndex,
+        object: Option<ObjectIndex>,
         allocation_start: AllocationStart,
         allocation_end: AllocationEnd,
     ) -> AllocationIndex {
@@ -133,7 +146,7 @@ impl Allocations {
             object,
             start: allocation_start,
             end: allocation_end,
-            parent: None,
+            parents: Vec::new(),
             children: BTreeMap::new(),
         });
         allocation_index
@@ -144,18 +157,17 @@ impl Allocations {
         parent_allocation_index: AllocationIndex,
         child_allocation_index: AllocationIndex,
     ) {
-        let mut child_node = &mut self.allocations[child_allocation_index];
-        if child_node.parent == Some(parent_allocation_index) {
+        let child_node = &mut self.allocations[child_allocation_index];
+        if child_node.parents.contains(&parent_allocation_index) {
             return;
         }
-        assert!(child_node.parent.is_none());
-        child_node.parent = Some(parent_allocation_index);
+        child_node.parents.push(parent_allocation_index);
 
         let allocation_start = child_node.start;
         let allocation_end = child_node.end;
 
         let mut node = &mut self.allocations[parent_allocation_index];
-        assert!(node.parent.is_none());
+        assert!(node.parents.is_empty());
         node.start = node.start.min(allocation_start);
         node.end = node.end.max(allocation_end);
 

@@ -75,11 +75,11 @@ impl<'a> Inspector<'a> {
                 let search_results = self.object_mapping.allocations.get::<1>(self.cursor_pos);
                 if let Some(search_result) = search_results.first() {
                     let allocation = search_result.result.last().unwrap();
-                    if allocation.object != ObjectIndex::MAX {
+                    if let Some(object_index) = allocation.object {
                         let (object, _) = self
                             .object_mapping
                             .all_objects
-                            .get_index(allocation.object)
+                            .get_index(object_index)
                             .unwrap();
                         if let Object::Offset(offset_object) = object {
                             self.offset_stack.push(self.cursor_pos);

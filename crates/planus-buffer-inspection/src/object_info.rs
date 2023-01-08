@@ -136,7 +136,10 @@ impl<'a> ObjectName<'a> for VTableObject {
 impl<'a> ObjectName<'a> for OffsetObject<'a> {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         match self.kind {
-            crate::OffsetObjectKind::VTable => format!("vtable_offset"),
+            crate::OffsetObjectKind::VTable(declaration) => format!(
+                "vtable_offset[{}]",
+                buffer.declarations.get_declaration(declaration).0
+            ),
             crate::OffsetObjectKind::Table(declaration) => {
                 format!(
                     "table_offset[{}]",
