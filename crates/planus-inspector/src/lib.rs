@@ -5,11 +5,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crossterm::event::{self, Event, KeyCode};
-use planus_buffer_inspection::{
-    object_mapping::{ObjectIndex, ObjectMapping},
-    InspectableFlatbuffer, Object,
-};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
@@ -39,8 +36,8 @@ impl<'a> Inspector<'a> {
             offset_stack: Vec::new(),
         }
     }
-    pub fn on_key(&mut self, c: KeyCode) -> bool {
-        let should_draw = match c {
+    pub fn on_key(&mut self, key: KeyEvent) -> bool {
+        let should_draw = match key.code {
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
                 false
@@ -68,7 +65,23 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Right => {
-                self.cursor_pos = self.cursor_pos.saturating_add(1);
+                if key.modifiers.contains(KeyModifiers::CONTROL) {
+                    let search_results = self.object_mapping.allocations.get::<2>(self.cursor_pos);
+                    if let Some(search_result) = search_results.first() {
+                        let allocation = search_result.result.first().unwrap();
+                        if let Some(object) = allocation.object {
+                            let (object, _) =
+                                self.object_mapping.all_objects.get_index(object).unwrap();
+                            if let Object::Offset(offset_object) = object {
+                                self.offset_stack.push(self.cursor_pos);
+                                self.cursor_pos =
+                                    offset_object.get_byte_index(&self.buffer).unwrap();
+                            }
+                        }
+                    }
+                } else {
+                    self.cursor_pos = self.cursor_pos.saturating_add(1);
+                }
                 true
             }
             KeyCode::Enter => {
@@ -133,7 +146,7 @@ pub fn run_inspector<B: Backend>(
             .unwrap_or_else(|| Duration::from_secs(0));
         if crossterm::event::poll(timeout)? {
             match event::read()? {
-                Event::Key(key) => should_draw = inspector.on_key(key.code),
+                Event::Key(key) => should_draw = inspector.on_key(key),
                 Event::Resize(_, _) => should_draw = true,
                 _ => (),
             }

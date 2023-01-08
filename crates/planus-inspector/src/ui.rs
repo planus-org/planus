@@ -82,8 +82,9 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         )),
         Spans::default(),
     ];
-    for search_result in search_results {
-        for allocation in search_result.result {
+
+    for (i, search_result) in search_results.iter().enumerate() {
+        for allocation in &search_result.result {
             let Some(object_index) = allocation.object
             else {
                 continue;
@@ -95,8 +96,18 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
                 .get_index(object_index)
                 .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
             text.extend_from_slice(&[
-                Spans::from(Span::raw(object.resolve_name(&inspector.buffer))),
-                Spans::from(Span::raw(format!("range: {range}"))),
+                Spans::from(Span::styled(
+                    object.resolve_name(&inspector.buffer),
+                    Style::default().fg(if i % 2 == 0 { Color::Red } else { Color::Blue }),
+                )),
+                Spans::from(Span::styled(
+                    format!("range: {range}"),
+                    Style::default().fg(if i % 2 == 0 {
+                        Color::Gray
+                    } else {
+                        Color::White
+                    }),
+                )),
                 Spans::default(),
             ]);
         }
