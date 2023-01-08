@@ -168,20 +168,24 @@ impl<'a> ObjectName<'a> for IntegerObject {
 }
 
 impl<'a> ObjectName<'a> for FloatObject {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("FLOAT") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!("float[{}]", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for BoolObject {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("BOOL") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!("bool[{}]", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for StringObject {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("STRING") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!(
+            "string[{}, {}]",
+            self.len(buffer).unwrap(),
+            String::from_utf8_lossy(self.bytes(buffer).unwrap())
+        )
     }
 }
 

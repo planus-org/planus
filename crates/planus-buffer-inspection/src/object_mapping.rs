@@ -86,14 +86,13 @@ impl<'a> ObjectMapping<'a> {
                 | Object::Table(_)
                 | Object::Struct(_)
                 | Object::Vector(_)
-                | Object::Array(_) => true,
-                Object::Enum(_)
+                | Object::Array(_)
                 | Object::UnionTag(_)
-                | Object::Union(_)
-                | Object::Integer(_)
-                | Object::Float(_)
-                | Object::Bool(_)
-                | Object::String(_) => unreachable!(),
+                | Object::Enum(_)
+                | Object::String(_) => true,
+                Object::Union(_) | Object::Integer(_) | Object::Float(_) | Object::Bool(_) => {
+                    unreachable!()
+                }
             };
             if should_insert {
                 self.allocations

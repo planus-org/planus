@@ -1,6 +1,6 @@
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{DeclarationIndex, Declarations, Type, TypeKind},
+    intermediate::{DeclarationIndex, Declarations, FloatLiteral, IntegerLiteral, Type, TypeKind},
 };
 
 use crate::object_info::DeclarationInfo;
@@ -22,6 +22,60 @@ type Result<T> = std::result::Result<T, Error>;
 pub struct InspectableFlatbuffer<'a> {
     pub declarations: &'a Declarations,
     pub buffer: &'a [u8],
+}
+
+impl<'a> InspectableFlatbuffer<'a> {
+    pub fn read_u8(&self, offset: usize) -> Result<u8> {
+        Ok(self.buffer[offset])
+    }
+
+    pub fn read_u16(&self, offset: usize) -> Result<u16> {
+        let slice: &[u8; 2] = self.buffer[offset..offset + 2].try_into().unwrap();
+        Ok(u16::from_le_bytes(*slice))
+    }
+
+    pub fn read_u32(&self, offset: usize) -> Result<u32> {
+        let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
+        Ok(u32::from_le_bytes(*slice))
+    }
+
+    pub fn read_u64(&self, offset: usize) -> Result<u64> {
+        let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
+        Ok(u64::from_le_bytes(*slice))
+    }
+
+    pub fn read_i8(&self, offset: usize) -> Result<i8> {
+        Ok(self.buffer[offset] as i8)
+    }
+
+    pub fn read_i16(&self, offset: usize) -> Result<i16> {
+        let slice: &[u8; 2] = self.buffer[offset..offset + 2].try_into().unwrap();
+        Ok(i16::from_le_bytes(*slice))
+    }
+
+    pub fn read_i32(&self, offset: usize) -> Result<i32> {
+        let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
+        Ok(i32::from_le_bytes(*slice))
+    }
+
+    pub fn read_i64(&self, offset: usize) -> Result<i64> {
+        let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
+        Ok(i64::from_le_bytes(*slice))
+    }
+
+    pub fn read_f32(&self, offset: usize) -> Result<f32> {
+        let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
+        Ok(f32::from_le_bytes(*slice))
+    }
+
+    pub fn read_f64(&self, offset: usize) -> Result<f64> {
+        let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
+        Ok(f64::from_le_bytes(*slice))
+    }
+
+    pub fn read_slice(&self, offset: usize, size: usize) -> Result<&'a [u8]> {
+        Ok(&self.buffer[offset..offset + size])
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -159,15 +213,12 @@ pub struct StringObject {
 
 impl<'a> OffsetObject<'a> {
     pub fn get_inner(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
-        let slice: &[u8; 4] = buffer.buffer[self.offset..self.offset + 4]
-            .try_into()
-            .unwrap();
-        let offset = self.offset + u32::from_le_bytes(*slice) as usize;
+        let offset = self.offset + buffer.read_u32(self.offset)? as usize;
         match self.kind {
             OffsetObjectKind::VTable => {
                 let offset = self
                     .offset
-                    .checked_add_signed(-i32::from_le_bytes(*slice) as isize)
+                    .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
                     .unwrap();
                 Ok(Object::VTable(VTableObject { offset }))
             }
@@ -183,24 +234,15 @@ impl<'a> OffsetObject<'a> {
 
 impl VTableObject {
     pub fn get_vtable_size(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
-        let slice: &[u8; 2] = buffer.buffer[self.offset..self.offset + 2]
-            .try_into()
-            .unwrap();
-        Ok(u16::from_le_bytes(*slice))
+        buffer.read_u16(self.offset)
     }
 
     pub fn get_table_size(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
-        let slice: &[u8; 2] = buffer.buffer[self.offset + 2..self.offset + 4]
-            .try_into()
-            .unwrap();
-        Ok(u16::from_le_bytes(*slice))
+        buffer.read_u16(self.offset + 2)
     }
 
     pub fn get_offset(&self, i: usize, buffer: &InspectableFlatbuffer<'_>) -> Result<Option<u16>> {
-        let slice: &[u8; 2] = buffer.buffer[self.offset + 4 + 2 * i..self.offset + 4 + 2 * i + 2]
-            .try_into()
-            .unwrap();
-        let value = u16::from_le_bytes(*slice);
+        let value = buffer.read_u16(self.offset + 4 + 2 * i)?;
         let value = (value != 0).then_some(value);
         Ok(value)
     }
@@ -210,8 +252,8 @@ impl VTableObject {
         buffer: &InspectableFlatbuffer<'a>,
     ) -> Result<impl 'a + ExactSizeIterator + DoubleEndedIterator + Iterator<Item = u16>> {
         let size = self.get_vtable_size(buffer)?;
-        let slice: &[u8] = &buffer.buffer[self.offset + 4..self.offset + size as usize];
-        Ok(slice.chunks_exact(2).map(move |chunk| {
+        let slice: &[u8] = buffer.read_slice(self.offset, size as usize)?;
+        Ok(slice[4..].chunks_exact(2).map(move |chunk| {
             let slice: &[u8; 2] = chunk.try_into().unwrap();
             u16::from_le_bytes(*slice)
         }))
@@ -220,11 +262,10 @@ impl VTableObject {
 
 impl TableObject {
     pub fn get_vtable(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<VTableObject> {
-        let slice: &[u8; 4] = buffer.buffer[self.offset..self.offset + 4]
-            .try_into()
+        let vtable_offset = self
+            .offset
+            .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
             .unwrap();
-        let offset = i32::from_le_bytes(*slice);
-        let vtable_offset = self.offset.checked_add_signed(-offset as isize).unwrap();
 
         Ok(VTableObject {
             offset: vtable_offset,
@@ -283,5 +324,46 @@ impl UnionObject {
 impl EnumObject {
     pub fn tag<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<IntegerObject> {
         todo!()
+    }
+}
+
+impl StringObject {
+    pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
+        buffer.read_u32(self.offset)
+    }
+
+    pub fn bytes<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<&'a [u8]> {
+        Ok(&buffer.buffer[self.offset..self.offset + self.len(buffer)? as usize])
+    }
+}
+
+impl BoolObject {
+    pub fn read(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<bool> {
+        Ok(buffer.buffer[self.offset] != 0)
+    }
+}
+
+impl FloatObject {
+    pub fn read(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<FloatLiteral> {
+        match self.type_ {
+            FloatType::F32 => Ok(FloatLiteral::F32(buffer.read_f32(self.offset)?)),
+            FloatType::F64 => Ok(FloatLiteral::F64(buffer.read_f64(self.offset)?)),
+        }
+    }
+}
+
+impl IntegerObject {
+    pub fn read(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<IntegerLiteral> {
+        let literal = match self.type_ {
+            IntegerType::U8 => IntegerLiteral::U8(buffer.read_u8(self.offset)?),
+            IntegerType::U16 => IntegerLiteral::U16(buffer.read_u16(self.offset)?),
+            IntegerType::U32 => IntegerLiteral::U32(buffer.read_u32(self.offset)?),
+            IntegerType::U64 => IntegerLiteral::U64(buffer.read_u64(self.offset)?),
+            IntegerType::I8 => IntegerLiteral::I8(buffer.read_i8(self.offset)?),
+            IntegerType::I16 => IntegerLiteral::I16(buffer.read_i16(self.offset)?),
+            IntegerType::I32 => IntegerLiteral::I32(buffer.read_i32(self.offset)?),
+            IntegerType::I64 => IntegerLiteral::I64(buffer.read_i64(self.offset)?),
+        };
+        Ok(literal)
     }
 }

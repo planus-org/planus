@@ -1,6 +1,4 @@
-use planus_buffer_inspection::{
-    allocations::AllocationIndex, object_info::ObjectName, object_mapping::ObjectIndex,
-};
+use planus_buffer_inspection::{object_info::ObjectName, object_mapping::ObjectIndex};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
