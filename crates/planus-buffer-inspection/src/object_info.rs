@@ -128,8 +128,11 @@ impl DeclarationInfo for EnumObject {
 }
 
 impl<'a> ObjectName<'a> for VTableObject {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("VTABLE") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!(
+            "vtable[{}]",
+            buffer.declarations.get_declaration(self.declaration).0
+        )
     }
 }
 
@@ -137,17 +140,17 @@ impl<'a> ObjectName<'a> for OffsetObject<'a> {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         match self.kind {
             crate::OffsetObjectKind::VTable(declaration) => format!(
-                "vtable_offset[{}]",
+                "offset to vtable[{}]",
                 buffer.declarations.get_declaration(declaration).0
             ),
             crate::OffsetObjectKind::Table(declaration) => {
                 format!(
-                    "table_offset[{}]",
+                    "offset to table[{}]",
                     buffer.declarations.get_declaration(declaration).0
                 )
             }
-            crate::OffsetObjectKind::Vector(_) => format!("offset[vector]"),
-            crate::OffsetObjectKind::String => format!("offset[string]"),
+            crate::OffsetObjectKind::Vector(_) => format!("offset to vector"),
+            crate::OffsetObjectKind::String => format!("offset to string"),
         }
     }
 }
@@ -165,27 +168,31 @@ impl<'a> ObjectName<'a> for ArrayObject<'a> {
 }
 
 impl<'a> ObjectName<'a> for IntegerObject {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("INTEGER") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!(
+            "{} = {}",
+            self.type_.flatbuffer_name(),
+            self.read(buffer).unwrap()
+        )
     }
 }
 
 impl<'a> ObjectName<'a> for FloatObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("float[{}]", self.read(buffer).unwrap())
+        format!("float = {}", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for BoolObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("bool[{}]", self.read(buffer).unwrap())
+        format!("bool = {}", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for StringObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         format!(
-            "string[{}, {}]",
+            "string[{}] = {}",
             self.len(buffer).unwrap(),
             String::from_utf8_lossy(self.bytes(buffer).unwrap())
         )

@@ -312,7 +312,10 @@ impl TableObject {
                 offset,
                 declaration,
             }),
-            TypeKind::Vector(ref type_) => Object::Vector(VectorObject { offset, type_ }),
+            TypeKind::Vector(ref type_) => Object::Offset(OffsetObject {
+                offset,
+                kind: OffsetObjectKind::Vector(type_),
+            }),
             TypeKind::Array(ref _type_, _size) => todo!(),
             TypeKind::SimpleType(type_) => match type_ {
                 SimpleType::Struct(declaration) => Object::Struct(StructObject {
@@ -327,7 +330,10 @@ impl TableObject {
                 SimpleType::Integer(type_) => Object::Integer(IntegerObject { offset, type_ }),
                 SimpleType::Float(type_) => Object::Float(FloatObject { offset, type_ }),
             },
-            TypeKind::String => Object::String(StringObject { offset }),
+            TypeKind::String => Object::Offset(OffsetObject {
+                offset,
+                kind: OffsetObjectKind::String,
+            }),
         };
         Ok(Some(object))
     }

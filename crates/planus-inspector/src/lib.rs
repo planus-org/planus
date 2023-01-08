@@ -6,7 +6,10 @@ use std::{
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
+use planus_buffer_inspection::{
+    object_mapping::{ObjectIndex, ObjectMapping},
+    InspectableFlatbuffer, Object,
+};
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
