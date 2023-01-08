@@ -23,7 +23,7 @@ struct ViewState<'a> {
     pub all_objects: Vec<Object<'a>>,
     pub current_gui_root_object: ObjectIndex,
     pub byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
-    pub parents: BTreeMap<ObjectIndex, ObjectIndex>,
+    pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
 }
 
 #[derive(Default)]
