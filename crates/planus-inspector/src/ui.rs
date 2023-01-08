@@ -49,12 +49,15 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 }
 
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let objs = inspector.view_state.byte_mapping.get(&inspector.cursor_pos);
+    let objs = inspector
+        .object_mapping
+        .byte_mapping
+        .get(&inspector.cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = Vec::new();
     if let Some(objs) = objs {
         for obj in objs {
-            let obj = inspector.view_state.all_objects[*obj];
+            let obj = inspector.object_mapping.all_objects[*obj];
             text.push(Span::raw(format!("{:?}", obj.type_.kind)));
         }
     }

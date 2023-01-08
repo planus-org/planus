@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{
@@ -204,4 +206,13 @@ trait ObjectInfo<'a> {
     fn get_representation(&self, buffer: &InspectableFlatbuffer<'_>) -> String;
     fn get_children(&self, buffer: &InspectableFlatbuffer<'_>) -> String;
     fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<usize>;
+}
+
+pub type ObjectIndex = usize;
+
+#[derive(Default)]
+pub struct ObjectMapping<'a> {
+    pub all_objects: Vec<Object<'a>>,
+    pub byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
+    pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
 }

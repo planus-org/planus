@@ -1,18 +1,15 @@
 pub mod ui;
 
 use std::{
-    collections::BTreeMap,
     io,
     time::{Duration, Instant},
 };
 
 use crossterm::event::{self, Event, KeyCode};
-use planus_buffer_inspection::{ByteIndex, Object};
+use planus_buffer_inspection::ObjectMapping;
 use tui::{backend::Backend, Terminal};
 
 use crate::ui::HEX_LINE_SIZE;
-
-pub type ObjectIndex = usize;
 
 pub struct TreeState<T> {
     pub data: T,
@@ -21,16 +18,8 @@ pub struct TreeState<T> {
 }
 
 #[derive(Default)]
-pub struct ViewState<'a> {
-    pub all_objects: Vec<Object<'a>>,
-    pub current_gui_root_object: ObjectIndex,
-    pub byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
-    pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
-}
-
-#[derive(Default)]
 pub struct Inspector<'a> {
-    pub view_state: ViewState<'a>,
+    pub object_mapping: ObjectMapping<'a>,
     pub data: &'a [u8],
     pub should_quit: bool,
     pub cursor_pos: usize,
