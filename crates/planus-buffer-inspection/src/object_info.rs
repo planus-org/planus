@@ -32,25 +32,6 @@ impl<'a, T: DeclarationInfo> ObjectName<'a> for T {
     }
 }
 
-impl DeclarationInfo for VTableObject {
-    type Declaration = Table;
-    const KIND: &'static str = "vtable";
-
-    fn declaration_index(&self) -> DeclarationIndex {
-        self.declaration
-    }
-
-    fn resolve_declaration<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> &'a Table {
-        if let DeclarationKind::Table(decl) =
-            &buffer.declarations.get_declaration(self.declaration).1.kind
-        {
-            decl
-        } else {
-            panic!("Inconsistent declarations");
-        }
-    }
-}
-
 impl DeclarationInfo for TableObject {
     type Declaration = Table;
     const KIND: &'static str = "table";
@@ -146,9 +127,25 @@ impl DeclarationInfo for EnumObject {
     }
 }
 
-impl<'a> ObjectName<'a> for OffsetObject<'a> {
+impl<'a> ObjectName<'a> for VTableObject {
     fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("OFFSET") // TODO
+        format!("VTABLE") // TODO
+    }
+}
+
+impl<'a> ObjectName<'a> for OffsetObject<'a> {
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        match self.kind {
+            crate::OffsetObjectKind::VTable => format!("vtable_offset"),
+            crate::OffsetObjectKind::Table(declaration) => {
+                format!(
+                    "table_offset[{}]",
+                    buffer.declarations.get_declaration(declaration).0
+                )
+            }
+            crate::OffsetObjectKind::Vector(_) => format!("offset[vector]"),
+            crate::OffsetObjectKind::String => format!("offset[string]"),
+        }
     }
 }
 

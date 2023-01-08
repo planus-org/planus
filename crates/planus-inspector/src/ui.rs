@@ -1,4 +1,6 @@
-use planus_buffer_inspection::{children::Byterange, object_info::ObjectName};
+use planus_buffer_inspection::{
+    allocations::AllocationIndex, object_info::ObjectName, object_mapping::ObjectIndex,
+};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -24,16 +26,19 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 }
 
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let objs = inspector
+    let search_results = inspector
         .object_mapping
-        .get_bytes_for_pos(inspector.cursor_pos);
+        .allocations
+        .get::<1>(inspector.cursor_pos);
 
     let mut ranges = Vec::new();
     let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
-    for obj in objs {
-        if let Some(range) = obj.byterange(&inspector.buffer) {
-            ranges.push(range);
+    for search_result in search_results {
+        let allocation = search_result.result.last().unwrap();
+        if allocation.object == ObjectIndex::MAX {
+            continue;
         }
+        ranges.push(allocation.start..allocation.end);
     }
 
     let mut view = Vec::new();
@@ -67,9 +72,10 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 }
 
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let objs = inspector
+    let search_results = inspector
         .object_mapping
-        .get_bytes_for_pos(inspector.cursor_pos);
+        .allocations
+        .get::<1>(inspector.cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = vec![
         Spans::from(Span::styled(
@@ -78,13 +84,19 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         )),
         Spans::default(),
     ];
-    for obj in objs {
-        let range = obj
-            .byterange(&inspector.buffer)
-            .map(|r| format!("{}-{}", r.start, r.end))
-            .unwrap_or_else(|| format!("none"));
+    for search_result in search_results {
+        let allocation = search_result.result.last().unwrap();
+        if allocation.object == ObjectIndex::MAX {
+            continue;
+        }
+        let range = format!("{}-{}", allocation.start, allocation.end);
+        let (object, _object_allocation_index) = inspector
+            .object_mapping
+            .all_objects
+            .get_index(allocation.object)
+            .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
         text.extend_from_slice(&[
-            Spans::from(Span::raw(obj.resolve_name(&inspector.buffer))),
+            Spans::from(Span::raw(object.resolve_name(&inspector.buffer))),
             Spans::from(Span::raw(format!("range: {range}"))),
             Spans::default(),
         ]);

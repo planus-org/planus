@@ -1,20 +1,20 @@
 use std::collections::BTreeMap;
 
-use indexmap::IndexSet;
+use indexmap::{map::Entry, IndexMap};
 use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 
 use crate::{
+    allocations::{AllocationIndex, Allocations},
     children::{Byterange, Children},
-    ByteIndex, InspectableFlatbuffer, Object, OffsetObject,
+    InspectableFlatbuffer, Object, OffsetObject,
 };
 
 pub type ObjectIndex = usize;
 
 pub struct ObjectMapping<'a> {
     pub root_object: OffsetObject<'a>,
-    pub all_objects: IndexSet<Object<'a>>,
-    pub primary_byte_mapping: Vec<ObjectIndex>,
-    pub secondary_byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
+    pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
+    pub allocations: Allocations,
     pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
 }
 
@@ -28,71 +28,81 @@ impl<'a> InspectableFlatbuffer<'a> {
             DeclarationKind::Table(_)
         ));
 
-        let root_offset_object = OffsetObject {
+        let root_object = OffsetObject {
             offset: 0,
             kind: crate::OffsetObjectKind::Table(root_table_index),
         };
-        let root_object = Object::Offset(root_offset_object);
 
-        let mut todo = vec![(root_object, 0)];
-        let mut all_objects = IndexSet::new();
-        let mut primary_byte_mapping = vec![usize::MAX; self.buffer.len()];
-        let mut secondary_byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>> = BTreeMap::new();
-        let mut parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>> = BTreeMap::new();
-        all_objects.insert(root_object);
-        for byte in root_offset_object.byterange(self).into_iter().flatten() {
-            primary_byte_mapping[byte] = 0;
-        }
+        let mut result = ObjectMapping {
+            root_object,
+            all_objects: Default::default(),
+            allocations: Default::default(),
+            parents: Default::default(),
+        };
 
-        while let Some((parent_object, parent_object_index)) = todo.pop() {
-            for (_name, child) in parent_object.children(self) {
-                let (child_index, inserted) = all_objects.insert_full(child);
-                if inserted {
-                    parents
-                        .entry(child_index)
-                        .or_default()
-                        .push(parent_object_index);
-                    for byte in child.byterange(self).into_iter().flatten() {
-                        if primary_byte_mapping[byte] == usize::MAX {
-                            primary_byte_mapping[byte] = child_index;
-                        } else {
-                            secondary_byte_mapping
-                                .entry(byte)
-                                .or_default()
-                                .push(child_index);
-                        }
-                    }
-                    todo.push((child, child_index));
-                }
-            }
-        }
+        let buffer_allocation_index =
+            result
+                .allocations
+                .allocate(ObjectIndex::MAX, 0, self.buffer.len());
 
-        ObjectMapping {
-            root_object: root_offset_object,
-            all_objects,
-            primary_byte_mapping,
-            secondary_byte_mapping,
-            parents,
-        }
+        let root_allocation_index =
+            result.handle_node(Object::Offset(root_object), self, buffer_allocation_index);
+        result
+            .allocations
+            .insert_child(buffer_allocation_index, root_allocation_index);
+
+        result
     }
 }
 
 impl<'a> ObjectMapping<'a> {
-    pub fn get_bytes_for_pos<'b>(
-        &'b self,
-        byte_index: ByteIndex,
-    ) -> impl 'b + Iterator<Item = Object<'a>> {
-        let primary_mapping = self.primary_byte_mapping[byte_index];
-        let secondary_mappings = self
-            .secondary_byte_mapping
-            .get(&byte_index)
-            .cloned()
-            .unwrap_or_default();
-        let primary_mapping = (primary_mapping != usize::MAX).then_some(primary_mapping);
+    fn handle_node(
+        &mut self,
+        object: Object<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+        buffer_allocation_index: AllocationIndex,
+    ) -> AllocationIndex {
+        let object_index;
+        let allocation_index;
+        match self.all_objects.entry(object) {
+            Entry::Occupied(entry) => {
+                return *entry.get();
+            }
+            Entry::Vacant(entry) => {
+                object_index = entry.index();
+                let range = object.byterange(buffer);
+                allocation_index = self
+                    .allocations
+                    .allocate(object_index, range.start, range.end);
+                entry.insert(allocation_index);
+            }
+        }
 
-        primary_mapping
-            .into_iter()
-            .chain(secondary_mappings.into_iter())
-            .map(|index| *self.all_objects.get_index(index).unwrap())
+        for (_child_name, child) in object.children(buffer) {
+            let child_allocation_index = self.handle_node(child, buffer, buffer_allocation_index);
+            let should_insert = match object {
+                Object::Offset(_) => false,
+                Object::VTable(_)
+                | Object::Table(_)
+                | Object::Struct(_)
+                | Object::Vector(_)
+                | Object::Array(_) => true,
+                Object::Enum(_)
+                | Object::UnionTag(_)
+                | Object::Union(_)
+                | Object::Integer(_)
+                | Object::Float(_)
+                | Object::Bool(_)
+                | Object::String(_) => unreachable!(),
+            };
+            if should_insert {
+                self.allocations
+                    .insert_child(allocation_index, child_allocation_index);
+            } else {
+                self.allocations
+                    .insert_child(buffer_allocation_index, child_allocation_index);
+            }
+        }
+        allocation_index
     }
 }

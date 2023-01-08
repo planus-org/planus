@@ -3,8 +3,9 @@ use planus_types::{
     intermediate::{DeclarationIndex, Declarations, Type, TypeKind},
 };
 
-use crate::object_info::{DeclarationInfo, ObjectName};
+use crate::object_info::DeclarationInfo;
 
+pub mod allocations;
 pub mod children;
 pub mod object_info;
 pub mod object_mapping;
@@ -23,7 +24,7 @@ pub struct InspectableFlatbuffer<'a> {
     pub buffer: &'a [u8],
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Object<'a> {
     /// 4 bytes of offset inside a table
     Offset(OffsetObject<'a>),
@@ -65,93 +66,93 @@ pub enum Object<'a> {
     String(StringObject),
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct OffsetObject<'a> {
     pub offset: ByteIndex,
     pub kind: OffsetObjectKind<'a>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum OffsetObjectKind<'a> {
+    VTable,
     Table(DeclarationIndex),
     Vector(&'a Type),
     String,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct VTableObject {
-    pub declaration: DeclarationIndex,
     pub offset: ByteIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct TableOffsetObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct TableObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct StructObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnionTagObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnionObject {
     pub tag: u8,
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct EnumObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct VectorObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct ArrayObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
     pub size: u32,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct IntegerObject {
     pub offset: ByteIndex,
     pub type_: IntegerType,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct FloatObject {
     pub offset: ByteIndex,
     pub type_: FloatType,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct BoolObject {
     pub offset: ByteIndex,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct StringObject {
     pub offset: ByteIndex,
 }
@@ -163,6 +164,13 @@ impl<'a> OffsetObject<'a> {
             .unwrap();
         let offset = self.offset + u32::from_le_bytes(*slice) as usize;
         match self.kind {
+            OffsetObjectKind::VTable => {
+                let offset = self
+                    .offset
+                    .checked_add_signed(-i32::from_le_bytes(*slice) as isize)
+                    .unwrap();
+                Ok(Object::VTable(VTableObject { offset }))
+            }
             OffsetObjectKind::Table(declaration) => Ok(Object::Table(TableObject {
                 offset,
                 declaration,
@@ -219,7 +227,6 @@ impl TableObject {
         let vtable_offset = self.offset.checked_add_signed(-offset as isize).unwrap();
 
         Ok(VTableObject {
-            declaration: self.declaration,
             offset: vtable_offset,
         })
     }
