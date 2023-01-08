@@ -6,7 +6,10 @@ use std::{
 };
 
 use crossterm::event::{self, Event, KeyCode};
-use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer};
+use planus_buffer_inspection::{
+    object_mapping::{ObjectIndex, ObjectMapping},
+    InspectableFlatbuffer, Object,
+};
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
@@ -23,6 +26,7 @@ pub struct Inspector<'a> {
     pub buffer: InspectableFlatbuffer<'a>,
     pub should_quit: bool,
     pub cursor_pos: usize,
+    pub offset_stack: Vec<usize>,
 }
 
 impl<'a> Inspector<'a> {
@@ -32,6 +36,7 @@ impl<'a> Inspector<'a> {
             object_mapping: buffer.calculate_object_mapping(root_table_index),
             should_quit: false,
             cursor_pos: 0,
+            offset_stack: Vec::new(),
         }
     }
     pub fn on_key(&mut self, c: KeyCode) {
@@ -58,6 +63,28 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Right => {
                 self.cursor_pos = self.cursor_pos.saturating_add(1);
+            }
+            KeyCode::Enter => {
+                let search_results = self.object_mapping.allocations.get::<1>(self.cursor_pos);
+                if let Some(search_result) = search_results.first() {
+                    let allocation = search_result.result.last().unwrap();
+                    if allocation.object != ObjectIndex::MAX {
+                        let (object, _) = self
+                            .object_mapping
+                            .all_objects
+                            .get_index(allocation.object)
+                            .unwrap();
+                        if let Object::Offset(offset_object) = object {
+                            self.offset_stack.push(self.cursor_pos);
+                            self.cursor_pos = offset_object.get_byte_index(&self.buffer).unwrap();
+                        }
+                    }
+                }
+            }
+            KeyCode::Backspace => {
+                if let Some(pos) = self.offset_stack.pop() {
+                    self.cursor_pos = pos;
+                }
             }
             _ => {}
         }

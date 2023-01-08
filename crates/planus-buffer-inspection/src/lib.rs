@@ -1,6 +1,8 @@
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{DeclarationIndex, Declarations, FloatLiteral, IntegerLiteral, Type, TypeKind},
+    intermediate::{
+        DeclarationIndex, Declarations, FloatLiteral, IntegerLiteral, SimpleType, Type, TypeKind,
+    },
 };
 
 use crate::object_info::DeclarationInfo;
@@ -212,16 +214,21 @@ pub struct StringObject {
 }
 
 impl<'a> OffsetObject<'a> {
+    pub fn get_byte_index(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<ByteIndex> {
+        let res = if matches!(self.kind, OffsetObjectKind::VTable) {
+            self.offset
+                .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
+                .ok_or_else(|| Error)?
+        } else {
+            self.offset + buffer.read_u32(self.offset)? as usize
+        };
+        Ok(res)
+    }
+
     pub fn get_inner(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
-        let offset = self.offset + buffer.read_u32(self.offset)? as usize;
+        let offset = self.get_byte_index(buffer)?;
         match self.kind {
-            OffsetObjectKind::VTable => {
-                let offset = self
-                    .offset
-                    .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
-                    .unwrap();
-                Ok(Object::VTable(VTableObject { offset }))
-            }
+            OffsetObjectKind::VTable => Ok(Object::VTable(VTableObject { offset })),
             OffsetObjectKind::Table(declaration) => Ok(Object::Table(TableObject {
                 offset,
                 declaration,
@@ -295,11 +302,27 @@ impl TableObject {
                 offset,
                 declaration,
             }),
-            TypeKind::Union(_declaration) => todo!(),
-            TypeKind::Vector(ref _type_) => todo!(),
+            TypeKind::Union(declaration) => Object::Union(UnionObject {
+                tag: 0,
+                offset,
+                declaration,
+            }),
+            TypeKind::Vector(ref type_) => Object::Vector(VectorObject { offset, type_ }),
             TypeKind::Array(ref _type_, _size) => todo!(),
-            TypeKind::SimpleType(_type_) => todo!(),
-            TypeKind::String => todo!(),
+            TypeKind::SimpleType(type_) => match type_ {
+                SimpleType::Struct(declaration) => Object::Struct(StructObject {
+                    offset,
+                    declaration,
+                }),
+                SimpleType::Enum(declaration) => Object::Enum(EnumObject {
+                    offset,
+                    declaration,
+                }),
+                SimpleType::Bool => Object::Bool(BoolObject { offset }),
+                SimpleType::Integer(type_) => Object::Integer(IntegerObject { offset, type_ }),
+                SimpleType::Float(type_) => Object::Float(FloatObject { offset, type_ }),
+            },
+            TypeKind::String => Object::String(StringObject { offset }),
         };
         Ok(Some(object))
     }
