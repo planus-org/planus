@@ -10,16 +10,18 @@ use crossterm::event::{self, Event, KeyCode};
 use planus_buffer_inspection::{ByteIndex, Object};
 use tui::{backend::Backend, Terminal};
 
+use crate::ui::HEX_LINE_SIZE;
+
 pub type ObjectIndex = usize;
 
 pub struct TreeState<T> {
-    data: T,
-    unfolded: bool,
-    children: Option<Vec<TreeState<T>>>,
+    pub data: T,
+    pub unfolded: bool,
+    pub children: Option<Vec<TreeState<T>>>,
 }
 
 #[derive(Default)]
-struct ViewState<'a> {
+pub struct ViewState<'a> {
     pub all_objects: Vec<Object<'a>>,
     pub current_gui_root_object: ObjectIndex,
     pub byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
@@ -28,18 +30,47 @@ struct ViewState<'a> {
 
 #[derive(Default)]
 pub struct Inspector<'a> {
-    view_state: ViewState<'a>,
-    should_quit: bool,
+    pub view_state: ViewState<'a>,
+    pub data: &'a [u8],
+    pub should_quit: bool,
+    pub cursor_pos: usize,
 }
 
 impl<'a> Inspector<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        Self {
+            data,
+            ..Default::default()
+        }
+    }
     pub fn on_key(&mut self, c: KeyCode) {
         match c {
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
             }
+            // Navigation
+            KeyCode::Up => {
+                self.cursor_pos = self.cursor_pos.saturating_sub(HEX_LINE_SIZE);
+            }
+            KeyCode::Down => {
+                self.cursor_pos = self.cursor_pos.saturating_add(HEX_LINE_SIZE);
+            }
+            KeyCode::PageUp => {
+                self.cursor_pos = self.cursor_pos.saturating_sub(8 * HEX_LINE_SIZE);
+            }
+            KeyCode::PageDown => {
+                self.cursor_pos = self.cursor_pos.saturating_add(8 * HEX_LINE_SIZE);
+            }
+
+            KeyCode::Left => {
+                self.cursor_pos = self.cursor_pos.saturating_sub(1);
+            }
+            KeyCode::Right => {
+                self.cursor_pos = self.cursor_pos.saturating_add(1);
+            }
             _ => {}
         }
+        self.cursor_pos = self.cursor_pos.min(self.data.len() - 1);
     }
 
     pub fn on_tick(&mut self) {}

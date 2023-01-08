@@ -12,6 +12,8 @@ description = "Internal library for planus."
 [dependencies]
 planus-buffer-inspection = { version = "0.3.1", path = "../planus-buffer-inspection" }
 planus-types = { version = "0.3.1", path = "../planus-types" }
+planus-translation = { version = "0.3.1", path = "../planus-translation" }
 tui = "0.19.0"
 crossterm = "0.25"
 color-eyre = "0.6.2"
+clap = { version = "3.2.10", features = ["derive", "deprecated"] }
