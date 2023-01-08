@@ -42,6 +42,7 @@ impl<'a> Inspector<'a> {
                 self.cursor_pos = self.cursor_pos.saturating_sub(HEX_LINE_SIZE);
             }
             KeyCode::Down => {
+                panic!("lol got u");
                 self.cursor_pos = self.cursor_pos.saturating_add(HEX_LINE_SIZE);
             }
             KeyCode::PageUp => {

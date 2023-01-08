@@ -1,13 +1,15 @@
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
 use crossterm::{
+    cursor::Show,
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use planus_inspector::{run_inspector, Inspector};
 use planus_translation::translate_files;
-use std::{io, path::PathBuf, process::ExitCode, time::Duration};
+use std::io::Write;
+use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
 
 #[derive(Parser)]
@@ -23,7 +25,7 @@ fn main() -> Result<ExitCode> {
     let args = App::parse();
     let data = std::fs::read(args.data_file)?;
 
-    let Some(_declarations) = translate_files(&args.schema_files)
+    let Some(declarations) = translate_files(&args.schema_files)
     else {
         return Ok(ExitCode::FAILURE);
     };
@@ -36,22 +38,28 @@ fn main() -> Result<ExitCode> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    let hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |x| {
+        let mut stdout = io::stdout();
+        cleanup_terminal(&mut stdout).ok();
+        hook(x);
+    }));
+
     // create app and run it
     let inspector = Inspector::new(&data);
     let res = run_inspector(&mut terminal, inspector, tick_rate);
 
-    // restore terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    cleanup_terminal(terminal.backend_mut().deref_mut())?;
 
     if let Err(err) = res {
         println!("{:?}", err)
     }
 
     Ok(ExitCode::SUCCESS)
+}
+
+fn cleanup_terminal(stdout: &mut impl std::io::Write) -> Result<()> {
+    disable_raw_mode()?;
+    execute!(stdout, LeaveAlternateScreen, DisableMouseCapture, Show)?;
+    Ok(())
 }
