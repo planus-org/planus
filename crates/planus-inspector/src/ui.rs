@@ -1,3 +1,4 @@
+use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -26,7 +27,8 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     let mut view = Vec::new();
     let skipped_lines = inspector.cursor_pos / HEX_LINE_SIZE;
     for (line_no, chunk) in inspector
-        .data
+        .buffer
+        .buffer
         .chunks(HEX_LINE_SIZE)
         .skip(skipped_lines)
         .enumerate()
@@ -51,15 +53,11 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let objs = inspector
         .object_mapping
-        .byte_mapping
-        .get(&inspector.cursor_pos);
+        .get_bytes_for_pos(inspector.cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = Vec::new();
-    if let Some(objs) = objs {
-        for obj in objs {
-            let obj = inspector.object_mapping.all_objects[*obj];
-            text.push(Span::raw(format!("{:?}", obj.type_.kind)));
-        }
+    for obj in objs {
+        text.push(Span::raw(obj.resolve_name(&inspector.buffer)));
     }
     let paragraph = Paragraph::new(Spans::from(text))
         .block(block)

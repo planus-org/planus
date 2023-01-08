@@ -10,4 +10,5 @@ rust-version = "1.61"
 description = "Internal buffer inspection library for planus."
 
 [dependencies]
+indexmap = "1.9.2"
 planus-types = { version = "0.3.1", path = "../planus-types" }

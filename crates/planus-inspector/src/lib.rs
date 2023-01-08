@@ -6,7 +6,8 @@ use std::{
 };
 
 use crossterm::event::{self, Event, KeyCode};
-use planus_buffer_inspection::ObjectMapping;
+use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer};
+use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
 use crate::ui::HEX_LINE_SIZE;
@@ -17,19 +18,20 @@ pub struct TreeState<T> {
     pub children: Option<Vec<TreeState<T>>>,
 }
 
-#[derive(Default)]
 pub struct Inspector<'a> {
     pub object_mapping: ObjectMapping<'a>,
-    pub data: &'a [u8],
+    pub buffer: InspectableFlatbuffer<'a>,
     pub should_quit: bool,
     pub cursor_pos: usize,
 }
 
 impl<'a> Inspector<'a> {
-    pub fn new(data: &'a [u8]) -> Self {
+    pub fn new(buffer: InspectableFlatbuffer<'a>, root_table_index: DeclarationIndex) -> Self {
         Self {
-            data,
-            ..Default::default()
+            buffer,
+            object_mapping: buffer.calculate_object_mapping(root_table_index),
+            should_quit: false,
+            cursor_pos: 0,
         }
     }
     pub fn on_key(&mut self, c: KeyCode) {
@@ -60,7 +62,7 @@ impl<'a> Inspector<'a> {
             }
             _ => {}
         }
-        self.cursor_pos = self.cursor_pos.min(self.data.len() - 1);
+        self.cursor_pos = self.cursor_pos.min(self.buffer.buffer.len() - 1);
     }
 
     pub fn on_tick(&mut self) {}

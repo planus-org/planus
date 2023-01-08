@@ -1,3 +1,5 @@
+use std::{io, io::Write, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
+
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
 use crossterm::{
@@ -8,8 +10,7 @@ use crossterm::{
 };
 use planus_inspector::{run_inspector, Inspector};
 use planus_translation::translate_files;
-use std::io::Write;
-use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
+use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::CrosstermBackend, Terminal};
 
 #[derive(Parser)]
@@ -23,7 +24,7 @@ pub struct App {
 
 fn main() -> Result<ExitCode> {
     let args = App::parse();
-    let data = std::fs::read(args.data_file)?;
+    let buffer = std::fs::read(args.data_file)?;
 
     let Some(declarations) = translate_files(&args.schema_files)
     else {
@@ -46,7 +47,13 @@ fn main() -> Result<ExitCode> {
     }));
 
     // create app and run it
-    let inspector = Inspector::new(&data);
+    let inspector = Inspector::new(
+        planus_buffer_inspection::InspectableFlatbuffer {
+            declarations: &declarations,
+            buffer: &buffer,
+        },
+        DeclarationIndex(0), // TODO: wrong probably, idunno
+    );
     let res = run_inspector(&mut terminal, inspector, tick_rate);
 
     cleanup_terminal(terminal.backend_mut().deref_mut())?;

@@ -53,7 +53,7 @@ pub struct RelativePath {
     pub remaining: Vec<String>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeclarationIndex(pub usize);
 impl DeclarationIndex {
     pub const INVALID: DeclarationIndex = DeclarationIndex(usize::MAX);
@@ -281,7 +281,7 @@ pub struct RpcMethod {
     pub return_type: Type,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Type {
     pub span: Span,
     pub kind: TypeKind,
@@ -319,7 +319,7 @@ impl TypeKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TypeKind {
     Table(DeclarationIndex),
     Union(DeclarationIndex),
@@ -329,7 +329,7 @@ pub enum TypeKind {
     String,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SimpleType {
     Struct(DeclarationIndex),
     Enum(DeclarationIndex),
@@ -461,6 +461,23 @@ impl Table {
             field.type_.kind.add_children(&mut children);
         }
         children.into_iter().collect()
+    }
+
+    pub fn get_field_for_vtable_index(
+        &self,
+        vtable_index: u32,
+    ) -> Option<(&str, &TableField, bool)> {
+        for (field_name, field) in &self.fields {
+            if vtable_index == field.vtable_index {
+                return Some((field_name, field, false));
+            }
+            if matches!(field.type_.kind, TypeKind::Union(_))
+                && vtable_index == field.vtable_index + 1
+            {
+                return Some((field_name, field, true));
+            }
+        }
+        None
     }
 }
 

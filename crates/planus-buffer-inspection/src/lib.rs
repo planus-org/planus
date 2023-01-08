@@ -1,16 +1,20 @@
-use std::collections::BTreeMap;
-
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{
-        AbsolutePath, Declaration, DeclarationIndex, DeclarationKind, Declarations, SimpleType,
-        Table, Type, TypeKind,
-    },
+    intermediate::{DeclarationIndex, Declarations, Type, TypeKind},
 };
+
+use crate::object_info::{DeclarationInfo, ObjectName};
+
+pub mod children;
+pub mod object_info;
+pub mod object_mapping;
 
 pub type ByteIndex = usize;
 
+// TODO
+#[derive(Debug)]
 pub struct Error;
+
 type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Copy, Clone)]
@@ -19,168 +23,205 @@ pub struct InspectableFlatbuffer<'a> {
     pub buffer: &'a [u8],
 }
 
-#[derive(Copy, Clone)]
-pub struct Object<'a> {
-    pub offset: ByteIndex,
-    pub type_: &'a Type,
-}
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Object<'a> {
+    /// 4 bytes of offset inside a table
+    Offset(OffsetObject<'a>),
 
-#[derive(Copy, Clone)]
-pub enum ObjectEnum<'a> {
+    /// 0 actual bytes, all bytes are sub-objects of u16 types
     VTable(VTableObject),
+
+    /// 4 bytes of offset to a vtable. Fields are their own objects
     Table(TableObject),
+
+    /// 0 bytes, actual bytes are in child objects
     Struct(StructObject),
+
+    /// 1 byte of union tag
+    UnionTag(UnionTagObject),
+
+    /// 4 bytes of offset to the inner object
     Union(UnionObject),
+
+    /// 1, 2, 4 or 8 bytes of enum tag
     Enum(EnumObject),
+
+    /// 4 bytes length field. The actual elements are their own values
     Vector(VectorObject<'a>),
+
+    /// 0 bytes, actual elements are their own values
     Array(ArrayObject<'a>),
+
+    /// 1, 2, 4 or 8 bytes of integer data
     Integer(IntegerObject),
+
+    /// 4 or 8 bytes of float data
     Float(FloatObject),
+
+    /// 1 byte of bool data
     Bool(BoolObject),
+
+    /// 4+n bytes of length and strings
     String(StringObject),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct OffsetObject<'a> {
+    pub offset: ByteIndex,
+    pub kind: OffsetObjectKind<'a>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum OffsetObjectKind<'a> {
+    Table(DeclarationIndex),
+    Vector(&'a Type),
+    String,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct VTableObject {
+    pub declaration: DeclarationIndex,
     pub offset: ByteIndex,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct TableOffsetObject {
+    pub offset: ByteIndex,
+    pub declaration: DeclarationIndex,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct TableObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct StructObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone)]
-pub struct UnionObject {
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct UnionTagObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct UnionObject {
+    pub tag: u8,
+    pub offset: ByteIndex,
+    pub declaration: DeclarationIndex,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct EnumObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct VectorObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct ArrayObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
     pub size: u32,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct IntegerObject {
     pub offset: ByteIndex,
     pub type_: IntegerType,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct FloatObject {
     pub offset: ByteIndex,
     pub type_: FloatType,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct BoolObject {
     pub offset: ByteIndex,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct StringObject {
     pub offset: ByteIndex,
 }
 
-impl<'a> From<Object<'a>> for ObjectEnum<'a> {
-    fn from(object: Object<'a>) -> Self {
-        let offset = object.offset;
-        match object.type_.kind {
-            TypeKind::Table(declaration) => ObjectEnum::Table(TableObject {
+impl<'a> OffsetObject<'a> {
+    pub fn get_inner(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
+        let slice: &[u8; 4] = buffer.buffer[self.offset..self.offset + 4]
+            .try_into()
+            .unwrap();
+        let offset = self.offset + u32::from_le_bytes(*slice) as usize;
+        match self.kind {
+            OffsetObjectKind::Table(declaration) => Ok(Object::Table(TableObject {
                 offset,
                 declaration,
-            }),
-            TypeKind::Union(declaration) => ObjectEnum::Union(UnionObject {
-                offset,
-                declaration,
-            }),
-            TypeKind::Vector(ref type_) => ObjectEnum::Vector(VectorObject {
-                offset,
-                type_: &type_,
-            }),
-            TypeKind::Array(ref type_, size) => ObjectEnum::Array(ArrayObject {
-                offset,
-                type_,
-                size: size,
-            }),
-            TypeKind::SimpleType(SimpleType::Struct(declaration)) => {
-                ObjectEnum::Struct(StructObject {
-                    offset,
-                    declaration,
-                })
-            }
-            TypeKind::SimpleType(SimpleType::Enum(declaration)) => ObjectEnum::Enum(EnumObject {
-                offset,
-                declaration,
-            }),
-            TypeKind::SimpleType(SimpleType::Bool) => ObjectEnum::Bool(BoolObject { offset }),
-            TypeKind::SimpleType(SimpleType::Integer(type_)) => {
-                ObjectEnum::Integer(IntegerObject { offset, type_ })
-            }
-            TypeKind::SimpleType(SimpleType::Float(type_)) => {
-                ObjectEnum::Float(FloatObject { offset, type_ })
-            }
-            TypeKind::String => ObjectEnum::String(StringObject { offset }),
+            })),
+            OffsetObjectKind::Vector(type_) => Ok(Object::Vector(VectorObject { offset, type_ })),
+            OffsetObjectKind::String => Ok(Object::String(StringObject { offset })),
         }
     }
 }
 
 impl VTableObject {
-    pub fn get_vtable_size(buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
-        todo!()
+    pub fn get_vtable_size(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
+        let slice: &[u8; 2] = buffer.buffer[self.offset..self.offset + 2]
+            .try_into()
+            .unwrap();
+        Ok(u16::from_le_bytes(*slice))
     }
 
-    pub fn get_table_size(buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
-        todo!()
+    pub fn get_table_size(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u16> {
+        let slice: &[u8; 2] = buffer.buffer[self.offset + 2..self.offset + 4]
+            .try_into()
+            .unwrap();
+        Ok(u16::from_le_bytes(*slice))
+    }
+
+    pub fn get_offset(&self, i: usize, buffer: &InspectableFlatbuffer<'_>) -> Result<Option<u16>> {
+        let slice: &[u8; 2] = buffer.buffer[self.offset + 4 + 2 * i..self.offset + 4 + 2 * i + 2]
+            .try_into()
+            .unwrap();
+        let value = u16::from_le_bytes(*slice);
+        let value = (value != 0).then_some(value);
+        Ok(value)
     }
 
     pub fn get_offsets<'a>(
+        &self,
         buffer: &InspectableFlatbuffer<'a>,
-    ) -> Result<impl ExactSizeIterator + DoubleEndedIterator + Iterator<Item = u16>> {
-        todo!();
-        Ok(std::iter::empty())
+    ) -> Result<impl 'a + ExactSizeIterator + DoubleEndedIterator + Iterator<Item = u16>> {
+        let size = self.get_vtable_size(buffer)?;
+        let slice: &[u8] = &buffer.buffer[self.offset + 4..self.offset + size as usize];
+        Ok(slice.chunks_exact(2).map(move |chunk| {
+            let slice: &[u8; 2] = chunk.try_into().unwrap();
+            u16::from_le_bytes(*slice)
+        }))
     }
 }
 
 impl TableObject {
-    pub fn resolve_decl<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> &'a Table {
-        if let DeclarationKind::Table(decl) =
-            &buffer.declarations.get_declaration(self.declaration).1.kind
-        {
-            decl
-        } else {
-            panic!("Inconsistent declarations");
-        }
-    }
+    pub fn get_vtable(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<VTableObject> {
+        let slice: &[u8; 4] = buffer.buffer[self.offset..self.offset + 4]
+            .try_into()
+            .unwrap();
+        let offset = i32::from_le_bytes(*slice);
+        let vtable_offset = self.offset.checked_add_signed(-offset as isize).unwrap();
 
-    pub fn resolve_name<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> &'a AbsolutePath {
-        buffer.declarations.get_declaration(self.declaration).0
-    }
-
-    pub fn get_vtable(&self, buffer: &InspectableFlatbuffer<'_>) -> VTableObject {
-        todo!()
+        Ok(VTableObject {
+            declaration: self.declaration,
+            offset: vtable_offset,
+        })
     }
 
     pub fn get_field<'a>(
@@ -188,31 +229,52 @@ impl TableObject {
         buffer: &InspectableFlatbuffer<'a>,
         field_index: usize,
     ) -> Result<Option<Object<'a>>> {
+        let decl = self.resolve_declaration(buffer);
+        let Some(offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)?
+        else {
+            return Ok(None)
+        };
+
+        let offset = self.offset + offset as usize;
+        let (_field_name, field_decl, is_union_tag) =
+            decl.get_field_for_vtable_index(field_index as u32).unwrap();
+        let object = match field_decl.type_.kind {
+            TypeKind::Table(declaration) => Object::Offset(OffsetObject {
+                offset,
+                kind: OffsetObjectKind::Table(declaration),
+            }),
+            TypeKind::Union(declaration) if is_union_tag => Object::UnionTag(UnionTagObject {
+                offset,
+                declaration,
+            }),
+            TypeKind::Union(_declaration) => todo!(),
+            TypeKind::Vector(ref _type_) => todo!(),
+            TypeKind::Array(ref _type_, _size) => todo!(),
+            TypeKind::SimpleType(_type_) => todo!(),
+            TypeKind::String => todo!(),
+        };
+        Ok(Some(object))
+    }
+}
+
+impl StructObject {
+    pub fn get_field<'a>(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _field_index: usize,
+    ) -> Result<Option<Object<'a>>> {
         todo!()
     }
+}
 
-    pub fn get_fields<'a>(
-        &self,
-        buffer: &InspectableFlatbuffer<'a>,
-    ) -> impl Iterator<Item = (usize, Result<Object<'a>>)> {
-        todo!();
-        std::iter::empty()
+impl UnionObject {
+    pub fn get_variant<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
+        todo!()
     }
 }
 
-trait ObjectInfo<'a> {
-    type Iterator: Iterator<Item = (String, Object<'a>)>;
-
-    fn get_representation(&self, buffer: &InspectableFlatbuffer<'_>) -> String;
-    fn get_children(&self, buffer: &InspectableFlatbuffer<'_>) -> String;
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<usize>;
-}
-
-pub type ObjectIndex = usize;
-
-#[derive(Default)]
-pub struct ObjectMapping<'a> {
-    pub all_objects: Vec<Object<'a>>,
-    pub byte_mapping: BTreeMap<ByteIndex, Vec<ObjectIndex>>,
-    pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
+impl EnumObject {
+    pub fn tag<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<IntegerObject> {
+        todo!()
+    }
 }
