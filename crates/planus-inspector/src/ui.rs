@@ -79,8 +79,13 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         Spans::default(),
     ];
     for obj in objs {
+        let range = obj
+            .byterange(&inspector.buffer)
+            .map(|r| format!("{}-{}", r.start, r.end))
+            .unwrap_or_else(|| format!("none"));
         text.extend_from_slice(&[
             Spans::from(Span::raw(obj.resolve_name(&inspector.buffer))),
+            Spans::from(Span::raw(format!("range: {range}"))),
             Spans::default(),
         ]);
     }
