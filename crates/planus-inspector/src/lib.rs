@@ -39,30 +39,37 @@ impl<'a> Inspector<'a> {
             offset_stack: Vec::new(),
         }
     }
-    pub fn on_key(&mut self, c: KeyCode) {
-        match c {
+    pub fn on_key(&mut self, c: KeyCode) -> bool {
+        let should_draw = match c {
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
+                false
             }
             // Navigation
             KeyCode::Up => {
                 self.cursor_pos = self.cursor_pos.saturating_sub(HEX_LINE_SIZE);
+                true
             }
             KeyCode::Down => {
                 self.cursor_pos = self.cursor_pos.saturating_add(HEX_LINE_SIZE);
+                true
             }
             KeyCode::PageUp => {
                 self.cursor_pos = self.cursor_pos.saturating_sub(8 * HEX_LINE_SIZE);
+                true
             }
             KeyCode::PageDown => {
                 self.cursor_pos = self.cursor_pos.saturating_add(8 * HEX_LINE_SIZE);
+                true
             }
 
             KeyCode::Left => {
                 self.cursor_pos = self.cursor_pos.saturating_sub(1);
+                true
             }
             KeyCode::Right => {
                 self.cursor_pos = self.cursor_pos.saturating_add(1);
+                true
             }
             KeyCode::Enter => {
                 let search_results = self.object_mapping.allocations.get::<1>(self.cursor_pos);
@@ -80,15 +87,29 @@ impl<'a> Inspector<'a> {
                         }
                     }
                 }
+                true
             }
             KeyCode::Backspace => {
                 if let Some(pos) = self.offset_stack.pop() {
                     self.cursor_pos = pos;
+                    true
+                } else {
+                    false
                 }
             }
-            _ => {}
-        }
+            KeyCode::Home => {
+                self.cursor_pos = 0;
+                true
+            }
+            KeyCode::End => {
+                self.cursor_pos = self.buffer.buffer.len() - 1;
+                true
+            }
+            _ => false,
+        };
         self.cursor_pos = self.cursor_pos.min(self.buffer.buffer.len() - 1);
+
+        should_draw
     }
 
     pub fn on_tick(&mut self) {}
@@ -100,15 +121,21 @@ pub fn run_inspector<B: Backend>(
     tick_rate: Duration,
 ) -> io::Result<()> {
     let mut last_tick = Instant::now();
+    let mut should_draw = true;
     loop {
-        terminal.draw(|f| ui::draw(f, &mut inspector))?;
+        if should_draw {
+            terminal.draw(|f| ui::draw(f, &mut inspector))?;
+            should_draw = false;
+        }
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
         if crossterm::event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                inspector.on_key(key.code);
+            match event::read()? {
+                Event::Key(key) => should_draw = inspector.on_key(key.code),
+                Event::Resize(_, _) => should_draw = true,
+                _ => (),
             }
         }
         if last_tick.elapsed() >= tick_rate {

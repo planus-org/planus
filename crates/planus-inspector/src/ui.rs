@@ -24,13 +24,12 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 }
 
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
+    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+    let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
     let search_results = inspector
         .object_mapping
         .allocations
         .get::<1>(inspector.cursor_pos);
-
-    let mut ranges = Vec::new();
-    let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
     for search_result in search_results {
         let allocation = search_result.result.last().unwrap();
         if allocation.object == ObjectIndex::MAX {
@@ -46,6 +45,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .buffer
         .chunks(HEX_LINE_SIZE)
         .skip(skipped_lines)
+        .take(100)
         .enumerate()
     {
         let mut line = Vec::new();
@@ -73,7 +73,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     let search_results = inspector
         .object_mapping
         .allocations
-        .get::<1>(inspector.cursor_pos);
+        .get::<3>(inspector.cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = vec![
         Spans::from(Span::styled(
@@ -83,21 +83,22 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         Spans::default(),
     ];
     for search_result in search_results {
-        let allocation = search_result.result.last().unwrap();
-        if allocation.object == ObjectIndex::MAX {
-            continue;
+        for allocation in search_result.result {
+            if allocation.object == ObjectIndex::MAX {
+                continue;
+            }
+            let range = format!("{}-{}", allocation.start, allocation.end);
+            let (object, _object_allocation_index) = inspector
+                .object_mapping
+                .all_objects
+                .get_index(allocation.object)
+                .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
+            text.extend_from_slice(&[
+                Spans::from(Span::raw(object.resolve_name(&inspector.buffer))),
+                Spans::from(Span::raw(format!("range: {range}"))),
+                Spans::default(),
+            ]);
         }
-        let range = format!("{}-{}", allocation.start, allocation.end);
-        let (object, _object_allocation_index) = inspector
-            .object_mapping
-            .all_objects
-            .get_index(allocation.object)
-            .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
-        text.extend_from_slice(&[
-            Spans::from(Span::raw(object.resolve_name(&inspector.buffer))),
-            Spans::from(Span::raw(format!("range: {range}"))),
-            Spans::default(),
-        ]);
     }
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
