@@ -22,6 +22,14 @@ pub struct PrettyPrinter<'writer, 'src, T> {
 }
 
 impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
+    pub fn new(writer: &'writer mut T, source: &'src str) -> Self {
+        Self {
+            is_at_new_paragraph: true,
+            writer,
+            source,
+        }
+    }
+
     fn write_standalone_comment(
         &mut self,
         indent: bool,
@@ -588,7 +596,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
         Ok(())
     }
 
-    fn write_type(&mut self, decl: &Type<'_>) -> Result<(), std::fmt::Error> {
+    pub fn write_type(&mut self, decl: &Type<'_>) -> Result<(), std::fmt::Error> {
         match &decl.kind {
             cst::TypeKind::Vector(typ) => {
                 self.write_str("[")?;
@@ -670,11 +678,7 @@ pub fn pretty_print<W: std::fmt::Write>(
     schema: &Schema<'_>,
     writer: &mut W,
 ) -> std::fmt::Result {
-    let mut printer = PrettyPrinter {
-        is_at_new_paragraph: true,
-        writer,
-        source,
-    };
+    let mut printer = PrettyPrinter::new(writer, source);
 
     let mut last_declaration_requires_paragraph = false;
     for decl in &schema.declarations {
