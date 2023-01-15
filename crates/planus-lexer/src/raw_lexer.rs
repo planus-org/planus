@@ -60,7 +60,7 @@ pub enum Token<'input> {
     #[regex(r"//[^\n]*", |lex| CommentToken { kind: CommentKind::Comment, content: &lex.slice()[2..] })]
     Comment(CommentToken<'input>),
 
-    #[token("\n")]
+    #[regex(r"(\n|\r\n)")]
     Newline,
 
     #[error]

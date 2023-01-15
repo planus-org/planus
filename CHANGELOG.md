@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for docstrings, and add them to the Rust output.
 - Update the `README` with information about our Discord server.
 - Split up `planus-cli` into multiple crates
+- Fix planus failing with "Unexpected token" on CLRF
 
 ### Removed
 - \[Rust\]: The old ways of serializing tables and unions using `create`-functions have been removed.
