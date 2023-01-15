@@ -155,7 +155,7 @@ impl<'input> Lexer<'input> {
             Token::Comment(c) => Some(Comment {
                 span: self.span(),
                 kind: c.kind,
-                content: c.content,
+                content: c.content.trim_end(),
             }),
             token => {
                 self.saved_token = Some(token);
