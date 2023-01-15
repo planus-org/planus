@@ -1,3 +1,6 @@
+//! Outer doc comment
+// Non-doc comment
 table X {}
 
+/// Doc comment
 table Y {}
