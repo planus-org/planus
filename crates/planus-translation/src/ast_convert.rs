@@ -6,7 +6,7 @@ use indexmap::{map::Entry, IndexMap};
 use planus_lexer::{Comment, CommentKind, TokenMetadata};
 use planus_types::{ast::*, cst};
 
-use crate::{ctx::Ctx, error::ErrorKind};
+use crate::{ctx::Ctx, error::ErrorKind, pretty_print::PrettyPrinter};
 
 struct CstConverter<'ctx> {
     pub schema: Schema,
@@ -638,7 +638,7 @@ impl<'ctx> CstConverter<'ctx> {
         is_table: bool,
     ) -> StructField {
         let default_docstring = format!(
-            "The field `{}` in on the {} `{}`",
+            "The field `{}` in the {} `{}`",
             field.ident.ident,
             if is_table { "table" } else { "struct" },
             parent_ident
@@ -776,7 +776,7 @@ impl<'ctx> CstConverter<'ctx> {
         parent_ident: &str,
     ) -> EnumVariant {
         let default_docstring = format!(
-            "The variant `{}` in on the enum `{}`",
+            "The variant `{}` in the enum `{}`",
             variant.ident.ident, parent_ident
         );
         let docstrings =
@@ -897,17 +897,18 @@ impl<'ctx> CstConverter<'ctx> {
         let docstrings;
         if let Some((name, colon)) = &variant.name {
             let default_docstring = format!(
-                "The variant `{}` in on the union `{}`",
+                "The variant `{}` in the union `{}`",
                 name.ident, parent_ident
             );
             docstrings = self.convert_docstrings(&name.token_metadata, default_docstring, None);
             self.handle_invalid_docstrings(&colon.token_metadata);
         } else {
-            // TODO: This is very bad documentation
-            let default_docstring = format!(
-                "The variant of type `{:?}` in on the union `{}`",
-                variant.type_.kind, parent_ident
-            );
+            let mut type_name = String::new();
+            // TODO: figure out if we should keep maintaining that entire pretty printer or do something simpler
+            let mut printer = PrettyPrinter::new(&mut type_name, "");
+            printer.write_type(&variant.type_).unwrap();
+            let default_docstring =
+                format!("The variant of type `{type_name}` in the union `{parent_ident}`",);
             docstrings =
                 self.convert_docstrings(type_metas.next().unwrap(), default_docstring, None);
         }
@@ -993,7 +994,7 @@ impl<'ctx> CstConverter<'ctx> {
 
     fn convert_rpc_method(&mut self, method: &cst::RpcMethod<'_>, parent_ident: &str) -> RpcMethod {
         let default_docstring = format!(
-            "The method `{}` in on the service `{}`",
+            "The method `{}` on the service `{}`",
             method.ident.ident, parent_ident
         );
         let docstrings =
