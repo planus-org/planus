@@ -907,10 +907,8 @@ impl<'ctx> CstConverter<'ctx> {
             // TODO: figure out if we should keep maintaining that entire pretty printer or do something simpler
             let mut printer = PrettyPrinter::new(&mut type_name, "");
             printer.write_type(&variant.type_).unwrap();
-            let default_docstring = format!(
-                "The variant of type `{}` in the union `{}`",
-                type_name, parent_ident
-            );
+            let default_docstring =
+                format!("The variant of type `{type_name}` in the union `{parent_ident}`",);
             docstrings =
                 self.convert_docstrings(type_metas.next().unwrap(), default_docstring, None);
         }
