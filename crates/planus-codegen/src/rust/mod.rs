@@ -959,8 +959,10 @@ fn float_type(type_: &FloatType) -> &'static str {
     }
 }
 
-pub fn format_string(s: &str) -> Result<String, crate::CodegenError> {
+pub fn format_string(s: &str, max_width: u64) -> Result<String, crate::CodegenError> {
     let mut child = Command::new("rustfmt")
+        .arg("--edition=2021")
+        .arg(format!("--config=max_width={}", max_width))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
