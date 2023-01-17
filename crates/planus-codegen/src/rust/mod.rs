@@ -968,7 +968,8 @@ pub fn format_string(s: &str, max_width: Option<u64>) -> Result<String, crate::C
         .stderr(Stdio::piped());
 
     if let Some(max_width) = max_width {
-        child.arg(format!("--max-width={}", max_width));
+        child.arg("--config");
+        child.arg(format!("max_width={}", max_width));
     }
 
     let mut child = child.spawn()?;
