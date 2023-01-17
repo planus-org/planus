@@ -43,7 +43,7 @@ pub fn generate_rust(declarations: &Declarations) -> Result<String, CodegenError
         declarations,
     );
     let res = templates::rust::Namespace(&output).render().unwrap();
-    let res = rust::format_string(&rust::format_string(&res, 1_000_000)?, 100)?;
+    let res = rust::format_string(&rust::format_string(&res, Some(1_000_000))?, None)?;
     Ok(res)
 }
 
