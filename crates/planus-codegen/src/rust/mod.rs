@@ -962,7 +962,8 @@ fn float_type(type_: &FloatType) -> &'static str {
 pub fn format_string(s: &str, max_width: Option<u64>) -> Result<String, crate::CodegenError> {
     let mut child = Command::new("rustfmt");
 
-    child.arg("--edition=2021")
+    child
+        .arg("--edition=2021")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
