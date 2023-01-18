@@ -959,12 +959,21 @@ fn float_type(type_: &FloatType) -> &'static str {
     }
 }
 
-pub fn format_string(s: &str) -> Result<String, crate::CodegenError> {
-    let mut child = Command::new("rustfmt")
+pub fn format_string(s: &str, max_width: Option<u64>) -> Result<String, crate::CodegenError> {
+    let mut child = Command::new("rustfmt");
+
+    child
+        .arg("--edition=2021")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
+        .stderr(Stdio::piped());
+
+    if let Some(max_width) = max_width {
+        child.arg("--config");
+        child.arg(format!("max_width={max_width}"));
+    }
+
+    let mut child = child.spawn()?;
 
     {
         let child_stdin = child.stdin.as_mut().unwrap();
