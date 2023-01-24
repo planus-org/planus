@@ -19,7 +19,7 @@ color-eyre = "0.6.2"
 planus = { path = "../../crates/planus", default-features = false, features = [
   "extra-validation",
 ] }
-flatbuffers = "=22.10.26"
+flatbuffers = "=23.1.21"
 serde = { version = "1.0.132", default-features = false, features = ["derive"] }
 static_assertions = "1.1.0"
 
