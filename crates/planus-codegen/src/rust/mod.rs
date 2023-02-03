@@ -789,7 +789,7 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
                 let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
                 getter_return_type = format!("{ref_name}<'a>");
-                getter_code = format!("{ref_name}(buffer)");
+                getter_code = format!("::core::convert::From::from(buffer)");
             }
             ResolvedType::Enum(decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();

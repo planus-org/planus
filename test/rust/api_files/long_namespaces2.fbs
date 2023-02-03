@@ -5,8 +5,7 @@ namespace Other.Long.Namespace.Here;
 enum Enum: uint8 { X }
 struct Struct {
   x: A.B.C.D.E.F.G.H.I.J.K.L.M.N.O.P.Q.R.S.T.U.V.W.X.Y.Z.Enum;
-  // TODO: Add back in once #169 has been solved
-  // y: A.B.C.D.E.F.G.H.I.J.K.L.M.N.O.P.Q.R.S.T.U.V.W.X.Y.Z.Struct;
+  y: A.B.C.D.E.F.G.H.I.J.K.L.M.N.O.P.Q.R.S.T.U.V.W.X.Y.Z.Struct;
 }
 table Table {
   x: A.B.C.D.E.F.G.H.I.J.K.L.M.N.O.P.Q.R.S.T.U.V.W.X.Y.Z.Enum;
