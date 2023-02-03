@@ -466,6 +466,12 @@ mod root {
                 }
             }
 
+            impl<'a> ::core::convert::From<::planus::ArrayWithStartOffset<'a, 12>> for Vec3Ref<'a> {
+                fn from(array: ::planus::ArrayWithStartOffset<'a, 12>) -> Self {
+                    Self(array)
+                }
+            }
+
             impl<'a> ::core::convert::From<Vec3Ref<'a>> for Vec3 {
                 #[allow(unreachable_code)]
                 fn from(value: Vec3Ref<'a>) -> Self {
