@@ -111,6 +111,12 @@ impl<'a> ::core::fmt::Debug for {{ info.ref_name }}<'a> {
     }
 }
 
+impl<'a> ::core::convert::From<::planus::ArrayWithStartOffset<'a, {{ size }}>> for {{ info.ref_name }}<'a> {
+    fn from(array: ::planus::ArrayWithStartOffset<'a, {{ size }}>) -> Self {
+        Self(array)
+    }
+}
+
 {% if info.should_do_infallible_conversion -%}
 impl<'a> ::core::convert::From<{{ info.ref_name }}<'a>> for {{ info.owned_name}} {
     #[allow(unreachable_code)]

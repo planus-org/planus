@@ -8,13 +8,43 @@ include "../include_test2.fbs";
 
 namespace A.B;
 
-table Obj {
-  here: Obj;
-  a: A.Obj;
-  a_a: A.A.Obj;
-  a_b: A.B.Obj;
-  b: B.Obj;
-  b_a: B.A.Obj;
-  b_b: B.B.Obj;
-  c: C.Obj;
+table Table {
+  here: Table;
+  a: A.Table;
+  a_a: A.A.Table;
+  a_b: A.B.Table;
+  b: B.Table;
+  b_a: B.A.Table;
+  b_b: B.B.Table;
+  c: C.Table;
+  struct_here: Struct;
+  struct_a: A.Struct;
+  struct_a_a: A.A.Struct;
+  struct_a_b: A.B.Struct;
+  struct_b: B.Struct;
+  struct_b_a: B.A.Struct;
+  struct_b_b: B.B.Struct;
+  struct_c: C.Struct;
+}
+
+table Struct {
+  here: Struct;
+  a: A.Struct;
+  a_a: A.A.Struct;
+  a_b: A.B.Struct;
+  b: B.Struct;
+  b_a: B.A.Struct;
+  b_b: B.B.Struct;
+  c: C.Struct;
+}
+
+union Union {
+  Table,
+  A.Table,
+  A.A.Table,
+  A.B.Table,
+  B.Table,
+  B.A.Table,
+  B.B.Table,
+  C.Table
 }
