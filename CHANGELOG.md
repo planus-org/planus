@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Add license files to crates
 - \[Rust\]: Implement a builder pattern for serializing tables and unions
 - \[Rust\]: rustfmt runs twice on generated code to ensure it is formatted correctly
+- \[Rust\]: Fix an issue with using structs across different flatbuffer namespaces.
 - Add support for docstrings, and add them to the Rust output.
 - Update the `README` with information about our Discord server.
 - Split up `planus-cli` into multiple crates
