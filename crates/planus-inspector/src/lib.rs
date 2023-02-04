@@ -100,9 +100,9 @@ impl<'a> Inspector<'a> {
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
                     let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                     if let Some(search_result) = search_results.first() {
-                        if let Some(index) = search_result.result.len().checked_sub(2) {
-                            let allocation = search_result.result[index];
-                            if let Some(object) = allocation.object {
+                        if let Some(index) = search_result.field_path.len().checked_sub(2) {
+                            let field_access = search_result.field_path[index];
+                            if let Some(object) = field_access.allocation.object {
                                 let (object, _) =
                                     self.object_mapping.all_objects.get_index(object).unwrap();
                                 if let Object::Offset(offset_object) = object {
@@ -121,8 +121,8 @@ impl<'a> Inspector<'a> {
             KeyCode::Enter => {
                 let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                 if let Some(search_result) = search_results.first() {
-                    let allocation = search_result.result.last().unwrap();
-                    if let Some(object_index) = allocation.object {
+                    let field_access = search_result.field_path.last().unwrap();
+                    if let Some(object_index) = field_access.allocation.object {
                         let (object, _) = self
                             .object_mapping
                             .all_objects

@@ -100,7 +100,7 @@ impl<'a> Children<'a> for TableObject {
             });
 
         let iter = std::iter::once((
-            Cow::Borrowed("vtable"),
+            Cow::Borrowed("#vtable"),
             Object::Offset(OffsetObject {
                 offset: self.offset,
                 kind: crate::OffsetObjectKind::VTable(self.declaration),

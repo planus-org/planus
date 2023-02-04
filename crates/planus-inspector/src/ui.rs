@@ -49,11 +49,11 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .allocations
         .get(inspector.hex_cursor_pos);
     for search_result in search_results {
-        let Some(allocation) = search_result.result.last() else { continue; };
-        if allocation.object.is_none() {
+        let Some(field_access) = search_result.field_path.last() else { continue; };
+        if field_access.allocation.object.is_none() {
             continue;
         }
-        ranges.push(allocation.start..allocation.end);
+        ranges.push(field_access.allocation.start..field_access.allocation.end);
     }
 
     let mut view = Vec::new();
@@ -104,17 +104,22 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     ];
 
     for (i, search_result) in search_results.iter().enumerate() {
-        for allocation in &search_result.result[search_result.result.len().saturating_sub(3)..] {
-            let Some(object_index) = allocation.object
+        for field_access in
+            &search_result.field_path[search_result.field_path.len().saturating_sub(3)..]
+        {
+            let Some(object_index) = field_access.allocation.object
             else {
                 continue;
             };
-            let range = format!("{}-{}", allocation.start, allocation.end);
+            let range = format!(
+                "{}-{}",
+                field_access.allocation.start, field_access.allocation.end
+            );
             let (object, _object_allocation_index) = inspector
                 .object_mapping
                 .all_objects
                 .get_index(object_index)
-                .unwrap_or_else(|| panic!("Cannot get object for allocation {allocation:?}"));
+                .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
             text.extend_from_slice(&[
                 Spans::from(Span::styled(
                     object.resolve_name(&inspector.buffer),

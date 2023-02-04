@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
 use crate::{object_mapping::ObjectIndex, ByteIndex};
 
@@ -7,46 +7,59 @@ pub type AllocationEnd = ByteIndex;
 pub type AllocationIndex = usize;
 
 #[derive(Default)]
-pub struct Allocations {
-    allocations: Vec<Allocation>,
+pub struct Allocations<'a> {
+    allocations: Vec<Allocation<'a>>,
 }
 
 #[derive(Debug)]
-pub struct Allocation {
+pub struct Allocation<'a> {
     pub object: Option<ObjectIndex>,
     pub start: AllocationStart,
     pub end: AllocationEnd,
     pub parents: Vec<AllocationIndex>,
     // Invariant: None of the allocation ranges can overlap
-    pub children: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren)>,
+    pub children: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren<'a>)>,
 }
 
 #[derive(Clone, Debug)]
-pub enum AllocationChildren {
-    Unique(AllocationIndex),
-    Overlapping(Vec<AllocationIndex>),
+pub enum AllocationChildren<'a> {
+    Unique(ChildMapping<'a>),
+    Overlapping(Vec<ChildMapping<'a>>),
 }
 
-impl AllocationChildren {
-    pub fn extend(&mut self, other: &AllocationChildren) {
-        if let AllocationChildren::Unique(child) = *self {
-            *self = AllocationChildren::Overlapping(vec![child])
+#[derive(Clone, Debug)]
+pub struct ChildMapping<'a> {
+    field_name: Cow<'a, str>,
+    allocation_index: AllocationIndex,
+}
+
+impl<'a> AllocationChildren<'a> {
+    pub fn extend(&mut self, other: &AllocationChildren<'a>) {
+        if let AllocationChildren::Unique(child) = self {
+            let child = std::mem::replace(
+                child,
+                ChildMapping {
+                    field_name: "".into(),
+                    allocation_index: 0,
+                },
+            );
+            *self = AllocationChildren::Overlapping(vec![child]);
         }
 
         match self {
-            AllocationChildren::Unique(_) => unreachable!(),
+            AllocationChildren::Unique(..) => unreachable!(),
             AllocationChildren::Overlapping(vec) => match other {
                 AllocationChildren::Unique(child) => {
-                    vec.push(*child);
+                    vec.push(child.clone());
                 }
                 AllocationChildren::Overlapping(children) => {
-                    vec.extend_from_slice(children);
+                    vec.extend_from_slice(&children);
                 }
             },
         }
     }
 
-    pub fn children(&self) -> &[AllocationIndex] {
+    pub fn children(&self) -> &[ChildMapping<'a>] {
         match self {
             AllocationChildren::Unique(child) => std::slice::from_ref(child),
             AllocationChildren::Overlapping(children) => children,
@@ -54,21 +67,16 @@ impl AllocationChildren {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SearchResult<T> {
-    pub result: Vec<T>,
+#[derive(Copy, Clone, Debug)]
+pub struct FieldAccess<'a> {
+    pub field_name: &'a str,
+    pub allocation: &'a Allocation<'a>,
 }
 
-impl<T> SearchResult<T> {
-    fn push(&mut self, object: T) {
-        let _ = self.result.push(object);
-    }
-
-    fn map<U>(self, f: impl FnMut(T) -> U) -> SearchResult<U> {
-        SearchResult {
-            result: self.result.into_iter().map(f).collect(),
-        }
-    }
+pub type FieldPath<'a> = Vec<FieldAccess<'a>>;
+pub struct SearchResult<'a> {
+    pub root_object: &'a Allocation<'a>,
+    pub field_path: FieldPath<'a>,
 }
 
 struct Interval {
@@ -82,14 +90,14 @@ impl Interval {
     }
 }
 
-impl Allocations {
-    pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<&Allocation>> {
+impl<'a> Allocations<'a> {
+    pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<'_>> {
         let mut out = Vec::new();
 
-        let root_allocation = &self.allocations[0];
-        let initial_state = SearchResult { result: Vec::new() };
+        let buffer_allocation = &self.allocations[0];
 
-        let mut todo = vec![(root_allocation, initial_state)];
+        let mut todo: Vec<(&Allocation, Vec<(usize, &str)>)> =
+            vec![(buffer_allocation, Vec::new())];
 
         while let Some((allocation, mut state)) = todo.pop() {
             if let Some((allocation_start, (allocation_end, children))) =
@@ -97,18 +105,18 @@ impl Allocations {
             {
                 if (*allocation_start..*allocation_end).contains(&offset) {
                     match children {
-                        AllocationChildren::Unique(child_index) => {
-                            let child = &self.allocations[*child_index];
-                            state.push(*child_index);
-                            todo.push((child, state));
+                        AllocationChildren::Unique(child) => {
+                            let allocation = &self.allocations[child.allocation_index];
+                            state.push((child.allocation_index, &child.field_name));
+                            todo.push((allocation, state));
                             continue;
                         }
                         AllocationChildren::Overlapping(children) => {
-                            for child_index in children {
-                                let child = &self.allocations[*child_index];
+                            for child in children {
+                                let allocation = &self.allocations[child.allocation_index];
                                 let mut state = state.clone();
-                                state.push(*child_index);
-                                todo.push((child, state));
+                                state.push((child.allocation_index, &child.field_name));
+                                todo.push((allocation, state));
                             }
                             continue;
                         }
@@ -122,7 +130,20 @@ impl Allocations {
         out.sort();
         out.dedup();
         out.into_iter()
-            .map(|r| r.map(|index| &self.allocations[index]))
+            .filter_map(|r| {
+                let mut iter = r.iter();
+                let (root_allocation_index, _) = iter.next()?;
+                let field_path = iter
+                    .map(|&(index, field_name)| FieldAccess {
+                        field_name,
+                        allocation: &self.allocations[index],
+                    })
+                    .collect();
+                Some(SearchResult {
+                    root_object: &self.allocations[*root_allocation_index],
+                    field_path,
+                })
+            })
             .collect()
     }
 
@@ -143,10 +164,15 @@ impl Allocations {
         allocation_index
     }
 
+    pub fn insert_new_root(&mut self, allocation_index: AllocationIndex) {
+        self.insert_child(0, allocation_index, "".into());
+    }
+
     pub fn insert_child(
         &mut self,
         parent_allocation_index: AllocationIndex,
         child_allocation_index: AllocationIndex,
+        field_name: Cow<'a, str>,
     ) {
         let child_node = &mut self.allocations[child_allocation_index];
         if child_node.parents.contains(&parent_allocation_index) {
@@ -194,7 +220,10 @@ impl Allocations {
                 start: allocation_start,
                 end: allocation_end,
             },
-            AllocationChildren::Unique(child_allocation_index),
+            AllocationChildren::Unique(ChildMapping {
+                field_name,
+                allocation_index: child_allocation_index,
+            }),
         ));
 
         'outer: loop {

@@ -15,7 +15,7 @@ pub struct ObjectMapping<'a> {
     pub root_object: OffsetObject<'a>,
     pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
     pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
-    pub allocations: Allocations,
+    pub allocations: Allocations<'a>,
     pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
 }
 
@@ -43,12 +43,14 @@ impl<'a> InspectableFlatbuffer<'a> {
         };
 
         let buffer_allocation_index = result.allocations.allocate(None, 0, self.buffer.len());
+        assert_eq!(buffer_allocation_index, 0);
 
-        let root_allocation_index =
-            result.handle_node(Object::Offset(root_object), self, buffer_allocation_index);
-        result
-            .allocations
-            .insert_child(buffer_allocation_index, root_allocation_index);
+        let root_allocation_index = result.handle_node(Object::Offset(root_object), self);
+        result.allocations.insert_child(
+            buffer_allocation_index,
+            root_allocation_index,
+            "root_offset".into(),
+        );
 
         result
     }
@@ -59,7 +61,6 @@ impl<'a> ObjectMapping<'a> {
         &mut self,
         object: Object<'a>,
         buffer: &InspectableFlatbuffer<'a>,
-        buffer_allocation_index: AllocationIndex,
     ) -> AllocationIndex {
         let object_index;
         let allocation_index;
@@ -78,28 +79,13 @@ impl<'a> ObjectMapping<'a> {
             }
         }
 
-        for (_child_name, child) in object.children(buffer) {
-            let child_allocation_index = self.handle_node(child, buffer, buffer_allocation_index);
-            let should_insert = match object {
-                Object::Offset(_) => false,
-                Object::VTable(_)
-                | Object::Table(_)
-                | Object::Struct(_)
-                | Object::Vector(_)
-                | Object::Array(_)
-                | Object::UnionTag(_)
-                | Object::Enum(_)
-                | Object::String(_) => true,
-                Object::Union(_) | Object::Integer(_) | Object::Float(_) | Object::Bool(_) => {
-                    unreachable!()
-                }
-            };
-            if should_insert {
-                self.allocations
-                    .insert_child(allocation_index, child_allocation_index);
+        for (child_name, child) in object.children(buffer) {
+            let child_allocation_index = self.handle_node(child, buffer);
+            if matches!(object, Object::Offset(_)) {
+                self.allocations.insert_new_root(child_allocation_index);
             } else {
                 self.allocations
-                    .insert_child(buffer_allocation_index, child_allocation_index);
+                    .insert_child(allocation_index, child_allocation_index, child_name);
             }
         }
         allocation_index
