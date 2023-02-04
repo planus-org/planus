@@ -32,9 +32,9 @@ pub enum ObjectFormattingKind<'a> {
 }
 
 pub enum BraceStyle<'a> {
-    BraceBegin { field_name: Cow<'a, str> },
+    BraceBegin { field_name: &'a str },
     BraceEnd,
-    LeafObject { field_name: Cow<'a, str> },
+    LeafObject { field_name: &'a str },
 }
 
 impl<'a> ObjectFormatting<'a> {

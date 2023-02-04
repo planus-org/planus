@@ -6,7 +6,7 @@ use std::{
 use indexmap::IndexMap;
 
 use crate::{
-    object_formatting::ObjectFormatting,
+    object_formatting::{BraceStyle, ObjectFormatting, ObjectFormattingKind, ObjectFormattingLine},
     object_mapping::{ObjectIndex, ObjectMapping},
     ByteIndex,
 };
@@ -36,6 +36,8 @@ impl<'a> IntervalTree<'a> {
             .then_some(children)
     }
 
+    // TODO: This should also return internal padding bytes
+    // TODO: This should return children sorted after where they start
     pub fn get_all_children(&self) -> BTreeSet<&ChildMapping<'a>> {
         self.allocations
             .values()
@@ -360,18 +362,90 @@ impl<'a> IntervalTree<'a> {
 }
 
 impl<'a> Allocation<'a> {
-    pub fn to_formatting(&self, object_mapping: &ObjectMapping<'a>) -> ObjectFormatting<'a> {
+    pub fn to_formatting(&'a self, object_mapping: &'a ObjectMapping<'a>) -> ObjectFormatting<'a> {
+        let root_object = *object_mapping
+            .all_objects
+            .get_index(self.object_index)
+            .unwrap()
+            .0;
         let mut out = ObjectFormatting {
             lines: Vec::new(),
             allocation_paths: IndexMap::new(),
-            root_object: *object_mapping
-                .all_objects
-                .get_index(self.object_index)
-                .unwrap()
-                .0,
+            root_object,
             root_object_range: (self.start, self.end),
         };
 
+        fn handle<'a>(
+            child_mapping: &'a ChildMapping<'a>,
+            object_mapping: &'a ObjectMapping<'a>,
+            path: &mut Vec<(&'a str, ObjectIndex)>,
+            out: &mut ObjectFormatting<'a>,
+        ) {
+            let allocation =
+                &object_mapping.allocations.allocations[child_mapping.allocation_index];
+            path.push((&child_mapping.field_name, allocation.object_index));
+            let allocation_path_index = out.allocation_paths.len();
+            assert!(out
+                .allocation_paths
+                .insert(path.clone(), out.lines.len())
+                .is_none());
+            if allocation.children.allocations.is_empty() {
+                out.lines.push(ObjectFormattingLine {
+                    indentation: path.len() * 2,
+                    kind: ObjectFormattingKind::Object {
+                        allocation_path_index,
+                        style: BraceStyle::LeafObject {
+                            field_name: &child_mapping.field_name,
+                        },
+                        object: object_mapping
+                            .all_objects
+                            .get_index(allocation.object_index)
+                            .unwrap()
+                            .0
+                            .clone(),
+                    },
+                    byte_range: (allocation.start, allocation.end),
+                });
+            } else {
+                out.lines.push(ObjectFormattingLine {
+                    indentation: path.len() * 2,
+                    kind: ObjectFormattingKind::Object {
+                        allocation_path_index,
+                        style: BraceStyle::BraceBegin {
+                            field_name: &child_mapping.field_name,
+                        },
+                        object: object_mapping
+                            .all_objects
+                            .get_index(allocation.object_index)
+                            .unwrap()
+                            .0
+                            .clone(),
+                    },
+                    byte_range: (allocation.start, allocation.end),
+                });
+                for child_mapping in allocation.children.get_all_children() {
+                    handle(child_mapping, object_mapping, path, out);
+                }
+                out.lines.push(ObjectFormattingLine {
+                    indentation: path.len() * 2,
+                    kind: ObjectFormattingKind::Object {
+                        allocation_path_index,
+                        style: BraceStyle::BraceEnd,
+                        object: *object_mapping
+                            .all_objects
+                            .get_index(allocation.object_index)
+                            .unwrap()
+                            .0,
+                    },
+                    byte_range: (allocation.start, allocation.end),
+                });
+            }
+            path.pop().unwrap();
+        }
+
+        for child_mapping in self.children.get_all_children() {
+            handle(child_mapping, object_mapping, &mut Vec::new(), &mut out);
+        }
         out
     }
 }
