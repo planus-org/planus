@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use planus_buffer_inspection::{
     allocations::SearchResult,
     object_formatting::{ObjectFormatting, ObjectFormattingKind},
@@ -67,7 +67,7 @@ impl<'a> ViewState<'a> {
         let search_result_index = search_results
             .iter()
             .position(|r| r.root_object_index == object_index)
-            .unwrap_or(0);
+            .unwrap_or_else(|| panic!("{object:?}\n{search_results:?}"));
 
         Self {
             current_byte: object.offset(),
@@ -179,13 +179,13 @@ impl<'a> Inspector<'a> {
             object_mapping: buffer.calculate_object_mapping(root_table_index),
             should_quit: false,
             view_stack: Vec::new(),
-            active_window: ActiveWindow::HexView,
+            active_window: ActiveWindow::ObjectView,
         }
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
-        let mut should_draw = match key.code {
-            KeyCode::Tab => {
+        let mut should_draw = match (key.code, key.modifiers) {
+            (KeyCode::Tab, _) => {
                 self.active_window = self.active_window.toggle();
                 if matches!(self.active_window, ActiveWindow::ObjectView)
                     && self.view_state.current_line.is_none()
@@ -194,11 +194,12 @@ impl<'a> Inspector<'a> {
                 }
                 true
             }
-            KeyCode::Char('q') | KeyCode::Esc => {
+            (KeyCode::Char('q') | KeyCode::Esc, _)
+            | (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
                 self.should_quit = true;
                 false
             }
-            KeyCode::Enter => {
+            (KeyCode::Enter, _) => {
                 if let Some(current_line) = self.view_state.current_line {
                     if let ObjectFormattingKind::Object {
                         object: Object::Offset(offset_object),
@@ -215,7 +216,7 @@ impl<'a> Inspector<'a> {
                 }
                 true
             }
-            KeyCode::Backspace => {
+            (KeyCode::Backspace, _) => {
                 if let Some(view_state) = self.view_stack.pop() {
                     self.view_state = view_state;
                     true

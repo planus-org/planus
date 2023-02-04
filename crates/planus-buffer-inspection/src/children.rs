@@ -145,10 +145,16 @@ impl<'a> Children<'a> for EnumObject {
 }
 
 impl<'a> Children<'a> for VectorObject<'a> {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
+    type Iter = std::iter::Once<ChildPair<'a>>;
 
     fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
+        std::iter::once((
+            Cow::Borrowed("length"),
+            Object::Integer(IntegerObject {
+                offset: self.offset,
+                type_: IntegerType::U32,
+            }),
+        ))
     }
 }
 
