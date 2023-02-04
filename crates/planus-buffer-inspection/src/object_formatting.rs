@@ -9,6 +9,7 @@ type LineIndex = usize;
 /// Maps into the allocation_paths IndexMap
 type AllocationPathIndex = usize;
 
+#[derive(Debug)]
 pub struct ObjectFormatting<'a> {
     pub root_object: Object<'a>,
     pub root_object_range: (usize, usize),
@@ -16,12 +17,14 @@ pub struct ObjectFormatting<'a> {
     pub allocation_paths: IndexMap<Vec<(&'a str, ObjectIndex)>, LineIndex>,
 }
 
+#[derive(Debug)]
 pub struct ObjectFormattingLine<'a> {
     pub indentation: usize,
     pub kind: ObjectFormattingKind<'a>,
     pub byte_range: (usize, usize),
 }
 
+#[derive(Debug)]
 pub enum ObjectFormattingKind<'a> {
     Object {
         allocation_path_index: AllocationPathIndex,
@@ -31,7 +34,9 @@ pub enum ObjectFormattingKind<'a> {
     Padding,
 }
 
+#[derive(Debug)]
 pub enum BraceStyle<'a> {
+    RootObject,
     BraceBegin { field_name: &'a str },
     BraceEnd,
     LeafObject { field_name: &'a str },
@@ -52,10 +57,20 @@ impl<'a> ObjectFormatting<'a> {
                     let object_address = line.byte_range.0;
                     writeln!(
                         f,
-                        "{indentation:>indentation_count$}{field_name}: {object_name} @ {object_address}{curly}",
+                        "{indentation:>indentation_count$}{field_name}: {object_name} @ {object_address:x}{curly}",
                         indentation = "",
                         indentation_count = line.indentation,
                         curly = if matches!(style, BraceStyle::BraceBegin { .. }) { " {" } else { "" },
+                    )?;
+                }
+                BraceStyle::RootObject => {
+                    let object_name = object.resolve_name(flatbuffer);
+                    let object_address = line.byte_range.0;
+                    writeln!(
+                        f,
+                        "{indentation:>indentation_count$}{object_name} @ {object_address:x} {{",
+                        indentation = "",
+                        indentation_count = line.indentation,
                     )?;
                 }
                 BraceStyle::BraceEnd => {
@@ -99,10 +114,12 @@ impl<'a> ObjectFormatting<'a> {
             }
         }
 
-        Helper {
+        let res = Helper {
             flatbuffer,
             object: self,
         }
-        .to_string()
+        .to_string();
+
+        res
     }
 }
