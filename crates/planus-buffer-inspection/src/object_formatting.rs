@@ -32,18 +32,12 @@ pub struct ObjectFormattingLine<'a> {
 pub enum ObjectFormattingKind<'a> {
     Object {
         allocation_path_index: AllocationPathIndex,
-        style: BraceStyle<'a>,
+        field_name: Option<Cow<'a, str>>,
+        brace_begin: bool,
+        brace_end: bool,
         object: Object<'a>,
     },
     Padding,
-}
-
-#[derive(Clone, Debug)]
-pub enum BraceStyle<'a> {
-    RootObject,
-    BraceBegin { field_name: Cow<'a, str> },
-    BraceEnd,
-    LeafObject { field_name: Cow<'a, str> },
 }
 
 impl<'a> ObjectFormatting<'a> {
@@ -55,37 +49,44 @@ impl<'a> ObjectFormatting<'a> {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match &line.kind {
-            ObjectFormattingKind::Object { style, object, .. } => match style {
-                BraceStyle::BraceBegin { field_name } | BraceStyle::LeafObject { field_name } => {
-                    let object_name = object.resolve_name(flatbuffer);
-                    let object_address = line.byte_range.0;
-                    writeln!(
-                        f,
-                        "{indentation:>indentation_count$}{field_name}: {object_name} @ {object_address:x}{curly}",
-                        indentation = "",
-                        indentation_count = line.indentation,
-                        curly = if matches!(style, BraceStyle::BraceBegin { .. }) { " {" } else { "" },
-                    )?;
-                }
-                BraceStyle::RootObject => {
-                    let object_name = object.resolve_name(flatbuffer);
-                    let object_address = line.byte_range.0;
-                    writeln!(
-                        f,
-                        "{indentation:>indentation_count$}{object_name} @ {object_address:x} {{",
-                        indentation = "",
-                        indentation_count = line.indentation,
-                    )?;
-                }
-                BraceStyle::BraceEnd => {
+            ObjectFormattingKind::Object {
+                object,
+                brace_begin,
+                brace_end,
+                field_name,
+                ..
+            } => {
+                if (*brace_begin, *brace_end) == (false, true) {
                     writeln!(
                         f,
                         "{indentation:>width$}}}",
                         indentation = "",
                         width = line.indentation
                     )?;
+                } else {
+                    let object_name = object.resolve_name(flatbuffer);
+                    let object_address = line.byte_range.0;
+                    if let Some(field_name) = field_name {
+                        writeln!(
+                            f,
+                            "{indentation:>indentation_count$}{field_name}: {object_name} @ {object_address:x}{brace_begin}{brace_end}",
+                            indentation = "",
+                            indentation_count = line.indentation,
+                            brace_begin = if *brace_begin { " {" } else { "" },
+                            brace_end = if *brace_end { "}" } else { "" },
+                        )?;
+                    } else {
+                        writeln!(
+                        f,
+                        "{indentation:>indentation_count$}{object_name} @ {object_address:x}{brace_begin}{brace_end}",
+                        indentation = "",
+                        indentation_count = line.indentation,
+                        brace_begin = if *brace_begin { " {" } else { "" },
+                        brace_end = if *brace_end { "}" } else { "" },
+                    )?;
+                    }
                 }
-            },
+            }
             ObjectFormattingKind::Padding if show_padding => {
                 writeln!(
                     f,

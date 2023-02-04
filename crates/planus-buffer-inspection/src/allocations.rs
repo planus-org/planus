@@ -6,7 +6,7 @@ use std::{
 use indexmap::IndexMap;
 
 use crate::{
-    object_formatting::{BraceStyle, ObjectFormatting, ObjectFormattingKind, ObjectFormattingLine},
+    object_formatting::{ObjectFormatting, ObjectFormattingKind, ObjectFormattingLine},
     object_mapping::{ObjectIndex, ObjectMapping},
     ByteIndex,
 };
@@ -365,48 +365,36 @@ impl<'a> IntervalTree<'a> {
 
 impl<'a> Allocation<'a> {
     pub fn to_formatting(&self, object_mapping: &ObjectMapping<'a>) -> ObjectFormatting<'a> {
-        fn handler<'a, 'b>(
-            child_mapping: &'b ChildMapping<'a>,
+        fn handler<'a>(
+            allocation: &Allocation<'a>,
+            field_name: Option<Cow<'a, str>>,
             object_mapping: &ObjectMapping<'a>,
             path: &mut Vec<FieldAccess<'a>>,
             out: &mut ObjectFormatting<'a>,
         ) {
-            let allocation: &Allocation<'a> =
-                &object_mapping.allocations.allocations[child_mapping.allocation_index];
-            path.push(FieldAccess {
-                object_index: allocation.object_index,
-                field_name: child_mapping.field_name.clone(),
-            });
+            let (object, _) = &object_mapping
+                .all_objects
+                .get_index(allocation.object_index)
+                .unwrap();
+            if let Some(field_name) = &field_name {
+                path.push(FieldAccess {
+                    object_index: allocation.object_index,
+                    field_name: field_name.clone(),
+                });
+            }
             let allocation_path_index = out.allocation_paths.len();
             assert!(out
                 .allocation_paths
                 .insert(path.clone(), out.lines.len())
                 .is_none());
-            if allocation.children.allocations.is_empty() {
+            if !allocation.children.allocations.is_empty() {
                 out.lines.push(ObjectFormattingLine {
                     indentation: path.len() * 2,
                     kind: ObjectFormattingKind::Object {
                         allocation_path_index,
-                        style: BraceStyle::LeafObject {
-                            field_name: child_mapping.field_name.clone(),
-                        },
-                        object: object_mapping
-                            .all_objects
-                            .get_index(allocation.object_index)
-                            .unwrap()
-                            .0
-                            .clone(),
-                    },
-                    byte_range: (allocation.start, allocation.end),
-                });
-            } else {
-                out.lines.push(ObjectFormattingLine {
-                    indentation: path.len() * 2,
-                    kind: ObjectFormattingKind::Object {
-                        allocation_path_index,
-                        style: BraceStyle::BraceBegin {
-                            field_name: child_mapping.field_name.clone(),
-                        },
+                        field_name: field_name.clone(),
+                        brace_begin: true,
+                        brace_end: false,
                         object: object_mapping
                             .all_objects
                             .get_index(allocation.object_index)
@@ -417,13 +405,23 @@ impl<'a> Allocation<'a> {
                     byte_range: (allocation.start, allocation.end),
                 });
                 for child_mapping in allocation.children.get_all_children() {
-                    handler(child_mapping, object_mapping, path, out);
+                    let allocation =
+                        &object_mapping.allocations.allocations[child_mapping.allocation_index];
+                    handler(
+                        allocation,
+                        Some(child_mapping.field_name.clone()),
+                        object_mapping,
+                        path,
+                        out,
+                    );
                 }
                 out.lines.push(ObjectFormattingLine {
                     indentation: path.len() * 2,
                     kind: ObjectFormattingKind::Object {
                         allocation_path_index,
-                        style: BraceStyle::BraceEnd,
+                        field_name: field_name.clone(),
+                        brace_begin: false,
+                        brace_end: true,
                         object: *object_mapping
                             .all_objects
                             .get_index(allocation.object_index)
@@ -432,8 +430,26 @@ impl<'a> Allocation<'a> {
                     },
                     byte_range: (allocation.start, allocation.end),
                 });
+            } else {
+                let have_braces = object.have_braces();
+                out.lines.push(ObjectFormattingLine {
+                    indentation: path.len() * 2,
+                    kind: ObjectFormattingKind::Object {
+                        allocation_path_index,
+                        field_name: field_name.clone(),
+                        brace_begin: have_braces,
+                        brace_end: have_braces,
+                        object: object_mapping
+                            .all_objects
+                            .get_index(allocation.object_index)
+                            .unwrap()
+                            .0
+                            .clone(),
+                    },
+                    byte_range: (allocation.start, allocation.end),
+                });
             }
-            path.pop().unwrap();
+            path.pop();
         }
         let root_object = *object_mapping
             .all_objects
@@ -448,30 +464,8 @@ impl<'a> Allocation<'a> {
             root_object_range: (self.start, self.end),
         };
 
-        out.allocation_paths.insert(Vec::new(), 0);
-        out.lines.push(ObjectFormattingLine {
-            indentation: 0,
-            kind: ObjectFormattingKind::Object {
-                allocation_path_index: 0,
-                style: BraceStyle::RootObject,
-                object: root_object,
-            },
-            byte_range: (self.start, self.end),
-        });
+        handler(self, None, object_mapping, &mut Vec::new(), &mut out);
 
-        for child_mapping in self.children.get_all_children() {
-            handler(child_mapping, object_mapping, &mut Vec::new(), &mut out);
-        }
-
-        out.lines.push(ObjectFormattingLine {
-            indentation: 0,
-            kind: ObjectFormattingKind::Object {
-                allocation_path_index: 0,
-                style: BraceStyle::BraceEnd,
-                object: root_object,
-            },
-            byte_range: (self.start, self.end),
-        });
         out
     }
 }

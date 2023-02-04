@@ -198,11 +198,6 @@ impl<'a> Inspector<'a> {
                 self.view_state.set_byte_view(&self.object_mapping, 0);
                 true
             }
-            (KeyCode::Char('q') | KeyCode::Esc, _)
-            | (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
-                self.should_quit = true;
-                false
-            }
             (KeyCode::Enter, _) => {
                 if let Some(current_line) = self.view_state.current_line {
                     if let ObjectFormattingKind::Object {
@@ -219,6 +214,19 @@ impl<'a> Inspector<'a> {
                     }
                 }
                 true
+            }
+            (KeyCode::Char('q'), _) | (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+                self.should_quit = true;
+                false
+            }
+            (KeyCode::Esc, _) => {
+                if let Some(view_state) = self.view_stack.pop() {
+                    self.view_state = view_state;
+                    true
+                } else {
+                    self.should_quit = true;
+                    false
+                }
             }
             (KeyCode::Backspace, _) => {
                 if let Some(view_state) = self.view_stack.pop() {

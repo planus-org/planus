@@ -3,9 +3,9 @@ use planus_types::intermediate::{
 };
 
 use crate::{
-    children::Children, ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer,
-    IntegerObject, Object, OffsetObject, StringObject, StructObject, TableObject, UnionObject,
-    UnionTagObject, VTableObject, VectorObject,
+    ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer, IntegerObject, Object,
+    OffsetObject, StringObject, StructObject, TableObject, UnionObject, UnionTagObject,
+    VTableObject, VectorObject,
 };
 
 pub trait DeclarationInfo {

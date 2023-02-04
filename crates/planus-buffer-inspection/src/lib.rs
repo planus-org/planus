@@ -142,6 +142,24 @@ impl<'a> Object<'a> {
             Object::String(inner) => inner.offset,
         }
     }
+
+    pub fn have_braces(&self) -> bool {
+        match self {
+            Object::Offset(_) => false,
+            Object::VTable(_) => true,
+            Object::Table(_) => true,
+            Object::Struct(_) => true,
+            Object::UnionTag(_) => false,
+            Object::Union(_) => false,
+            Object::Enum(_) => false,
+            Object::Vector(_) => true,
+            Object::Array(_) => true,
+            Object::Integer(_) => false,
+            Object::Float(_) => false,
+            Object::Bool(_) => false,
+            Object::String(_) => false,
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -377,7 +395,7 @@ impl StructObject {
         buffer: &InspectableFlatbuffer<'a>,
         field_index: usize,
     ) -> Result<Object<'a>> {
-        let Some((field_name, field)) = self.get_field_info(buffer, field_index)
+        let Some((_field_name, field)) = self.get_field_info(buffer, field_index)
         else {
             return Err(Error)
         };
