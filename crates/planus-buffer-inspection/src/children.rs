@@ -17,7 +17,7 @@ pub trait Children<'a> {
 }
 
 pub trait Byterange {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<usize>;
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex);
 }
 
 impl<'a> Children<'a> for Object<'a> {
@@ -56,7 +56,7 @@ impl<'a> Children<'a> for VTableObject {
     fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
         let vtable_size = self.get_vtable_size(buffer).unwrap();
 
-        let iter = (self.offset..self.offset + vtable_size as usize)
+        let iter = (self.offset..self.offset + vtable_size as u32)
             .step_by(2)
             .enumerate()
             .map(|(i, offset)| {
@@ -95,7 +95,7 @@ impl<'a> Children<'a> for TableObject {
                 } else {
                     Cow::Borrowed(field_name)
                 };
-                let field_value = this.get_field(&buffer, i).unwrap()?;
+                let field_value = this.get_field(&buffer, i as u32).unwrap()?;
                 Some((field_name, field_value))
             });
 
@@ -163,19 +163,17 @@ impl<'a> Children<'a> for VectorObject<'a> {
     fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
         let this = *self;
         let buffer = *buffer;
-        let iter = std::iter::once((
-            Cow::Borrowed("length"),
-            Object::Integer(IntegerObject {
-                offset: self.offset,
-                type_: IntegerType::U32,
-            }),
-        ))
-        .chain((0..self.len(&buffer).unwrap_or(0)).filter_map(move |i| {
-            Some((
-                Cow::Owned(i.to_string()),
-                this.read(i as usize, &buffer).ok()??,
+        let iter =
+            std::iter::once((
+                Cow::Borrowed("length"),
+                Object::Integer(IntegerObject {
+                    offset: self.offset,
+                    type_: IntegerType::U32,
+                }),
             ))
-        }));
+            .chain((0..self.len(&buffer).unwrap_or(0)).filter_map(move |i| {
+                Some((Cow::Owned(i.to_string()), this.read(i, &buffer).ok()??))
+            }));
         Box::new(iter)
     }
 }
@@ -227,7 +225,7 @@ impl<'a> Children<'a> for StringObject {
 }
 
 impl<'a> Byterange for Object<'a> {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<usize> {
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         match self {
             Object::Offset(obj) => obj.byterange(buffer),
             Object::VTable(obj) => obj.byterange(buffer),
@@ -247,82 +245,85 @@ impl<'a> Byterange for Object<'a> {
 }
 
 impl<'a> Byterange for OffsetObject<'a> {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 4
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + 4)
     }
 }
 
 impl Byterange for VTableObject {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         let size = self.get_vtable_size(buffer).unwrap();
-        self.offset..self.offset + size as usize
+        (self.offset, self.offset + size as ByteIndex)
     }
 }
 
 impl Byterange for TableObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 4
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + 4)
     }
 }
 
 impl Byterange for StructObject {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         let decl = self.resolve_declaration(buffer);
-        self.offset..self.offset + decl.size as usize
+        (self.offset, self.offset + decl.size)
     }
 }
 
 impl Byterange for UnionTagObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 1
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + 1)
     }
 }
 
 impl Byterange for UnionObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 4
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + 4)
     }
 }
 
 impl Byterange for EnumObject {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         let decl = self.resolve_declaration(buffer);
-        self.offset..self.offset + decl.type_.byte_size() as usize
+        (self.offset, self.offset + decl.type_.byte_size())
     }
 }
 
 impl<'a> Byterange for VectorObject<'a> {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset)
     }
 }
 
 impl<'a> Byterange for ArrayObject<'a> {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset)
     }
 }
 
 impl Byterange for IntegerObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + self.type_.byte_size() as usize
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + self.type_.byte_size())
     }
 }
 
 impl Byterange for FloatObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + self.type_.byte_size() as usize
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + self.type_.byte_size())
     }
 }
 
 impl Byterange for BoolObject {
-    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 1
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.offset, self.offset + 1)
     }
 }
 
 impl Byterange for StringObject {
-    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + 4 + self.len(buffer).unwrap() as usize
+    fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (
+            self.offset,
+            self.offset + 4 + self.len(buffer).unwrap() as ByteIndex,
+        )
     }
 }

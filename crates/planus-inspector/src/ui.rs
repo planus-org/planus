@@ -74,7 +74,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
             .get_index(field_access.object_index)
             .unwrap();
         let allocation = &inspector.object_mapping.allocations.allocations[allocation_index];
-        ranges.push(allocation.start..allocation.end);
+        ranges.push(allocation.start as usize..allocation.end as usize);
     }
 
     // TODO: make lines fill entire box instead of being 16 bytes

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use indexmap::IndexMap;
 
 use crate::{
-    allocations::FieldPath, object_info::ObjectName, object_mapping::ObjectIndex,
+    allocations::FieldPath, object_info::ObjectName, object_mapping::ObjectIndex, ByteIndex,
     InspectableFlatbuffer, Object,
 };
 
@@ -16,7 +16,7 @@ type AllocationPathIndex = usize;
 pub struct ObjectFormatting<'a> {
     pub root_object_index: ObjectIndex,
     pub root_object: Object<'a>,
-    pub root_object_range: (usize, usize),
+    pub root_object_range: (ByteIndex, ByteIndex),
     pub lines: Vec<ObjectFormattingLine<'a>>,
     pub allocation_paths: IndexMap<FieldPath<'a>, LineIndex>,
 }
@@ -25,7 +25,7 @@ pub struct ObjectFormatting<'a> {
 pub struct ObjectFormattingLine<'a> {
     pub indentation: usize,
     pub kind: ObjectFormattingKind<'a>,
-    pub byte_range: (usize, usize),
+    pub byte_range: (ByteIndex, ByteIndex),
 }
 
 #[derive(Clone, Debug)]

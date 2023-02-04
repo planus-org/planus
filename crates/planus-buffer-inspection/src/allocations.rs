@@ -46,7 +46,7 @@ impl<'a> IntervalTree<'a> {
     pub fn get_all_children(&self) -> BTreeSet<&ChildMapping<'a>> {
         self.allocations
             .values()
-            .flat_map(|(_, children)| children.children())
+            .flat_map(|(_, children)| children.as_slice())
             .collect()
     }
 }
@@ -60,50 +60,12 @@ pub struct Allocation<'a> {
     pub children: IntervalTree<'a>,
 }
 
-#[derive(Clone, Debug)]
-pub enum AllocationChildren<'a> {
-    Unique(ChildMapping<'a>),
-    Overlapping(Vec<ChildMapping<'a>>),
-}
+type AllocationChildren<'a> = Vec<ChildMapping<'a>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChildMapping<'a> {
     field_name: Cow<'a, str>,
     allocation_index: AllocationIndex,
-}
-
-impl<'a> AllocationChildren<'a> {
-    pub fn extend(&mut self, other: &AllocationChildren<'a>) {
-        if let AllocationChildren::Unique(child) = self {
-            let child = std::mem::replace(
-                child,
-                ChildMapping {
-                    field_name: "".into(),
-                    allocation_index: 0,
-                },
-            );
-            *self = AllocationChildren::Overlapping(vec![child]);
-        }
-
-        match self {
-            AllocationChildren::Unique(..) => unreachable!(),
-            AllocationChildren::Overlapping(vec) => match other {
-                AllocationChildren::Unique(child) => {
-                    vec.push(child.clone());
-                }
-                AllocationChildren::Overlapping(children) => {
-                    vec.extend_from_slice(&children);
-                }
-            },
-        }
-    }
-
-    pub fn children(&self) -> &[ChildMapping<'a>] {
-        match self {
-            AllocationChildren::Unique(child) => std::slice::from_ref(child),
-            AllocationChildren::Overlapping(children) => children,
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -155,33 +117,19 @@ impl<'a> Allocations<'a> {
             })
             .collect();
 
-        while let Some((children, mut state)) = todo.pop() {
+        while let Some((children, state)) = todo.pop() {
             if let Some((allocation_start, (allocation_end, children))) =
                 children.allocations.range(..=offset).next_back()
             {
                 if (*allocation_start..*allocation_end).contains(&offset) {
-                    match children {
-                        AllocationChildren::Unique(child) => {
-                            let allocation = &self.allocations[child.allocation_index];
-                            state.field_path.push(FieldAccess {
-                                field_name: child.field_name.clone(),
-                                object_index: allocation.object_index,
-                            });
-                            todo.push((&allocation.children, state));
-                            continue;
-                        }
-                        AllocationChildren::Overlapping(children) => {
-                            for child in children {
-                                let allocation = &self.allocations[child.allocation_index];
-                                let mut state = state.clone();
-                                state.field_path.push(FieldAccess {
-                                    field_name: child.field_name.clone(),
-                                    object_index: allocation.object_index,
-                                });
-                                todo.push((&allocation.children, state));
-                            }
-                            continue;
-                        }
+                    for child in children {
+                        let allocation = &self.allocations[child.allocation_index];
+                        let mut state = state.clone();
+                        state.field_path.push(FieldAccess {
+                            field_name: child.field_name.clone(),
+                            object_index: allocation.object_index,
+                        });
+                        todo.push((&allocation.children, state));
                     }
                 }
             }
@@ -239,16 +187,11 @@ impl<'a> AllocationsBuilder<'a> {
         field_name: Cow<'a, str>,
     ) {
         let child_node = &mut self.allocations[child_allocation_index];
-        if child_node.parents.contains(&parent_allocation_index) {
-            return;
-        }
-        child_node.parents.push(parent_allocation_index);
 
         let allocation_start = child_node.start;
         let allocation_end = child_node.end;
 
         let mut node = &mut self.allocations[parent_allocation_index];
-        assert!(node.parents.is_empty());
         node.start = node.start.min(allocation_start);
         node.end = node.end.max(allocation_end);
 
@@ -264,8 +207,8 @@ impl<'a> AllocationsBuilder<'a> {
 impl<'a> IntervalTree<'a> {
     fn insert_allocation(
         &mut self,
-        allocation_start: usize,
-        allocation_end: usize,
+        allocation_start: AllocationStart,
+        allocation_end: AllocationEnd,
         field_name: Cow<'a, str>,
         child_allocation_index: usize,
     ) {
@@ -301,10 +244,10 @@ impl<'a> IntervalTree<'a> {
                 start: allocation_start,
                 end: allocation_end,
             },
-            AllocationChildren::Unique(ChildMapping {
+            vec![ChildMapping {
                 field_name,
                 allocation_index: child_allocation_index,
-            }),
+            }],
         ));
 
         'outer: loop {
@@ -342,7 +285,7 @@ impl<'a> IntervalTree<'a> {
                     ) {
                         (true, true) => {
                             let mut combined = a.clone();
-                            combined.extend(&b);
+                            combined.extend_from_slice(&b);
                             nodes_to_fixup.push((interval, combined));
                         }
                         (true, false) => {

@@ -10,7 +10,7 @@ use planus_buffer_inspection::{
     allocations::SearchResult,
     object_formatting::{ObjectFormatting, ObjectFormattingKind},
     object_mapping::ObjectMapping,
-    InspectableFlatbuffer, Object,
+    ByteIndex, InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
@@ -70,7 +70,7 @@ impl<'a> ViewState<'a> {
             .unwrap_or_else(|| panic!("{object:?}\n{search_results:?}"));
 
         Self {
-            current_byte: object.offset(),
+            current_byte: object.offset() as usize,
             current_line: Some(0),
             current_object_formatting: object_mapping.allocations.allocations[allocation_index]
                 .to_formatting(object_mapping),
@@ -82,7 +82,7 @@ impl<'a> ViewState<'a> {
     fn set_byte_view(&mut self, object_mapping: &ObjectMapping<'a>, index: usize) {
         if self.current_byte != index {
             self.current_byte = index;
-            self.search_results = object_mapping.allocations.get(self.current_byte);
+            self.search_results = object_mapping.allocations.get(self.current_byte as u32);
             self.find_closest_match(object_mapping);
         }
     }
@@ -108,8 +108,10 @@ impl<'a> ViewState<'a> {
             } else {
                 &[]
             };
-            self.current_byte = current_object.byte_range.0;
-            self.search_results = object_mapping.allocations.get(self.current_byte);
+            self.current_byte = current_object.byte_range.0 as usize;
+            self.search_results = object_mapping
+                .allocations
+                .get(self.current_byte as ByteIndex);
             self.search_result_index = self
                 .search_results
                 .iter()
@@ -170,13 +172,9 @@ impl<'a> Inspector<'a> {
             buffer,
             view_state: ViewState::new_for_object(
                 &object_mapping,
-                *object_mapping
-                    .all_objects
-                    .get_index(object_mapping.root_object.offset)
-                    .unwrap()
-                    .0,
+                Object::Offset(object_mapping.root_object),
             ),
-            object_mapping: buffer.calculate_object_mapping(root_table_index),
+            object_mapping,
             should_quit: false,
             view_stack: Vec::new(),
             active_window: ActiveWindow::ObjectView,

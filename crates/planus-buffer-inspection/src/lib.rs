@@ -14,7 +14,7 @@ pub mod object_formatting;
 pub mod object_info;
 pub mod object_mapping;
 
-pub type ByteIndex = usize;
+pub type ByteIndex = u32;
 
 // TODO
 #[derive(Debug)]
@@ -29,55 +29,66 @@ pub struct InspectableFlatbuffer<'a> {
 }
 
 impl<'a> InspectableFlatbuffer<'a> {
-    pub fn read_u8(&self, offset: usize) -> Result<u8> {
+    pub fn read_u8(&self, offset: ByteIndex) -> Result<u8> {
+        let offset = offset as usize;
         Ok(self.buffer[offset])
     }
 
-    pub fn read_u16(&self, offset: usize) -> Result<u16> {
+    pub fn read_u16(&self, offset: ByteIndex) -> Result<u16> {
+        let offset = offset as usize;
         let slice: &[u8; 2] = self.buffer[offset..offset + 2].try_into().unwrap();
         Ok(u16::from_le_bytes(*slice))
     }
 
-    pub fn read_u32(&self, offset: usize) -> Result<u32> {
+    pub fn read_u32(&self, offset: ByteIndex) -> Result<u32> {
+        let offset = offset as usize;
         let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
         Ok(u32::from_le_bytes(*slice))
     }
 
-    pub fn read_u64(&self, offset: usize) -> Result<u64> {
+    pub fn read_u64(&self, offset: ByteIndex) -> Result<u64> {
+        let offset = offset as usize;
         let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
         Ok(u64::from_le_bytes(*slice))
     }
 
-    pub fn read_i8(&self, offset: usize) -> Result<i8> {
+    pub fn read_i8(&self, offset: ByteIndex) -> Result<i8> {
+        let offset = offset as usize;
         Ok(self.buffer[offset] as i8)
     }
 
-    pub fn read_i16(&self, offset: usize) -> Result<i16> {
+    pub fn read_i16(&self, offset: ByteIndex) -> Result<i16> {
+        let offset = offset as usize;
         let slice: &[u8; 2] = self.buffer[offset..offset + 2].try_into().unwrap();
         Ok(i16::from_le_bytes(*slice))
     }
 
-    pub fn read_i32(&self, offset: usize) -> Result<i32> {
+    pub fn read_i32(&self, offset: ByteIndex) -> Result<i32> {
+        let offset = offset as usize;
         let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
         Ok(i32::from_le_bytes(*slice))
     }
 
-    pub fn read_i64(&self, offset: usize) -> Result<i64> {
+    pub fn read_i64(&self, offset: ByteIndex) -> Result<i64> {
+        let offset = offset as usize;
         let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
         Ok(i64::from_le_bytes(*slice))
     }
 
-    pub fn read_f32(&self, offset: usize) -> Result<f32> {
+    pub fn read_f32(&self, offset: ByteIndex) -> Result<f32> {
+        let offset = offset as usize;
         let slice: &[u8; 4] = self.buffer[offset..offset + 4].try_into().unwrap();
         Ok(f32::from_le_bytes(*slice))
     }
 
-    pub fn read_f64(&self, offset: usize) -> Result<f64> {
+    pub fn read_f64(&self, offset: ByteIndex) -> Result<f64> {
+        let offset = offset as usize;
         let slice: &[u8; 8] = self.buffer[offset..offset + 8].try_into().unwrap();
         Ok(f64::from_le_bytes(*slice))
     }
 
-    pub fn read_slice(&self, offset: usize, size: usize) -> Result<&'a [u8]> {
+    pub fn read_slice(&self, offset: ByteIndex, size: usize) -> Result<&'a [u8]> {
+        let offset = offset as usize;
         Ok(&self.buffer[offset..offset + size])
     }
 }
@@ -258,10 +269,10 @@ impl<'a> OffsetObject<'a> {
     pub fn get_byte_index(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<ByteIndex> {
         let res = if matches!(self.kind, OffsetObjectKind::VTable(_)) {
             self.offset
-                .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
+                .checked_add_signed(-buffer.read_i32(self.offset)? as i32)
                 .ok_or_else(|| Error)?
         } else {
-            self.offset + buffer.read_u32(self.offset)? as usize
+            self.offset + buffer.read_u32(self.offset)?
         };
         Ok(res)
     }
@@ -292,7 +303,7 @@ impl VTableObject {
         buffer.read_u16(self.offset + 2)
     }
 
-    pub fn get_offset(&self, i: usize, buffer: &InspectableFlatbuffer<'_>) -> Result<Option<u16>> {
+    pub fn get_offset(&self, i: u32, buffer: &InspectableFlatbuffer<'_>) -> Result<Option<u16>> {
         let value = buffer.read_u16(self.offset + 4 + 2 * i)?;
         let value = (value != 0).then_some(value);
         Ok(value)
@@ -315,7 +326,7 @@ impl TableObject {
     pub fn get_vtable(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<VTableObject> {
         let vtable_offset = self
             .offset
-            .checked_add_signed(-buffer.read_i32(self.offset)? as isize)
+            .checked_add_signed(-buffer.read_i32(self.offset)? as i32)
             .unwrap();
 
         Ok(VTableObject {
@@ -327,7 +338,7 @@ impl TableObject {
     pub fn get_field<'a>(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        field_index: usize,
+        field_index: u32,
     ) -> Result<Option<Object<'a>>> {
         let decl = self.resolve_declaration(buffer);
         let Some(offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)?
@@ -335,7 +346,7 @@ impl TableObject {
             return Ok(None)
         };
 
-        let offset = self.offset + offset as usize;
+        let offset = self.offset + offset as u32;
         let (_field_name, field_decl, is_union_tag) =
             decl.get_field_for_vtable_index(field_index as u32).unwrap();
         let object = match field_decl.type_.kind {
@@ -400,7 +411,7 @@ impl StructObject {
             return Err(Error)
         };
 
-        let offset = self.offset + field.offset as usize;
+        let offset = self.offset + field.offset;
         let object = match field.type_ {
             SimpleType::Struct(declaration) => Object::Struct(StructObject {
                 offset,
@@ -451,13 +462,14 @@ impl StringObject {
     }
 
     pub fn bytes<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<&'a [u8]> {
-        Ok(&buffer.buffer[self.offset + 4..self.offset + 4 + self.len(buffer)? as usize])
+        let offset = self.offset as usize;
+        Ok(&buffer.buffer[offset + 4..offset + 4 + self.len(buffer)? as usize])
     }
 }
 
 impl BoolObject {
     pub fn read(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<bool> {
-        Ok(buffer.buffer[self.offset] != 0)
+        Ok(buffer.buffer[self.offset as usize] != 0)
     }
 }
 
@@ -493,10 +505,10 @@ impl<'a> VectorObject<'a> {
 
     pub fn read(
         &self,
-        index: usize,
+        index: u32,
         buffer: &InspectableFlatbuffer<'a>,
     ) -> Result<Option<Object<'a>>> {
-        if index >= self.len(buffer)? as usize {
+        if index >= self.len(buffer)? {
             return Ok(None);
         }
 
@@ -527,7 +539,7 @@ impl<'a> VectorObject<'a> {
                         .kind
                     {
                         Object::Struct(StructObject {
-                            offset: offset + index * decl.size as usize,
+                            offset: offset + index * decl.size,
                             declaration: *declaration_index,
                         })
                     } else {
@@ -542,7 +554,7 @@ impl<'a> VectorObject<'a> {
                         .kind
                     {
                         Object::Enum(EnumObject {
-                            offset: offset + index * decl.type_.byte_size() as usize,
+                            offset: offset + index * decl.type_.byte_size(),
                             declaration: *declaration_index,
                         })
                     } else {
@@ -553,11 +565,11 @@ impl<'a> VectorObject<'a> {
                     offset: offset + index,
                 }),
                 SimpleType::Integer(type_) => Object::Integer(IntegerObject {
-                    offset: offset + index * type_.byte_size() as usize,
+                    offset: offset + index * type_.byte_size(),
                     type_: *type_,
                 }),
                 SimpleType::Float(type_) => Object::Float(FloatObject {
-                    offset: offset + index * type_.byte_size() as usize,
+                    offset: offset + index * type_.byte_size(),
                     type_: *type_,
                 }),
             },

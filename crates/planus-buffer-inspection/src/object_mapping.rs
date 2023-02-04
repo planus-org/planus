@@ -72,10 +72,10 @@ impl<'a> ObjectMappingBuilder<'a> {
             }
             Entry::Vacant(entry) => {
                 object_index = entry.index();
-                let range = object.byterange(buffer);
-                allocation_index = self
-                    .allocations
-                    .allocate(object_index, range.start, range.end);
+                let (allocation_start, allocation_end) = object.byterange(buffer);
+                allocation_index =
+                    self.allocations
+                        .allocate(object_index, allocation_start, allocation_end);
                 entry.insert(allocation_index);
             }
         }
