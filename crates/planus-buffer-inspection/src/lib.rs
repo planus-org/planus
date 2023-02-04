@@ -1,7 +1,8 @@
 use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{
-        DeclarationIndex, Declarations, FloatLiteral, IntegerLiteral, SimpleType, Type, TypeKind,
+        DeclarationIndex, DeclarationKind, Declarations, FloatLiteral, IntegerLiteral, SimpleType,
+        Type, TypeKind,
     },
 };
 
@@ -377,8 +378,23 @@ impl UnionObject {
 }
 
 impl EnumObject {
-    pub fn tag<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<IntegerObject> {
-        todo!()
+    pub fn tag<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<IntegerObject> {
+        let (_, decl) = buffer.declarations.get_declaration(self.declaration);
+
+        if let DeclarationKind::Enum(e) = &decl.kind {
+            Ok(IntegerObject {
+                offset: self.offset,
+                type_: e.type_,
+            })
+        } else {
+            Err(Error)
+        }
+    }
+
+    pub fn read(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u64> {
+        let tag = self.tag(buffer)?;
+        let val = tag.read(buffer)?;
+        Ok(val.to_u64())
     }
 }
 

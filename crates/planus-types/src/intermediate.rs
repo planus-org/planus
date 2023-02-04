@@ -410,6 +410,19 @@ impl IntegerLiteral {
             IntegerLiteral::I64(n) => *n == 0,
         }
     }
+
+    pub fn to_u64(&self) -> u64 {
+        match self {
+            IntegerLiteral::U8(v) => *v as u64,
+            IntegerLiteral::I8(v) => *v as u64,
+            IntegerLiteral::U16(v) => *v as u64,
+            IntegerLiteral::I16(v) => *v as u64,
+            IntegerLiteral::U32(v) => *v as u64,
+            IntegerLiteral::I32(v) => *v as u64,
+            IntegerLiteral::U64(v) => *v as u64,
+            IntegerLiteral::I64(v) => *v as u64,
+        }
+    }
 }
 
 impl Display for Literal {

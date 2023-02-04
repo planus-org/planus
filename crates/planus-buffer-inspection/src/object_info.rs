@@ -22,14 +22,18 @@ pub trait DeclarationInfo {
     }
 }
 
-pub trait ObjectName<'a> {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String;
+macro_rules! impl_object_name {
+    ($typ:ty) => {
+        impl<'a> ObjectName<'a> for $typ {
+            fn resolve_name(&self, buffer: &InspectableFlatbuffer<'_>) -> String {
+                format!("{}[{}]", Self::KIND, self.resolve_path(buffer))
+            }
+        }
+    };
 }
 
-impl<'a, T: DeclarationInfo> ObjectName<'a> for T {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'_>) -> String {
-        format!("{}[{}]", Self::KIND, self.resolve_path(buffer))
-    }
+pub trait ObjectName<'a> {
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String;
 }
 
 impl DeclarationInfo for TableObject {
@@ -198,6 +202,30 @@ impl<'a> ObjectName<'a> for StringObject {
         )
     }
 }
+
+impl<'a> ObjectName<'a> for EnumObject {
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let tag = self.tag(buffer).unwrap();
+        let (path, decl) = buffer
+            .declarations
+            .get_declaration(self.declaration_index());
+        if let DeclarationKind::Enum(e) = &decl.kind {
+            let val = tag.read(buffer).unwrap().to_u64();
+            if let Some((tag, variant)) = e.variants.get_index(val as usize) {
+                format!("enum[{path}] = {}[{}]", variant.name, tag.to_u64())
+            } else {
+                format!("enum[{path}] = [{val}]")
+            }
+        } else {
+            panic!("Inconsistent declarations");
+        }
+    }
+}
+
+impl_object_name!(StructObject);
+impl_object_name!(TableObject);
+impl_object_name!(UnionObject);
+impl_object_name!(UnionTagObject);
 
 impl<'a> ObjectName<'a> for Object<'a> {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
