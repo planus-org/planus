@@ -9,6 +9,7 @@ use crate::object_info::DeclarationInfo;
 
 pub mod allocations;
 pub mod children;
+pub mod object_formatting;
 pub mod object_info;
 pub mod object_mapping;
 
