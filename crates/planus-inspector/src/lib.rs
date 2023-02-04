@@ -62,10 +62,12 @@ impl<'a> ViewState<'a> {
         let (object_index, _object, &allocation_index) =
             object_mapping.all_objects.get_full(&object).unwrap();
         let search_results = object_mapping.allocations.get(object.offset());
+
+        // TODO: should be unwrappable
         let search_result_index = search_results
             .iter()
             .position(|r| r.root_object_index == object_index)
-            .unwrap();
+            .unwrap_or(0);
 
         Self {
             current_byte: object.offset(),
