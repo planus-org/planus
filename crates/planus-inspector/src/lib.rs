@@ -41,13 +41,83 @@ pub struct Inspector<'a> {
     pub object_mapping: ObjectMapping<'a>,
     pub buffer: InspectableFlatbuffer<'a>,
     pub should_quit: bool,
-    pub hex_cursor_pos: usize,
-    pub object_line_pos: usize,
-    pub offset_stack: Vec<usize>,
+    pub view_stack: Vec<ViewState<'a>>,
     pub active_window: ActiveWindow,
+    pub view_state: ViewState<'a>,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct ViewState<'a> {
+    pub current_byte: usize,
+    pub current_line: usize,
+    pub current_object_formatting: Option<ObjectFormatting<'a>>,
     pub search_results: Vec<SearchResult<'a>>,
     pub search_result_index: usize,
-    pub object_formatting: Option<ObjectFormatting<'a>>,
+}
+
+impl<'a> ViewState<'a> {
+    fn update_view_data(&mut self, object_mapping: &ObjectMapping<'a>) {
+        self.search_results = object_mapping.allocations.get(self.current_byte);
+        if let Some(search_result) = self.search_results.get(self.search_result_index) {
+            let allocation =
+                &object_mapping.allocations.allocations[search_result.root_allocation_index];
+            let object_formatting = allocation.to_formatting(&object_mapping);
+            if self.current_line >= object_formatting.lines.len() {
+                self.current_line = object_formatting.lines.len() - 1;
+            }
+            self.current_object_formatting = Some(object_formatting);
+        }
+    }
+
+    fn set_byte_view(&mut self, object_mapping: &ObjectMapping<'a>, index: usize) {
+        if self.current_byte != index {
+            self.current_byte = index;
+            self.update_search_results(object_mapping);
+            self.find_closest_match(object_mapping);
+        }
+    }
+
+    fn set_line_view(&mut self, object_mapping: &ObjectMapping<'a>, line: usize) {
+        if self.current_line != line
+            && line
+                < self
+                    .current_object_formatting
+                    .as_ref()
+                    .map(|o| o.lines.len())
+                    .unwrap_or(0)
+        {
+            self.current_line = line;
+            if let Some(current_object_formatting) = &self.current_object_formatting {
+                self.current_byte = current_object_formatting.lines[line].byte_range.0;
+                self.update_search_results(object_mapping);
+                self.search_result_index = self
+                    .search_results
+                    .iter()
+                    .enumerate()
+                    .find(|(_i, _sr)| true)
+                    .map(|(i, _)| i)
+                    .unwrap_or(0);
+            }
+        }
+    }
+
+    fn update_search_results(&mut self, object_mapping: &ObjectMapping<'a>) {
+        // TODO: handle empty
+        self.search_results = object_mapping.allocations.get(self.current_byte);
+    }
+
+    fn find_closest_match(&mut self, object_mapping: &ObjectMapping<'a>) {
+        // TODO: fix
+        self.search_result_index = 0;
+        self.current_line = 0;
+
+        if let Some(search_result) = self.search_results.get(self.search_result_index) {
+            let allocation =
+                &object_mapping.allocations.allocations[search_result.root_allocation_index];
+            let object_formatting = allocation.to_formatting(&object_mapping);
+            self.current_object_formatting = Some(object_formatting);
+        }
+    }
 }
 
 impl<'a> Inspector<'a> {
@@ -56,97 +126,28 @@ impl<'a> Inspector<'a> {
             buffer,
             object_mapping: buffer.calculate_object_mapping(root_table_index),
             should_quit: false,
-            hex_cursor_pos: 0,
-            object_line_pos: 0,
-            offset_stack: Vec::new(),
+            view_stack: Vec::new(),
             active_window: ActiveWindow::HexView,
-            search_results: Vec::new(),
-            search_result_index: 0,
-            object_formatting: None,
+            view_state: ViewState::default(),
         }
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
-        match key.code {
+        let mut should_draw = match key.code {
             KeyCode::Tab => {
                 self.active_window = self.active_window.toggle();
-                return true;
+                true
             }
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
-            }
-            _ => (),
-        }
-
-        let should_draw = match self.active_window {
-            ActiveWindow::ObjectView => self.object_view_key(key),
-            ActiveWindow::HexView => self.hex_view_key(key),
-        };
-
-        // Recalculate data required by UI if needed
-        if should_draw {
-            self.search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
-            if let Some(search_result) = self.search_results.get(self.search_result_index) {
-                let allocation = &self.object_mapping.allocations.allocations
-                    [search_result.root_allocation_index];
-                self.object_formatting = Some(allocation.to_formatting(&self.object_mapping));
-            }
-        }
-
-        should_draw
-    }
-
-    pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
-        let should_draw = match key.code {
-            // Navigation
-            KeyCode::Up => {
-                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(HEX_LINE_SIZE);
-                true
-            }
-            KeyCode::Down => {
-                self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(HEX_LINE_SIZE);
-                true
-            }
-            KeyCode::PageUp => {
-                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(8 * HEX_LINE_SIZE);
-                true
-            }
-            KeyCode::PageDown => {
-                self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(8 * HEX_LINE_SIZE);
-                true
-            }
-
-            KeyCode::Left => {
-                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(1);
-                true
-            }
-            KeyCode::Right => {
-                if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    if let Some(search_result) = self.search_results.first() {
-                        if let Some(index) = search_result.field_path.len().checked_sub(2) {
-                            let field_access = search_result.field_path[index].clone();
-                            let allocation = &self.object_mapping.allocations.allocations
-                                [field_access.allocation_index];
-                            let (object, _) = self
-                                .object_mapping
-                                .all_objects
-                                .get_index(allocation.object_index)
-                                .unwrap();
-                            if let Object::Offset(offset_object) = object {
-                                self.offset_stack.push(self.hex_cursor_pos);
-                                self.hex_cursor_pos =
-                                    offset_object.get_byte_index(&self.buffer).unwrap();
-                            }
-                        }
-                    }
-                } else {
-                    self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(1);
-                }
-                true
+                false
             }
             KeyCode::Enter => {
-                let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
-                if let Some(search_result) = search_results.first() {
+                if let Some(search_result) = self
+                    .view_state
+                    .search_results
+                    .get(self.view_state.search_result_index)
+                {
                     let field_access = search_result.field_path.last().unwrap();
                     let allocation =
                         &self.object_mapping.allocations.allocations[field_access.allocation_index];
@@ -156,41 +157,95 @@ impl<'a> Inspector<'a> {
                         .get_index(allocation.object_index)
                         .unwrap();
                     if let Object::Offset(offset_object) = object {
-                        self.offset_stack.push(self.hex_cursor_pos);
-                        self.hex_cursor_pos = offset_object.get_byte_index(&self.buffer).unwrap();
+                        self.view_stack.push(self.view_state.clone());
+                        self.view_state = ViewState::default();
+                        self.view_state.set_byte_view(
+                            &self.object_mapping,
+                            offset_object.get_byte_index(&self.buffer).unwrap(),
+                        );
                     }
                 }
                 true
             }
             KeyCode::Backspace => {
-                if let Some(pos) = self.offset_stack.pop() {
-                    self.hex_cursor_pos = pos;
+                if let Some(view_state) = self.view_stack.pop() {
+                    self.view_state = view_state;
                     true
                 } else {
                     false
                 }
             }
+            _ => false,
+        };
+
+        should_draw = should_draw
+            || match self.active_window {
+                ActiveWindow::ObjectView => self.object_view_key(key),
+                ActiveWindow::HexView => self.hex_view_key(key),
+            };
+
+        should_draw
+    }
+
+    pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
+        let mut current_byte = self.view_state.current_byte;
+        let should_draw = match key.code {
+            // Navigation
+            KeyCode::Up => {
+                current_byte = current_byte.saturating_sub(HEX_LINE_SIZE);
+                true
+            }
+            KeyCode::Down => {
+                current_byte = current_byte.saturating_add(HEX_LINE_SIZE);
+                true
+            }
+            KeyCode::PageUp => {
+                current_byte = current_byte.saturating_sub(8 * HEX_LINE_SIZE);
+                true
+            }
+            KeyCode::PageDown => {
+                self.view_state.current_byte = self
+                    .view_state
+                    .current_byte
+                    .saturating_add(8 * HEX_LINE_SIZE);
+                true
+            }
+
+            KeyCode::Left => {
+                current_byte = current_byte.saturating_sub(1);
+                true
+            }
+            KeyCode::Right => {
+                current_byte = current_byte.saturating_add(1);
+                true
+            }
             KeyCode::Home => {
-                self.hex_cursor_pos = 0;
+                self.view_state.current_byte = 0;
                 true
             }
             KeyCode::End => {
-                self.hex_cursor_pos = self.buffer.buffer.len() - 1;
+                self.view_state.current_byte = self.buffer.buffer.len() - 1;
                 true
             }
             _ => false,
         };
-        self.hex_cursor_pos = self.hex_cursor_pos.min(self.buffer.buffer.len() - 1);
+        current_byte = current_byte.min(self.buffer.buffer.len() - 1);
+
+        self.view_state
+            .set_byte_view(&self.object_mapping, current_byte);
 
         should_draw
     }
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
+        let mut current_line = self.view_state.current_line;
         match key.code {
-            KeyCode::Up => self.object_line_pos = self.object_line_pos.saturating_sub(1),
-            KeyCode::Down => self.object_line_pos = self.object_line_pos + 1,
+            KeyCode::Up => current_line = current_line.saturating_sub(1),
+            KeyCode::Down => current_line = current_line + 1,
             _ => (),
         }
+        self.view_state
+            .set_line_view(&self.object_mapping, current_line);
         true
     }
 
@@ -202,6 +257,10 @@ pub fn run_inspector<B: Backend>(
     mut inspector: Inspector,
     tick_rate: Duration,
 ) -> io::Result<()> {
+    inspector
+        .view_state
+        .set_byte_view(&inspector.object_mapping, 0);
+
     let mut last_tick = Instant::now();
     let mut should_draw = true;
     loop {

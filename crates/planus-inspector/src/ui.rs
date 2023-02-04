@@ -34,12 +34,12 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let mut text = vec![
         Spans::from(Span::styled(
-            format!("Objects at 0x{:x}: ", inspector.hex_cursor_pos),
+            format!("Objects at 0x{:x}: ", inspector.view_state.current_byte),
             Style::default(),
         )),
         Spans::default(),
     ];
-    for search_result in &inspector.search_results {
+    for search_result in &inspector.view_state.search_results {
         for field_access in &search_result.field_path {
             let allocation =
                 &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
@@ -71,7 +71,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
-    for search_result in &inspector.search_results {
+    for search_result in &inspector.view_state.search_results {
         let Some(field_access) = search_result.field_path.last() else { continue; };
         let allocation =
             &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
@@ -79,7 +79,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     }
 
     let mut view = Vec::new();
-    let skipped_lines = inspector.hex_cursor_pos / HEX_LINE_SIZE;
+    let skipped_lines = inspector.view_state.current_byte / HEX_LINE_SIZE;
     for (line_no, chunk) in inspector
         .buffer
         .buffer
@@ -91,7 +91,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         let mut line = Vec::new();
         for (col_no, b) in chunk.iter().enumerate() {
             let pos = (line_no + skipped_lines) * HEX_LINE_SIZE + col_no;
-            let style = if pos == inspector.hex_cursor_pos {
+            let style = if pos == inspector.view_state.current_byte {
                 Style::default().bg(Color::White)
             } else {
                 if let Some(i) = ranges.iter().position(|r| r.contains(&pos)) {
@@ -121,11 +121,16 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
 
     let mut text = Vec::new();
 
-    if let Some(obj_fmt) = inspector.object_formatting.as_ref() {
+    if let Some(obj_fmt) = inspector.view_state.current_object_formatting.as_ref() {
         let lines = obj_fmt.to_string(&inspector.buffer);
 
-        for (i, line) in lines.lines().enumerate() {
-            let style = if i == inspector.object_line_pos {
+        for (i, line) in lines.lines().enumerate().skip(
+            inspector
+                .view_state
+                .current_line
+                .saturating_sub(usize::from(area.height).saturating_sub(8)),
+        ) {
+            let style = if i == inspector.view_state.current_line {
                 Style::default().add_modifier(Modifier::BOLD)
             } else {
                 Style::default()

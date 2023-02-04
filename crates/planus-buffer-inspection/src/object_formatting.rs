@@ -9,7 +9,7 @@ type LineIndex = usize;
 /// Maps into the allocation_paths IndexMap
 type AllocationPathIndex = usize;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ObjectFormatting<'a> {
     pub root_object: Object<'a>,
     pub root_object_range: (usize, usize),
@@ -17,14 +17,14 @@ pub struct ObjectFormatting<'a> {
     pub allocation_paths: IndexMap<Vec<(Cow<'a, str>, ObjectIndex)>, LineIndex>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ObjectFormattingLine<'a> {
     pub indentation: usize,
     pub kind: ObjectFormattingKind<'a>,
     pub byte_range: (usize, usize),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ObjectFormattingKind<'a> {
     Object {
         allocation_path_index: AllocationPathIndex,
@@ -34,7 +34,7 @@ pub enum ObjectFormattingKind<'a> {
     Padding,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum BraceStyle<'a> {
     RootObject,
     BraceBegin { field_name: Cow<'a, str> },
