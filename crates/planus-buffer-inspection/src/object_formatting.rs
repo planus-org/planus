@@ -86,4 +86,23 @@ impl<'a> ObjectFormatting<'a> {
         }
         Ok(())
     }
+
+    pub fn to_string(&self, flatbuffer: &InspectableFlatbuffer<'_>) -> String {
+        struct Helper<'a> {
+            flatbuffer: &'a InspectableFlatbuffer<'a>,
+            object: &'a ObjectFormatting<'a>,
+        }
+
+        impl<'a> std::fmt::Display for Helper<'a> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.object.fmt_lines(self.flatbuffer, true, f)
+            }
+        }
+
+        Helper {
+            flatbuffer,
+            object: self,
+        }
+        .to_string()
+    }
 }
