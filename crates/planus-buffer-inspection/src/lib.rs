@@ -467,3 +467,9 @@ impl IntegerObject {
         Ok(literal)
     }
 }
+
+impl<'a> VectorObject<'a> {
+    pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
+        buffer.read_u32(self.offset)
+    }
+}

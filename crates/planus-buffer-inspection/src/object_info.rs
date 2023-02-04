@@ -3,9 +3,9 @@ use planus_types::intermediate::{
 };
 
 use crate::{
-    ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer, IntegerObject, Object,
-    OffsetObject, StringObject, StructObject, TableObject, UnionObject, UnionTagObject,
-    VTableObject, VectorObject,
+    children::Children, ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer,
+    IntegerObject, Object, OffsetObject, StringObject, StructObject, TableObject, UnionObject,
+    UnionTagObject, VTableObject, VectorObject,
 };
 
 pub trait DeclarationInfo {
@@ -154,8 +154,10 @@ impl<'a> ObjectName<'a> for OffsetObject<'a> {
 }
 
 impl<'a> ObjectName<'a> for VectorObject<'a> {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("VECTOR") // TODO
+    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = self.len(buffer).map(|n| n.to_string());
+        let len = len.as_deref().unwrap_or("invalid");
+        format!("vector({}, {:?})", len, self.type_.kind)
     }
 }
 
