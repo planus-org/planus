@@ -18,12 +18,30 @@ pub struct TreeState<T> {
     pub children: Option<Vec<TreeState<T>>>,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum ActiveWindow {
+    ObjectView,
+    HexView,
+}
+
+impl ActiveWindow {
+    #[must_use]
+    pub fn toggle(self) -> Self {
+        match self {
+            ActiveWindow::ObjectView => ActiveWindow::HexView,
+            ActiveWindow::HexView => ActiveWindow::ObjectView,
+        }
+    }
+}
+
 pub struct Inspector<'a> {
     pub object_mapping: ObjectMapping<'a>,
     pub buffer: InspectableFlatbuffer<'a>,
     pub should_quit: bool,
-    pub cursor_pos: usize,
+    pub hex_cursor_pos: usize,
+    pub object_line_pos: usize,
     pub offset_stack: Vec<usize>,
+    pub active_window: ActiveWindow,
 }
 
 impl<'a> Inspector<'a> {
@@ -32,41 +50,55 @@ impl<'a> Inspector<'a> {
             buffer,
             object_mapping: buffer.calculate_object_mapping(root_table_index),
             should_quit: false,
-            cursor_pos: 0,
+            hex_cursor_pos: 0,
+            object_line_pos: 0,
             offset_stack: Vec::new(),
+            active_window: ActiveWindow::HexView,
         }
     }
+
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
-        let should_draw = match key.code {
+        match key.code {
+            KeyCode::Tab => self.active_window = self.active_window.toggle(),
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
-                false
             }
+            _ => (),
+        }
+
+        match self.active_window {
+            ActiveWindow::ObjectView => self.object_view_key(key),
+            ActiveWindow::HexView => self.hex_view_key(key),
+        }
+    }
+
+    pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
+        let should_draw = match key.code {
             // Navigation
             KeyCode::Up => {
-                self.cursor_pos = self.cursor_pos.saturating_sub(HEX_LINE_SIZE);
+                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(HEX_LINE_SIZE);
                 true
             }
             KeyCode::Down => {
-                self.cursor_pos = self.cursor_pos.saturating_add(HEX_LINE_SIZE);
+                self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(HEX_LINE_SIZE);
                 true
             }
             KeyCode::PageUp => {
-                self.cursor_pos = self.cursor_pos.saturating_sub(8 * HEX_LINE_SIZE);
+                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(8 * HEX_LINE_SIZE);
                 true
             }
             KeyCode::PageDown => {
-                self.cursor_pos = self.cursor_pos.saturating_add(8 * HEX_LINE_SIZE);
+                self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(8 * HEX_LINE_SIZE);
                 true
             }
 
             KeyCode::Left => {
-                self.cursor_pos = self.cursor_pos.saturating_sub(1);
+                self.hex_cursor_pos = self.hex_cursor_pos.saturating_sub(1);
                 true
             }
             KeyCode::Right => {
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    let search_results = self.object_mapping.allocations.get(self.cursor_pos);
+                    let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                     if let Some(search_result) = search_results.first() {
                         if let Some(index) = search_result.result.len().checked_sub(2) {
                             let allocation = search_result.result[index];
@@ -74,20 +106,20 @@ impl<'a> Inspector<'a> {
                                 let (object, _) =
                                     self.object_mapping.all_objects.get_index(object).unwrap();
                                 if let Object::Offset(offset_object) = object {
-                                    self.offset_stack.push(self.cursor_pos);
-                                    self.cursor_pos =
+                                    self.offset_stack.push(self.hex_cursor_pos);
+                                    self.hex_cursor_pos =
                                         offset_object.get_byte_index(&self.buffer).unwrap();
                                 }
                             }
                         }
                     }
                 } else {
-                    self.cursor_pos = self.cursor_pos.saturating_add(1);
+                    self.hex_cursor_pos = self.hex_cursor_pos.saturating_add(1);
                 }
                 true
             }
             KeyCode::Enter => {
-                let search_results = self.object_mapping.allocations.get(self.cursor_pos);
+                let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                 if let Some(search_result) = search_results.first() {
                     let allocation = search_result.result.last().unwrap();
                     if let Some(object_index) = allocation.object {
@@ -97,8 +129,9 @@ impl<'a> Inspector<'a> {
                             .get_index(object_index)
                             .unwrap();
                         if let Object::Offset(offset_object) = object {
-                            self.offset_stack.push(self.cursor_pos);
-                            self.cursor_pos = offset_object.get_byte_index(&self.buffer).unwrap();
+                            self.offset_stack.push(self.hex_cursor_pos);
+                            self.hex_cursor_pos =
+                                offset_object.get_byte_index(&self.buffer).unwrap();
                         }
                     }
                 }
@@ -106,25 +139,34 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Backspace => {
                 if let Some(pos) = self.offset_stack.pop() {
-                    self.cursor_pos = pos;
+                    self.hex_cursor_pos = pos;
                     true
                 } else {
                     false
                 }
             }
             KeyCode::Home => {
-                self.cursor_pos = 0;
+                self.hex_cursor_pos = 0;
                 true
             }
             KeyCode::End => {
-                self.cursor_pos = self.buffer.buffer.len() - 1;
+                self.hex_cursor_pos = self.buffer.buffer.len() - 1;
                 true
             }
             _ => false,
         };
-        self.cursor_pos = self.cursor_pos.min(self.buffer.buffer.len() - 1);
+        self.hex_cursor_pos = self.hex_cursor_pos.min(self.buffer.buffer.len() - 1);
 
         should_draw
+    }
+
+    fn object_view_key(&mut self, key: KeyEvent) -> bool {
+        match key.code {
+            KeyCode::Up => self.object_line_pos = self.object_line_pos.saturating_sub(1),
+            KeyCode::Down => self.object_line_pos = self.object_line_pos + 1,
+            _ => (),
+        }
+        true
     }
 
     pub fn on_tick(&mut self) {}
@@ -148,7 +190,9 @@ pub fn run_inspector<B: Backend>(
             .unwrap_or_else(|| Duration::from_secs(0));
         if crossterm::event::poll(timeout)? {
             match event::read()? {
-                Event::Key(key) => should_draw = inspector.on_key(key),
+                Event::Key(key) => {
+                    should_draw = inspector.on_key(key);
+                }
                 Event::Resize(_, _) => should_draw = true,
                 _ => (),
             }

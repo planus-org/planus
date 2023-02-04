@@ -14,13 +14,31 @@ pub const HEX_LINE_SIZE: usize = 16;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Percentage(20), Percentage(50), Percentage(30)].as_ref())
+    let vert = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Percentage(50), Percentage(50)].as_ref())
         .split(f.size());
+    let top = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Percentage(30), Percentage(70)].as_ref())
+        .split(vert[0]);
 
-    hex_view(f, chunks[1], inspector);
-    info_area(f, chunks[2], inspector);
+    interpretations_view(f, top[0], inspector);
+    info_area(f, top[1], inspector);
+    hex_view(f, vert[1], inspector);
+}
+
+fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
+    let text = vec![
+        Spans::from(Span::styled(
+            format!("Objects at {}: ", inspector.hex_cursor_pos),
+            Style::default(),
+        )),
+        Spans::default(),
+    ];
+    let block = Block::default().borders(Borders::ALL);
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
 }
 
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
@@ -29,9 +47,9 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     let search_results = inspector
         .object_mapping
         .allocations
-        .get(inspector.cursor_pos);
+        .get(inspector.hex_cursor_pos);
     for search_result in search_results {
-        let allocation = search_result.result.last().unwrap();
+        let Some(allocation) = search_result.result.last() else { continue; };
         if allocation.object.is_none() {
             continue;
         }
@@ -39,7 +57,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     }
 
     let mut view = Vec::new();
-    let skipped_lines = inspector.cursor_pos / HEX_LINE_SIZE;
+    let skipped_lines = inspector.hex_cursor_pos / HEX_LINE_SIZE;
     for (line_no, chunk) in inspector
         .buffer
         .buffer
@@ -51,7 +69,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         let mut line = Vec::new();
         for (col_no, b) in chunk.iter().enumerate() {
             let pos = (line_no + skipped_lines) * HEX_LINE_SIZE + col_no;
-            let style = if pos == inspector.cursor_pos {
+            let style = if pos == inspector.hex_cursor_pos {
                 Style::default().bg(Color::White)
             } else {
                 if let Some(i) = ranges.iter().position(|r| r.contains(&pos)) {
@@ -64,6 +82,8 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         }
         view.push(Spans::from(line));
     }
+
+    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
     let block = Block::default().borders(Borders::ALL);
     let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
@@ -73,11 +93,11 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     let search_results = inspector
         .object_mapping
         .allocations
-        .get(inspector.cursor_pos);
+        .get(inspector.hex_cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = vec![
         Spans::from(Span::styled(
-            format!("offset: {}", inspector.cursor_pos),
+            format!("offset: {}", inspector.hex_cursor_pos),
             Style::default(),
         )),
         Spans::default(),
