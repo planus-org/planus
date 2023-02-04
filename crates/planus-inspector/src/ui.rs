@@ -29,7 +29,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     let search_results = inspector
         .object_mapping
         .allocations
-        .get::<1>(inspector.cursor_pos);
+        .get(inspector.cursor_pos);
     for search_result in search_results {
         let allocation = search_result.result.last().unwrap();
         if allocation.object.is_none() {
@@ -73,7 +73,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     let search_results = inspector
         .object_mapping
         .allocations
-        .get::<3>(inspector.cursor_pos);
+        .get(inspector.cursor_pos);
     let block = Block::default().borders(Borders::ALL);
     let mut text = vec![
         Spans::from(Span::styled(
@@ -84,7 +84,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
     ];
 
     for (i, search_result) in search_results.iter().enumerate() {
-        for allocation in &search_result.result {
+        for allocation in &search_result.result[search_result.result.len().saturating_sub(3)..] {
             let Some(object_index) = allocation.object
             else {
                 continue;

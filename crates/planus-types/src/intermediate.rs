@@ -197,6 +197,18 @@ pub enum DeclarationKind {
     RpcService(RpcService),
 }
 
+impl DeclarationKind {
+    pub fn kind_as_str(&self) -> &'static str {
+        match self {
+            DeclarationKind::Table(_) => "table",
+            DeclarationKind::Struct(_) => "struct",
+            DeclarationKind::Enum(_) => "enum",
+            DeclarationKind::Union(_) => "union",
+            DeclarationKind::RpcService(_) => "rpc_service",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Table {
     pub fields: IndexMap<String, TableField>,

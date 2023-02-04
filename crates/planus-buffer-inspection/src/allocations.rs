@@ -55,19 +55,16 @@ impl AllocationChildren {
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SearchResult<T, const N: usize> {
-    pub result: heapless::Vec<T, N>,
+pub struct SearchResult<T> {
+    pub result: Vec<T>,
 }
 
-impl<T, const N: usize> SearchResult<T, N> {
+impl<T> SearchResult<T> {
     fn push(&mut self, object: T) {
-        if self.result.is_full() {
-            self.result.remove(0);
-        }
         let _ = self.result.push(object);
     }
 
-    fn map<U>(self, f: impl FnMut(T) -> U) -> SearchResult<U, N> {
+    fn map<U>(self, f: impl FnMut(T) -> U) -> SearchResult<U> {
         SearchResult {
             result: self.result.into_iter().map(f).collect(),
         }
@@ -86,17 +83,11 @@ impl Interval {
 }
 
 impl Allocations {
-    pub fn get<'a, const N: usize>(
-        &'a self,
-        offset: ByteIndex,
-    ) -> Vec<SearchResult<&'a Allocation, N>> {
+    pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<&Allocation>> {
         let mut out = Vec::new();
 
         let root_allocation = &self.allocations[0];
-        let mut initial_state = SearchResult {
-            result: heapless::Vec::new(),
-        };
-        initial_state.result.push(0).unwrap();
+        let initial_state = SearchResult { result: Vec::new() };
 
         let mut todo = vec![(root_allocation, initial_state)];
 

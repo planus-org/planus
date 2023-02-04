@@ -6,10 +6,7 @@ use std::{
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use planus_buffer_inspection::{
-    object_mapping::{ObjectIndex, ObjectMapping},
-    InspectableFlatbuffer, Object,
-};
+use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
@@ -69,16 +66,18 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Right => {
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    let search_results = self.object_mapping.allocations.get::<2>(self.cursor_pos);
+                    let search_results = self.object_mapping.allocations.get(self.cursor_pos);
                     if let Some(search_result) = search_results.first() {
-                        let allocation = search_result.result.first().unwrap();
-                        if let Some(object) = allocation.object {
-                            let (object, _) =
-                                self.object_mapping.all_objects.get_index(object).unwrap();
-                            if let Object::Offset(offset_object) = object {
-                                self.offset_stack.push(self.cursor_pos);
-                                self.cursor_pos =
-                                    offset_object.get_byte_index(&self.buffer).unwrap();
+                        if let Some(index) = search_result.result.len().checked_sub(2) {
+                            let allocation = search_result.result[index];
+                            if let Some(object) = allocation.object {
+                                let (object, _) =
+                                    self.object_mapping.all_objects.get_index(object).unwrap();
+                                if let Object::Offset(offset_object) = object {
+                                    self.offset_stack.push(self.cursor_pos);
+                                    self.cursor_pos =
+                                        offset_object.get_byte_index(&self.buffer).unwrap();
+                                }
                             }
                         }
                     }
@@ -88,7 +87,7 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Enter => {
-                let search_results = self.object_mapping.allocations.get::<1>(self.cursor_pos);
+                let search_results = self.object_mapping.allocations.get(self.cursor_pos);
                 if let Some(search_result) = search_results.first() {
                     let allocation = search_result.result.last().unwrap();
                     if let Some(object_index) = allocation.object {
