@@ -19,15 +19,7 @@ mod dot;
 mod rust;
 mod templates;
 
-#[derive(thiserror::Error, Debug)]
-pub enum CodegenError {
-    #[error("io error")]
-    Io(#[from] std::io::Error),
-    #[error("codegen error: {0}")]
-    Other(String),
-}
-
-pub fn generate_rust(declarations: &Declarations) -> Result<String, CodegenError> {
+pub fn generate_rust(declarations: &Declarations) -> eyre::Result<String> {
     let default_analysis = run_analysis(declarations, &mut rust::analysis::DefaultAnalysis);
     let eq_analysis = run_analysis(declarations, &mut rust::analysis::EqAnalysis);
     let infallible_analysis = run_analysis(
@@ -43,7 +35,8 @@ pub fn generate_rust(declarations: &Declarations) -> Result<String, CodegenError
         declarations,
     );
     let res = templates::rust::Namespace(&output).render().unwrap();
-    let res = rust::format_string(&rust::format_string(&res, Some(1_000_000))?, None)?;
+    let res = rust::format_string(&res, Some(1_000_000))?;
+    let res = rust::format_string(&res, None)?;
     Ok(res)
 }
 
