@@ -32,10 +32,6 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 }
 
 fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let search_results = inspector
-        .object_mapping
-        .allocations
-        .get(inspector.hex_cursor_pos);
     let mut text = vec![
         Spans::from(Span::styled(
             format!("Objects at 0x{:x}: ", inspector.hex_cursor_pos),
@@ -43,7 +39,7 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
         )),
         Spans::default(),
     ];
-    for search_result in &search_results {
+    for search_result in &inspector.search_results {
         for field_access in &search_result.field_path {
             let allocation =
                 &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
@@ -75,11 +71,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
-    let search_results = inspector
-        .object_mapping
-        .allocations
-        .get(inspector.hex_cursor_pos);
-    for search_result in search_results {
+    for search_result in &inspector.search_results {
         let Some(field_access) = search_result.field_path.last() else { continue; };
         let allocation =
             &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
@@ -127,22 +119,9 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView);
 
-    let search_results = inspector
-        .object_mapping
-        .allocations
-        .get(inspector.hex_cursor_pos);
-    let mut text = vec![
-        Spans::from(Span::styled(
-            format!("offset: {}", inspector.hex_cursor_pos),
-            Style::default(),
-        )),
-        Spans::default(),
-    ];
+    let mut text = Vec::new();
 
-    if let Some(search_result) = search_results.first() {
-        let allocation =
-            &inspector.object_mapping.allocations.allocations[search_result.root_allocation_index];
-        let obj_fmt = allocation.to_formatting(&inspector.object_mapping);
+    if let Some(obj_fmt) = inspector.object_formatting.as_ref() {
         let lines = obj_fmt.to_string(&inspector.buffer);
 
         for (i, line) in lines.lines().enumerate() {
@@ -163,6 +142,6 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
             Color::White
         }));
 
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
     f.render_widget(paragraph, area);
 }

@@ -6,7 +6,10 @@ use std::{
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
+use planus_buffer_inspection::{
+    allocations::SearchResult, object_formatting::ObjectFormatting, object_mapping::ObjectMapping,
+    InspectableFlatbuffer, Object,
+};
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
@@ -42,6 +45,9 @@ pub struct Inspector<'a> {
     pub object_line_pos: usize,
     pub offset_stack: Vec<usize>,
     pub active_window: ActiveWindow,
+    pub search_results: Vec<SearchResult<'a>>,
+    pub search_result_index: usize,
+    pub object_formatting: Option<ObjectFormatting<'a>>,
 }
 
 impl<'a> Inspector<'a> {
@@ -54,6 +60,9 @@ impl<'a> Inspector<'a> {
             object_line_pos: 0,
             offset_stack: Vec::new(),
             active_window: ActiveWindow::HexView,
+            search_results: Vec::new(),
+            search_result_index: 0,
+            object_formatting: None,
         }
     }
 
@@ -69,10 +78,22 @@ impl<'a> Inspector<'a> {
             _ => (),
         }
 
-        match self.active_window {
+        let should_draw = match self.active_window {
             ActiveWindow::ObjectView => self.object_view_key(key),
             ActiveWindow::HexView => self.hex_view_key(key),
+        };
+
+        // Recalculate data required by UI if needed
+        if should_draw {
+            self.search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
+            if let Some(search_result) = self.search_results.get(self.search_result_index) {
+                let allocation = &self.object_mapping.allocations.allocations
+                    [search_result.root_allocation_index];
+                self.object_formatting = Some(allocation.to_formatting(&self.object_mapping));
+            }
         }
+
+        should_draw
     }
 
     pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
@@ -101,10 +122,9 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Right => {
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
-                    let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
-                    if let Some(search_result) = search_results.first() {
+                    if let Some(search_result) = self.search_results.first() {
                         if let Some(index) = search_result.field_path.len().checked_sub(2) {
-                            let field_access = search_result.field_path[index];
+                            let field_access = search_result.field_path[index].clone();
                             let allocation = &self.object_mapping.allocations.allocations
                                 [field_access.allocation_index];
                             let (object, _) = self
