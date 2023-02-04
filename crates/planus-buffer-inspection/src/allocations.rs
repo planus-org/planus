@@ -101,10 +101,10 @@ impl<'a> AllocationChildren<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FieldAccess<'a> {
     pub allocation_index: AllocationIndex,
-    pub field_name: &'a str,
+    pub field_name: Cow<'a, str>,
 }
 
 pub type FieldPath<'a> = Vec<FieldAccess<'a>>;
@@ -127,8 +127,8 @@ impl Interval {
 }
 
 impl<'a> Allocations<'a> {
-    pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<'_>> {
-        let mut out = Vec::new();
+    pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<'a>> {
+        let mut out: Vec<SearchResult<'a>> = Vec::new();
 
         let root_allocations = self
             .roots
@@ -141,7 +141,7 @@ impl<'a> Allocations<'a> {
                     .map(|child| child.allocation_index)
             });
 
-        let mut todo: Vec<(&IntervalTree<'_>, SearchResult<'_>)> = root_allocations
+        let mut todo: Vec<(&IntervalTree<'_>, SearchResult<'a>)> = root_allocations
             .map(|root_allocation_index| {
                 (
                     &self.allocations[root_allocation_index].children,
@@ -162,7 +162,7 @@ impl<'a> Allocations<'a> {
                         AllocationChildren::Unique(child) => {
                             let allocation = &self.allocations[child.allocation_index];
                             state.field_path.push(FieldAccess {
-                                field_name: &child.field_name,
+                                field_name: child.field_name.clone(),
                                 allocation_index: child.allocation_index,
                             });
                             todo.push((&allocation.children, state));
@@ -173,7 +173,7 @@ impl<'a> Allocations<'a> {
                                 let allocation = &self.allocations[child.allocation_index];
                                 let mut state = state.clone();
                                 state.field_path.push(FieldAccess {
-                                    field_name: &child.field_name,
+                                    field_name: child.field_name.clone(),
                                     allocation_index: child.allocation_index,
                                 });
                                 todo.push((&allocation.children, state));
