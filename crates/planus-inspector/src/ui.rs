@@ -139,6 +139,22 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         Spans::default(),
     ];
 
+    if let Some(search_result) = search_results.first() {
+        let allocation =
+            &inspector.object_mapping.allocations.allocations[search_result.root_allocation_index];
+        let obj_fmt = allocation.to_formatting(&inspector.object_mapping);
+        let lines = obj_fmt.to_string(&inspector.buffer);
+
+        for (i, line) in lines.lines().enumerate() {
+            let style = if i == inspector.object_line_pos {
+                Style::default().add_modifier(Modifier::BOLD)
+            } else {
+                Style::default()
+            };
+            text.push(Spans::from(Span::styled(format!("{line}"), style)));
+        }
+    }
+
     let block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(if is_active {

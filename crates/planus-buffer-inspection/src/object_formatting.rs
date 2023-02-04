@@ -50,7 +50,7 @@ impl<'a> ObjectFormatting<'a> {
                 BraceStyle::BraceBegin { field_name } | BraceStyle::LeafObject { field_name } => {
                     let object_name = object.resolve_name(flatbuffer);
                     let object_address = line.byte_range.0;
-                    write!(
+                    writeln!(
                         f,
                         "{indentation:>indentation_count$}{field_name}: {object_name} @ {object_address}{curly}",
                         indentation = "",
@@ -59,11 +59,11 @@ impl<'a> ObjectFormatting<'a> {
                     )?;
                 }
                 BraceStyle::BraceEnd => {
-                    write!(f, "{indentation:>width$}}}", indentation = "", width = 0)?;
+                    writeln!(f, "{indentation:>width$}}}", indentation = "", width = 0)?;
                 }
             },
             ObjectFormattingKind::Padding if show_padding => {
-                write!(
+                writeln!(
                     f,
                     "{indentation:>width$}padding",
                     indentation = "",
