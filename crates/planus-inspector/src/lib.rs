@@ -102,14 +102,15 @@ impl<'a> Inspector<'a> {
                     if let Some(search_result) = search_results.first() {
                         if let Some(index) = search_result.field_path.len().checked_sub(2) {
                             let field_access = search_result.field_path[index];
-                            if let Some(object) = field_access.allocation.object {
-                                let (object, _) =
-                                    self.object_mapping.all_objects.get_index(object).unwrap();
-                                if let Object::Offset(offset_object) = object {
-                                    self.offset_stack.push(self.hex_cursor_pos);
-                                    self.hex_cursor_pos =
-                                        offset_object.get_byte_index(&self.buffer).unwrap();
-                                }
+                            let (object, _) = self
+                                .object_mapping
+                                .all_objects
+                                .get_index(field_access.allocation.object_index)
+                                .unwrap();
+                            if let Object::Offset(offset_object) = object {
+                                self.offset_stack.push(self.hex_cursor_pos);
+                                self.hex_cursor_pos =
+                                    offset_object.get_byte_index(&self.buffer).unwrap();
                             }
                         }
                     }
@@ -122,17 +123,14 @@ impl<'a> Inspector<'a> {
                 let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                 if let Some(search_result) = search_results.first() {
                     let field_access = search_result.field_path.last().unwrap();
-                    if let Some(object_index) = field_access.allocation.object {
-                        let (object, _) = self
-                            .object_mapping
-                            .all_objects
-                            .get_index(object_index)
-                            .unwrap();
-                        if let Object::Offset(offset_object) = object {
-                            self.offset_stack.push(self.hex_cursor_pos);
-                            self.hex_cursor_pos =
-                                offset_object.get_byte_index(&self.buffer).unwrap();
-                        }
+                    let (object, _) = self
+                        .object_mapping
+                        .all_objects
+                        .get_index(field_access.allocation.object_index)
+                        .unwrap();
+                    if let Object::Offset(offset_object) = object {
+                        self.offset_stack.push(self.hex_cursor_pos);
+                        self.hex_cursor_pos = offset_object.get_byte_index(&self.buffer).unwrap();
                     }
                 }
                 true

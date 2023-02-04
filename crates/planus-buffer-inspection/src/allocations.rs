@@ -8,17 +8,23 @@ pub type AllocationIndex = usize;
 
 #[derive(Default)]
 pub struct Allocations<'a> {
-    allocations: Vec<Allocation<'a>>,
+    pub roots: IntervalTree<'a>,
+    pub allocations: Vec<Allocation<'a>>,
+}
+
+#[derive(Default, Debug)]
+pub struct IntervalTree<'a> {
+    // Invariant: None of the allocation ranges can overlap
+    allocations: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren<'a>)>,
 }
 
 #[derive(Debug)]
 pub struct Allocation<'a> {
-    pub object: Option<ObjectIndex>,
+    pub object_index: ObjectIndex,
     pub start: AllocationStart,
     pub end: AllocationEnd,
     pub parents: Vec<AllocationIndex>,
-    // Invariant: None of the allocation ranges can overlap
-    pub children: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren<'a>)>,
+    pub children: IntervalTree<'a>,
 }
 
 #[derive(Clone, Debug)]
@@ -94,21 +100,19 @@ impl<'a> Allocations<'a> {
     pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<'_>> {
         let mut out = Vec::new();
 
-        let buffer_allocation = &self.allocations[0];
+        let mut todo: Vec<(&IntervalTree<'_>, Vec<(usize, &str)>)> =
+            vec![(&self.roots, Vec::new())];
 
-        let mut todo: Vec<(&Allocation, Vec<(usize, &str)>)> =
-            vec![(buffer_allocation, Vec::new())];
-
-        while let Some((allocation, mut state)) = todo.pop() {
+        while let Some((children, mut state)) = todo.pop() {
             if let Some((allocation_start, (allocation_end, children))) =
-                allocation.children.range(..=offset).next_back()
+                children.allocations.range(..=offset).next_back()
             {
                 if (*allocation_start..*allocation_end).contains(&offset) {
                     match children {
                         AllocationChildren::Unique(child) => {
                             let allocation = &self.allocations[child.allocation_index];
                             state.push((child.allocation_index, &child.field_name));
-                            todo.push((allocation, state));
+                            todo.push((&allocation.children, state));
                             continue;
                         }
                         AllocationChildren::Overlapping(children) => {
@@ -116,7 +120,7 @@ impl<'a> Allocations<'a> {
                                 let allocation = &self.allocations[child.allocation_index];
                                 let mut state = state.clone();
                                 state.push((child.allocation_index, &child.field_name));
-                                todo.push((allocation, state));
+                                todo.push((&allocation.children, state));
                             }
                             continue;
                         }
@@ -149,23 +153,32 @@ impl<'a> Allocations<'a> {
 
     pub fn allocate(
         &mut self,
-        object: Option<ObjectIndex>,
+        object: ObjectIndex,
         allocation_start: AllocationStart,
         allocation_end: AllocationEnd,
     ) -> AllocationIndex {
         let allocation_index = self.allocations.len();
         self.allocations.push(Allocation {
-            object,
+            object_index: object,
             start: allocation_start,
             end: allocation_end,
             parents: Vec::new(),
-            children: BTreeMap::new(),
+            children: IntervalTree::default(),
         });
         allocation_index
     }
 
     pub fn insert_new_root(&mut self, allocation_index: AllocationIndex) {
-        self.insert_child(0, allocation_index, "".into());
+        let node = &mut self.allocations[allocation_index];
+
+        let allocation_start = node.start;
+        let allocation_end = node.end;
+        self.roots.insert_allocation(
+            allocation_start,
+            allocation_end,
+            "".into(),
+            allocation_index,
+        );
     }
 
     pub fn insert_child(
@@ -188,20 +201,37 @@ impl<'a> Allocations<'a> {
         node.start = node.start.min(allocation_start);
         node.end = node.end.max(allocation_end);
 
-        let mut unaltered_end = node.children.split_off(&allocation_end);
+        node.children.insert_allocation(
+            allocation_start,
+            allocation_end,
+            field_name,
+            child_allocation_index,
+        );
+    }
+}
+
+impl<'a> IntervalTree<'a> {
+    fn insert_allocation(
+        &mut self,
+        allocation_start: usize,
+        allocation_end: usize,
+        field_name: Cow<'a, str>,
+        child_allocation_index: usize,
+    ) {
+        let mut unaltered_end = self.allocations.split_off(&allocation_end);
 
         // Fix up the allocation_start to get the previous element as well
         let mut search_allocation_start = allocation_start;
 
         if let Some((child_allocation_start, (child_allocation_end, _child))) =
-            node.children.range(..=allocation_start).next_back()
+            self.allocations.range(..=allocation_start).next_back()
         {
             if allocation_start < *child_allocation_end {
                 search_allocation_start = *child_allocation_start;
             }
         }
 
-        let nodes_to_fixup = node.children.split_off(&search_allocation_start);
+        let nodes_to_fixup = self.allocations.split_off(&search_allocation_start);
 
         let mut nodes_to_fixup = nodes_to_fixup
             .into_iter()
@@ -282,11 +312,11 @@ impl<'a> Allocations<'a> {
             break;
         }
 
-        node.children.extend(
+        self.allocations.extend(
             nodes_to_fixup
                 .into_iter()
                 .map(|(interval, children)| (interval.start, (interval.end, children))),
         );
-        node.children.append(&mut unaltered_end);
+        self.allocations.append(&mut unaltered_end);
     }
 }

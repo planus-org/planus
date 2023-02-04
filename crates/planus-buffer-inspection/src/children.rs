@@ -65,8 +65,8 @@ impl<'a> Children<'a> for VTableObject {
                     type_: IntegerType::U16,
                 });
                 match i {
-                    0 => (Cow::Borrowed("vtable_size"), object),
-                    1 => (Cow::Borrowed("table_size"), object),
+                    0 => (Cow::Borrowed("#vtable_size"), object),
+                    1 => (Cow::Borrowed("#table_size"), object),
                     n => (Cow::Owned(format!("{n}")), object),
                 }
             });

@@ -2,10 +2,7 @@ use std::borrow::Cow;
 
 use indexmap::IndexMap;
 
-use crate::{
-    allocations::SearchResult, object_info::ObjectName, object_mapping::ObjectMapping,
-    InspectableFlatbuffer,
-};
+use crate::{allocations::AllocationIndex, object_info::ObjectName, InspectableFlatbuffer, Object};
 
 /// Maps into the lines Vec
 type LineIndex = usize;
@@ -14,7 +11,7 @@ type AllocationPathIndex = usize;
 
 pub struct ObjectFormatting<'a> {
     pub lines: Vec<ObjectFormattingLine<'a>>,
-    pub allocation_paths: IndexMap<SearchResult<'a>, LineIndex>,
+    pub allocation_paths: IndexMap<Vec<(&'a str, AllocationIndex)>, LineIndex>,
 }
 
 pub struct ObjectFormattingLine<'a> {
@@ -27,6 +24,7 @@ pub enum ObjectFormattingKind<'a> {
     Object {
         allocation_path_index: AllocationPathIndex,
         style: BraceStyle<'a>,
+        object: Object<'a>,
     },
     Padding,
 }
@@ -42,28 +40,12 @@ impl<'a> ObjectFormatting<'a> {
         &self,
         line: &ObjectFormattingLine<'_>,
         flatbuffer: &InspectableFlatbuffer<'_>,
-        object_mapping: &ObjectMapping<'_>,
         show_padding: bool,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match &line.kind {
-            ObjectFormattingKind::Object {
-                style,
-                allocation_path_index,
-            } => match style {
+            ObjectFormattingKind::Object { style, object, .. } => match style {
                 BraceStyle::BraceBegin { field_name } | BraceStyle::LeafObject { field_name } => {
-                    let (allocation_path, _) = self
-                        .allocation_paths
-                        .get_index(*allocation_path_index)
-                        .unwrap();
-                    let object_index = allocation_path
-                        .field_path
-                        .last()
-                        .unwrap()
-                        .allocation
-                        .object
-                        .unwrap();
-                    let (object, _) = object_mapping.all_objects.get_index(object_index).unwrap();
                     let object_name = object.resolve_name(flatbuffer);
                     let object_address = line.byte_range.0;
                     write!(
@@ -94,12 +76,11 @@ impl<'a> ObjectFormatting<'a> {
     fn fmt_lines(
         &self,
         flatbuffer: &InspectableFlatbuffer<'_>,
-        object_mapping: &ObjectMapping<'_>,
         show_padding: bool,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         for line in &self.lines {
-            self.fmt_line(line, flatbuffer, object_mapping, show_padding, f)?;
+            self.fmt_line(line, flatbuffer, show_padding, f)?;
         }
         Ok(())
     }

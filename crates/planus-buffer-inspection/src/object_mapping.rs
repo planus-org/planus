@@ -42,15 +42,8 @@ impl<'a> InspectableFlatbuffer<'a> {
             parents: Default::default(),
         };
 
-        let buffer_allocation_index = result.allocations.allocate(None, 0, self.buffer.len());
-        assert_eq!(buffer_allocation_index, 0);
-
         let root_allocation_index = result.handle_node(Object::Offset(root_object), self);
-        result.allocations.insert_child(
-            buffer_allocation_index,
-            root_allocation_index,
-            "root_offset".into(),
-        );
+        result.allocations.insert_new_root(root_allocation_index);
 
         result
     }
@@ -72,9 +65,9 @@ impl<'a> ObjectMapping<'a> {
             Entry::Vacant(entry) => {
                 object_index = entry.index();
                 let range = object.byterange(buffer);
-                allocation_index =
-                    self.allocations
-                        .allocate(Some(object_index), range.start, range.end);
+                allocation_index = self
+                    .allocations
+                    .allocate(object_index, range.start, range.end);
                 entry.insert(allocation_index);
             }
         }

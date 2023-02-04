@@ -50,9 +50,6 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .get(inspector.hex_cursor_pos);
     for search_result in search_results {
         let Some(field_access) = search_result.field_path.last() else { continue; };
-        if field_access.allocation.object.is_none() {
-            continue;
-        }
         ranges.push(field_access.allocation.start..field_access.allocation.end);
     }
 
@@ -107,10 +104,6 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         for field_access in
             &search_result.field_path[search_result.field_path.len().saturating_sub(3)..]
         {
-            let Some(object_index) = field_access.allocation.object
-            else {
-                continue;
-            };
             let range = format!(
                 "{}-{}",
                 field_access.allocation.start, field_access.allocation.end
@@ -118,7 +111,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
             let (object, _object_allocation_index) = inspector
                 .object_mapping
                 .all_objects
-                .get_index(object_index)
+                .get_index(field_access.allocation.object_index)
                 .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
             text.extend_from_slice(&[
                 Spans::from(Span::styled(
