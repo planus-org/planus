@@ -4,7 +4,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -56,7 +56,7 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
         }
     }
 
-    let block = Block::default().borders(Borders::ALL);
+    let block = block(false);
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
@@ -104,13 +104,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         view.push(Spans::from(line));
     }
 
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(if is_active {
-            Color::Green
-        } else {
-            Color::White
-        }));
+    let block = block(is_active);
     let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
@@ -140,14 +134,18 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         text.push(Spans::from(Span::styled(format!("{line}"), style)));
     }
 
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(if is_active {
-            Color::Green
-        } else {
-            Color::White
-        }));
-
+    let block = block(is_active);
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
     f.render_widget(paragraph, area);
+}
+
+fn block(is_active: bool) -> Block<'static> {
+    let res = Block::default().borders(Borders::ALL);
+    if is_active {
+        res.border_style(Style::default().fg(Color::White))
+            .border_type(BorderType::Rounded)
+    } else {
+        res.border_style(Style::default().fg(Color::Rgb(128, 128, 128)))
+            .border_type(BorderType::Rounded)
+    }
 }

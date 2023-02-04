@@ -194,6 +194,10 @@ impl<'a> Inspector<'a> {
                 }
                 true
             }
+            (KeyCode::Char('g'), _) => {
+                self.view_state.set_byte_view(&self.object_mapping, 0);
+                true
+            }
             (KeyCode::Char('q') | KeyCode::Esc, _)
             | (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
                 self.should_quit = true;

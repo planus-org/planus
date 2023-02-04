@@ -433,7 +433,7 @@ impl StringObject {
     }
 
     pub fn bytes<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<&'a [u8]> {
-        Ok(&buffer.buffer[self.offset..self.offset + self.len(buffer)? as usize])
+        Ok(&buffer.buffer[self.offset + 4..self.offset + 4 + self.len(buffer)? as usize])
     }
 }
 
