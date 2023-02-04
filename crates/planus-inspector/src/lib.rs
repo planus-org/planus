@@ -82,7 +82,7 @@ impl<'a> ViewState<'a> {
     fn set_byte_view(&mut self, object_mapping: &ObjectMapping<'a>, index: usize) {
         if self.current_byte != index {
             self.current_byte = index;
-            self.update_search_results(object_mapping);
+            self.search_results = object_mapping.allocations.get(self.current_byte);
             self.find_closest_match(object_mapping);
         }
     }
@@ -92,39 +92,73 @@ impl<'a> ViewState<'a> {
             && self.current_line.unwrap_or(usize::MAX) != line
         {
             self.current_line = Some(line);
-            self.current_byte = self.current_object_formatting.lines[line].byte_range.0;
-            self.update_search_results(object_mapping);
+            let current_object = &self.current_object_formatting.lines[line];
+
+            let current_field_path = if let ObjectFormattingKind::Object {
+                allocation_path_index,
+                ..
+            } = current_object.kind
+            {
+                self.current_object_formatting
+                    .allocation_paths
+                    .get_index(allocation_path_index)
+                    .unwrap()
+                    .0
+                    .as_slice()
+            } else {
+                &[]
+            };
+            self.current_byte = current_object.byte_range.0;
+            self.search_results = object_mapping.allocations.get(self.current_byte);
             self.search_result_index = self
                 .search_results
                 .iter()
                 .enumerate()
-                .find(|(_i, _sr)| true)
+                .find(|(_i, sr)| {
+                    sr.root_object_index == self.current_object_formatting.root_object_index
+                        && sr.field_path == current_field_path
+                })
                 .map(|(i, _)| i)
                 .unwrap_or(0);
         }
     }
 
-    fn update_search_results(&mut self, object_mapping: &ObjectMapping<'a>) {
-        let search_results = object_mapping.allocations.get(self.current_byte);
-        if search_results.is_empty() {
+    fn find_closest_match(&mut self, object_mapping: &ObjectMapping<'a>) {
+        if self.search_results.is_empty() {
             self.current_line = None;
         } else {
-            self.search_results = object_mapping.allocations.get(self.current_byte);
-        }
-    }
-
-    fn find_closest_match(&mut self, object_mapping: &ObjectMapping<'a>) {
-        // TODO: fix
-        self.search_result_index = 0;
-        self.current_line = None;
-
-        if let Some(search_result) = self.search_results.get(self.search_result_index) {
-            let (_object, &allocation_index) = &object_mapping
-                .all_objects
-                .get_index(search_result.root_object_index)
+            self.search_result_index = self
+                .search_results
+                .iter()
+                .enumerate()
+                .min_by_key(|(_, sr)| {
+                    if sr.root_object_index == self.current_object_formatting.root_object_index {
+                        if let Some(&line_index) = self
+                            .current_object_formatting
+                            .allocation_paths
+                            .get(&sr.field_path)
+                        {
+                            (0, line_index.abs_diff(self.current_line.unwrap_or(0)))
+                        } else {
+                            (0, usize::MAX)
+                        }
+                    } else {
+                        (1, 0)
+                    }
+                })
+                .map(|(i, _sr)| i)
                 .unwrap();
-            let allocation = &object_mapping.allocations.allocations[allocation_index];
-            self.current_object_formatting = allocation.to_formatting(&object_mapping);
+            let search_result = &self.search_results[self.search_result_index];
+            if search_result.root_object_index != self.current_object_formatting.root_object_index {
+                self.current_object_formatting = object_mapping.allocations.allocations
+                    [search_result.root_allocation_index]
+                    .to_formatting(object_mapping);
+            }
+            self.current_line = self
+                .current_object_formatting
+                .allocation_paths
+                .get(&search_result.field_path)
+                .copied();
         }
     }
 }

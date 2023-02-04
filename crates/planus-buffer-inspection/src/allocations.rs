@@ -112,6 +112,7 @@ pub type FieldPath<'a> = Vec<FieldAccess<'a>>;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchResult<'a> {
     pub root_object_index: ObjectIndex,
+    pub root_allocation_index: AllocationIndex,
     pub field_path: FieldPath<'a>,
 }
 
@@ -147,6 +148,7 @@ impl<'a> Allocations<'a> {
                     &self.allocations[root_allocation_index].children,
                     SearchResult {
                         root_object_index: self.allocations[root_allocation_index].object_index,
+                        root_allocation_index,
                         field_path: Vec::new(),
                     },
                 )
@@ -442,6 +444,7 @@ impl<'a> Allocation<'a> {
             lines: Vec::new(),
             allocation_paths: IndexMap::new(),
             root_object,
+            root_object_index: self.object_index,
             root_object_range: (self.start, self.end),
         };
 
