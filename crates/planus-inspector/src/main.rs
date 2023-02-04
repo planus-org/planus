@@ -88,7 +88,7 @@ fn main() -> Result<ExitCode> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -117,6 +117,6 @@ fn main() -> Result<ExitCode> {
 
 fn cleanup_terminal(stdout: &mut impl std::io::Write) -> Result<()> {
     disable_raw_mode()?;
-    execute!(stdout, LeaveAlternateScreen, DisableMouseCapture, Show)?;
+    execute!(stdout, LeaveAlternateScreen, Show)?;
     Ok(())
 }
