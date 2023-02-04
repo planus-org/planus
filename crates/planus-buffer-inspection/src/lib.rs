@@ -123,6 +123,26 @@ pub enum Object<'a> {
     String(StringObject),
 }
 
+impl<'a> Object<'a> {
+    pub fn offset(&self) -> ByteIndex {
+        match self {
+            Object::Offset(inner) => inner.offset,
+            Object::VTable(inner) => inner.offset,
+            Object::Table(inner) => inner.offset,
+            Object::Struct(inner) => inner.offset,
+            Object::UnionTag(inner) => inner.offset,
+            Object::Union(inner) => inner.offset,
+            Object::Enum(inner) => inner.offset,
+            Object::Vector(inner) => inner.offset,
+            Object::Array(inner) => inner.offset,
+            Object::Integer(inner) => inner.offset,
+            Object::Float(inner) => inner.offset,
+            Object::Bool(inner) => inner.offset,
+            Object::String(inner) => inner.offset,
+        }
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct OffsetObject<'a> {
     pub offset: ByteIndex,

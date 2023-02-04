@@ -5,9 +5,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use planus_buffer_inspection::{
-    allocations::SearchResult, object_formatting::ObjectFormatting, object_mapping::ObjectMapping,
+    allocations::SearchResult,
+    object_formatting::{ObjectFormatting, ObjectFormattingKind},
+    object_mapping::ObjectMapping,
     InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
@@ -46,26 +48,32 @@ pub struct Inspector<'a> {
     pub view_state: ViewState<'a>,
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct ViewState<'a> {
     pub current_byte: usize,
-    pub current_line: usize,
-    pub current_object_formatting: Option<ObjectFormatting<'a>>,
+    pub current_line: Option<usize>,
+    pub current_object_formatting: ObjectFormatting<'a>,
     pub search_results: Vec<SearchResult<'a>>,
     pub search_result_index: usize,
 }
 
 impl<'a> ViewState<'a> {
-    fn update_view_data(&mut self, object_mapping: &ObjectMapping<'a>) {
-        self.search_results = object_mapping.allocations.get(self.current_byte);
-        if let Some(search_result) = self.search_results.get(self.search_result_index) {
-            let allocation =
-                &object_mapping.allocations.allocations[search_result.root_allocation_index];
-            let object_formatting = allocation.to_formatting(&object_mapping);
-            if self.current_line >= object_formatting.lines.len() {
-                self.current_line = object_formatting.lines.len() - 1;
-            }
-            self.current_object_formatting = Some(object_formatting);
+    fn new_for_object(object_mapping: &ObjectMapping<'a>, object: Object<'a>) -> Self {
+        let (object_index, _object, &allocation_index) =
+            object_mapping.all_objects.get_full(&object).unwrap();
+        let search_results = object_mapping.allocations.get(object.offset());
+        let search_result_index = search_results
+            .iter()
+            .position(|r| r.root_object_index == object_index)
+            .unwrap();
+
+        Self {
+            current_byte: object.offset(),
+            current_line: Some(0),
+            current_object_formatting: object_mapping.allocations.allocations[allocation_index]
+                .to_formatting(object_mapping),
+            search_results,
+            search_result_index,
         }
     }
 
@@ -78,57 +86,64 @@ impl<'a> ViewState<'a> {
     }
 
     fn set_line_view(&mut self, object_mapping: &ObjectMapping<'a>, line: usize) {
-        if self.current_line != line
-            && line
-                < self
-                    .current_object_formatting
-                    .as_ref()
-                    .map(|o| o.lines.len())
-                    .unwrap_or(0)
+        if line < self.current_object_formatting.lines.len()
+            && self.current_line.unwrap_or(usize::MAX) != line
         {
-            self.current_line = line;
-            if let Some(current_object_formatting) = &self.current_object_formatting {
-                self.current_byte = current_object_formatting.lines[line].byte_range.0;
-                self.update_search_results(object_mapping);
-                self.search_result_index = self
-                    .search_results
-                    .iter()
-                    .enumerate()
-                    .find(|(_i, _sr)| true)
-                    .map(|(i, _)| i)
-                    .unwrap_or(0);
-            }
+            self.current_line = Some(line);
+            self.current_byte = self.current_object_formatting.lines[line].byte_range.0;
+            self.update_search_results(object_mapping);
+            self.search_result_index = self
+                .search_results
+                .iter()
+                .enumerate()
+                .find(|(_i, _sr)| true)
+                .map(|(i, _)| i)
+                .unwrap_or(0);
         }
     }
 
     fn update_search_results(&mut self, object_mapping: &ObjectMapping<'a>) {
-        // TODO: handle empty
-        self.search_results = object_mapping.allocations.get(self.current_byte);
+        let search_results = object_mapping.allocations.get(self.current_byte);
+        if search_results.is_empty() {
+            self.current_line = None;
+        } else {
+            self.search_results = object_mapping.allocations.get(self.current_byte);
+        }
     }
 
     fn find_closest_match(&mut self, object_mapping: &ObjectMapping<'a>) {
         // TODO: fix
         self.search_result_index = 0;
-        self.current_line = 0;
+        self.current_line = None;
 
         if let Some(search_result) = self.search_results.get(self.search_result_index) {
-            let allocation =
-                &object_mapping.allocations.allocations[search_result.root_allocation_index];
-            let object_formatting = allocation.to_formatting(&object_mapping);
-            self.current_object_formatting = Some(object_formatting);
+            let (_object, &allocation_index) = &object_mapping
+                .all_objects
+                .get_index(search_result.root_object_index)
+                .unwrap();
+            let allocation = &object_mapping.allocations.allocations[allocation_index];
+            self.current_object_formatting = allocation.to_formatting(&object_mapping);
         }
     }
 }
 
 impl<'a> Inspector<'a> {
     pub fn new(buffer: InspectableFlatbuffer<'a>, root_table_index: DeclarationIndex) -> Self {
+        let object_mapping = buffer.calculate_object_mapping(root_table_index);
         Self {
             buffer,
+            view_state: ViewState::new_for_object(
+                &object_mapping,
+                *object_mapping
+                    .all_objects
+                    .get_index(object_mapping.root_object.offset)
+                    .unwrap()
+                    .0,
+            ),
             object_mapping: buffer.calculate_object_mapping(root_table_index),
             should_quit: false,
             view_stack: Vec::new(),
             active_window: ActiveWindow::HexView,
-            view_state: ViewState::default(),
         }
     }
 
@@ -136,6 +151,11 @@ impl<'a> Inspector<'a> {
         let mut should_draw = match key.code {
             KeyCode::Tab => {
                 self.active_window = self.active_window.toggle();
+                if matches!(self.active_window, ActiveWindow::ObjectView)
+                    && self.view_state.current_line.is_none()
+                {
+                    self.view_state.current_line = Some(0);
+                }
                 true
             }
             KeyCode::Char('q') | KeyCode::Esc => {
@@ -143,26 +163,18 @@ impl<'a> Inspector<'a> {
                 false
             }
             KeyCode::Enter => {
-                if let Some(search_result) = self
-                    .view_state
-                    .search_results
-                    .get(self.view_state.search_result_index)
-                {
-                    let field_access = search_result.field_path.last().unwrap();
-                    let allocation =
-                        &self.object_mapping.allocations.allocations[field_access.allocation_index];
-                    let (object, _) = self
-                        .object_mapping
-                        .all_objects
-                        .get_index(allocation.object_index)
-                        .unwrap();
-                    if let Object::Offset(offset_object) = object {
-                        self.view_stack.push(self.view_state.clone());
-                        self.view_state = ViewState::default();
-                        self.view_state.set_byte_view(
-                            &self.object_mapping,
-                            offset_object.get_byte_index(&self.buffer).unwrap(),
+                if let Some(current_line) = self.view_state.current_line {
+                    if let ObjectFormattingKind::Object {
+                        object: Object::Offset(offset_object),
+                        ..
+                    } = self.view_state.current_object_formatting.lines[current_line].kind
+                    {
+                        let inner = offset_object.get_inner(&self.buffer).unwrap();
+                        let old_view_state = std::mem::replace(
+                            &mut self.view_state,
+                            ViewState::new_for_object(&self.object_mapping, inner),
                         );
+                        self.view_stack.push(old_view_state);
                     }
                 }
                 true
@@ -238,7 +250,7 @@ impl<'a> Inspector<'a> {
     }
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
-        let mut current_line = self.view_state.current_line;
+        let mut current_line = self.view_state.current_line.unwrap_or(0);
         match key.code {
             KeyCode::Up => current_line = current_line.saturating_sub(1),
             KeyCode::Down => current_line = current_line + 1,
@@ -257,10 +269,6 @@ pub fn run_inspector<B: Backend>(
     mut inspector: Inspector,
     tick_rate: Duration,
 ) -> io::Result<()> {
-    inspector
-        .view_state
-        .set_byte_view(&inspector.object_mapping, 0);
-
     let mut last_tick = Instant::now();
     let mut should_draw = true;
     loop {

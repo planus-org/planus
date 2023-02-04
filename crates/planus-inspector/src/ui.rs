@@ -1,7 +1,4 @@
-use planus_buffer_inspection::{
-    object_formatting::{ObjectFormatting, ObjectFormattingKind, ObjectFormattingLine},
-    object_info::ObjectName,
-};
+use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -41,20 +38,18 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
     ];
     for search_result in &inspector.view_state.search_results {
         for field_access in &search_result.field_path {
-            let allocation =
-                &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
-
-            let (object, _object_allocation_index) = inspector
+            let (object, _) = inspector
                 .object_mapping
                 .all_objects
-                .get_index(allocation.object_index)
-                .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
+                .get_index(field_access.object_index)
+                .unwrap();
+
             text.extend_from_slice(&[Spans::from(Span::styled(
                 format!(
                     "{}: {} @ 0x{:x}",
                     field_access.field_name,
                     object.resolve_name(&inspector.buffer),
-                    allocation.start,
+                    object.offset(),
                 ),
                 Style::default(),
             ))]);
@@ -73,8 +68,12 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
     for search_result in &inspector.view_state.search_results {
         let Some(field_access) = search_result.field_path.last() else { continue; };
-        let allocation =
-            &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
+        let (_object, &allocation_index) = &inspector
+            .object_mapping
+            .all_objects
+            .get_index(field_access.object_index)
+            .unwrap();
+        let allocation = &inspector.object_mapping.allocations.allocations[allocation_index];
         ranges.push(allocation.start..allocation.end);
     }
 
@@ -121,22 +120,24 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
 
     let mut text = Vec::new();
 
-    if let Some(obj_fmt) = inspector.view_state.current_object_formatting.as_ref() {
-        let lines = obj_fmt.to_string(&inspector.buffer);
+    let lines = inspector
+        .view_state
+        .current_object_formatting
+        .to_string(&inspector.buffer);
 
-        for (i, line) in lines.lines().enumerate().skip(
-            inspector
-                .view_state
-                .current_line
-                .saturating_sub(usize::from(area.height).saturating_sub(8)),
-        ) {
-            let style = if i == inspector.view_state.current_line {
-                Style::default().add_modifier(Modifier::BOLD)
-            } else {
-                Style::default()
-            };
-            text.push(Spans::from(Span::styled(format!("{line}"), style)));
-        }
+    for (i, line) in lines.lines().enumerate().skip(
+        inspector
+            .view_state
+            .current_line
+            .unwrap_or(0)
+            .saturating_sub(usize::from(area.height).saturating_sub(8)),
+    ) {
+        let style = if Some(i) == inspector.view_state.current_line {
+            Style::default().add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+        };
+        text.push(Spans::from(Span::styled(format!("{line}"), style)));
     }
 
     let block = Block::default()

@@ -101,9 +101,9 @@ impl<'a> AllocationChildren<'a> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FieldAccess<'a> {
-    pub allocation_index: AllocationIndex,
+    pub object_index: ObjectIndex,
     pub field_name: Cow<'a, str>,
 }
 
@@ -111,7 +111,7 @@ pub type FieldPath<'a> = Vec<FieldAccess<'a>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchResult<'a> {
-    pub root_allocation_index: AllocationIndex,
+    pub root_object_index: ObjectIndex,
     pub field_path: FieldPath<'a>,
 }
 
@@ -146,7 +146,7 @@ impl<'a> Allocations<'a> {
                 (
                     &self.allocations[root_allocation_index].children,
                     SearchResult {
-                        root_allocation_index,
+                        root_object_index: self.allocations[root_allocation_index].object_index,
                         field_path: Vec::new(),
                     },
                 )
@@ -163,7 +163,7 @@ impl<'a> Allocations<'a> {
                             let allocation = &self.allocations[child.allocation_index];
                             state.field_path.push(FieldAccess {
                                 field_name: child.field_name.clone(),
-                                allocation_index: child.allocation_index,
+                                object_index: allocation.object_index,
                             });
                             todo.push((&allocation.children, state));
                             continue;
@@ -174,7 +174,7 @@ impl<'a> Allocations<'a> {
                                 let mut state = state.clone();
                                 state.field_path.push(FieldAccess {
                                     field_name: child.field_name.clone(),
-                                    allocation_index: child.allocation_index,
+                                    object_index: allocation.object_index,
                                 });
                                 todo.push((&allocation.children, state));
                             }
@@ -366,12 +366,15 @@ impl<'a> Allocation<'a> {
         fn handler<'a, 'b>(
             child_mapping: &'b ChildMapping<'a>,
             object_mapping: &ObjectMapping<'a>,
-            path: &mut Vec<(Cow<'a, str>, ObjectIndex)>,
+            path: &mut Vec<FieldAccess<'a>>,
             out: &mut ObjectFormatting<'a>,
         ) {
             let allocation: &Allocation<'a> =
                 &object_mapping.allocations.allocations[child_mapping.allocation_index];
-            path.push((child_mapping.field_name.clone(), allocation.object_index));
+            path.push(FieldAccess {
+                object_index: allocation.object_index,
+                field_name: child_mapping.field_name.clone(),
+            });
             let allocation_path_index = out.allocation_paths.len();
             assert!(out
                 .allocation_paths
@@ -469,3 +472,51 @@ impl<'a> Allocation<'a> {
         out
     }
 }
+
+/*
+
+search_results
+search_results_index
+current_root_object
+current_line: usize
+current_byte: usize
+
+fn hex_formatting_ranges(current_object, current_line) -> ((usize, usize), (usize, usize)) {
+    let root_object = current_root_object.object;
+    let current_object = current_root_object.lines[current_line].object;
+    (
+        (root_object.start, root_object.end),
+        (current_object.start, current_object.end),
+    )
+}
+
+fn info_formatting_ranges(current_object, current_line) -> ((usize, usize), (usize, usize)) {
+    todo!()
+}
+
+fn cycle_interpretation() {
+    search_results_index = (search_results_index + 1) % search_results.len();
+    current_root_object = search_results[search_results_index].root_allocation.to_format();
+    current_line = current_object.find_matching(search_results[search_results_index]);
+}
+
+fn set_current_line(new_current_line: usize)
+    if new_current_line != current_line {
+        current_line = new_current_line;
+        let current_object = current_root_object.lines[current_line].object;
+        current_byte = current_object.start;
+        search_results = calculate_search_results();
+        search_results_index = search_results.position(|search_result| search_result.matches(current_object.path)).unwrap();
+    }
+}
+
+fn set_byte(new_current_byte)
+    if new_current_byte != current_byte {
+        current_byte = new_current_byte;
+        search_results = calculate_search_results(current_byte);
+
+        let current_object = current_root_object.lines[current_line].object;
+        (search_result_index, current_root_object, current_line) = find_closest_match(search_results, current_object.path);
+    }
+}
+*/
