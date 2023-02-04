@@ -15,9 +15,14 @@ pub type AllocationStart = ByteIndex;
 pub type AllocationEnd = ByteIndex;
 pub type AllocationIndex = usize;
 
-#[derive(Default)]
 pub struct Allocations<'a> {
-    pub roots: IntervalTree<'a>,
+    pub roots: rust_lapper::Lapper<ByteIndex, AllocationIndex>,
+    pub allocations: Vec<Allocation<'a>>,
+}
+
+#[derive(Default)]
+pub struct AllocationsBuilder<'a> {
+    pub roots: Vec<rust_lapper::Interval<ByteIndex, AllocationIndex>>,
     pub allocations: Vec<Allocation<'a>>,
 }
 
@@ -133,14 +138,9 @@ impl<'a> Allocations<'a> {
 
         let root_allocations = self
             .roots
-            .get_children(offset)
+            .find(offset, offset + 1)
             .into_iter()
-            .flat_map(|children| {
-                children
-                    .children()
-                    .iter()
-                    .map(|child| child.allocation_index)
-            });
+            .map(|children| children.val);
 
         let mut todo: Vec<(&IntervalTree<'_>, SearchResult<'a>)> = root_allocations
             .map(|root_allocation_index| {
@@ -192,6 +192,15 @@ impl<'a> Allocations<'a> {
         out.sort();
         out
     }
+}
+
+impl<'a> AllocationsBuilder<'a> {
+    pub fn finish(self) -> Allocations<'a> {
+        Allocations {
+            roots: rust_lapper::Lapper::new(self.roots),
+            allocations: self.allocations,
+        }
+    }
 
     pub fn allocate(
         &mut self,
@@ -215,12 +224,12 @@ impl<'a> Allocations<'a> {
 
         let allocation_start = node.start;
         let allocation_end = node.end;
-        self.roots.insert_allocation(
-            allocation_start,
-            allocation_end,
-            "".into(),
-            allocation_index,
-        );
+
+        self.roots.push(rust_lapper::Interval {
+            start: allocation_start,
+            stop: allocation_end,
+            val: allocation_index,
+        });
     }
 
     pub fn insert_child(

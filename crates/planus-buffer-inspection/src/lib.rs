@@ -490,4 +490,78 @@ impl<'a> VectorObject<'a> {
     pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
         buffer.read_u32(self.offset)
     }
+
+    pub fn read(
+        &self,
+        index: usize,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> Result<Option<Object<'a>>> {
+        if index >= self.len(buffer)? as usize {
+            return Ok(None);
+        }
+
+        let offset = self.offset + 4;
+        let object = match &self.type_.kind {
+            TypeKind::Union(_) => return Ok(None),
+            TypeKind::Array(_, _) => return Ok(None),
+            TypeKind::Table(declaration_index) => Object::Offset(OffsetObject {
+                offset: offset + index * 4,
+                kind: OffsetObjectKind::Table(*declaration_index),
+            }),
+            TypeKind::Vector(type_) => Object::Offset(OffsetObject {
+                offset: offset + index * 4,
+                kind: OffsetObjectKind::Vector(type_),
+            }),
+
+            TypeKind::String => Object::Offset(OffsetObject {
+                offset: offset + index * 4,
+                kind: OffsetObjectKind::String,
+            }),
+
+            TypeKind::SimpleType(type_) => match type_ {
+                SimpleType::Struct(declaration_index) => {
+                    if let DeclarationKind::Struct(decl) = &buffer
+                        .declarations
+                        .get_declaration(*declaration_index)
+                        .1
+                        .kind
+                    {
+                        Object::Struct(StructObject {
+                            offset: offset + index * decl.size as usize,
+                            declaration: *declaration_index,
+                        })
+                    } else {
+                        panic!("Inconsistent declarations");
+                    }
+                }
+                SimpleType::Enum(declaration_index) => {
+                    if let DeclarationKind::Enum(decl) = &buffer
+                        .declarations
+                        .get_declaration(*declaration_index)
+                        .1
+                        .kind
+                    {
+                        Object::Enum(EnumObject {
+                            offset: offset + index * decl.type_.byte_size() as usize,
+                            declaration: *declaration_index,
+                        })
+                    } else {
+                        panic!("Inconsistent declarations");
+                    }
+                }
+                SimpleType::Bool => Object::Bool(BoolObject {
+                    offset: offset + index,
+                }),
+                SimpleType::Integer(type_) => Object::Integer(IntegerObject {
+                    offset: offset + index * type_.byte_size() as usize,
+                    type_: *type_,
+                }),
+                SimpleType::Float(type_) => Object::Float(FloatObject {
+                    offset: offset + index * type_.byte_size() as usize,
+                    type_: *type_,
+                }),
+            },
+        };
+        Ok(Some(object))
+    }
 }

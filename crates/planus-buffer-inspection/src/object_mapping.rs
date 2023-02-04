@@ -1,10 +1,10 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 use indexmap::{map::Entry, IndexMap};
 use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 
 use crate::{
-    allocations::{AllocationIndex, Allocations},
+    allocations::{AllocationIndex, Allocations, AllocationsBuilder},
     children::{Byterange, Children},
     ByteIndex, InspectableFlatbuffer, Object, OffsetObject,
 };
@@ -16,7 +16,7 @@ pub struct ObjectMapping<'a> {
     pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
     pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
     pub allocations: Allocations<'a>,
-    pub parents: BTreeMap<ObjectIndex, Vec<ObjectIndex>>,
+    pub parents: HashMap<ObjectIndex, Vec<ObjectIndex>>,
 }
 
 impl<'a> InspectableFlatbuffer<'a> {
@@ -34,22 +34,30 @@ impl<'a> InspectableFlatbuffer<'a> {
             kind: crate::OffsetObjectKind::Table(root_table_index),
         };
 
-        let mut result = ObjectMapping {
+        let mut builder = ObjectMappingBuilder::default();
+
+        let root_allocation_index = builder.handle_node(Object::Offset(root_object), self);
+        builder.allocations.insert_new_root(root_allocation_index);
+
+        ObjectMapping {
             root_object,
-            vtable_locations: Default::default(),
-            all_objects: Default::default(),
-            allocations: Default::default(),
-            parents: Default::default(),
-        };
-
-        let root_allocation_index = result.handle_node(Object::Offset(root_object), self);
-        result.allocations.insert_new_root(root_allocation_index);
-
-        result
+            all_objects: builder.all_objects,
+            vtable_locations: builder.vtable_locations,
+            allocations: builder.allocations.finish(),
+            parents: builder.parents,
+        }
     }
 }
 
-impl<'a> ObjectMapping<'a> {
+#[derive(Default)]
+pub struct ObjectMappingBuilder<'a> {
+    pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
+    pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
+    pub allocations: AllocationsBuilder<'a>,
+    pub parents: HashMap<ObjectIndex, Vec<ObjectIndex>>,
+}
+
+impl<'a> ObjectMappingBuilder<'a> {
     fn handle_node(
         &mut self,
         object: Object<'a>,

@@ -67,7 +67,7 @@ impl<'a> Children<'a> for VTableObject {
                 match i {
                     0 => (Cow::Borrowed("#vtable_size"), object),
                     1 => (Cow::Borrowed("#table_size"), object),
-                    n => (Cow::Owned(format!("{n}")), object),
+                    n => (Cow::Owned((n - 2).to_string()), object),
                 }
             });
         Box::new(iter)
@@ -158,16 +158,25 @@ impl<'a> Children<'a> for EnumObject {
 }
 
 impl<'a> Children<'a> for VectorObject<'a> {
-    type Iter = std::iter::Once<ChildPair<'a>>;
+    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
 
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::once((
+    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
+        let this = *self;
+        let buffer = *buffer;
+        let iter = std::iter::once((
             Cow::Borrowed("length"),
             Object::Integer(IntegerObject {
                 offset: self.offset,
                 type_: IntegerType::U32,
             }),
         ))
+        .chain((0..self.len(&buffer).unwrap_or(0)).filter_map(move |i| {
+            Some((
+                Cow::Owned(i.to_string()),
+                this.read(i as usize, &buffer).ok()??,
+            ))
+        }));
+        Box::new(iter)
     }
 }
 
@@ -314,6 +323,6 @@ impl Byterange for BoolObject {
 
 impl Byterange for StringObject {
     fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> std::ops::Range<ByteIndex> {
-        self.offset..self.offset + self.len(buffer).unwrap() as usize
+        self.offset..self.offset + 4 + self.len(buffer).unwrap() as usize
     }
 }
