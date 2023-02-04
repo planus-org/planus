@@ -14,7 +14,7 @@ pub struct ObjectFormatting<'a> {
     pub root_object: Object<'a>,
     pub root_object_range: (usize, usize),
     pub lines: Vec<ObjectFormattingLine<'a>>,
-    pub allocation_paths: IndexMap<Vec<(&'a str, ObjectIndex)>, LineIndex>,
+    pub allocation_paths: IndexMap<Vec<(Cow<'a, str>, ObjectIndex)>, LineIndex>,
 }
 
 #[derive(Debug)]
@@ -37,9 +37,9 @@ pub enum ObjectFormattingKind<'a> {
 #[derive(Debug)]
 pub enum BraceStyle<'a> {
     RootObject,
-    BraceBegin { field_name: &'a str },
+    BraceBegin { field_name: Cow<'a, str> },
     BraceEnd,
-    LeafObject { field_name: &'a str },
+    LeafObject { field_name: Cow<'a, str> },
 }
 
 impl<'a> ObjectFormatting<'a> {

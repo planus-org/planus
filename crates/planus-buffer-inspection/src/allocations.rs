@@ -362,16 +362,16 @@ impl<'a> IntervalTree<'a> {
 }
 
 impl<'a> Allocation<'a> {
-    pub fn to_formatting(&'a self, object_mapping: &'a ObjectMapping<'a>) -> ObjectFormatting<'a> {
-        fn handler<'a>(
-            child_mapping: &'a ChildMapping<'a>,
-            object_mapping: &'a ObjectMapping<'a>,
-            path: &mut Vec<(&'a str, ObjectIndex)>,
+    pub fn to_formatting(&self, object_mapping: &ObjectMapping<'a>) -> ObjectFormatting<'a> {
+        fn handler<'a, 'b>(
+            child_mapping: &'b ChildMapping<'a>,
+            object_mapping: &ObjectMapping<'a>,
+            path: &mut Vec<(Cow<'a, str>, ObjectIndex)>,
             out: &mut ObjectFormatting<'a>,
         ) {
-            let allocation =
+            let allocation: &Allocation<'a> =
                 &object_mapping.allocations.allocations[child_mapping.allocation_index];
-            path.push((&child_mapping.field_name, allocation.object_index));
+            path.push((child_mapping.field_name.clone(), allocation.object_index));
             let allocation_path_index = out.allocation_paths.len();
             assert!(out
                 .allocation_paths
@@ -383,7 +383,7 @@ impl<'a> Allocation<'a> {
                     kind: ObjectFormattingKind::Object {
                         allocation_path_index,
                         style: BraceStyle::LeafObject {
-                            field_name: &child_mapping.field_name,
+                            field_name: child_mapping.field_name.clone(),
                         },
                         object: object_mapping
                             .all_objects
@@ -400,7 +400,7 @@ impl<'a> Allocation<'a> {
                     kind: ObjectFormattingKind::Object {
                         allocation_path_index,
                         style: BraceStyle::BraceBegin {
-                            field_name: &child_mapping.field_name,
+                            field_name: child_mapping.field_name.clone(),
                         },
                         object: object_mapping
                             .all_objects
