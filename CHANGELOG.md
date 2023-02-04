@@ -16,12 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Bump the Minimum Support Rust Version (MSRV) to 1.61.0.
 - \[Rust\]: Add license files to crates
 - \[Rust\]: Implement a builder pattern for serializing tables and unions
-- \[Rust\]: rustfmt runs twice on generated code to ensure it is formatted correctly
-- \[Rust\]: Fix an issue with using structs across different flatbuffer namespaces.
-- Add support for docstrings, and add them to the Rust output.
-- Update the `README` with information about our Discord server.
-- Split up `planus-cli` into multiple crates
-- Fix planus failing with "Unexpected token" on CLRF
+- Add support for docstrings, and add them to the Rust output. [#152](https://github.com/planus-org/planus/pull/152)
+- Update the `README` with information about our Discord server [#138](https://github.com/planus-org/planus/pull/138)
+- Split up `planus-cli` into multiple crates [#161](https://github.com/planus-org/planus/pull/161)
+
+### Fixed
+- Fix planus failing with "Unexpected token" on CLRF [#166](https://github.com/planus-org/planus/pull/166)
+- \[Rust\]: rustfmt runs twice on generated code to ensure it is formatted correctly [#168](https://github.com/planus-org/planus/pull/168)
+- \[Rust\]: Fix an issue with using structs across different flatbuffer namespaces [#172](https://github.com/planus-org/planus/pull/172)
+- \[Rust\]: Fix bad error reporting when `rustfmt` was not installed [#173](https://github.com/planus-org/planus/pull/173)
 
 ### Removed
 - \[Rust\]: The old ways of serializing tables and unions using `create`-functions have been removed.
@@ -66,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-12-30
 - Initial release
 
-[Unreleased]: https://github.com/planus-org/planus/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/planus-org/planus/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/planus-org/planus/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/planus-org/planus/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/planus-org/planus/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/planus-org/planus/releases/tag/v0.1.0
