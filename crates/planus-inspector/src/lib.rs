@@ -105,10 +105,12 @@ impl<'a> Inspector<'a> {
                     if let Some(search_result) = search_results.first() {
                         if let Some(index) = search_result.field_path.len().checked_sub(2) {
                             let field_access = search_result.field_path[index];
+                            let allocation = &self.object_mapping.allocations.allocations
+                                [field_access.allocation_index];
                             let (object, _) = self
                                 .object_mapping
                                 .all_objects
-                                .get_index(field_access.allocation.object_index)
+                                .get_index(allocation.object_index)
                                 .unwrap();
                             if let Object::Offset(offset_object) = object {
                                 self.offset_stack.push(self.hex_cursor_pos);
@@ -126,10 +128,12 @@ impl<'a> Inspector<'a> {
                 let search_results = self.object_mapping.allocations.get(self.hex_cursor_pos);
                 if let Some(search_result) = search_results.first() {
                     let field_access = search_result.field_path.last().unwrap();
+                    let allocation =
+                        &self.object_mapping.allocations.allocations[field_access.allocation_index];
                     let (object, _) = self
                         .object_mapping
                         .all_objects
-                        .get_index(field_access.allocation.object_index)
+                        .get_index(allocation.object_index)
                         .unwrap();
                     if let Object::Offset(offset_object) = object {
                         self.offset_stack.push(self.hex_cursor_pos);

@@ -1,6 +1,15 @@
-use std::{borrow::Cow, collections::BTreeMap};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
+};
 
-use crate::{object_mapping::ObjectIndex, ByteIndex};
+use indexmap::IndexMap;
+
+use crate::{
+    object_formatting::ObjectFormatting,
+    object_mapping::{ObjectIndex, ObjectMapping},
+    ByteIndex,
+};
 
 pub type AllocationStart = ByteIndex;
 pub type AllocationEnd = ByteIndex;
@@ -18,6 +27,23 @@ pub struct IntervalTree<'a> {
     allocations: BTreeMap<AllocationStart, (AllocationEnd, AllocationChildren<'a>)>,
 }
 
+impl<'a> IntervalTree<'a> {
+    pub fn get_children(&self, offset: ByteIndex) -> Option<&AllocationChildren<'a>> {
+        let (allocation_start, (allocation_end, children)) =
+            self.allocations.range(..=offset).next_back()?;
+        (*allocation_start..*allocation_end)
+            .contains(&offset)
+            .then_some(children)
+    }
+
+    pub fn get_all_children(&self) -> BTreeSet<&ChildMapping<'a>> {
+        self.allocations
+            .values()
+            .flat_map(|(_, children)| children.children())
+            .collect()
+    }
+}
+
 #[derive(Debug)]
 pub struct Allocation<'a> {
     pub object_index: ObjectIndex,
@@ -33,7 +59,7 @@ pub enum AllocationChildren<'a> {
     Overlapping(Vec<ChildMapping<'a>>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChildMapping<'a> {
     field_name: Cow<'a, str>,
     allocation_index: AllocationIndex,
@@ -73,15 +99,17 @@ impl<'a> AllocationChildren<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FieldAccess<'a> {
+    pub allocation_index: AllocationIndex,
     pub field_name: &'a str,
-    pub allocation: &'a Allocation<'a>,
 }
 
 pub type FieldPath<'a> = Vec<FieldAccess<'a>>;
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchResult<'a> {
-    pub root_object: &'a Allocation<'a>,
+    pub root_allocation_index: AllocationIndex,
     pub field_path: FieldPath<'a>,
 }
 
@@ -100,8 +128,28 @@ impl<'a> Allocations<'a> {
     pub fn get(&self, offset: ByteIndex) -> Vec<SearchResult<'_>> {
         let mut out = Vec::new();
 
-        let mut todo: Vec<(&IntervalTree<'_>, Vec<(usize, &str)>)> =
-            vec![(&self.roots, Vec::new())];
+        let root_allocations = self
+            .roots
+            .get_children(offset)
+            .into_iter()
+            .flat_map(|children| {
+                children
+                    .children()
+                    .iter()
+                    .map(|child| child.allocation_index)
+            });
+
+        let mut todo: Vec<(&IntervalTree<'_>, SearchResult<'_>)> = root_allocations
+            .map(|root_allocation_index| {
+                (
+                    &self.allocations[root_allocation_index].children,
+                    SearchResult {
+                        root_allocation_index,
+                        field_path: Vec::new(),
+                    },
+                )
+            })
+            .collect();
 
         while let Some((children, mut state)) = todo.pop() {
             if let Some((allocation_start, (allocation_end, children))) =
@@ -111,7 +159,10 @@ impl<'a> Allocations<'a> {
                     match children {
                         AllocationChildren::Unique(child) => {
                             let allocation = &self.allocations[child.allocation_index];
-                            state.push((child.allocation_index, &child.field_name));
+                            state.field_path.push(FieldAccess {
+                                field_name: &child.field_name,
+                                allocation_index: child.allocation_index,
+                            });
                             todo.push((&allocation.children, state));
                             continue;
                         }
@@ -119,7 +170,10 @@ impl<'a> Allocations<'a> {
                             for child in children {
                                 let allocation = &self.allocations[child.allocation_index];
                                 let mut state = state.clone();
-                                state.push((child.allocation_index, &child.field_name));
+                                state.field_path.push(FieldAccess {
+                                    field_name: &child.field_name,
+                                    allocation_index: child.allocation_index,
+                                });
                                 todo.push((&allocation.children, state));
                             }
                             continue;
@@ -132,23 +186,7 @@ impl<'a> Allocations<'a> {
         }
 
         out.sort();
-        out.dedup();
-        out.into_iter()
-            .filter_map(|r| {
-                let mut iter = r.iter();
-                let (root_allocation_index, _) = iter.next()?;
-                let field_path = iter
-                    .map(|&(index, field_name)| FieldAccess {
-                        field_name,
-                        allocation: &self.allocations[index],
-                    })
-                    .collect();
-                Some(SearchResult {
-                    root_object: &self.allocations[*root_allocation_index],
-                    field_path,
-                })
-            })
-            .collect()
+        out
     }
 
     pub fn allocate(
@@ -318,5 +356,22 @@ impl<'a> IntervalTree<'a> {
                 .map(|(interval, children)| (interval.start, (interval.end, children))),
         );
         self.allocations.append(&mut unaltered_end);
+    }
+}
+
+impl<'a> Allocation<'a> {
+    pub fn to_formatting(&self, object_mapping: &ObjectMapping<'a>) -> ObjectFormatting<'a> {
+        let mut out = ObjectFormatting {
+            lines: Vec::new(),
+            allocation_paths: IndexMap::new(),
+            root_object: *object_mapping
+                .all_objects
+                .get_index(self.object_index)
+                .unwrap()
+                .0,
+            root_object_range: (self.start, self.end),
+        };
+
+        out
     }
 }

@@ -45,17 +45,20 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
     ];
     for search_result in &search_results {
         for field_access in &search_result.field_path {
+            let allocation =
+                &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
+
             let (object, _object_allocation_index) = inspector
                 .object_mapping
                 .all_objects
-                .get_index(field_access.allocation.object_index)
+                .get_index(allocation.object_index)
                 .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
             text.extend_from_slice(&[Spans::from(Span::styled(
                 format!(
                     "{}: {} @ 0x{:x}",
                     field_access.field_name,
                     object.resolve_name(&inspector.buffer),
-                    field_access.allocation.start,
+                    allocation.start,
                 ),
                 Style::default(),
             ))]);
@@ -78,7 +81,9 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .get(inspector.hex_cursor_pos);
     for search_result in search_results {
         let Some(field_access) = search_result.field_path.last() else { continue; };
-        ranges.push(field_access.allocation.start..field_access.allocation.end);
+        let allocation =
+            &inspector.object_mapping.allocations.allocations[field_access.allocation_index];
+        ranges.push(allocation.start..allocation.end);
     }
 
     let mut view = Vec::new();
@@ -134,15 +139,6 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         Spans::default(),
     ];
 
-    let obj = ObjectFormatting {
-        lines: vec![ObjectFormattingLine {
-            indentation: 0,
-            kind: ObjectFormattingKind::Padding,
-            byte_range: (0, 5),
-        }],
-        allocation_paths: Default::default(),
-    };
-
     let block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(if is_active {
@@ -150,6 +146,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         } else {
             Color::White
         }));
+
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }

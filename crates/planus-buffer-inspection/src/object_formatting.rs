@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use indexmap::IndexMap;
 
-use crate::{allocations::AllocationIndex, object_info::ObjectName, InspectableFlatbuffer, Object};
+use crate::{object_info::ObjectName, object_mapping::ObjectIndex, InspectableFlatbuffer, Object};
 
 /// Maps into the lines Vec
 type LineIndex = usize;
@@ -10,8 +10,10 @@ type LineIndex = usize;
 type AllocationPathIndex = usize;
 
 pub struct ObjectFormatting<'a> {
+    pub root_object: Object<'a>,
+    pub root_object_range: (usize, usize),
     pub lines: Vec<ObjectFormattingLine<'a>>,
-    pub allocation_paths: IndexMap<Vec<(&'a str, AllocationIndex)>, LineIndex>,
+    pub allocation_paths: IndexMap<Vec<(&'a str, ObjectIndex)>, LineIndex>,
 }
 
 pub struct ObjectFormattingLine<'a> {
