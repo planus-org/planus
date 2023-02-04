@@ -1,7 +1,8 @@
+use color_eyre::owo_colors::OwoColorize;
 use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
@@ -77,8 +78,11 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         ranges.push(allocation.start..allocation.end);
     }
 
+    // TODO: make lines fill entire box instead of being 16 bytes
     let mut view = Vec::new();
     let skipped_lines = inspector.view_state.current_byte / HEX_LINE_SIZE;
+    let text_style = Style::default();
+
     for (line_no, chunk) in inspector
         .buffer
         .buffer
@@ -87,19 +91,22 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         .take(100)
         .enumerate()
     {
-        let mut line = Vec::new();
+        let mut line = vec![Span::styled(
+            format!("{:06x}  ", (skipped_lines + line_no) * 16),
+            text_style.fg(Color::Rgb(128, 128, 128)),
+        )];
         for (col_no, b) in chunk.iter().enumerate() {
             let pos = (line_no + skipped_lines) * HEX_LINE_SIZE + col_no;
             let style = if pos == inspector.view_state.current_byte {
-                Style::default().bg(Color::White)
+                text_style.bg(Color::White).fg(Color::Black)
             } else {
                 if let Some(i) = ranges.iter().position(|r| r.contains(&pos)) {
-                    Style::default().bg(range_colors.get(i).cloned().unwrap_or(Color::Black))
+                    text_style.bg(range_colors.get(i).cloned().unwrap_or(Color::Black))
                 } else {
-                    Style::default()
+                    text_style
                 }
             };
-            line.push(Span::styled(format!("{b:02x} "), style.fg(Color::Green)));
+            line.push(Span::styled(format!("{b:02x} "), style));
         }
         view.push(Spans::from(line));
     }
