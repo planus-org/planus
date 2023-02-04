@@ -59,7 +59,10 @@ impl<'a> Inspector<'a> {
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
         match key.code {
-            KeyCode::Tab => self.active_window = self.active_window.toggle(),
+            KeyCode::Tab => {
+                self.active_window = self.active_window.toggle();
+                return true;
+            }
             KeyCode::Char('q') | KeyCode::Esc => {
                 self.should_quit = true;
             }

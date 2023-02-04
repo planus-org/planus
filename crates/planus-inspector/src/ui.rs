@@ -1,8 +1,11 @@
-use planus_buffer_inspection::object_info::ObjectName;
+use planus_buffer_inspection::{
+    object_formatting::{ObjectFormatting, ObjectFormattingKind, ObjectFormattingLine},
+    object_info::ObjectName,
+};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Wrap},
     Frame,
@@ -20,7 +23,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
         .split(f.size());
     let top = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Percentage(30), Percentage(70)].as_ref())
+        .constraints([Percentage(40), Percentage(60)].as_ref())
         .split(vert[0]);
 
     interpretations_view(f, top[0], inspector);
@@ -29,19 +32,44 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 }
 
 fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let text = vec![
+    let search_results = inspector
+        .object_mapping
+        .allocations
+        .get(inspector.hex_cursor_pos);
+    let mut text = vec![
         Spans::from(Span::styled(
-            format!("Objects at {}: ", inspector.hex_cursor_pos),
+            format!("Objects at 0x{:x}: ", inspector.hex_cursor_pos),
             Style::default(),
         )),
         Spans::default(),
     ];
+    for search_result in &search_results {
+        for field_access in &search_result.field_path {
+            let (object, _object_allocation_index) = inspector
+                .object_mapping
+                .all_objects
+                .get_index(field_access.allocation.object_index)
+                .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
+            text.extend_from_slice(&[Spans::from(Span::styled(
+                format!(
+                    "{}: {} @ 0x{:x}",
+                    field_access.field_name,
+                    object.resolve_name(&inspector.buffer),
+                    field_access.allocation.start,
+                ),
+                Style::default(),
+            ))]);
+        }
+    }
+
     let block = Block::default().borders(Borders::ALL);
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
 
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
+    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
+
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
     let search_results = inspector
@@ -80,18 +108,24 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         view.push(Spans::from(line));
     }
 
-    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
-    let block = Block::default().borders(Borders::ALL);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(if is_active {
+            Color::Green
+        } else {
+            Color::White
+        }));
     let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
 
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
+    let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView);
+
     let search_results = inspector
         .object_mapping
         .allocations
         .get(inspector.hex_cursor_pos);
-    let block = Block::default().borders(Borders::ALL);
     let mut text = vec![
         Spans::from(Span::styled(
             format!("offset: {}", inspector.hex_cursor_pos),
@@ -100,36 +134,22 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         Spans::default(),
     ];
 
-    for (i, search_result) in search_results.iter().enumerate() {
-        for field_access in
-            &search_result.field_path[search_result.field_path.len().saturating_sub(3)..]
-        {
-            let range = format!(
-                "{}-{}",
-                field_access.allocation.start, field_access.allocation.end
-            );
-            let (object, _object_allocation_index) = inspector
-                .object_mapping
-                .all_objects
-                .get_index(field_access.allocation.object_index)
-                .unwrap_or_else(|| panic!("Cannot get object for allocation {field_access:?}"));
-            text.extend_from_slice(&[
-                Spans::from(Span::styled(
-                    object.resolve_name(&inspector.buffer),
-                    Style::default().fg(if i % 2 == 0 { Color::Red } else { Color::Blue }),
-                )),
-                Spans::from(Span::styled(
-                    format!("range: {range}"),
-                    Style::default().fg(if i % 2 == 0 {
-                        Color::Gray
-                    } else {
-                        Color::White
-                    }),
-                )),
-                Spans::default(),
-            ]);
-        }
-    }
+    let obj = ObjectFormatting {
+        lines: vec![ObjectFormattingLine {
+            indentation: 0,
+            kind: ObjectFormattingKind::Padding,
+            byte_range: (0, 5),
+        }],
+        allocation_paths: Default::default(),
+    };
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(if is_active {
+            Color::Green
+        } else {
+            Color::White
+        }));
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
