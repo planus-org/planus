@@ -78,7 +78,12 @@ impl<'a> ObjectFormatting<'a> {
                     )?;
                 }
                 BraceStyle::BraceEnd => {
-                    writeln!(f, "{indentation:>width$}}}", indentation = "", width = 0)?;
+                    writeln!(
+                        f,
+                        "{indentation:>width$}}}",
+                        indentation = "",
+                        width = line.indentation
+                    )?;
                 }
             },
             ObjectFormattingKind::Padding if show_padding => {

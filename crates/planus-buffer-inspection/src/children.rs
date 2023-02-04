@@ -113,10 +113,23 @@ impl<'a> Children<'a> for TableObject {
 }
 
 impl<'a> Children<'a> for StructObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
+    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
 
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
+    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
+        let this = *self;
+        let buffer = *buffer;
+        let decl = self.resolve_declaration(&buffer);
+        Box::new(
+            decl.fields
+                .keys()
+                .enumerate()
+                .filter_map(move |(i, field_name)| {
+                    Some((
+                        Cow::Borrowed(field_name.as_str()),
+                        this.get_field(&buffer, i).ok()?,
+                    ))
+                }),
+        )
     }
 }
 

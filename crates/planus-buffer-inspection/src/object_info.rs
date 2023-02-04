@@ -26,7 +26,7 @@ macro_rules! impl_object_name {
     ($typ:ty) => {
         impl<'a> ObjectName<'a> for $typ {
             fn resolve_name(&self, buffer: &InspectableFlatbuffer<'_>) -> String {
-                format!("{}[{}]", Self::KIND, self.resolve_path(buffer))
+                format!("{} {}", Self::KIND, self.resolve_path(buffer))
             }
         }
     };
@@ -134,7 +134,7 @@ impl DeclarationInfo for EnumObject {
 impl<'a> ObjectName<'a> for VTableObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         format!(
-            "vtable[{}]",
+            "vtable {}",
             buffer.declarations.get_declaration(self.declaration).0
         )
     }
@@ -142,20 +142,14 @@ impl<'a> ObjectName<'a> for VTableObject {
 
 impl<'a> ObjectName<'a> for OffsetObject<'a> {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        match self.kind {
-            crate::OffsetObjectKind::VTable(declaration) => format!(
-                "offset to vtable[{}]",
-                buffer.declarations.get_declaration(declaration).0
-            ),
-            crate::OffsetObjectKind::Table(declaration) => {
-                format!(
-                    "offset to table[{}]",
-                    buffer.declarations.get_declaration(declaration).0
-                )
-            }
-            crate::OffsetObjectKind::Vector(_) => format!("offset to vector"),
-            crate::OffsetObjectKind::String => format!("offset to string"),
-        }
+        format!(
+            "offset({})",
+            self.get_inner(buffer)
+                .as_ref()
+                .map(|inner| inner.resolve_name(buffer))
+                .as_deref()
+                .unwrap_or("invalid")
+        )
     }
 }
 
@@ -174,7 +168,7 @@ impl<'a> ObjectName<'a> for ArrayObject<'a> {
 impl<'a> ObjectName<'a> for IntegerObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         format!(
-            "{} = {}",
+            "{}({})",
             self.type_.flatbuffer_name(),
             self.read(buffer).unwrap()
         )
@@ -183,20 +177,24 @@ impl<'a> ObjectName<'a> for IntegerObject {
 
 impl<'a> ObjectName<'a> for FloatObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("float = {}", self.read(buffer).unwrap())
+        format!(
+            "{}({})",
+            self.type_.flatbuffer_name(),
+            self.read(buffer).unwrap()
+        )
     }
 }
 
 impl<'a> ObjectName<'a> for BoolObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("bool = {}", self.read(buffer).unwrap())
+        format!("bool({})", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for StringObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         format!(
-            "string[{}] = {}",
+            "string({}, {:?})",
             self.len(buffer).unwrap(),
             String::from_utf8_lossy(self.bytes(buffer).unwrap())
         )
@@ -210,11 +208,11 @@ impl<'a> ObjectName<'a> for EnumObject {
             .declarations
             .get_declaration(self.declaration_index());
         if let DeclarationKind::Enum(e) = &decl.kind {
-            let val = tag.read(buffer).unwrap().to_u64();
-            if let Some((tag, variant)) = e.variants.get_index(val as usize) {
-                format!("enum[{path}] = {}[{}]", variant.name, tag.to_u64())
+            let tag = tag.read(buffer).unwrap();
+            if let Some(variant) = e.variants.get(&tag) {
+                format!("enum {path}({}, {})", tag, variant.name)
             } else {
-                format!("enum[{path}] = [{val}]")
+                format!("enum {path}({tag}, ?)")
             }
         } else {
             panic!("Inconsistent declarations");

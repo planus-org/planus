@@ -2,7 +2,7 @@ use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{
         DeclarationIndex, DeclarationKind, Declarations, FloatLiteral, IntegerLiteral, SimpleType,
-        Type, TypeKind,
+        StructField, Type, TypeKind,
     },
 };
 
@@ -362,12 +362,41 @@ impl TableObject {
 }
 
 impl StructObject {
+    pub fn get_field_info<'a>(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        field_index: usize,
+    ) -> Option<(&'a str, &'a StructField)> {
+        let decl = self.resolve_declaration(buffer);
+        let (field_name, field) = decl.fields.get_index(field_index)?;
+        Some((field_name.as_str(), field))
+    }
+
     pub fn get_field<'a>(
         &self,
-        _buffer: &InspectableFlatbuffer<'a>,
-        _field_index: usize,
-    ) -> Result<Option<Object<'a>>> {
-        todo!()
+        buffer: &InspectableFlatbuffer<'a>,
+        field_index: usize,
+    ) -> Result<Object<'a>> {
+        let Some((field_name, field)) = self.get_field_info(buffer, field_index)
+        else {
+            return Err(Error)
+        };
+
+        let offset = self.offset + field.offset as usize;
+        let object = match field.type_ {
+            SimpleType::Struct(declaration) => Object::Struct(StructObject {
+                offset,
+                declaration,
+            }),
+            SimpleType::Enum(declaration) => Object::Enum(EnumObject {
+                offset,
+                declaration,
+            }),
+            SimpleType::Bool => Object::Bool(BoolObject { offset }),
+            SimpleType::Integer(type_) => Object::Integer(IntegerObject { offset, type_ }),
+            SimpleType::Float(type_) => Object::Float(FloatObject { offset, type_ }),
+        };
+        Ok(object)
     }
 }
 
