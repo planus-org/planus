@@ -1,8 +1,7 @@
-use color_eyre::owo_colors::OwoColorize;
 use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
