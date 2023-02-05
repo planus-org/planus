@@ -1,22 +1,21 @@
-use std::collections::HashMap;
+use std::borrow::Cow;
 
-use indexmap::{map::Entry, IndexMap};
+use indexmap::IndexMap;
 use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 
 use crate::{
-    allocations::{AllocationIndex, Allocations, AllocationsBuilder},
     children::{Byterange, Children},
+    object_info::ObjectName,
     ByteIndex, InspectableFlatbuffer, Object, OffsetObject,
 };
 
 pub type ObjectIndex = usize;
+pub type LineIndex = usize;
 
 pub struct ObjectMapping<'a> {
-    pub root_object: OffsetObject<'a>,
-    pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
-    pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
-    pub allocations: Allocations<'a>,
-    pub parents: HashMap<ObjectIndex, Vec<ObjectIndex>>,
+    pub root_offset: OffsetObject<'a>,
+    pub root_objects: IndexMap<Object<'a>, (ByteIndex, ByteIndex)>,
+    pub root_intervals: rust_lapper::Lapper<ByteIndex, ObjectIndex>,
 }
 
 impl<'a> InspectableFlatbuffer<'a> {
@@ -36,59 +35,277 @@ impl<'a> InspectableFlatbuffer<'a> {
 
         let mut builder = ObjectMappingBuilder::default();
 
-        let root_allocation_index = builder.handle_node(Object::Offset(root_object), self);
-        builder.allocations.insert_new_root(root_allocation_index);
+        builder.process_root_object(Object::Offset(root_object), self);
 
         ObjectMapping {
-            root_object,
-            all_objects: builder.all_objects,
-            vtable_locations: builder.vtable_locations,
-            allocations: builder.allocations.finish(),
-            parents: builder.parents,
+            root_offset: root_object,
+            root_objects: builder.root_objects,
+            root_intervals: rust_lapper::Lapper::new(builder.root_intervals),
         }
     }
 }
 
+#[derive(Debug)]
+pub struct Interpretation {
+    pub root_object_index: ObjectIndex,
+    pub lines: Vec<LineIndex>,
+}
+
+#[derive(Debug)]
+pub struct LineTree<'a> {
+    field_name: Option<Cow<'a, str>>,
+    object: Object<'a>,
+    start_line_index: LineIndex,
+    end_line_index: Option<LineIndex>,
+    range: (ByteIndex, ByteIndex),
+    children: Vec<LineTree<'a>>,
+}
+
+#[derive(Debug)]
+pub struct Line<'a> {
+    pub start_line_index: LineIndex,
+    pub line: String,
+    pub offset_object: Option<OffsetObject<'a>>,
+    pub start: ByteIndex,
+    pub end: ByteIndex,
+}
+
+impl<'a> LineTree<'a> {
+    fn get_interpretations(
+        &self,
+        root_object_index: ObjectIndex,
+        byte_index: ByteIndex,
+        lines: &mut Vec<LineIndex>,
+        callback: &mut impl FnMut(Interpretation),
+    ) -> bool {
+        if !(self.range.0..self.range.1).contains(&byte_index) {
+            return false;
+        }
+
+        lines.push(self.start_line_index);
+
+        let mut found = false;
+        for child in &self.children {
+            found |= child.get_interpretations(root_object_index, byte_index, lines, callback);
+        }
+        if !found {
+            callback(Interpretation {
+                root_object_index,
+                lines: lines.clone(),
+            });
+        }
+        lines.pop();
+        true
+    }
+
+    fn to_strings_helper(
+        &self,
+        depth: usize,
+        buffer: &InspectableFlatbuffer<'a>,
+        out: &mut Vec<Line<'a>>,
+    ) {
+        debug_assert_eq!(out.len(), self.start_line_index);
+
+        let offset_object = if let Object::Offset(o) = self.object {
+            Some(o)
+        } else {
+            None
+        };
+
+        let mut line = format!(
+            "{indentation:>indentation_count$}",
+            indentation = "",
+            indentation_count = 2 * depth
+        );
+
+        if let Some(field_name) = &self.field_name {
+            line.push_str(&field_name);
+            line.push_str(": ");
+        }
+
+        line.push_str(&self.object.resolve_name(buffer));
+        line.push_str(" @ ");
+        line.push_str(&format!(" @ {:x}", self.range.0));
+
+        if self.end_line_index.is_some() {
+            line.push_str(" {");
+        } else if self.object.have_braces() {
+            line.push_str(" {}");
+        }
+        out.push(Line {
+            line,
+            start_line_index: self.start_line_index,
+            offset_object,
+            start: self.range.0,
+            end: self.range.1,
+        });
+
+        for child in &self.children {
+            child.to_strings_helper(depth + 1, buffer, out);
+        }
+
+        if let Some(end_line) = self.end_line_index {
+            debug_assert_eq!(out.len(), end_line);
+            out.push(Line {
+                start_line_index: self.start_line_index,
+                line: format!(
+                    "{indentation:>indentation_count$}}}",
+                    indentation = "",
+                    indentation_count = 2 * depth
+                ),
+                offset_object,
+                start: self.range.0,
+                end: self.range.1,
+            });
+        }
+    }
+
+    pub fn flatten(&self, buffer: &InspectableFlatbuffer<'a>) -> Vec<Line<'a>> {
+        let mut out = Vec::new();
+        self.to_strings_helper(0, buffer, &mut out);
+        out
+    }
+
+    pub fn last_line(&self) -> usize {
+        if let Some(end_line) = self.end_line_index {
+            end_line
+        } else if let Some(last) = self.children.last() {
+            last.last_line()
+        } else {
+            self.start_line_index
+        }
+    }
+}
+
+impl<'a> ObjectMapping<'a> {
+    pub fn get_interpretations(
+        &self,
+        byte_index: ByteIndex,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> Vec<Interpretation> {
+        let mut interpretations = Vec::new();
+        self.get_interpretations_cb(byte_index, buffer, |interpretation| {
+            interpretations.push(interpretation);
+        });
+        interpretations
+    }
+
+    pub fn get_interpretations_cb(
+        &self,
+        byte_index: ByteIndex,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Interpretation),
+    ) {
+        for root_object_index in self.root_intervals.find(byte_index, byte_index + 1) {
+            self.line_tree(root_object_index.val, buffer)
+                .get_interpretations(
+                    root_object_index.val,
+                    byte_index,
+                    &mut Vec::new(),
+                    &mut callback,
+                );
+        }
+    }
+
+    pub fn line_tree(
+        &self,
+        root_object_index: ObjectIndex,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> LineTree<'a> {
+        fn handler<'a>(
+            field_name: Option<Cow<'a, str>>,
+            current: Object<'a>,
+            buffer: &InspectableFlatbuffer<'a>,
+            next_line: &mut LineIndex,
+        ) -> LineTree<'a> {
+            let current_line = *next_line;
+            *next_line += 1;
+            let mut children = Vec::new();
+            let mut range = current.byterange(buffer);
+            current.children(buffer, |field_name, child| {
+                let child = handler(Some(field_name), child, buffer, next_line);
+                range.0 = range.0.min(child.range.0);
+                range.1 = range.1.max(child.range.1);
+                children.push(child);
+            });
+
+            let mut end_line = None;
+
+            if !children.is_empty() {
+                end_line = Some(*next_line);
+                *next_line += 1;
+            }
+
+            LineTree {
+                field_name,
+                object: current,
+                start_line_index: current_line,
+                end_line_index: end_line,
+                range,
+                children,
+            }
+        }
+        handler(
+            None,
+            *self.root_objects.get_index(root_object_index).unwrap().0,
+            buffer,
+            &mut 0,
+        )
+    }
+}
+
 #[derive(Default)]
-pub struct ObjectMappingBuilder<'a> {
-    pub all_objects: IndexMap<Object<'a>, AllocationIndex>,
-    pub vtable_locations: HashMap<ByteIndex, AllocationIndex>,
-    pub allocations: AllocationsBuilder<'a>,
-    pub parents: HashMap<ObjectIndex, Vec<ObjectIndex>>,
+struct ObjectMappingBuilder<'a> {
+    root_objects: IndexMap<Object<'a>, (ByteIndex, ByteIndex)>,
+    root_intervals: Vec<rust_lapper::Interval<ByteIndex, ObjectIndex>>,
 }
 
 impl<'a> ObjectMappingBuilder<'a> {
-    fn handle_node(
+    fn process_root_object(&mut self, current: Object<'a>, buffer: &InspectableFlatbuffer<'a>) {
+        if self.root_objects.contains_key(&current) {
+            return;
+        }
+
+        if let Object::Offset(offset_object) = current {
+            if let Ok(inner) = offset_object.get_inner(buffer) {
+                self.process_root_object(inner, buffer);
+            }
+        }
+
+        let mut range = current.byterange(buffer);
+
+        current.children(buffer, |child_name, child| {
+            std::mem::drop(child_name);
+            self.process_child_object(child, &mut range, buffer);
+        });
+        let (index, old) = self.root_objects.insert_full(current, range);
+        assert!(old.is_none());
+        self.root_intervals.push(rust_lapper::Interval {
+            start: range.0,
+            stop: range.1,
+            val: index,
+        });
+    }
+
+    fn process_child_object(
         &mut self,
-        object: Object<'a>,
+        current: Object<'a>,
+        range: &mut (u32, u32),
         buffer: &InspectableFlatbuffer<'a>,
-    ) -> AllocationIndex {
-        let object_index;
-        let allocation_index;
+    ) {
+        let crange = current.byterange(buffer);
+        range.0 = range.0.min(crange.0);
+        range.1 = range.1.max(crange.1);
 
-        match self.all_objects.entry(object) {
-            Entry::Occupied(entry) => {
-                return *entry.get();
-            }
-            Entry::Vacant(entry) => {
-                object_index = entry.index();
-                let (allocation_start, allocation_end) = object.byterange(buffer);
-                allocation_index =
-                    self.allocations
-                        .allocate(object_index, allocation_start, allocation_end);
-                entry.insert(allocation_index);
+        if let Object::Offset(offset_object) = current {
+            if let Ok(inner) = offset_object.get_inner(buffer) {
+                self.process_root_object(inner, buffer);
             }
         }
 
-        for (child_name, child) in object.children(buffer) {
-            let child_allocation_index = self.handle_node(child, buffer);
-            if matches!(object, Object::Offset(_)) {
-                self.allocations.insert_new_root(child_allocation_index);
-            } else {
-                self.allocations
-                    .insert_child(allocation_index, child_allocation_index, child_name);
-            }
-        }
-        allocation_index
+        current.children(buffer, |child_name, child| {
+            std::mem::drop(child_name);
+            self.process_child_object(child, range, buffer);
+        });
     }
 }

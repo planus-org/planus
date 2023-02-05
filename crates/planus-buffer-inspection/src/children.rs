@@ -8,12 +8,12 @@ use crate::{
     TableObject, UnionObject, UnionTagObject, VTableObject, VectorObject,
 };
 
-type ChildPair<'a> = (Cow<'a, str>, Object<'a>);
-
 pub trait Children<'a> {
-    type Iter: Iterator<Item = ChildPair<'a>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter;
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    );
 }
 
 pub trait Byterange {
@@ -21,206 +21,202 @@ pub trait Byterange {
 }
 
 impl<'a> Children<'a> for Object<'a> {
-    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
         match self {
-            Object::Offset(obj) => Box::new(obj.children(buffer)),
-            Object::VTable(obj) => Box::new(obj.children(buffer)),
-            Object::Table(obj) => Box::new(obj.children(buffer)),
-            Object::Struct(obj) => Box::new(obj.children(buffer)),
-            Object::UnionTag(obj) => Box::new(obj.children(buffer)),
-            Object::Union(obj) => Box::new(obj.children(buffer)),
-            Object::Enum(obj) => Box::new(obj.children(buffer)),
-            Object::Vector(obj) => Box::new(obj.children(buffer)),
-            Object::Array(obj) => Box::new(obj.children(buffer)),
-            Object::Integer(obj) => Box::new(obj.children(buffer)),
-            Object::Float(obj) => Box::new(obj.children(buffer)),
-            Object::Bool(obj) => Box::new(obj.children(buffer)),
-            Object::String(obj) => Box::new(obj.children(buffer)),
+            Object::Offset(_) => (),
+            Object::VTable(obj) => obj.children(buffer, callback),
+            Object::Table(obj) => obj.children(buffer, callback),
+            Object::Struct(obj) => obj.children(buffer, callback),
+            Object::UnionTag(obj) => obj.children(buffer, callback),
+            Object::Union(obj) => obj.children(buffer, callback),
+            Object::Enum(obj) => obj.children(buffer, callback),
+            Object::Vector(obj) => obj.children(buffer, callback),
+            Object::Array(obj) => obj.children(buffer, callback),
+            Object::Integer(obj) => obj.children(buffer, callback),
+            Object::Float(obj) => obj.children(buffer, callback),
+            Object::Bool(obj) => obj.children(buffer, callback),
+            Object::String(obj) => obj.children(buffer, callback),
         }
     }
 }
 
-impl<'a> Children<'a> for OffsetObject<'a> {
-    type Iter = std::iter::Once<ChildPair<'a>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::once((Cow::Borrowed("inner"), self.get_inner(buffer).unwrap()))
-    }
-}
-
 impl<'a> Children<'a> for VTableObject {
-    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
         let vtable_size = self.get_vtable_size(buffer).unwrap();
 
-        let iter = (self.offset..self.offset + vtable_size as u32)
+        for (i, offset) in (self.offset..self.offset + vtable_size as u32)
             .step_by(2)
             .enumerate()
-            .map(|(i, offset)| {
-                let object = Object::Integer(IntegerObject {
-                    offset: offset,
-                    type_: IntegerType::U16,
-                });
-                match i {
-                    0 => (Cow::Borrowed("#vtable_size"), object),
-                    1 => (Cow::Borrowed("#table_size"), object),
-                    n => (Cow::Owned((n - 2).to_string()), object),
-                }
+        {
+            let object = Object::Integer(IntegerObject {
+                offset: offset,
+                type_: IntegerType::U16,
             });
-        Box::new(iter)
+            match i {
+                0 => callback(Cow::Borrowed("#vtable_size"), object),
+                1 => callback(Cow::Borrowed("#table_size"), object),
+                n => callback(Cow::Owned((n - 2).to_string()), object),
+            }
+        }
     }
 }
 
 impl<'a> Children<'a> for TableObject {
-    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        let this = *self;
-        let buffer = *buffer;
-        let vtable = self.get_vtable(&buffer).unwrap();
-        let decl = self.resolve_declaration(&buffer);
-        let field_iter = vtable
-            .get_offsets(&buffer)
-            .unwrap()
-            .enumerate()
-            .filter(|&(_i, offset)| offset != 0)
-            .filter_map(move |(i, _offset)| {
-                let (field_name, _field_decl, is_union_tag) =
-                    decl.get_field_for_vtable_index(i as u32).unwrap();
-                let field_name = if is_union_tag {
-                    Cow::Owned(format!("union_key[{}]", field_name))
-                } else {
-                    Cow::Borrowed(field_name)
-                };
-                let field_value = this.get_field(&buffer, i as u32).unwrap()?;
-                Some((field_name, field_value))
-            });
-
-        let iter = std::iter::once((
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+        callback(
             Cow::Borrowed("#vtable"),
             Object::Offset(OffsetObject {
                 offset: self.offset,
                 kind: crate::OffsetObjectKind::VTable(self.declaration),
             }),
-        ))
-        .chain(field_iter);
+        );
 
-        Box::new(iter)
+        let vtable = self.get_vtable(buffer).unwrap();
+        let decl = self.resolve_declaration(buffer);
+        for (i, offset) in vtable.get_offsets(buffer).unwrap().enumerate() {
+            if offset == 0 {
+                continue;
+            }
+            let (field_name, _field_decl, is_union_tag) =
+                decl.get_field_for_vtable_index(i as u32).unwrap();
+            let field_name = if is_union_tag {
+                Cow::Owned(format!("union_key[{}]", field_name))
+            } else {
+                Cow::Borrowed(field_name)
+            };
+            if let Some(field_value) = self.get_field(&buffer, i as u32).unwrap() {
+                callback(field_name, field_value);
+            }
+        }
     }
 }
 
 impl<'a> Children<'a> for StructObject {
-    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
         let this = *self;
         let buffer = *buffer;
         let decl = self.resolve_declaration(&buffer);
-        Box::new(
-            decl.fields
-                .keys()
-                .enumerate()
-                .filter_map(move |(i, field_name)| {
-                    Some((
-                        Cow::Borrowed(field_name.as_str()),
-                        this.get_field(&buffer, i).ok()?,
-                    ))
-                }),
-        )
+        for (i, field_name) in decl.fields.keys().enumerate() {
+            if let Ok(field) = this.get_field(&buffer, i) {
+                callback(Cow::Borrowed(field_name.as_str()), field);
+            }
+        }
     }
 }
 
 impl<'a> Children<'a> for UnionTagObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
     }
 }
 
 impl<'a> Children<'a> for UnionObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
     }
 }
 
 impl<'a> Children<'a> for EnumObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
     }
 }
 
 impl<'a> Children<'a> for VectorObject<'a> {
-    type Iter = Box<dyn 'a + Iterator<Item = ChildPair<'a>>>;
-
-    fn children(&self, buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        let this = *self;
-        let buffer = *buffer;
-        let iter =
-            std::iter::once((
-                Cow::Borrowed("length"),
-                Object::Integer(IntegerObject {
-                    offset: self.offset,
-                    type_: IntegerType::U32,
-                }),
-            ))
-            .chain((0..self.len(&buffer).unwrap_or(0)).filter_map(move |i| {
-                Some((Cow::Owned(i.to_string()), this.read(i, &buffer).ok()??))
-            }));
-        Box::new(iter)
-    }
-}
-
-impl<'a> Children<'a> for ArrayObject<'a> {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
-    }
-}
-
-impl<'a> Children<'a> for IntegerObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
-    }
-}
-
-impl<'a> Children<'a> for FloatObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
-    }
-}
-
-impl<'a> Children<'a> for BoolObject {
-    type Iter = std::iter::Empty<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::empty()
-    }
-}
-
-impl<'a> Children<'a> for StringObject {
-    type Iter = std::iter::Once<ChildPair<'a>>;
-
-    fn children(&self, _buffer: &InspectableFlatbuffer<'a>) -> Self::Iter {
-        std::iter::once((
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+        callback(
             Cow::Borrowed("length"),
             Object::Integer(IntegerObject {
                 offset: self.offset,
                 type_: IntegerType::U32,
             }),
-        ))
+        );
+        for i in 0..self.len(&buffer).unwrap_or(0) {
+            if let Ok(Some(value)) = self.read(i, buffer) {
+                callback(Cow::Owned(i.to_string()), value);
+            }
+        }
+    }
+}
+
+impl<'a> Children<'a> for ArrayObject<'a> {
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+    }
+}
+
+impl<'a> Children<'a> for IntegerObject {
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+    }
+}
+
+impl<'a> Children<'a> for FloatObject {
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+    }
+}
+
+impl<'a> Children<'a> for BoolObject {
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+    }
+}
+
+impl<'a> Children<'a> for StringObject {
+    fn children(
+        &self,
+        _buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+    ) {
+        callback(
+            Cow::Borrowed("length"),
+            Object::Integer(IntegerObject {
+                offset: self.offset,
+                type_: IntegerType::U32,
+            }),
+        );
     }
 }
 

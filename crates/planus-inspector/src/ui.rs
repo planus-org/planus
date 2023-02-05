@@ -36,24 +36,22 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
         )),
         Spans::default(),
     ];
-    for search_result in &inspector.view_state.search_results {
-        for field_access in &search_result.field_path {
-            let (object, _) = inspector
-                .object_mapping
-                .all_objects
-                .get_index(field_access.object_index)
-                .unwrap();
-
-            text.extend_from_slice(&[Spans::from(Span::styled(
-                format!(
-                    "{}: {} @ 0x{:x}",
-                    field_access.field_name,
-                    object.resolve_name(&inspector.buffer),
-                    object.offset(),
-                ),
-                Style::default(),
-            ))]);
-        }
+    for interpretation in &inspector.view_state.interpretations {
+        let object = inspector
+            .object_mapping
+            .root_objects
+            .get_index(interpretation.root_object_index)
+            .unwrap()
+            .0;
+        text.extend_from_slice(&[Spans::from(Span::styled(
+            format!(
+                "{}:{} @ {:x}",
+                object.resolve_name(&inspector.buffer),
+                interpretation.lines.last().unwrap(),
+                object.offset(),
+            ),
+            Style::default(),
+        ))]);
     }
 
     let block = block(false);
@@ -64,18 +62,17 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
 
-    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
-    let range_colors = [Color::Blue, Color::Cyan, Color::Gray];
-    for search_result in &inspector.view_state.search_results {
-        let Some(field_access) = search_result.field_path.last() else { continue; };
-        let (_object, &allocation_index) = &inspector
-            .object_mapping
-            .all_objects
-            .get_index(field_access.object_index)
-            .unwrap();
-        let allocation = &inspector.object_mapping.allocations.allocations[allocation_index];
-        ranges.push(allocation.start as usize..allocation.end as usize);
+    let range_colors = [Color::Blue, Color::Cyan];
+    let mut ranges = Vec::new();
+    if let Some(current_line) = inspector.view_state.current_line {
+        ranges.push(
+            inspector.view_state.lines[current_line].start as usize
+                ..inspector.view_state.lines[current_line].end as usize,
+        );
     }
+    ranges.push(
+        inspector.view_state.lines[0].start as usize..inspector.view_state.lines[0].end as usize,
+    );
 
     // TODO: make lines fill entire box instead of being 16 bytes
     let mut view = Vec::new();
@@ -96,7 +93,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         )];
         for (col_no, b) in chunk.iter().enumerate() {
             let pos = (line_no + skipped_lines) * HEX_LINE_SIZE + col_no;
-            let style = if pos == inspector.view_state.current_byte {
+            let style = if is_active && pos == inspector.view_state.current_byte {
                 text_style.bg(Color::White).fg(Color::Black)
             } else {
                 if let Some(i) = ranges.iter().position(|r| r.contains(&pos)) {
@@ -120,12 +117,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
 
     let mut text = Vec::new();
 
-    let lines = inspector
-        .view_state
-        .current_object_formatting
-        .to_string(&inspector.buffer);
-
-    for (i, line) in lines.lines().enumerate().skip(
+    for (i, line) in inspector.view_state.lines.iter().enumerate().skip(
         inspector
             .view_state
             .current_line
@@ -137,7 +129,7 @@ fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector
         } else {
             Style::default()
         };
-        text.push(Spans::from(Span::styled(format!("{line}"), style)));
+        text.push(Spans::from(Span::styled(line.line.clone(), style)));
     }
 
     let block = block(is_active);

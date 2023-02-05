@@ -7,10 +7,8 @@ use std::{
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use planus_buffer_inspection::{
-    allocations::SearchResult,
-    object_formatting::{ObjectFormatting, ObjectFormattingKind},
-    object_mapping::ObjectMapping,
-    ByteIndex, InspectableFlatbuffer, Object,
+    object_mapping::{Interpretation, Line, ObjectIndex, ObjectMapping},
+    InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
@@ -48,119 +46,129 @@ pub struct Inspector<'a> {
     pub view_state: ViewState<'a>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ViewState<'a> {
     pub current_byte: usize,
+    pub current_object_index: ObjectIndex,
     pub current_line: Option<usize>,
-    pub current_object_formatting: ObjectFormatting<'a>,
-    pub search_results: Vec<SearchResult<'a>>,
-    pub search_result_index: usize,
+    pub lines: Vec<Line<'a>>,
+    pub interpretations: Vec<Interpretation>,
+    pub interpretation_index: usize,
 }
 
 impl<'a> ViewState<'a> {
-    fn new_for_object(object_mapping: &ObjectMapping<'a>, object: Object<'a>) -> Self {
-        let (object_index, _object, &allocation_index) =
-            object_mapping.all_objects.get_full(&object).unwrap();
-        let search_results = object_mapping.allocations.get(object.offset());
-
-        // TODO: should be unwrappable
-        let search_result_index = search_results
-            .iter()
-            .position(|r| r.root_object_index == object_index)
-            .unwrap_or_else(|| panic!("{object:?}\n{search_results:?}"));
+    fn new_for_object(
+        object_mapping: &ObjectMapping<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+        object: Object<'a>,
+    ) -> Self {
+        let object_index = object_mapping
+            .root_objects
+            .get_index_of(&object)
+            .unwrap_or_else(|| panic!("{object:?}, {:?}", object_mapping.root_objects));
+        let mut interpretations = Vec::new();
+        let mut interpretation_index = None;
+        object_mapping.get_interpretations_cb(object.offset(), buffer, |interpretation| {
+            if interpretation.root_object_index == object_index {
+                interpretation_index.get_or_insert(interpretations.len());
+            }
+            interpretations.push(interpretation);
+        });
 
         Self {
             current_byte: object.offset() as usize,
             current_line: Some(0),
-            current_object_formatting: object_mapping.allocations.allocations[allocation_index]
-                .to_formatting(object_mapping),
-            search_results,
-            search_result_index,
+            current_object_index: object_index,
+            lines: object_mapping
+                .line_tree(object_index, buffer)
+                .flatten(buffer),
+            interpretations,
+            interpretation_index: interpretation_index.unwrap(),
         }
     }
 
-    fn set_byte_view(&mut self, object_mapping: &ObjectMapping<'a>, index: usize) {
+    fn set_byte_view(
+        &mut self,
+        object_mapping: &ObjectMapping<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+        index: usize,
+    ) {
         if self.current_byte != index {
             self.current_byte = index;
-            self.search_results = object_mapping.allocations.get(self.current_byte as u32);
-            self.find_closest_match(object_mapping);
+            self.interpretations =
+                object_mapping.get_interpretations(self.current_byte as u32, buffer);
+            self.find_closest_match(object_mapping, buffer);
         }
     }
 
-    fn set_line_view(&mut self, object_mapping: &ObjectMapping<'a>, line: usize) {
-        if line < self.current_object_formatting.lines.len()
-            && self.current_line.unwrap_or(usize::MAX) != line
-        {
+    fn set_line_view(
+        &mut self,
+        object_mapping: &ObjectMapping<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+        line: usize,
+    ) {
+        if line < self.lines.len() && self.current_line != Some(line) {
             self.current_line = Some(line);
-            let current_object = &self.current_object_formatting.lines[line];
-
-            let current_field_path = if let ObjectFormattingKind::Object {
-                allocation_path_index,
-                ..
-            } = current_object.kind
-            {
-                self.current_object_formatting
-                    .allocation_paths
-                    .get_index(allocation_path_index)
-                    .unwrap()
-                    .0
-                    .as_slice()
-            } else {
-                &[]
-            };
-            self.current_byte = current_object.byte_range.0 as usize;
-            self.search_results = object_mapping
-                .allocations
-                .get(self.current_byte as ByteIndex);
-            self.search_result_index = self
-                .search_results
+            self.current_byte = self.lines[line].start as usize;
+            let start_line_index = self.lines[line].start_line_index;
+            self.interpretations =
+                object_mapping.get_interpretations(self.current_byte as u32, buffer);
+            self.interpretation_index = self
+                .interpretations
                 .iter()
-                .enumerate()
-                .find(|(_i, sr)| {
-                    sr.root_object_index == self.current_object_formatting.root_object_index
-                        && sr.field_path == current_field_path
+                .position(|interpretation| {
+                    interpretation.root_object_index == self.current_object_index
+                        && interpretation.lines.contains(&start_line_index)
                 })
-                .map(|(i, _)| i)
-                .unwrap_or(0);
+                .unwrap();
         }
     }
 
-    fn find_closest_match(&mut self, object_mapping: &ObjectMapping<'a>) {
-        if self.search_results.is_empty() {
+    fn find_closest_match(
+        &mut self,
+        object_mapping: &ObjectMapping<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) {
+        if self.interpretations.is_empty() {
+            self.interpretation_index = 0;
             self.current_line = None;
         } else {
-            self.search_result_index = self
-                .search_results
+            self.interpretation_index = self
+                .interpretations
                 .iter()
                 .enumerate()
-                .min_by_key(|(_, sr)| {
-                    if sr.root_object_index == self.current_object_formatting.root_object_index {
-                        if let Some(&line_index) = self
-                            .current_object_formatting
-                            .allocation_paths
-                            .get(&sr.field_path)
-                        {
-                            (0, line_index.abs_diff(self.current_line.unwrap_or(0)))
-                        } else {
-                            (0, usize::MAX)
-                        }
+                .min_by_key(|(_, interpretation)| {
+                    if interpretation.root_object_index == self.current_object_index {
+                        (
+                            0,
+                            interpretation
+                                .lines
+                                .iter()
+                                .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
+                                .min()
+                                .unwrap_or(usize::MAX),
+                        )
                     } else {
                         (1, 0)
                     }
                 })
-                .map(|(i, _sr)| i)
+                .map(|(i, _)| i)
                 .unwrap();
-            let search_result = &self.search_results[self.search_result_index];
-            if search_result.root_object_index != self.current_object_formatting.root_object_index {
-                self.current_object_formatting = object_mapping.allocations.allocations
-                    [search_result.root_allocation_index]
-                    .to_formatting(object_mapping);
+            if self.current_object_index
+                != self.interpretations[self.interpretation_index].root_object_index
+            {
+                self.current_object_index =
+                    self.interpretations[self.interpretation_index].root_object_index;
+                self.lines = object_mapping
+                    .line_tree(self.current_object_index, buffer)
+                    .flatten(buffer)
             }
-            self.current_line = self
-                .current_object_formatting
-                .allocation_paths
-                .get(&search_result.field_path)
-                .copied();
+            self.current_line = Some(
+                *self.interpretations[self.interpretation_index]
+                    .lines
+                    .last()
+                    .unwrap(),
+            );
         }
     }
 }
@@ -172,7 +180,8 @@ impl<'a> Inspector<'a> {
             buffer,
             view_state: ViewState::new_for_object(
                 &object_mapping,
-                Object::Offset(object_mapping.root_object),
+                &buffer,
+                Object::Offset(object_mapping.root_offset),
             ),
             object_mapping,
             should_quit: false,
@@ -193,20 +202,17 @@ impl<'a> Inspector<'a> {
                 true
             }
             (KeyCode::Char('g'), _) => {
-                self.view_state.set_byte_view(&self.object_mapping, 0);
+                self.view_state
+                    .set_byte_view(&self.object_mapping, &self.buffer, 0);
                 true
             }
             (KeyCode::Enter, _) => {
                 if let Some(current_line) = self.view_state.current_line {
-                    if let ObjectFormattingKind::Object {
-                        object: Object::Offset(offset_object),
-                        ..
-                    } = self.view_state.current_object_formatting.lines[current_line].kind
-                    {
+                    if let Some(offset_object) = self.view_state.lines[current_line].offset_object {
                         let inner = offset_object.get_inner(&self.buffer).unwrap();
                         let old_view_state = std::mem::replace(
                             &mut self.view_state,
-                            ViewState::new_for_object(&self.object_mapping, inner),
+                            ViewState::new_for_object(&self.object_mapping, &self.buffer, inner),
                         );
                         self.view_stack.push(old_view_state);
                     }
@@ -291,7 +297,7 @@ impl<'a> Inspector<'a> {
         current_byte = current_byte.min(self.buffer.buffer.len() - 1);
 
         self.view_state
-            .set_byte_view(&self.object_mapping, current_byte);
+            .set_byte_view(&self.object_mapping, &self.buffer, current_byte);
 
         should_draw
     }
@@ -304,7 +310,7 @@ impl<'a> Inspector<'a> {
             _ => (),
         }
         self.view_state
-            .set_line_view(&self.object_mapping, current_line);
+            .set_line_view(&self.object_mapping, &self.buffer, current_line);
         true
     }
 
