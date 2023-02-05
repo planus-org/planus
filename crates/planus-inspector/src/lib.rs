@@ -133,27 +133,43 @@ impl<'a> ViewState<'a> {
             self.interpretation_index = 0;
             self.current_line = None;
         } else {
-            self.interpretation_index = self
-                .interpretations
-                .iter()
-                .enumerate()
-                .min_by_key(|(_, interpretation)| {
-                    if interpretation.root_object_index == self.current_object_index {
-                        (
-                            0,
-                            interpretation
-                                .lines
-                                .iter()
-                                .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
-                                .min()
-                                .unwrap_or(usize::MAX),
-                        )
-                    } else {
-                        (1, 0)
-                    }
-                })
-                .map(|(i, _)| i)
-                .unwrap();
+            self.set_interpretation_index(
+                object_mapping,
+                buffer,
+                self.interpretations
+                    .iter()
+                    .enumerate()
+                    .min_by_key(|(_, interpretation)| {
+                        if interpretation.root_object_index == self.current_object_index {
+                            (
+                                0,
+                                interpretation
+                                    .lines
+                                    .iter()
+                                    .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
+                                    .min()
+                                    .unwrap_or(usize::MAX),
+                            )
+                        } else {
+                            (1, 0)
+                        }
+                    })
+                    .map(|(i, _)| i)
+                    .unwrap(),
+            );
+        }
+    }
+
+    fn set_interpretation_index(
+        &mut self,
+        object_mapping: &ObjectMapping<'a>,
+        buffer: &InspectableFlatbuffer<'a>,
+        interpretation_index: usize,
+    ) {
+        if interpretation_index < self.interpretations.len()
+            && self.interpretation_index != interpretation_index
+        {
+            self.interpretation_index = interpretation_index;
             if self.current_object_index
                 != self.interpretations[self.interpretation_index].root_object_index
             {
@@ -204,6 +220,15 @@ impl<'a> Inspector<'a> {
             (KeyCode::Char('g'), _) => {
                 self.view_state
                     .set_byte_view(&self.object_mapping, &self.buffer, 0);
+                true
+            }
+            (KeyCode::Char('c'), _) if self.view_state.interpretations.len() > 0 => {
+                self.view_state.set_interpretation_index(
+                    &self.object_mapping,
+                    &self.buffer,
+                    (self.view_state.interpretation_index + 1)
+                        % self.view_state.interpretations.len(),
+                );
                 true
             }
             (KeyCode::Enter, _) => {

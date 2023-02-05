@@ -36,7 +36,7 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
         )),
         Spans::default(),
     ];
-    for interpretation in &inspector.view_state.interpretations {
+    for (i, interpretation) in inspector.view_state.interpretations.iter().enumerate() {
         let object = inspector
             .object_mapping
             .root_objects
@@ -45,7 +45,12 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
             .0;
         text.extend_from_slice(&[Spans::from(Span::styled(
             format!(
-                "{}:{} @ {:x}",
+                "{}{}:{} @ {:x}",
+                if i == inspector.view_state.interpretation_index {
+                    "* "
+                } else {
+                    "  "
+                },
                 object.resolve_name(&inspector.buffer),
                 interpretation.lines.last().unwrap(),
                 object.offset(),
@@ -55,7 +60,7 @@ fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mu
     }
 
     let block = block(false);
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
     f.render_widget(paragraph, area);
 }
 
