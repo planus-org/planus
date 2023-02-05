@@ -124,7 +124,6 @@ impl<'a> LineTree<'a> {
         }
 
         line.push_str(&self.object.resolve_name(buffer));
-        line.push_str(" @ ");
         line.push_str(&format!(" @ {:x}", self.range.0));
 
         if self.end_line_index.is_some() {
