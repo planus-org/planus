@@ -187,7 +187,7 @@ impl<'a> Inspector<'a> {
             view_state: ViewState::new_for_object(
                 &object_mapping,
                 &buffer,
-                Object::Offset(object_mapping.root_offset),
+                object_mapping.root_object,
             ),
             object_mapping,
             should_quit: false,
@@ -208,8 +208,11 @@ impl<'a> Inspector<'a> {
                 true
             }
             (KeyCode::Char('g'), _) => {
-                self.view_state
-                    .set_byte_pos(&self.object_mapping, &self.buffer, 0);
+                self.view_state = ViewState::new_for_object(
+                    &self.object_mapping,
+                    &self.buffer,
+                    self.object_mapping.root_object,
+                );
                 true
             }
             (KeyCode::Char('c'), _) if self.view_state.interpretations.len() > 0 => {

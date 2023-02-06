@@ -13,7 +13,7 @@ pub type ObjectIndex = usize;
 pub type LineIndex = usize;
 
 pub struct ObjectMapping<'a> {
-    pub root_offset: OffsetObject<'a>,
+    pub root_object: Object<'a>,
     pub root_objects: IndexMap<Object<'a>, (ByteIndex, ByteIndex)>,
     pub root_intervals: rust_lapper::Lapper<ByteIndex, ObjectIndex>,
 }
@@ -28,17 +28,17 @@ impl<'a> InspectableFlatbuffer<'a> {
             DeclarationKind::Table(_)
         ));
 
-        let root_object = OffsetObject {
+        let root_offset_object = OffsetObject {
             offset: 0,
             kind: crate::OffsetObjectKind::Table(root_table_index),
         };
 
         let mut builder = ObjectMappingBuilder::default();
 
-        builder.process_root_object(Object::Offset(root_object), self);
+        builder.process_root_object(Object::Offset(root_offset_object), self);
 
         ObjectMapping {
-            root_offset: root_object,
+            root_object: root_offset_object.get_inner(self).unwrap(),
             root_objects: builder.root_objects,
             root_intervals: rust_lapper::Lapper::new(builder.root_intervals),
         }
