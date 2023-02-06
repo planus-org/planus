@@ -87,7 +87,7 @@ impl<'a> ViewState<'a> {
         }
     }
 
-    fn set_byte_view(
+    fn set_byte_pos(
         &mut self,
         object_mapping: &ObjectMapping<'a>,
         buffer: &InspectableFlatbuffer<'a>,
@@ -97,11 +97,39 @@ impl<'a> ViewState<'a> {
             self.current_byte = index;
             self.interpretations =
                 object_mapping.get_interpretations(self.current_byte as u32, buffer);
-            self.find_closest_match(object_mapping, buffer);
+            if self.interpretations.is_empty() {
+                self.interpretation_index = 0;
+                self.current_line = None;
+            } else {
+                self.set_interpretation_index(
+                    object_mapping,
+                    buffer,
+                    self.interpretations
+                        .iter()
+                        .enumerate()
+                        .min_by_key(|(_, interpretation)| {
+                            if interpretation.root_object_index == self.current_object_index {
+                                (
+                                    0,
+                                    interpretation
+                                        .lines
+                                        .iter()
+                                        .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
+                                        .min()
+                                        .unwrap_or(usize::MAX),
+                                )
+                            } else {
+                                (1, 0)
+                            }
+                        })
+                        .map(|(i, _)| i)
+                        .unwrap(),
+                );
+            };
         }
     }
 
-    fn set_line_view(
+    fn set_line_pos(
         &mut self,
         object_mapping: &ObjectMapping<'a>,
         buffer: &InspectableFlatbuffer<'a>,
@@ -124,51 +152,13 @@ impl<'a> ViewState<'a> {
         }
     }
 
-    fn find_closest_match(
-        &mut self,
-        object_mapping: &ObjectMapping<'a>,
-        buffer: &InspectableFlatbuffer<'a>,
-    ) {
-        if self.interpretations.is_empty() {
-            self.interpretation_index = 0;
-            self.current_line = None;
-        } else {
-            self.set_interpretation_index(
-                object_mapping,
-                buffer,
-                self.interpretations
-                    .iter()
-                    .enumerate()
-                    .min_by_key(|(_, interpretation)| {
-                        if interpretation.root_object_index == self.current_object_index {
-                            (
-                                0,
-                                interpretation
-                                    .lines
-                                    .iter()
-                                    .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
-                                    .min()
-                                    .unwrap_or(usize::MAX),
-                            )
-                        } else {
-                            (1, 0)
-                        }
-                    })
-                    .map(|(i, _)| i)
-                    .unwrap(),
-            );
-        }
-    }
-
     fn set_interpretation_index(
         &mut self,
         object_mapping: &ObjectMapping<'a>,
         buffer: &InspectableFlatbuffer<'a>,
         interpretation_index: usize,
     ) {
-        if interpretation_index < self.interpretations.len()
-            && self.interpretation_index != interpretation_index
-        {
+        if interpretation_index < self.interpretations.len() {
             self.interpretation_index = interpretation_index;
             if self.current_object_index
                 != self.interpretations[self.interpretation_index].root_object_index
@@ -219,7 +209,7 @@ impl<'a> Inspector<'a> {
             }
             (KeyCode::Char('g'), _) => {
                 self.view_state
-                    .set_byte_view(&self.object_mapping, &self.buffer, 0);
+                    .set_byte_pos(&self.object_mapping, &self.buffer, 0);
                 true
             }
             (KeyCode::Char('c'), _) if self.view_state.interpretations.len() > 0 => {
@@ -322,7 +312,7 @@ impl<'a> Inspector<'a> {
         current_byte = current_byte.min(self.buffer.buffer.len() - 1);
 
         self.view_state
-            .set_byte_view(&self.object_mapping, &self.buffer, current_byte);
+            .set_byte_pos(&self.object_mapping, &self.buffer, current_byte);
 
         should_draw
     }
@@ -335,7 +325,7 @@ impl<'a> Inspector<'a> {
             _ => (),
         }
         self.view_state
-            .set_line_view(&self.object_mapping, &self.buffer, current_line);
+            .set_line_pos(&self.object_mapping, &self.buffer, current_line);
         true
     }
 
