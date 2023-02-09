@@ -1,4 +1,4 @@
-use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode, time::Duration};
+use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode};
 
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
@@ -83,7 +83,6 @@ fn main() -> Result<ExitCode> {
         DeclarationIndex(root_table_index),
     );
 
-    let tick_rate = Duration::from_millis(100);
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -101,7 +100,7 @@ fn main() -> Result<ExitCode> {
 
     // create app and run it
 
-    let res = run_inspector(&mut terminal, inspector, tick_rate);
+    let res = run_inspector(&mut terminal, inspector);
 
     // Cleanup and display errors if any
     cleanup_terminal(terminal.backend_mut().deref_mut())?;

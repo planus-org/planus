@@ -1,9 +1,6 @@
 pub mod ui;
 
-use std::{
-    io,
-    time::{Duration, Instant},
-};
+use std::{io, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use planus_buffer_inspection::{
@@ -331,16 +328,12 @@ impl<'a> Inspector<'a> {
             .set_line_pos(&self.object_mapping, &self.buffer, current_line);
         true
     }
-
-    pub fn on_tick(&mut self) {}
 }
 
 pub fn run_inspector<B: Backend>(
     terminal: &mut Terminal<B>,
     mut inspector: Inspector,
-    tick_rate: Duration,
 ) -> io::Result<()> {
-    let mut last_tick = Instant::now();
     let mut should_draw = true;
     loop {
         if should_draw {
@@ -348,10 +341,7 @@ pub fn run_inspector<B: Backend>(
             should_draw = false;
         }
 
-        let timeout = tick_rate
-            .checked_sub(last_tick.elapsed())
-            .unwrap_or_else(|| Duration::from_secs(0));
-        if crossterm::event::poll(timeout)? {
+        if crossterm::event::poll(Duration::MAX)? {
             match event::read()? {
                 Event::Key(key) => {
                     should_draw = inspector.on_key(key);
@@ -359,10 +349,6 @@ pub fn run_inspector<B: Backend>(
                 Event::Resize(_, _) => should_draw = true,
                 _ => (),
             }
-        }
-        if last_tick.elapsed() >= tick_rate {
-            inspector.on_tick();
-            last_tick = Instant::now();
         }
         if inspector.should_quit {
             return Ok(());
