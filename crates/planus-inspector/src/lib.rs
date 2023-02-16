@@ -10,8 +10,6 @@ use planus_buffer_inspection::{
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, Terminal};
 
-use crate::ui::HEX_LINE_SIZE;
-
 pub struct TreeState<T> {
     pub data: T,
     pub unfolded: bool,
@@ -24,16 +22,6 @@ pub enum ActiveWindow {
     HexView,
 }
 
-impl ActiveWindow {
-    #[must_use]
-    pub fn toggle(self) -> Self {
-        match self {
-            ActiveWindow::ObjectView => ActiveWindow::HexView,
-            ActiveWindow::HexView => ActiveWindow::ObjectView,
-        }
-    }
-}
-
 pub struct Inspector<'a> {
     pub object_mapping: ObjectMapping<'a>,
     pub buffer: InspectableFlatbuffer<'a>,
@@ -41,6 +29,42 @@ pub struct Inspector<'a> {
     pub view_stack: Vec<ViewState<'a>>,
     pub active_window: ActiveWindow,
     pub view_state: ViewState<'a>,
+    pub hex_view_state: HexViewState,
+}
+
+pub struct HexViewState {
+    pub line_size: usize,
+    pub height: usize,
+    pub line_pos: usize,
+}
+
+pub struct Ranges {
+    pub inner_range: Option<std::ops::Range<usize>>,
+    pub outer_range: Option<std::ops::Range<usize>>,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum RangeMatch {
+    Inner,
+    Outer,
+}
+
+impl Ranges {
+    pub fn best_match(&self, value: usize) -> Option<RangeMatch> {
+        if let Some(inner_range) = &self.inner_range {
+            if inner_range.contains(&value) {
+                return Some(RangeMatch::Inner);
+            }
+        }
+
+        if let Some(outer_range) = &self.outer_range {
+            if outer_range.contains(&value) {
+                return Some(RangeMatch::Outer);
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(Debug)]
@@ -90,40 +114,38 @@ impl<'a> ViewState<'a> {
         buffer: &InspectableFlatbuffer<'a>,
         index: usize,
     ) {
-        if self.current_byte != index {
-            self.current_byte = index;
-            self.interpretations =
-                object_mapping.get_interpretations(self.current_byte as u32, buffer);
-            if self.interpretations.is_empty() {
-                self.interpretation_index = 0;
-                self.current_line = None;
-            } else {
-                self.set_interpretation_index(
-                    object_mapping,
-                    buffer,
-                    self.interpretations
-                        .iter()
-                        .enumerate()
-                        .min_by_key(|(_, interpretation)| {
-                            if interpretation.root_object_index == self.current_object_index {
-                                (
-                                    0,
-                                    interpretation
-                                        .lines
-                                        .iter()
-                                        .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
-                                        .min()
-                                        .unwrap_or(usize::MAX),
-                                )
-                            } else {
-                                (1, 0)
-                            }
-                        })
-                        .map(|(i, _)| i)
-                        .unwrap(),
-                );
-            };
-        }
+        self.current_byte = index;
+        self.interpretations = object_mapping.get_interpretations(self.current_byte as u32, buffer);
+        if self.interpretations.is_empty() {
+            self.interpretation_index = 0;
+            self.current_line = None;
+            self.lines.clear();
+        } else {
+            self.set_interpretation_index(
+                object_mapping,
+                buffer,
+                self.interpretations
+                    .iter()
+                    .enumerate()
+                    .min_by_key(|(_, interpretation)| {
+                        if interpretation.root_object_index == self.current_object_index {
+                            (
+                                0,
+                                interpretation
+                                    .lines
+                                    .iter()
+                                    .map(|line| line.abs_diff(self.current_line.unwrap_or(0)))
+                                    .min()
+                                    .unwrap_or(usize::MAX),
+                            )
+                        } else {
+                            (1, 0)
+                        }
+                    })
+                    .map(|(i, _)| i)
+                    .unwrap(),
+            );
+        };
     }
 
     fn set_line_pos(
@@ -174,6 +196,18 @@ impl<'a> ViewState<'a> {
             );
         }
     }
+
+    pub fn hex_ranges(&self) -> Ranges {
+        Ranges {
+            inner_range: self.current_line.map(|current_line| {
+                self.lines[current_line].start as usize..self.lines[current_line].end as usize
+            }),
+            outer_range: self
+                .lines
+                .first()
+                .map(|line| line.start as usize..line.end as usize),
+        }
+    }
 }
 
 impl<'a> Inspector<'a> {
@@ -190,20 +224,38 @@ impl<'a> Inspector<'a> {
             should_quit: false,
             view_stack: Vec::new(),
             active_window: ActiveWindow::ObjectView,
+            hex_view_state: HexViewState {
+                line_size: 0,
+                height: 0,
+                line_pos: 0,
+            },
         }
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
         let mut should_draw = match (key.code, key.modifiers) {
-            (KeyCode::Tab, _) => {
-                self.active_window = self.active_window.toggle();
-                if matches!(self.active_window, ActiveWindow::ObjectView)
-                    && self.view_state.current_line.is_none()
-                {
-                    self.view_state.current_line = Some(0);
+            (KeyCode::Tab, _) => match self.active_window {
+                ActiveWindow::HexView => {
+                    if !self.view_state.lines.is_empty() {
+                        if self.view_state.current_line.is_none() {
+                            self.view_state.current_line = Some(0);
+                        }
+                        self.active_window = ActiveWindow::ObjectView;
+                        true
+                    } else {
+                        false
+                    }
                 }
-                true
-            }
+                ActiveWindow::ObjectView => {
+                    self.active_window = ActiveWindow::HexView;
+                    self.view_state.set_byte_pos(
+                        &self.object_mapping,
+                        &self.buffer,
+                        self.view_state.current_byte,
+                    );
+                    true
+                }
+            },
             (KeyCode::Char('g'), _) => {
                 self.view_state = ViewState::new_for_object(
                     &self.object_mapping,
@@ -269,52 +321,53 @@ impl<'a> Inspector<'a> {
 
     pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
         let mut current_byte = self.view_state.current_byte;
-        let should_draw = match key.code {
+        match key.code {
             // Navigation
             KeyCode::Up => {
-                current_byte = current_byte.saturating_sub(HEX_LINE_SIZE);
-                true
+                if let Some(next) = current_byte.checked_sub(self.hex_view_state.line_size) {
+                    current_byte = next;
+                }
             }
             KeyCode::Down => {
-                current_byte = current_byte.saturating_add(HEX_LINE_SIZE);
-                true
+                let next = current_byte.saturating_add(self.hex_view_state.line_size);
+                if next < self.buffer.buffer.len() {
+                    current_byte = next;
+                }
             }
             KeyCode::PageUp => {
-                current_byte = current_byte.saturating_sub(8 * HEX_LINE_SIZE);
-                true
+                current_byte = current_byte.saturating_sub(8 * self.hex_view_state.line_size);
             }
             KeyCode::PageDown => {
-                self.view_state.current_byte = self
+                current_byte = self
                     .view_state
                     .current_byte
-                    .saturating_add(8 * HEX_LINE_SIZE);
-                true
+                    .saturating_add(8 * self.hex_view_state.line_size);
             }
 
             KeyCode::Left => {
                 current_byte = current_byte.saturating_sub(1);
-                true
             }
             KeyCode::Right => {
                 current_byte = current_byte.saturating_add(1);
-                true
             }
             KeyCode::Home => {
-                self.view_state.current_byte = 0;
-                true
+                current_byte = 0;
             }
             KeyCode::End => {
-                self.view_state.current_byte = self.buffer.buffer.len() - 1;
-                true
+                current_byte = self.buffer.buffer.len() - 1;
             }
-            _ => false,
+            _ => (),
         };
         current_byte = current_byte.min(self.buffer.buffer.len() - 1);
 
-        self.view_state
-            .set_byte_pos(&self.object_mapping, &self.buffer, current_byte);
+        if current_byte != self.view_state.current_byte {
+            self.view_state
+                .set_byte_pos(&self.object_mapping, &self.buffer, current_byte);
 
-        should_draw
+            true
+        } else {
+            false
+        }
     }
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
