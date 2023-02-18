@@ -65,6 +65,7 @@ pub struct LineTree<'a> {
 pub struct Line<'a> {
     pub start_line_index: LineIndex,
     pub end_line_index: LineIndex,
+    pub parent_line_index: LineIndex,
     pub line: String,
     pub offset_object: Option<OffsetObject<'a>>,
     pub start: ByteIndex,
@@ -102,6 +103,7 @@ impl<'a> LineTree<'a> {
     fn to_strings_helper(
         &self,
         depth: usize,
+        parent_line_index: LineIndex,
         buffer: &InspectableFlatbuffer<'a>,
         out: &mut Vec<Line<'a>>,
     ) {
@@ -136,13 +138,14 @@ impl<'a> LineTree<'a> {
             line,
             start_line_index: self.start_line_index,
             end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
+            parent_line_index,
             offset_object,
             start: self.range.0,
             end: self.range.1,
         });
 
         for child in &self.children {
-            child.to_strings_helper(depth + 1, buffer, out);
+            child.to_strings_helper(depth + 1, self.start_line_index, buffer, out);
         }
 
         if let Some(end_line) = self.end_line_index {
@@ -155,6 +158,7 @@ impl<'a> LineTree<'a> {
                     indentation = "",
                     indentation_count = 2 * depth
                 ),
+                parent_line_index,
                 offset_object,
                 start: self.range.0,
                 end: self.range.1,
@@ -164,7 +168,7 @@ impl<'a> LineTree<'a> {
 
     pub fn flatten(&self, buffer: &InspectableFlatbuffer<'a>) -> Vec<Line<'a>> {
         let mut out = Vec::new();
-        self.to_strings_helper(0, buffer, &mut out);
+        self.to_strings_helper(0, 0, buffer, &mut out);
         out
     }
 
