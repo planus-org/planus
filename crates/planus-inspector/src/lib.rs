@@ -454,7 +454,9 @@ impl<'a> Inspector<'a> {
                 KeyCode::Char(c @ '0'..='9')
                 | KeyCode::Char(c @ 'a'..='f')
                 | KeyCode::Char(c @ 'A'..='F') => {
-                    input.push(c.to_ascii_lowercase());
+                    if input.len() < 16 {
+                        input.push(c.to_ascii_lowercase());
+                    }
                 }
                 KeyCode::Enter => {
                     let addr = usize::from_str_radix(&input, 16).unwrap();

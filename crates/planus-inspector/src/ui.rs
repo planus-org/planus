@@ -1,6 +1,6 @@
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
@@ -8,6 +8,10 @@ use tui::{
 };
 
 use crate::{Inspector, ModalState, RangeMatch};
+
+const INNER_AREA_COLOR: Color = Color::Rgb(82, 44, 74);
+const OUTER_AREA_COLOR: Color = Color::Rgb(50, 65, 92);
+const ADDRESS_COLOR: Color = Color::Rgb(96, 50, 38);
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
@@ -37,15 +41,18 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 
     object_view(f, object_area, inspector);
     hex_view(f, hex_area, inspector);
-    f.render_widget(Paragraph::new("Info!").block(block(false)), info_area);
+    f.render_widget(
+        Paragraph::new("Info!").block(block(false, " Info view ")),
+        info_area,
+    );
     f.render_widget(Paragraph::new("wut"), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
         #[allow(irrefutable_let_patterns)] // Remove when second modal gets added
         let modal_area = if let ModalState::GoToByte { .. } = modal_state {
             let mut area = centered_rect(20, 20, f.size());
-            area.height = 4;
-            area.width = 20;
+            area.height = 3;
+            area.width = 21;
             area
         } else {
             centered_rect(60, 60, f.size())
@@ -59,19 +66,18 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
     let paragraph = match modal_state {
         ModalState::GoToByte { input } => {
             let text = vec![
-                Spans::from(Span::styled(format!("Go to offset:"), Style::default())),
                 Spans::from(vec![
                     Span::styled("0x", Style::default().fg(Color::DarkGray)),
                     Span::styled(input, Style::default()),
                 ]),
                 Spans::default(),
             ];
-            let block = block(true);
+            let block = block(true, "Go to offset");
             f.set_cursor(
                 // Put cursor past the end of the input text
                 area.x + input.len() as u16 + 3,
                 // Move one line down, from the border to the input line
-                area.y + 2,
+                area.y + 1,
             );
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
@@ -82,7 +88,7 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView)
         && inspector.modal.is_none();
-    let block = block(is_active);
+    let block = block(is_active, " Hex view ");
     let inner_area = block.inner(area);
 
     let ranges = inspector.view_state.hex_ranges();
@@ -132,30 +138,32 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
                     (first_line + line_no) * inspector.hex_view_state.line_size,
                     width = max_offset_hex_digits
                 ),
-                text_style.fg(Color::Magenta),
+                text_style.fg(ADDRESS_COLOR),
             )];
             for (col_no, b) in chunk.iter().enumerate() {
                 let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
                 let style = if is_active && pos == inspector.view_state.byte_index {
-                    text_style.add_modifier(Modifier::BOLD)
+                    text_style.add_modifier(Modifier::UNDERLINED)
                 } else {
                     text_style.add_modifier(Modifier::DIM)
                 };
 
                 let style = match ranges.best_match(pos) {
                     None => style.bg(Color::Black),
-                    Some(RangeMatch::Outer) => style.bg(Color::DarkGray),
-                    Some(RangeMatch::Inner) => style.bg(Color::Blue),
+                    Some(RangeMatch::Outer) => style.bg(OUTER_AREA_COLOR),
+                    Some(RangeMatch::Inner) => style.bg(INNER_AREA_COLOR),
                 };
 
                 line.push(Span::styled(format!("{b:02x}"), style));
                 if col_no + 1 < chunk.len() {
                     let style = match (ranges.best_match(pos), ranges.best_match(pos + 1)) {
-                        (None, _) | (_, None) => style.bg(Color::Black),
+                        (None, _) | (_, None) => text_style.bg(Color::Black),
                         (Some(RangeMatch::Outer), Some(_)) | (Some(_), Some(RangeMatch::Outer)) => {
-                            style.bg(Color::DarkGray)
+                            text_style.bg(OUTER_AREA_COLOR)
                         }
-                        (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => style.bg(Color::Blue),
+                        (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => {
+                            text_style.bg(INNER_AREA_COLOR)
+                        }
                     };
                     if col_no % 8 != 7 {
                         line.push(Span::styled(" ", style));
@@ -175,7 +183,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView)
         && inspector.modal.is_none();
-    let block = block(is_active);
+    let block = block(is_active, " Object view ");
 
     let mut text = Vec::new();
 
@@ -199,14 +207,16 @@ fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspect
     f.render_widget(paragraph, area);
 }
 
-fn block(is_active: bool) -> Block<'static> {
-    let res = Block::default().borders(Borders::ALL);
+fn block(is_active: bool, title: &'static str) -> Block<'static> {
+    let res = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title_alignment(Alignment::Center)
+        .title(title);
     if is_active {
         res.border_style(Style::default().fg(Color::White))
-            .border_type(BorderType::Rounded)
     } else {
-        res.border_style(Style::default().fg(Color::Rgb(128, 128, 128)))
-            .border_type(BorderType::Rounded)
+        res.border_style(Style::default().fg(Color::DarkGray))
     }
 }
 
