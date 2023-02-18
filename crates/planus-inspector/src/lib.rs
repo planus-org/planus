@@ -28,6 +28,7 @@ pub enum ActiveWindow {
 #[derive(Clone, Debug)]
 pub enum ModalState {
     GoToByte { input: String },
+    XRefs { xrefs: VecWithIndex<String> },
 }
 
 pub struct Inspector<'a> {
@@ -324,6 +325,12 @@ impl<'a> Inspector<'a> {
                 });
                 true
             }
+            KeyCode::Char('x') => {
+                self.modal = Some(ModalState::XRefs {
+                    xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
+                });
+                true
+            }
             KeyCode::Char('q') => {
                 self.should_quit = true;
                 false
@@ -482,6 +489,10 @@ impl<'a> Inspector<'a> {
     }
 
     fn modal_view_key(&mut self, key: KeyEvent, mut modal_state: ModalState) -> Option<ModalState> {
+        if let KeyCode::Esc = key.code {
+            return None;
+        }
+
         match &mut modal_state {
             ModalState::GoToByte { input } => match key.code {
                 KeyCode::Char(c @ '0'..='9')
@@ -501,9 +512,9 @@ impl<'a> Inspector<'a> {
                 KeyCode::Backspace => {
                     input.pop();
                 }
-                KeyCode::Esc => {
-                    return None;
-                }
+                _ => (),
+            },
+            ModalState::XRefs { .. } => match key.code {
                 _ => (),
             },
         }

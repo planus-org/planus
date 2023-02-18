@@ -101,7 +101,6 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
-        #[allow(irrefutable_let_patterns)] // Remove when second modal gets added
         let modal_area = if let ModalState::GoToByte { .. } = modal_state {
             let mut area = centered_rect(20, 20, f.size());
             area.height = 3;
@@ -125,13 +124,21 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
                 ]),
                 Spans::default(),
             ];
-            let block = block(true, "Go to offset");
+            let block = block(true, " Go to offset ");
             f.set_cursor(
                 // Put cursor past the end of the input text
                 area.x + input.len() as u16 + 3,
                 // Move one line down, from the border to the input line
                 area.y + 1,
             );
+            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+        }
+        ModalState::XRefs { .. } => {
+            let text = vec![
+                Spans::from(vec![Span::styled("0x", DEFAULT_STYLE)]),
+                Spans::default(),
+            ];
+            let block = block(true, " XRefs ");
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
     };
