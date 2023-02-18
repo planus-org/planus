@@ -1,7 +1,7 @@
 use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
@@ -50,32 +50,34 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
 fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let mut text = vec![
         Spans::from(Span::styled(
-            format!("Objects at 0x{:x}: ", inspector.view_state.current_byte),
+            format!("Objects at 0x{:x}: ", inspector.view_state.byte_index),
             Style::default(),
         )),
         Spans::default(),
     ];
-    for (i, interpretation) in inspector.view_state.interpretations.iter().enumerate() {
-        let object = inspector
-            .object_mapping
-            .root_objects
-            .get_index(interpretation.root_object_index)
-            .unwrap()
-            .0;
-        text.extend_from_slice(&[Spans::from(Span::styled(
-            format!(
-                "{}{}:{} @ {:x}",
-                if i == inspector.view_state.interpretation_index {
-                    "* "
-                } else {
-                    "  "
-                },
-                object.resolve_name(&inspector.buffer),
-                interpretation.lines.last().unwrap(),
-                object.offset(),
-            ),
-            Style::default(),
-        ))]);
+    if let Some(info_view_data) = &inspector.view_state.info_view_data {
+        for (i, interpretation) in info_view_data.interpretations.iter().enumerate() {
+            let object = inspector
+                .object_mapping
+                .root_objects
+                .get_index(interpretation.root_object_index)
+                .unwrap()
+                .0;
+            text.extend_from_slice(&[Spans::from(Span::styled(
+                format!(
+                    "{}{}:{} @ {:x}",
+                    if i == info_view_data.interpretations.index() {
+                        "* "
+                    } else {
+                        "  "
+                    },
+                    object.resolve_name(&inspector.buffer),
+                    interpretation.lines.last().unwrap(),
+                    object.offset(),
+                ),
+                Style::default(),
+            ))]);
+        }
     }
 
     let block = block(false);
@@ -101,7 +103,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 
     let mut view = Vec::new();
     if inner_area.height != 0 {
-        let cursor_line = inspector.view_state.current_byte / inspector.hex_view_state.line_size;
+        let cursor_line = inspector.view_state.byte_index / inspector.hex_view_state.line_size;
         let mut first_line = inspector.hex_view_state.line_pos / inspector.hex_view_state.line_size;
         let total_lines = inspector.buffer.buffer.len() / inspector.hex_view_state.line_size;
 
@@ -139,7 +141,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
             )];
             for (col_no, b) in chunk.iter().enumerate() {
                 let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
-                let style = if is_active && pos == inspector.view_state.current_byte {
+                let style = if is_active && pos == inspector.view_state.byte_index {
                     text_style.add_modifier(Modifier::BOLD)
                 } else {
                     text_style.add_modifier(Modifier::DIM)
@@ -178,19 +180,17 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView);
     let block = block(is_active);
-    let inner_area = block.inner(area);
 
     let mut text = Vec::new();
 
-    if let Some(current_line) = inspector.view_state.current_line {
-        for (i, line) in inspector
-            .view_state
+    if let Some(info_view_data) = &mut inspector.view_state.info_view_data {
+        for (i, line) in info_view_data
             .lines
             .iter()
             .enumerate()
-            .skip(current_line)
+            .skip(info_view_data.lines.index().saturating_sub(1))
         {
-            let style = if Some(i) == inspector.view_state.current_line {
+            let style = if i == info_view_data.lines.index() {
                 Style::default().add_modifier(Modifier::BOLD)
             } else {
                 Style::default().add_modifier(Modifier::DIM)
