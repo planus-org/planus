@@ -1,4 +1,3 @@
-use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -12,18 +11,34 @@ use crate::{Inspector, ModalState, RangeMatch};
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
-    let vert = Layout::default()
+    let areas = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Percentage(50), Percentage(50)].as_ref())
+        .constraints([Length(f.size().height.saturating_sub(1)), Min(0)].as_ref())
         .split(f.size());
-    let top = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Percentage(40), Percentage(60)].as_ref())
-        .split(vert[0]);
 
-    interpretations_view(f, top[0], inspector);
-    info_area(f, top[1], inspector);
-    hex_view(f, vert[1], inspector);
+    let main_area = areas[0];
+    let hotkey_area = areas[1];
+
+    let areas = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Percentage(60), Percentage(40)].as_ref())
+        .split(main_area);
+
+    let top_area = areas[0];
+    let hex_area = areas[1];
+
+    let areas = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Length(top_area.width.saturating_sub(20)), Min(0)].as_ref())
+        .split(top_area);
+
+    let object_area = areas[0];
+    let info_area = areas[1];
+
+    object_view(f, object_area, inspector);
+    hex_view(f, hex_area, inspector);
+    f.render_widget(Paragraph::new("Info!").block(block(false)), info_area);
+    f.render_widget(Paragraph::new("wut"), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
         let modal_area = centered_rect(20, 20, f.size());
@@ -47,44 +62,6 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
     f.render_widget(paragraph, area);
 }
 
-fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let mut text = vec![
-        Spans::from(Span::styled(
-            format!("Objects at 0x{:x}: ", inspector.view_state.byte_index),
-            Style::default(),
-        )),
-        Spans::default(),
-    ];
-    if let Some(info_view_data) = &inspector.view_state.info_view_data {
-        for (i, interpretation) in info_view_data.interpretations.iter().enumerate() {
-            let object = inspector
-                .object_mapping
-                .root_objects
-                .get_index(interpretation.root_object_index)
-                .unwrap()
-                .0;
-            text.extend_from_slice(&[Spans::from(Span::styled(
-                format!(
-                    "{}{}:{} @ {:x}",
-                    if i == info_view_data.interpretations.index() {
-                        "* "
-                    } else {
-                        "  "
-                    },
-                    object.resolve_name(&inspector.buffer),
-                    interpretation.lines.last().unwrap(),
-                    object.offset(),
-                ),
-                Style::default(),
-            ))]);
-        }
-    }
-
-    let block = block(false);
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
-    f.render_widget(paragraph, area);
-}
-
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
     let block = block(is_active);
@@ -102,7 +79,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     inspector.hex_view_state.line_size = eight_groups * 8;
 
     let mut view = Vec::new();
-    if inner_area.height != 0 {
+    if inner_area.height != 0 && inspector.hex_view_state.line_size != 0 {
         let cursor_line = inspector.view_state.byte_index / inspector.hex_view_state.line_size;
         let mut first_line = inspector.hex_view_state.line_pos / inspector.hex_view_state.line_size;
         let total_lines = inspector.buffer.buffer.len() / inspector.hex_view_state.line_size;
@@ -177,7 +154,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
     f.render_widget(paragraph, area);
 }
 
-fn info_area<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
+fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
     let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView);
     let block = block(is_active);
 
