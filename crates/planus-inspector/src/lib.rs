@@ -22,6 +22,11 @@ pub enum ActiveWindow {
     HexView,
 }
 
+#[derive(Clone, Debug)]
+pub enum ModalState {
+    GoToByte { input: String },
+}
+
 pub struct Inspector<'a> {
     pub object_mapping: ObjectMapping<'a>,
     pub buffer: InspectableFlatbuffer<'a>,
@@ -30,6 +35,7 @@ pub struct Inspector<'a> {
     pub active_window: ActiveWindow,
     pub view_state: ViewState<'a>,
     pub hex_view_state: HexViewState,
+    pub modal: Option<ModalState>,
 }
 
 pub struct HexViewState {
@@ -229,6 +235,7 @@ impl<'a> Inspector<'a> {
                 height: 0,
                 line_pos: 0,
             },
+            modal: None,
         }
     }
 
@@ -257,11 +264,9 @@ impl<'a> Inspector<'a> {
                 }
             },
             (KeyCode::Char('g'), _) => {
-                self.view_state = ViewState::new_for_object(
-                    &self.object_mapping,
-                    &self.buffer,
-                    self.object_mapping.root_object,
-                );
+                self.modal = Some(ModalState::GoToByte {
+                    input: String::new(),
+                });
                 true
             }
             (KeyCode::Char('c'), _) if self.view_state.interpretations.len() > 0 => {
@@ -309,6 +314,11 @@ impl<'a> Inspector<'a> {
             }
             _ => false,
         };
+
+        if let Some(modal_state) = self.modal.take() {
+            self.modal = self.modal_view_key(key, modal_state);
+            should_draw = true;
+        }
 
         should_draw = should_draw
             || match self.active_window {
@@ -358,16 +368,7 @@ impl<'a> Inspector<'a> {
             }
             _ => (),
         };
-        current_byte = current_byte.min(self.buffer.buffer.len() - 1);
-
-        if current_byte != self.view_state.current_byte {
-            self.view_state
-                .set_byte_pos(&self.object_mapping, &self.buffer, current_byte);
-
-            true
-        } else {
-            false
-        }
+        self.update_byte_pos(current_byte)
     }
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
@@ -380,6 +381,36 @@ impl<'a> Inspector<'a> {
         self.view_state
             .set_line_pos(&self.object_mapping, &self.buffer, current_line);
         true
+    }
+
+    fn modal_view_key(&mut self, key: KeyEvent, mut modal_state: ModalState) -> Option<ModalState> {
+        match &mut modal_state {
+            ModalState::GoToByte { input } => match key.code {
+                KeyCode::Char(c @ '0'..='9') => {
+                    input.push(c);
+                }
+                KeyCode::Enter => {
+                    let addr = usize::from_str_radix(&input, 16).unwrap();
+                    self.update_byte_pos(addr);
+                    return None;
+                }
+                _ => (),
+            },
+        }
+
+        Some(modal_state)
+    }
+
+    fn update_byte_pos(&mut self, current_byte: usize) -> bool {
+        let current_byte = current_byte.min(self.buffer.buffer.len() - 1);
+        if current_byte != self.view_state.current_byte {
+            self.view_state
+                .set_byte_pos(&self.object_mapping, &self.buffer, current_byte);
+
+            true
+        } else {
+            false
+        }
     }
 }
 

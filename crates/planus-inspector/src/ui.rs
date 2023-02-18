@@ -1,14 +1,14 @@
 use planus_buffer_inspection::object_info::ObjectName;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
-use crate::{Inspector, RangeMatch};
+use crate::{Inspector, ModalState, RangeMatch};
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
@@ -24,6 +24,27 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     interpretations_view(f, top[0], inspector);
     info_area(f, top[1], inspector);
     hex_view(f, vert[1], inspector);
+
+    if let Some(modal_state) = inspector.modal.as_ref() {
+        let modal_area = centered_rect(20, 20, f.size());
+        modal_view(f, modal_area, modal_state);
+    }
+}
+
+fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState) {
+    let paragraph = match modal_state {
+        ModalState::GoToByte { input } => {
+            let text = vec![
+                Spans::from(Span::styled(format!("Go to position"), Style::default())),
+                Spans::from(Span::styled(input.clone(), Style::default())),
+                Spans::default(),
+            ];
+            let block = block(false);
+            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+        }
+    };
+    f.render_widget(Clear, area);
+    f.render_widget(paragraph, area);
 }
 
 fn interpretations_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
@@ -191,4 +212,30 @@ fn block(is_active: bool) -> Block<'static> {
         res.border_style(Style::default().fg(Color::Rgb(128, 128, 128)))
             .border_type(BorderType::Rounded)
     }
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }
