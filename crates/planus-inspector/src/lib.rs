@@ -297,8 +297,9 @@ impl<'a> Inspector<'a> {
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
-        let mut should_draw = match (key.code, key.modifiers) {
-            (KeyCode::Tab, _) => match self.active_window {
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+        let mut should_draw = match key.code {
+            KeyCode::Tab => match self.active_window {
                 ActiveWindow::HexView => {
                     if self.view_state.info_view_data.is_some() {
                         self.active_window = ActiveWindow::ObjectView;
@@ -317,17 +318,21 @@ impl<'a> Inspector<'a> {
                     true
                 }
             },
-            (KeyCode::Char('g'), _) => {
+            KeyCode::Char('g') => {
                 self.modal = Some(ModalState::GoToByte {
                     input: String::new(),
                 });
                 true
             }
-            (KeyCode::Char('q'), _) | (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+            KeyCode::Char('q') => {
                 self.should_quit = true;
                 false
             }
-            (KeyCode::Char('c'), _) => {
+            KeyCode::Char('c') if ctrl => {
+                self.should_quit = true;
+                false
+            }
+            KeyCode::Char('c') => {
                 if let Some(info_view_data) = &mut self.view_state.info_view_data {
                     info_view_data.set_interpretation_index(
                         &self.object_mapping,
@@ -340,7 +345,7 @@ impl<'a> Inspector<'a> {
                     false
                 }
             }
-            (KeyCode::Enter, _) if self.modal.is_none() => {
+            KeyCode::Enter if self.modal.is_none() => {
                 if let Some(info_view_data) = &mut self.view_state.info_view_data {
                     if let Some(offset_object) = info_view_data.lines.cur().offset_object {
                         let inner = offset_object.get_inner(&self.buffer).unwrap();
@@ -353,7 +358,7 @@ impl<'a> Inspector<'a> {
                 }
                 true
             }
-            (KeyCode::Esc, _) if self.modal.is_none() => {
+            KeyCode::Esc if self.modal.is_none() => {
                 if let Some(view_state) = self.view_stack.pop() {
                     self.view_state = view_state;
                     true
@@ -362,7 +367,7 @@ impl<'a> Inspector<'a> {
                     false
                 }
             }
-            (KeyCode::Backspace, _) if self.modal.is_none() => {
+            KeyCode::Backspace if self.modal.is_none() => {
                 if let Some(view_state) = self.view_stack.pop() {
                     self.view_state = view_state;
                     true
@@ -389,6 +394,7 @@ impl<'a> Inspector<'a> {
 
     pub fn hex_view_key(&mut self, key: KeyEvent) -> bool {
         let mut current_byte = self.view_state.byte_index;
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         match key.code {
             // Navigation
             KeyCode::Up => {
@@ -411,9 +417,18 @@ impl<'a> Inspector<'a> {
                     .byte_index
                     .saturating_add(8 * self.hex_view_state.line_size);
             }
-
+            KeyCode::Left if ctrl => {
+                if let Some(range) = self.view_state.hex_ranges().inner_range {
+                    current_byte = range.start.saturating_sub(1);
+                }
+            }
             KeyCode::Left => {
                 current_byte = current_byte.saturating_sub(1);
+            }
+            KeyCode::Right if ctrl => {
+                if let Some(range) = self.view_state.hex_ranges().inner_range {
+                    current_byte = range.end;
+                }
             }
             KeyCode::Right => {
                 current_byte = current_byte.saturating_add(1);
@@ -430,14 +445,32 @@ impl<'a> Inspector<'a> {
     }
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         if let Some(info_view_data) = &mut self.view_state.info_view_data {
             let line_step = 5;
+            let cur_index = info_view_data.lines.index();
             let last_index = info_view_data.lines.len() - 1;
             let line = match key.code {
-                KeyCode::Up => info_view_data.lines.index().saturating_sub(1),
-                KeyCode::PageUp => info_view_data.lines.index().saturating_sub(line_step),
-                KeyCode::Down => info_view_data.lines.index() + 1,
-                KeyCode::PageDown => last_index.min(info_view_data.lines.index() + line_step),
+                KeyCode::Up if ctrl => {
+                    let start_line_index = info_view_data.lines.cur().start_line_index;
+                    if start_line_index != cur_index {
+                        start_line_index
+                    } else {
+                        cur_index.saturating_sub(1) as usize
+                    }
+                }
+                KeyCode::Up => cur_index.saturating_sub(1),
+                KeyCode::PageUp => cur_index.saturating_sub(line_step),
+                KeyCode::Down if ctrl => {
+                    let end_line_index = info_view_data.lines.cur().end_line_index;
+                    if end_line_index != cur_index {
+                        end_line_index
+                    } else {
+                        cur_index.saturating_add(1) as usize
+                    }
+                }
+                KeyCode::Down => cur_index + 1,
+                KeyCode::PageDown => last_index.min(cur_index + line_step),
                 KeyCode::Home => 0,
                 KeyCode::End => last_index,
                 _ => return false,
