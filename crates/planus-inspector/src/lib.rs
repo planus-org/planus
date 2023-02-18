@@ -427,6 +427,8 @@ impl<'a> Inspector<'a> {
             KeyCode::Left if ctrl => {
                 if let Some(range) = self.view_state.hex_ranges().inner_range {
                     current_byte = range.start.saturating_sub(1);
+                } else {
+                    current_byte = current_byte.saturating_sub(1);
                 }
             }
             KeyCode::Left => {
@@ -435,6 +437,8 @@ impl<'a> Inspector<'a> {
             KeyCode::Right if ctrl => {
                 if let Some(range) = self.view_state.hex_ranges().inner_range {
                     current_byte = range.end;
+                } else {
+                    current_byte = current_byte.saturating_add(1);
                 }
             }
             KeyCode::Right => {
