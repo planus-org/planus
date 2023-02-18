@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct VecWithIndex<T> {
     index: usize,
     values: Vec<T>,

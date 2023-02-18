@@ -41,29 +41,47 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     f.render_widget(Paragraph::new("wut"), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
-        let modal_area = centered_rect(20, 20, f.size());
+        #[allow(irrefutable_let_patterns)] // Remove when second modal gets added
+        let modal_area = if let ModalState::GoToByte { .. } = modal_state {
+            let mut area = centered_rect(20, 20, f.size());
+            area.height = 4;
+            area.width = 20;
+            area
+        } else {
+            centered_rect(60, 60, f.size())
+        };
         modal_view(f, modal_area, modal_state);
     }
 }
 
 fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState) {
+    f.render_widget(Clear, area);
     let paragraph = match modal_state {
         ModalState::GoToByte { input } => {
             let text = vec![
-                Spans::from(Span::styled(format!("Go to position"), Style::default())),
-                Spans::from(Span::styled(input.clone(), Style::default())),
+                Spans::from(Span::styled(format!("Go to offset:"), Style::default())),
+                Spans::from(vec![
+                    Span::styled("0x", Style::default().fg(Color::DarkGray)),
+                    Span::styled(input, Style::default()),
+                ]),
                 Spans::default(),
             ];
-            let block = block(false);
+            let block = block(true);
+            f.set_cursor(
+                // Put cursor past the end of the input text
+                area.x + input.len() as u16 + 3,
+                // Move one line down, from the border to the input line
+                area.y + 2,
+            );
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
     };
-    f.render_widget(Clear, area);
     f.render_widget(paragraph, area);
 }
 
 pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView);
+    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView)
+        && inspector.modal.is_none();
     let block = block(is_active);
     let inner_area = block.inner(area);
 
@@ -155,7 +173,8 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
 }
 
 fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView);
+    let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView)
+        && inspector.modal.is_none();
     let block = block(is_active);
 
     let mut text = Vec::new();

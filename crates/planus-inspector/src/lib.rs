@@ -76,13 +76,13 @@ impl Ranges {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ViewState<'a> {
     pub byte_index: usize,
     pub info_view_data: Option<InfoViewData<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InfoViewData<'a> {
     pub lines: VecWithIndex<Line<'a>>,
     pub interpretations: VecWithIndex<Interpretation>,
@@ -340,7 +340,7 @@ impl<'a> Inspector<'a> {
                     false
                 }
             }
-            (KeyCode::Enter, _) => {
+            (KeyCode::Enter, _) if self.modal.is_none() => {
                 if let Some(info_view_data) = &mut self.view_state.info_view_data {
                     if let Some(offset_object) = info_view_data.lines.cur().offset_object {
                         let inner = offset_object.get_inner(&self.buffer).unwrap();
@@ -353,7 +353,7 @@ impl<'a> Inspector<'a> {
                 }
                 true
             }
-            (KeyCode::Esc, _) => {
+            (KeyCode::Esc, _) if self.modal.is_none() => {
                 if let Some(view_state) = self.view_stack.pop() {
                     self.view_state = view_state;
                     true
@@ -362,7 +362,7 @@ impl<'a> Inspector<'a> {
                     false
                 }
             }
-            (KeyCode::Backspace, _) => {
+            (KeyCode::Backspace, _) if self.modal.is_none() => {
                 if let Some(view_state) = self.view_stack.pop() {
                     self.view_state = view_state;
                     true
@@ -431,9 +431,15 @@ impl<'a> Inspector<'a> {
 
     fn object_view_key(&mut self, key: KeyEvent) -> bool {
         if let Some(info_view_data) = &mut self.view_state.info_view_data {
+            let line_step = 5;
+            let last_index = info_view_data.lines.len() - 1;
             let line = match key.code {
                 KeyCode::Up => info_view_data.lines.index().saturating_sub(1),
+                KeyCode::PageUp => info_view_data.lines.index().saturating_sub(line_step),
                 KeyCode::Down => info_view_data.lines.index() + 1,
+                KeyCode::PageDown => last_index.min(info_view_data.lines.index() + line_step),
+                KeyCode::Home => 0,
+                KeyCode::End => last_index,
                 _ => return false,
             };
             self.view_state
@@ -445,12 +451,22 @@ impl<'a> Inspector<'a> {
     fn modal_view_key(&mut self, key: KeyEvent, mut modal_state: ModalState) -> Option<ModalState> {
         match &mut modal_state {
             ModalState::GoToByte { input } => match key.code {
-                KeyCode::Char(c @ '0'..='9') => {
-                    input.push(c);
+                KeyCode::Char(c @ '0'..='9')
+                | KeyCode::Char(c @ 'a'..='f')
+                | KeyCode::Char(c @ 'A'..='F') => {
+                    input.push(c.to_ascii_lowercase());
                 }
                 KeyCode::Enter => {
                     let addr = usize::from_str_radix(&input, 16).unwrap();
+                    self.view_stack.push(self.view_state.clone());
                     self.update_byte_pos(addr);
+                    self.active_window = ActiveWindow::HexView;
+                    return None;
+                }
+                KeyCode::Backspace => {
+                    input.pop();
+                }
+                KeyCode::Esc => {
                     return None;
                 }
                 _ => (),

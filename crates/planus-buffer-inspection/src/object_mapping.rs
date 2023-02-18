@@ -45,7 +45,7 @@ impl<'a> InspectableFlatbuffer<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Interpretation {
     pub root_object_index: ObjectIndex,
     pub lines: Vec<LineIndex>,
@@ -61,7 +61,7 @@ pub struct LineTree<'a> {
     children: Vec<LineTree<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Line<'a> {
     pub start_line_index: LineIndex,
     pub line: String,
