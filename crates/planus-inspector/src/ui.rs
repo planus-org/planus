@@ -51,6 +51,13 @@ const DEFAULT_STYLE: Style = Style {
     sub_modifier: Modifier::empty(),
 };
 
+const EMPTY_STYLE: Style = Style {
+    fg: None,
+    bg: None,
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
+
 const ACTIVE_STYLE: Style = Style {
     fg: Some(WHITE),
     bg: None,
@@ -91,7 +98,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
         Paragraph::new("Info!").block(block(false, " Info view ")),
         info_area,
     );
-    f.render_widget(Paragraph::new("wut"), hotkey_area);
+    f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
         #[allow(irrefutable_let_patterns)] // Remove when second modal gets added
@@ -185,12 +192,12 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
                     ),
                     ADDRESS_STYLE,
                 ),
-                Span::styled("  ", Style::default()),
+                Span::styled("  ", EMPTY_STYLE),
             ];
             for (col_no, b) in chunk.iter().enumerate() {
                 let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
 
-                let mut style = Style::default();
+                let mut style = EMPTY_STYLE;
 
                 if is_active && pos == inspector.view_state.byte_index {
                     style = style.patch(CURSOR_STYLE);
@@ -209,7 +216,7 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
                 line.push(Span::styled(format!("{b:02x}"), style));
                 if col_no + 1 < chunk.len() {
                     let style = match (ranges.best_match(pos), ranges.best_match(pos + 1)) {
-                        (None, _) | (_, None) => Style::default(),
+                        (None, _) | (_, None) => EMPTY_STYLE,
                         (Some(RangeMatch::Outer), Some(_)) | (Some(_), Some(RangeMatch::Outer)) => {
                             OUTER_AREA_STYLE
                         }
