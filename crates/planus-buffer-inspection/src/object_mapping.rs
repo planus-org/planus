@@ -64,6 +64,7 @@ pub struct LineTree<'a> {
 #[derive(Clone, Debug)]
 pub struct Line<'a> {
     pub start_line_index: LineIndex,
+    pub end_line_index: LineIndex,
     pub line: String,
     pub offset_object: Option<OffsetObject<'a>>,
     pub start: ByteIndex,
@@ -134,6 +135,7 @@ impl<'a> LineTree<'a> {
         out.push(Line {
             line,
             start_line_index: self.start_line_index,
+            end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
             offset_object,
             start: self.range.0,
             end: self.range.1,
@@ -147,6 +149,7 @@ impl<'a> LineTree<'a> {
             debug_assert_eq!(out.len(), end_line);
             out.push(Line {
                 start_line_index: self.start_line_index,
+                end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
                 line: format!(
                     "{indentation:>indentation_count$}}}",
                     indentation = "",
