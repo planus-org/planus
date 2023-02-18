@@ -462,6 +462,15 @@ impl<'a> Inspector<'a> {
             let cur_index = info_view_data.lines.index();
             let last_index = info_view_data.lines.len() - 1;
             let line = match key.code {
+                KeyCode::Left => info_view_data.lines.cur().parent_line_index,
+                KeyCode::Right => {
+                    let cur = info_view_data.lines.cur();
+                    if cur.start_line_index != cur.end_line_index {
+                        cur.start_line_index + 1
+                    } else {
+                        return false;
+                    }
+                }
                 KeyCode::Up if ctrl => {
                     let start_line_index = info_view_data.lines.cur().start_line_index;
                     if start_line_index != cur_index {
