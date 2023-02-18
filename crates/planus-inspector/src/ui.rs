@@ -9,9 +9,16 @@ use tui::{
 
 use crate::{Inspector, ModalState, RangeMatch};
 
+const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
+const DARK_GREEN: Color = Color::Rgb(100, 88, 55);
+const DARK_MAGENTA: Color = Color::Rgb(114, 77, 106);
+const WHITE: Color = Color::Rgb(241, 242, 216);
+const GREY: Color = Color::Rgb(145, 145, 133);
+const BLACK: Color = Color::Rgb(0, 0, 0);
+
 const CURSOR_STYLE: Style = Style {
     fg: Some(WHITE),
-    bg: Some(DARK_MAGENTA),
+    bg: None,
     add_modifier: Modifier::UNDERLINED,
     sub_modifier: Modifier::DIM,
 };
@@ -50,13 +57,6 @@ const ACTIVE_STYLE: Style = Style {
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
 };
-
-const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
-const DARK_GREEN: Color = Color::Rgb(100, 88, 55);
-const DARK_MAGENTA: Color = Color::Rgb(114, 77, 106);
-const WHITE: Color = Color::Rgb(241, 242, 216);
-const GREY: Color = Color::Rgb(145, 145, 133);
-const BLACK: Color = Color::Rgb(0, 0, 0);
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
@@ -176,14 +176,17 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
             .take(inner_area.height as usize)
             .enumerate()
         {
-            let mut line = vec![Span::styled(
-                format!(
-                    "{:0width$x}  ",
-                    (first_line + line_no) * inspector.hex_view_state.line_size,
-                    width = max_offset_hex_digits
+            let mut line = vec![
+                Span::styled(
+                    format!(
+                        "{:0width$x}",
+                        (first_line + line_no) * inspector.hex_view_state.line_size,
+                        width = max_offset_hex_digits
+                    ),
+                    ADDRESS_STYLE,
                 ),
-                ADDRESS_STYLE,
-            )];
+                Span::styled("  ", Style::default()),
+            ];
             for (col_no, b) in chunk.iter().enumerate() {
                 let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
 
