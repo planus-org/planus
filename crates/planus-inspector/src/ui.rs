@@ -9,12 +9,58 @@ use tui::{
 
 use crate::{Inspector, ModalState, RangeMatch};
 
-const INNER_AREA_COLOR: Color = Color::Rgb(82, 44, 74);
-const OUTER_AREA_COLOR: Color = Color::Rgb(50, 65, 92);
-const ADDRESS_COLOR: Color = Color::Rgb(96, 50, 38);
+const CURSOR_STYLE: Style = Style {
+    fg: Some(WHITE),
+    bg: Some(DARK_MAGENTA),
+    add_modifier: Modifier::UNDERLINED,
+    sub_modifier: Modifier::DIM,
+};
+
+const INNER_AREA_STYLE: Style = Style {
+    fg: Some(WHITE),
+    bg: Some(DARK_MAGENTA),
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
+
+const OUTER_AREA_STYLE: Style = Style {
+    fg: Some(WHITE),
+    bg: Some(DARK_BLUE),
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
+
+const ADDRESS_STYLE: Style = Style {
+    fg: Some(DARK_GREEN),
+    bg: None,
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
+
+const DEFAULT_STYLE: Style = Style {
+    fg: Some(GREY),
+    bg: Some(BLACK),
+    add_modifier: Modifier::DIM,
+    sub_modifier: Modifier::empty(),
+};
+
+const ACTIVE_STYLE: Style = Style {
+    fg: Some(WHITE),
+    bg: None,
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
+
+const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
+const DARK_GREEN: Color = Color::Rgb(100, 88, 55);
+const DARK_MAGENTA: Color = Color::Rgb(114, 77, 106);
+const WHITE: Color = Color::Rgb(241, 242, 216);
+const GREY: Color = Color::Rgb(145, 145, 133);
+const BLACK: Color = Color::Rgb(0, 0, 0);
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     use Constraint::*;
+
     let areas = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Length(f.size().height.saturating_sub(1)), Min(0)].as_ref())
@@ -67,8 +113,8 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
         ModalState::GoToByte { input } => {
             let text = vec![
                 Spans::from(vec![
-                    Span::styled("0x", Style::default().fg(Color::DarkGray)),
-                    Span::styled(input, Style::default()),
+                    Span::styled("0x", DEFAULT_STYLE),
+                    Span::styled(input, ACTIVE_STYLE),
                 ]),
                 Spans::default(),
             ];
@@ -122,8 +168,6 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
         first_line = first_line.min((total_lines + 1).saturating_sub(inner_area.height as usize));
         inspector.hex_view_state.line_pos = first_line * inspector.hex_view_state.line_size;
 
-        let text_style = Style::default();
-
         for (line_no, chunk) in inspector
             .buffer
             .buffer
@@ -138,32 +182,35 @@ pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspec
                     (first_line + line_no) * inspector.hex_view_state.line_size,
                     width = max_offset_hex_digits
                 ),
-                text_style.fg(ADDRESS_COLOR),
+                ADDRESS_STYLE,
             )];
             for (col_no, b) in chunk.iter().enumerate() {
                 let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
-                let style = if is_active && pos == inspector.view_state.byte_index {
-                    text_style.add_modifier(Modifier::UNDERLINED)
-                } else {
-                    text_style.add_modifier(Modifier::DIM)
-                };
 
-                let style = match ranges.best_match(pos) {
-                    None => style.bg(Color::Black),
-                    Some(RangeMatch::Outer) => style.bg(OUTER_AREA_COLOR),
-                    Some(RangeMatch::Inner) => style.bg(INNER_AREA_COLOR),
-                };
+                let mut style = Style::default();
+
+                if is_active && pos == inspector.view_state.byte_index {
+                    style = style.patch(CURSOR_STYLE);
+                }
+
+                match ranges.best_match(pos) {
+                    Some(RangeMatch::Outer) => {
+                        style = style.patch(OUTER_AREA_STYLE);
+                    }
+                    Some(RangeMatch::Inner) => {
+                        style = style.patch(INNER_AREA_STYLE);
+                    }
+                    None => (),
+                }
 
                 line.push(Span::styled(format!("{b:02x}"), style));
                 if col_no + 1 < chunk.len() {
                     let style = match (ranges.best_match(pos), ranges.best_match(pos + 1)) {
-                        (None, _) | (_, None) => text_style.bg(Color::Black),
+                        (None, _) | (_, None) => Style::default(),
                         (Some(RangeMatch::Outer), Some(_)) | (Some(_), Some(RangeMatch::Outer)) => {
-                            text_style.bg(OUTER_AREA_COLOR)
+                            OUTER_AREA_STYLE
                         }
-                        (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => {
-                            text_style.bg(INNER_AREA_COLOR)
-                        }
+                        (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => INNER_AREA_STYLE,
                     };
                     if col_no % 8 != 7 {
                         line.push(Span::styled(" ", style));
@@ -195,9 +242,9 @@ fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspect
             .skip(info_view_data.lines.index().saturating_sub(1))
         {
             let style = if i == info_view_data.lines.index() {
-                Style::default().add_modifier(Modifier::BOLD)
+                ACTIVE_STYLE
             } else {
-                Style::default().add_modifier(Modifier::DIM)
+                DEFAULT_STYLE
             };
             text.push(Spans::from(Span::styled(line.line.clone(), style)));
         }
@@ -212,11 +259,12 @@ fn block(is_active: bool, title: &'static str) -> Block<'static> {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .title_alignment(Alignment::Center)
-        .title(title);
+        .title(title)
+        .style(DEFAULT_STYLE);
     if is_active {
-        res.border_style(Style::default().fg(Color::White))
+        res.border_style(ACTIVE_STYLE)
     } else {
-        res.border_style(Style::default().fg(Color::DarkGray))
+        res.border_style(DEFAULT_STYLE)
     }
 }
 
