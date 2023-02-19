@@ -1,3 +1,4 @@
+use planus_buffer_inspection::InspectableFlatbuffer;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -7,7 +8,7 @@ use tui::{
     Frame,
 };
 
-use crate::{Inspector, ModalState, RangeMatch};
+use crate::{ActiveWindow, HexViewState, Inspector, ModalState, RangeMatch, ViewState};
 
 const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
 const DARK_GREEN: Color = Color::Rgb(100, 88, 55);
@@ -92,8 +93,18 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
     let object_area = areas[0];
     let info_area = areas[1];
 
-    object_view(f, object_area, inspector);
-    hex_view(f, hex_area, inspector);
+    inspector.view_state.object_view(
+        f,
+        object_area,
+        matches!(inspector.active_window, ActiveWindow::ObjectView) && inspector.modal.is_none(),
+    );
+    inspector.view_state.hex_view(
+        f,
+        hex_area,
+        matches!(inspector.active_window, ActiveWindow::HexView) && inspector.modal.is_none(),
+        &inspector.buffer,
+        &mut inspector.hex_view_state,
+    );
     f.render_widget(
         Paragraph::new("Info!").block(block(false, " Info view ")),
         info_area,
@@ -145,130 +156,134 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
     f.render_widget(paragraph, area);
 }
 
-pub fn hex_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let is_active = matches!(inspector.active_window, crate::ActiveWindow::HexView)
-        && inspector.modal.is_none();
-    let block = block(is_active, " Hex view ");
-    let inner_area = block.inner(area);
+impl<'a> ViewState<'a> {
+    pub fn hex_view<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        area: Rect,
+        is_active: bool,
+        buffer: &InspectableFlatbuffer<'a>,
+        hex_view_state: &mut HexViewState,
+    ) {
+        let block = block(is_active, " Hex view ");
+        let inner_area = block.inner(area);
 
-    let ranges = inspector.view_state.hex_ranges();
+        let ranges = self.hex_ranges();
 
-    let max_offset = inspector.buffer.buffer.len().max(1) as u64;
-    let max_offset_ilog2 = 63 - max_offset.leading_zeros();
-    let max_offset_hex_digits = max_offset_ilog2 / 4 + 1;
-    let max_offset_hex_digits = (max_offset_hex_digits + (max_offset_hex_digits & 1)) as usize;
+        let max_offset = buffer.buffer.len().max(1) as u64;
+        let max_offset_ilog2 = 63 - max_offset.leading_zeros();
+        let max_offset_hex_digits = max_offset_ilog2 / 4 + 1;
+        let max_offset_hex_digits = (max_offset_hex_digits + (max_offset_hex_digits & 1)) as usize;
 
-    let remaining_width = inner_area.width as usize - max_offset_hex_digits - 2;
-    let eight_groups = (remaining_width + 1) / 25;
-    inspector.hex_view_state.line_size = eight_groups * 8;
+        let remaining_width = inner_area.width as usize - max_offset_hex_digits - 2;
+        let eight_groups = (remaining_width + 1) / 25;
+        hex_view_state.line_size = eight_groups * 8;
 
-    let mut view = Vec::new();
-    if inner_area.height != 0 && inspector.hex_view_state.line_size != 0 {
-        let cursor_line = inspector.view_state.byte_index / inspector.hex_view_state.line_size;
-        let mut first_line = inspector.hex_view_state.line_pos / inspector.hex_view_state.line_size;
-        let total_lines = inspector.buffer.buffer.len() / inspector.hex_view_state.line_size;
+        let mut view = Vec::new();
+        if inner_area.height != 0 && hex_view_state.line_size != 0 {
+            let cursor_line = self.byte_index / hex_view_state.line_size;
+            let mut first_line = hex_view_state.line_pos / hex_view_state.line_size;
+            let total_lines = buffer.buffer.len() / hex_view_state.line_size;
 
-        if inner_area.height <= 4 {
-            first_line = first_line.clamp(
-                (cursor_line + 1).saturating_sub(inner_area.height as usize),
-                cursor_line,
-            );
-        } else {
-            first_line = first_line.clamp(
-                (cursor_line + 2).saturating_sub(inner_area.height as usize),
-                cursor_line.saturating_sub(1),
-            );
-        }
-        first_line = first_line.min((total_lines + 1).saturating_sub(inner_area.height as usize));
-        inspector.hex_view_state.line_pos = first_line * inspector.hex_view_state.line_size;
-
-        for (line_no, chunk) in inspector
-            .buffer
-            .buffer
-            .chunks(inspector.hex_view_state.line_size)
-            .skip(first_line)
-            .take(inner_area.height as usize)
-            .enumerate()
-        {
-            let mut line = vec![
-                Span::styled(
-                    format!(
-                        "{:0width$x}",
-                        (first_line + line_no) * inspector.hex_view_state.line_size,
-                        width = max_offset_hex_digits
-                    ),
-                    ADDRESS_STYLE,
-                ),
-                Span::styled("  ", EMPTY_STYLE),
-            ];
-            for (col_no, b) in chunk.iter().enumerate() {
-                let pos = (line_no + first_line) * inspector.hex_view_state.line_size + col_no;
-
-                let mut style = EMPTY_STYLE;
-
-                if is_active && pos == inspector.view_state.byte_index {
-                    style = style.patch(CURSOR_STYLE);
-                }
-
-                match ranges.best_match(pos) {
-                    Some(RangeMatch::Outer) => {
-                        style = style.patch(OUTER_AREA_STYLE);
-                    }
-                    Some(RangeMatch::Inner) => {
-                        style = style.patch(INNER_AREA_STYLE);
-                    }
-                    None => (),
-                }
-
-                line.push(Span::styled(format!("{b:02x}"), style));
-                if col_no + 1 < chunk.len() {
-                    let style = match (ranges.best_match(pos), ranges.best_match(pos + 1)) {
-                        (None, _) | (_, None) => EMPTY_STYLE,
-                        (Some(RangeMatch::Outer), Some(_)) | (Some(_), Some(RangeMatch::Outer)) => {
-                            OUTER_AREA_STYLE
-                        }
-                        (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => INNER_AREA_STYLE,
-                    };
-                    if col_no % 8 != 7 {
-                        line.push(Span::styled(" ", style));
-                    } else {
-                        line.push(Span::styled("  ", style));
-                    }
-                }
-            }
-            view.push(Spans::from(line));
-        }
-    }
-
-    let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
-}
-
-fn object_view<B: Backend>(f: &mut Frame<B>, area: Rect, inspector: &mut Inspector) {
-    let is_active = matches!(inspector.active_window, crate::ActiveWindow::ObjectView)
-        && inspector.modal.is_none();
-    let block = block(is_active, " Object view ");
-
-    let mut text = Vec::new();
-
-    if let Some(info_view_data) = &mut inspector.view_state.info_view_data {
-        for (i, line) in info_view_data
-            .lines
-            .iter()
-            .enumerate()
-            .skip(info_view_data.lines.index().saturating_sub(1))
-        {
-            let style = if i == info_view_data.lines.index() {
-                ACTIVE_STYLE
+            if inner_area.height <= 4 {
+                first_line = first_line.clamp(
+                    (cursor_line + 1).saturating_sub(inner_area.height as usize),
+                    cursor_line,
+                );
             } else {
-                DEFAULT_STYLE
-            };
-            text.push(Spans::from(Span::styled(line.line.clone(), style)));
+                first_line = first_line.clamp(
+                    (cursor_line + 2).saturating_sub(inner_area.height as usize),
+                    cursor_line.saturating_sub(1),
+                );
+            }
+            first_line =
+                first_line.min((total_lines + 1).saturating_sub(inner_area.height as usize));
+            hex_view_state.line_pos = first_line * hex_view_state.line_size;
+
+            for (line_no, chunk) in buffer
+                .buffer
+                .chunks(hex_view_state.line_size)
+                .skip(first_line)
+                .take(inner_area.height as usize)
+                .enumerate()
+            {
+                let mut line = vec![
+                    Span::styled(
+                        format!(
+                            "{:0width$x}",
+                            (first_line + line_no) * hex_view_state.line_size,
+                            width = max_offset_hex_digits
+                        ),
+                        ADDRESS_STYLE,
+                    ),
+                    Span::styled("  ", EMPTY_STYLE),
+                ];
+                for (col_no, b) in chunk.iter().enumerate() {
+                    let pos = (line_no + first_line) * hex_view_state.line_size + col_no;
+
+                    let mut style = EMPTY_STYLE;
+
+                    if is_active && pos == self.byte_index {
+                        style = style.patch(CURSOR_STYLE);
+                    }
+
+                    match ranges.best_match(pos) {
+                        Some(RangeMatch::Outer) => {
+                            style = style.patch(OUTER_AREA_STYLE);
+                        }
+                        Some(RangeMatch::Inner) => {
+                            style = style.patch(INNER_AREA_STYLE);
+                        }
+                        None => (),
+                    }
+
+                    line.push(Span::styled(format!("{b:02x}"), style));
+                    if col_no + 1 < chunk.len() {
+                        let style = match (ranges.best_match(pos), ranges.best_match(pos + 1)) {
+                            (None, _) | (_, None) => EMPTY_STYLE,
+                            (Some(RangeMatch::Outer), Some(_))
+                            | (Some(_), Some(RangeMatch::Outer)) => OUTER_AREA_STYLE,
+                            (Some(RangeMatch::Inner), Some(RangeMatch::Inner)) => INNER_AREA_STYLE,
+                        };
+                        if col_no % 8 != 7 {
+                            line.push(Span::styled(" ", style));
+                        } else {
+                            line.push(Span::styled("  ", style));
+                        }
+                    }
+                }
+                view.push(Spans::from(line));
+            }
         }
+
+        let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
+        f.render_widget(paragraph, area);
     }
 
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
-    f.render_widget(paragraph, area);
+    fn object_view<B: Backend>(&self, f: &mut Frame<B>, area: Rect, is_active: bool) {
+        let block = block(is_active, " Object view ");
+
+        let mut text = Vec::new();
+
+        if let Some(info_view_data) = &self.info_view_data {
+            for (i, line) in info_view_data
+                .lines
+                .iter()
+                .enumerate()
+                .skip(info_view_data.lines.index().saturating_sub(1))
+            {
+                let style = if i == info_view_data.lines.index() {
+                    ACTIVE_STYLE
+                } else {
+                    DEFAULT_STYLE
+                };
+                text.push(Spans::from(Span::styled(line.line.clone(), style)));
+            }
+        }
+
+        let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
+        f.render_widget(paragraph, area);
+    }
 }
 
 fn block(is_active: bool, title: &'static str) -> Block<'static> {
