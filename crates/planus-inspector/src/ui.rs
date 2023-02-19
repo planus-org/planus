@@ -67,49 +67,13 @@ const ACTIVE_STYLE: Style = Style {
 };
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
-    use Constraint::*;
-
-    let areas = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Length(f.size().height.saturating_sub(1)), Min(0)].as_ref())
-        .split(f.size());
-
-    let main_area = areas[0];
-    let hotkey_area = areas[1];
-
-    let areas = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Percentage(60), Percentage(40)].as_ref())
-        .split(main_area);
-
-    let top_area = areas[0];
-    let hex_area = areas[1];
-
-    let areas = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Length(top_area.width.saturating_sub(20)), Min(0)].as_ref())
-        .split(top_area);
-
-    let object_area = areas[0];
-    let info_area = areas[1];
-
-    inspector.view_state.object_view(
+    inspector.view_state.draw_main_ui(
         f,
-        object_area,
-        matches!(inspector.active_window, ActiveWindow::ObjectView) && inspector.modal.is_none(),
-    );
-    inspector.view_state.hex_view(
-        f,
-        hex_area,
-        matches!(inspector.active_window, ActiveWindow::HexView) && inspector.modal.is_none(),
+        inspector.active_window,
+        inspector.modal.is_some(),
         &inspector.buffer,
         &mut inspector.hex_view_state,
     );
-    f.render_widget(
-        Paragraph::new("Info!").block(block(false, " Info view ")),
-        info_area,
-    );
-    f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
 
     if let Some(modal_state) = inspector.modal.as_ref() {
         let modal_area = if let ModalState::GoToByte { .. } = modal_state {
@@ -157,6 +121,59 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
 }
 
 impl<'a> ViewState<'a> {
+    fn draw_main_ui<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        active_window: ActiveWindow,
+        modal_is_active: bool,
+        buffer: &InspectableFlatbuffer<'a>,
+        hex_view_state: &mut HexViewState,
+    ) {
+        use Constraint::*;
+
+        let areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Length(f.size().height.saturating_sub(1)), Min(0)].as_ref())
+            .split(f.size());
+
+        let main_area = areas[0];
+        let hotkey_area = areas[1];
+
+        let areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Percentage(60), Percentage(40)].as_ref())
+            .split(main_area);
+
+        let top_area = areas[0];
+        let hex_area = areas[1];
+
+        let areas = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Length(top_area.width.saturating_sub(20)), Min(0)].as_ref())
+            .split(top_area);
+
+        let object_area = areas[0];
+        let info_area = areas[1];
+
+        self.object_view(
+            f,
+            object_area,
+            matches!(active_window, ActiveWindow::ObjectView) && !modal_is_active,
+        );
+        self.hex_view(
+            f,
+            hex_area,
+            matches!(active_window, ActiveWindow::HexView) && !modal_is_active,
+            buffer,
+            hex_view_state,
+        );
+        f.render_widget(
+            Paragraph::new("Info!").block(block(false, " Info view ")),
+            info_area,
+        );
+        f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
+    }
+
     pub fn hex_view<B: Backend>(
         &self,
         f: &mut Frame<B>,
