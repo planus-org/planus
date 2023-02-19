@@ -146,6 +146,15 @@ fn modal_view<B: Backend>(
             let block = block(true, " History ");
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
+        ModalState::HelpMenu => {
+            let text = vec![
+                Spans::from(Span::styled("Hotkeys", DEFAULT_STYLE)),
+                Spans::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
+            ];
+
+            let block = block(true, " Help ");
+            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+        }
     };
     f.render_widget(paragraph, area);
 }
@@ -167,7 +176,7 @@ impl<'a> ViewState<'a> {
             .split(f.size());
 
         let main_area = areas[0];
-        let hotkey_area = areas[1];
+        let legend_area = areas[1];
 
         let areas = Layout::default()
             .direction(Direction::Vertical)
@@ -202,7 +211,7 @@ impl<'a> ViewState<'a> {
             Paragraph::new("Info!").block(block(false, " Info view ")),
             info_area,
         );
-        f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
+        self.draw_legend_view(f, legend_area, active_window);
     }
 
     pub fn draw_hex_view<B: Backend>(
@@ -345,6 +354,24 @@ impl<'a> ViewState<'a> {
         }
 
         Paragraph::new(text).wrap(Wrap { trim: false })
+    }
+
+    fn legend_view(&self, active_window: ActiveWindow) -> Paragraph {
+        let text = match active_window {
+            ActiveWindow::ObjectView => "up/down: move cursor  ?: help menu",
+            ActiveWindow::HexView => "arrow keys: move cursor",
+        };
+        Paragraph::new(Spans::from(Span::styled(text, DEFAULT_STYLE)))
+    }
+
+    fn draw_legend_view<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        area: Rect,
+        active_window: ActiveWindow,
+    ) {
+        let paragraph = self.legend_view(active_window);
+        f.render_widget(paragraph, area);
     }
 }
 

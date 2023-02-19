@@ -30,6 +30,7 @@ pub enum ModalState {
     GoToByte { input: String },
     XRefs { xrefs: VecWithIndex<String> },
     ViewHistory { index: usize },
+    HelpMenu,
 }
 
 pub struct Inspector<'a> {
@@ -321,27 +322,23 @@ impl<'a> Inspector<'a> {
                 }
             },
             KeyCode::Char('g') => {
-                self.modal = Some(ModalState::GoToByte {
+                self.toggle_modal(ModalState::GoToByte {
                     input: String::new(),
                 });
                 true
             }
             KeyCode::Char('x') => {
-                if self.modal.is_none() {
-                    self.modal = Some(ModalState::XRefs {
-                        xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
-                    });
-                } else {
-                    self.modal = None;
-                }
+                self.toggle_modal(ModalState::XRefs {
+                    xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
+                });
                 true
             }
             KeyCode::Char('h') => {
-                if self.modal.is_none() {
-                    self.modal = Some(ModalState::ViewHistory { index: 0 });
-                } else {
-                    self.modal = None;
-                }
+                self.toggle_modal(ModalState::ViewHistory { index: 0 });
+                true
+            }
+            KeyCode::Char('?') => {
+                self.toggle_modal(ModalState::HelpMenu);
                 true
             }
             KeyCode::Char('q') => {
@@ -559,9 +556,20 @@ impl<'a> Inspector<'a> {
                 }
                 _ => (),
             },
+            ModalState::HelpMenu => (),
         }
 
         Some(modal_state)
+    }
+
+    fn toggle_modal(&mut self, modal: ModalState) {
+        if self.modal.as_ref().map(|m| std::mem::discriminant(m))
+            == Some(std::mem::discriminant(&modal))
+        {
+            self.modal = None;
+        } else {
+            self.modal = Some(modal);
+        }
     }
 
     fn update_byte_pos(&mut self, current_byte: usize) -> bool {
