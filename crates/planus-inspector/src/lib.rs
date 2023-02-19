@@ -31,6 +31,7 @@ pub enum ModalState {
     XRefs { xrefs: VecWithIndex<String> },
     ViewHistory { index: usize },
     HelpMenu,
+    Interpretations { index: usize },
 }
 
 pub struct Inspector<'a> {
@@ -337,6 +338,10 @@ impl<'a> Inspector<'a> {
                 self.toggle_modal(ModalState::ViewHistory { index: 0 });
                 true
             }
+            KeyCode::Char('i') => {
+                self.toggle_modal(ModalState::Interpretations { index: 0 });
+                true
+            }
             KeyCode::Char('?') => {
                 self.toggle_modal(ModalState::HelpMenu);
                 true
@@ -551,6 +556,25 @@ impl<'a> Inspector<'a> {
                     if !self.view_stack.is_empty() {
                         self.view_stack.truncate(*index + 1);
                         self.view_state = self.view_stack.pop().unwrap();
+                        return None;
+                    }
+                }
+                _ => (),
+            },
+            ModalState::Interpretations { index } => match key.code {
+                KeyCode::Up => {
+                    *index = index.saturating_sub(1);
+                }
+                KeyCode::Down => {
+                    *index = index.saturating_add(1);
+                }
+                KeyCode::Enter => {
+                    if let Some(info_view_data) = self.view_state.info_view_data.as_mut() {
+                        info_view_data.set_interpretation_index(
+                            &self.object_mapping,
+                            &self.buffer,
+                            *index,
+                        );
                         return None;
                     }
                 }

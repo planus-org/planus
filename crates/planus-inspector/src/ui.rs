@@ -126,8 +126,8 @@ fn modal_view<B: Backend>(
 
             for (line_no, view) in inspector.view_stack.iter().enumerate() {
                 let byte_index = view.byte_index;
-                let line = if let Some(info) = &view.info_view_data {
-                    &info.lines.cur().line
+                let name = if let Some(info) = &view.info_view_data {
+                    &info.lines.cur().name
                 } else {
                     "no object"
                 };
@@ -138,12 +138,36 @@ fn modal_view<B: Backend>(
                     DEFAULT_STYLE
                 };
                 text.push(Spans::from(Span::styled(
-                    format!("{line_no:02} 0x{byte_index:0>8x} {line}"),
+                    format!("{line_no:02} 0x{byte_index:0>8x} {name}"),
                     style,
                 )));
             }
 
             let block = block(true, " History ");
+            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+        }
+        ModalState::Interpretations { index } => {
+            let mut text = Vec::new();
+
+            if let Some(info) = &inspector.view_state.info_view_data {
+                for (line_no, interpretation) in info.interpretations.iter().enumerate() {
+                    let line_index = interpretation.lines[0];
+                    let line = info.lines.get(line_index).unwrap();
+                    let name = &line.name;
+
+                    let style = if *index == line_no {
+                        CURSOR_STYLE
+                    } else {
+                        DEFAULT_STYLE
+                    };
+                    text.push(Spans::from(Span::styled(
+                        format!("{line_no:2} {name}"),
+                        style,
+                    )));
+                }
+            }
+
+            let block = block(true, " Interpretations ");
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
         ModalState::HelpMenu => {

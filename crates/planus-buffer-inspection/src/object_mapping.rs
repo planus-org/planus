@@ -66,6 +66,7 @@ pub struct Line<'a> {
     pub start_line_index: LineIndex,
     pub end_line_index: LineIndex,
     pub parent_line_index: LineIndex,
+    pub name: String,
     pub line: String,
     pub offset_object: Option<OffsetObject<'a>>,
     pub start: ByteIndex,
@@ -126,7 +127,9 @@ impl<'a> LineTree<'a> {
             line.push_str(": ");
         }
 
-        line.push_str(&self.object.resolve_name(buffer));
+        let name = self.object.resolve_name(buffer);
+
+        line.push_str(&name);
         line.push_str(&format!(" @ {:x}", self.range.0));
 
         if self.end_line_index.is_some() {
@@ -136,6 +139,7 @@ impl<'a> LineTree<'a> {
         }
         out.push(Line {
             line,
+            name,
             start_line_index: self.start_line_index,
             end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
             parent_line_index,
@@ -151,6 +155,7 @@ impl<'a> LineTree<'a> {
         if let Some(end_line) = self.end_line_index {
             debug_assert_eq!(out.len(), end_line);
             out.push(Line {
+                name: String::new(),
                 start_line_index: self.start_line_index,
                 end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
                 line: format!(
