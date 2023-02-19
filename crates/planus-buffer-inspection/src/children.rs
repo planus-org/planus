@@ -51,6 +51,7 @@ impl<'a> Children<'a> for VTableObject {
         mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
     ) {
         let vtable_size = self.get_vtable_size(buffer).unwrap();
+        let decl = self.resolve_declaration(buffer);
 
         for (i, offset) in (self.offset..self.offset + vtable_size as u32)
             .step_by(2)
@@ -63,7 +64,13 @@ impl<'a> Children<'a> for VTableObject {
             match i {
                 0 => callback(Cow::Borrowed("#vtable_size"), object),
                 1 => callback(Cow::Borrowed("#table_size"), object),
-                n => callback(Cow::Owned((n - 2).to_string()), object),
+                n => {
+                    if let Some((k, _)) = decl.fields.get_index(n - 2) {
+                        callback(Cow::Owned(format!("offset[{k}]")), object)
+                    } else {
+                        callback(Cow::Owned(format!("offset[{}]", n - 2)), object)
+                    }
+                }
             }
         }
     }

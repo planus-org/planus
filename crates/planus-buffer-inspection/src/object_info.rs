@@ -1,5 +1,6 @@
 use planus_types::intermediate::{
-    AbsolutePath, DeclarationIndex, DeclarationKind, Enum, Struct, Table, TypeKind, Union,
+    AbsolutePath, DeclarationIndex, DeclarationKind, Enum, SimpleType, Struct, Table, TypeKind,
+    Union,
 };
 
 use crate::{
@@ -25,15 +26,15 @@ pub trait DeclarationInfo {
 macro_rules! impl_object_name {
     ($typ:ty) => {
         impl<'a> ObjectName<'a> for $typ {
-            fn resolve_name(&self, buffer: &InspectableFlatbuffer<'_>) -> String {
-                format!("{} {}", Self::KIND, self.resolve_path(buffer))
+            fn print_object(&self, buffer: &InspectableFlatbuffer<'_>) -> String {
+                format!("{}", self.resolve_path(buffer).0.last().unwrap())
             }
         }
     };
 }
 
 pub trait ObjectName<'a> {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String;
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String;
 }
 
 impl DeclarationInfo for TableObject {
@@ -131,8 +132,27 @@ impl DeclarationInfo for EnumObject {
     }
 }
 
+impl DeclarationInfo for VTableObject {
+    type Declaration = Table;
+    const KIND: &'static str = "vtable";
+
+    fn declaration_index(&self) -> DeclarationIndex {
+        self.declaration
+    }
+
+    fn resolve_declaration<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> &'a Table {
+        if let DeclarationKind::Table(decl) =
+            &buffer.declarations.get_declaration(self.declaration).1.kind
+        {
+            decl
+        } else {
+            panic!("Inconsistent declarations");
+        }
+    }
+}
+
 impl<'a> ObjectName<'a> for VTableObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         let path = buffer.declarations.get_declaration(self.declaration).0;
         let path = path.0.last().unwrap();
         format!("vtable {path}")
@@ -140,78 +160,66 @@ impl<'a> ObjectName<'a> for VTableObject {
 }
 
 impl<'a> ObjectName<'a> for OffsetObject<'a> {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!(
-            "offset({})",
-            self.get_inner(buffer)
-                .as_ref()
-                .map(|inner| inner.resolve_name(buffer))
-                .as_deref()
-                .unwrap_or("invalid")
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        self.follow_offset(buffer).map_or_else(
+            |_| "invalid offset".to_string(),
+            |inner| inner.print_object(buffer),
         )
     }
 }
 
 impl<'a> ObjectName<'a> for VectorObject<'a> {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        let len = self.len(buffer).map(|n| n.to_string());
-        let len = len.as_deref().unwrap_or("invalid");
-        if let TypeKind::Table(declaration_index) | TypeKind::Union(declaration_index) =
-            self.type_.kind
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        if let TypeKind::Table(declaration_index)
+        | TypeKind::Union(declaration_index)
+        | TypeKind::SimpleType(SimpleType::Enum(declaration_index))
+        | TypeKind::SimpleType(SimpleType::Struct(declaration_index)) = self.type_.kind
         {
             let (path, _) = buffer.declarations.get_declaration(declaration_index);
             let path = path.0.last().unwrap();
-            format!("vector({len}, {path})")
+            format!("[{path}]")
         } else {
-            format!("vector({len}, {:?})", self.type_.kind)
+            format!("[{:?}]", self.type_.kind)
         }
     }
 }
 
 impl<'a> ObjectName<'a> for ArrayObject<'a> {
-    fn resolve_name(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
+    fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
         format!("ARRAY") // TODO
     }
 }
 
 impl<'a> ObjectName<'a> for IntegerObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!(
-            "{}({})",
-            self.type_.flatbuffer_name(),
-            self.read(buffer).unwrap()
-        )
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!("{}", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for FloatObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!(
-            "{}({})",
-            self.type_.flatbuffer_name(),
-            self.read(buffer).unwrap()
-        )
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!("{}", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for BoolObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("bool({})", self.read(buffer).unwrap())
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        format!("{}", self.read(buffer).unwrap())
     }
 }
 
 impl<'a> ObjectName<'a> for StringObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         format!(
-            "string({}, {:?})",
-            self.len(buffer).unwrap(),
-            String::from_utf8_lossy(self.bytes(buffer).unwrap())
+            "{:?} (len={})",
+            String::from_utf8_lossy(self.bytes(buffer).unwrap()),
+            self.len(buffer).unwrap()
         )
     }
 }
 
 impl<'a> ObjectName<'a> for EnumObject {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         let tag = self.tag(buffer).unwrap();
         let (path, decl) = buffer
             .declarations
@@ -220,9 +228,9 @@ impl<'a> ObjectName<'a> for EnumObject {
             let tag = tag.read(buffer).unwrap();
             let path = path.0.last().unwrap();
             if let Some(variant) = e.variants.get(&tag) {
-                format!("enum {path}({tag}, {})", variant.name)
+                format!("{path}::{}", variant.name)
             } else {
-                format!("enum {path}({tag}, ?)")
+                format!("{path}::UnknownTag({tag})")
             }
         } else {
             panic!("Inconsistent declarations");
@@ -236,21 +244,21 @@ impl_object_name!(UnionObject);
 impl_object_name!(UnionTagObject);
 
 impl<'a> ObjectName<'a> for Object<'a> {
-    fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         match self {
-            Object::Offset(obj) => obj.resolve_name(buffer),
-            Object::VTable(obj) => obj.resolve_name(buffer),
-            Object::Table(obj) => obj.resolve_name(buffer),
-            Object::Struct(obj) => obj.resolve_name(buffer),
-            Object::UnionTag(obj) => obj.resolve_name(buffer),
-            Object::Union(obj) => obj.resolve_name(buffer),
-            Object::Enum(obj) => obj.resolve_name(buffer),
-            Object::Vector(obj) => obj.resolve_name(buffer),
-            Object::Array(obj) => obj.resolve_name(buffer),
-            Object::Integer(obj) => obj.resolve_name(buffer),
-            Object::Float(obj) => obj.resolve_name(buffer),
-            Object::Bool(obj) => obj.resolve_name(buffer),
-            Object::String(obj) => obj.resolve_name(buffer),
+            Object::Offset(obj) => obj.print_object(buffer),
+            Object::VTable(obj) => obj.print_object(buffer),
+            Object::Table(obj) => obj.print_object(buffer),
+            Object::Struct(obj) => obj.print_object(buffer),
+            Object::UnionTag(obj) => obj.print_object(buffer),
+            Object::Union(obj) => obj.print_object(buffer),
+            Object::Enum(obj) => obj.print_object(buffer),
+            Object::Vector(obj) => obj.print_object(buffer),
+            Object::Array(obj) => obj.print_object(buffer),
+            Object::Integer(obj) => obj.print_object(buffer),
+            Object::Float(obj) => obj.print_object(buffer),
+            Object::Bool(obj) => obj.print_object(buffer),
+            Object::String(obj) => obj.print_object(buffer),
         }
     }
 }

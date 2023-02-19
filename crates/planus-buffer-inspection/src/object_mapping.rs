@@ -6,7 +6,7 @@ use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 use crate::{
     children::{Byterange, Children},
     object_info::ObjectName,
-    ByteIndex, InspectableFlatbuffer, Object, OffsetObject,
+    ByteIndex, InspectableFlatbuffer, Object, OffsetObject, OffsetObjectKind,
 };
 
 pub type ObjectIndex = usize;
@@ -38,7 +38,7 @@ impl<'a> InspectableFlatbuffer<'a> {
         builder.process_root_object(Object::Offset(root_offset_object), self);
 
         ObjectMapping {
-            root_object: root_offset_object.get_inner(self).unwrap(),
+            root_object: root_offset_object.follow_offset(self).unwrap(),
             root_objects: builder.root_objects,
             root_intervals: rust_lapper::Lapper::new(builder.root_intervals),
         }
@@ -113,22 +113,29 @@ impl<'a> LineTree<'a> {
         debug_assert_eq!(out.len(), self.start_line_index);
 
         let mut line = String::new();
+        let name = self.object.print_object(buffer);
 
-        if let Some(field_name) = &self.field_name {
-            line.push_str(&field_name);
-            line.push_str(": ");
+        if let Object::Offset(OffsetObject {
+            kind: OffsetObjectKind::VTable(_),
+            ..
+        }) = &self.object
+        {
+            line.push_str("#vtable");
+        } else {
+            if let Some(field_name) = &self.field_name {
+                line.push_str(&field_name);
+                line.push_str(": ");
+            }
+
+            line.push_str(&name);
+
+            if self.end_line_index.is_some() {
+                line.push_str(" {");
+            } else if self.object.have_braces() {
+                line.push_str(" {}");
+            }
         }
 
-        let name = self.object.resolve_name(buffer);
-
-        line.push_str(&name);
-        line.push_str(&format!(" @ {:x}", self.range.0));
-
-        if self.end_line_index.is_some() {
-            line.push_str(" {");
-        } else if self.object.have_braces() {
-            line.push_str(" {}");
-        }
         out.push(Line {
             object_width: line.len(),
             line,
@@ -278,7 +285,7 @@ impl<'a> ObjectMappingBuilder<'a> {
         }
 
         if let Object::Offset(offset_object) = current {
-            if let Ok(inner) = offset_object.get_inner(buffer) {
+            if let Ok(inner) = offset_object.follow_offset(buffer) {
                 self.process_root_object(inner, buffer);
             }
         }
@@ -309,7 +316,7 @@ impl<'a> ObjectMappingBuilder<'a> {
         range.1 = range.1.max(crange.1);
 
         if let Object::Offset(offset_object) = current {
-            if let Ok(inner) = offset_object.get_inner(buffer) {
+            if let Ok(inner) = offset_object.follow_offset(buffer) {
                 self.process_root_object(inner, buffer);
             }
         }

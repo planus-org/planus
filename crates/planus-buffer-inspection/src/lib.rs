@@ -189,6 +189,14 @@ impl<'a> Object<'a> {
             Object::String(_) => Cow::Borrowed("string"),
         }
     }
+
+    pub fn follow_offset(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Option<Object<'a>>> {
+        match self {
+            Object::Offset(inner) => inner.follow_offset(buffer).map(Some),
+            Object::Union(inner) => inner.get_variant(buffer).map(Some),
+            _ => Ok(None),
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -237,7 +245,7 @@ pub struct UnionTagObject {
 impl UnionTagObject {
     fn type_name(&self, declarations: &Declarations) -> String {
         format!(
-            "union tag for {}",
+            "union tag {}",
             declarations.get_declaration(self.declaration).0
         )
     }
@@ -312,7 +320,7 @@ impl<'a> OffsetObject<'a> {
         Ok(res)
     }
 
-    pub fn get_inner(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
+    pub fn follow_offset(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
         let offset = self.get_byte_index(buffer)?;
         match self.kind {
             OffsetObjectKind::VTable(declaration) => Ok(Object::VTable(VTableObject {
@@ -330,19 +338,16 @@ impl<'a> OffsetObject<'a> {
 
     fn type_name(&self, declarations: &Declarations) -> Cow<'static, str> {
         match self.kind {
-            OffsetObjectKind::VTable(index) => Cow::Owned(format!(
-                "offset to vtable for {}",
-                declarations.get_declaration(index).0
-            )),
-            OffsetObjectKind::Table(index) => Cow::Owned(format!(
-                "offset to table {}",
-                declarations.get_declaration(index).0
-            )),
-            OffsetObjectKind::Vector(type_) => Cow::Owned(format!(
-                "offset to [{}]",
-                declarations.format_type_kind(&type_.kind)
-            )),
-            OffsetObjectKind::String => Cow::Borrowed("offset to string"),
+            OffsetObjectKind::VTable(index) => {
+                Cow::Owned(format!("&vtable {}", declarations.get_declaration(index).0))
+            }
+            OffsetObjectKind::Table(index) => {
+                Cow::Owned(format!("&table {}", declarations.get_declaration(index).0))
+            }
+            OffsetObjectKind::Vector(type_) => {
+                Cow::Owned(format!("&[{}]", declarations.format_type_kind(&type_.kind)))
+            }
+            OffsetObjectKind::String => Cow::Borrowed("&string"),
         }
     }
 }
@@ -507,7 +512,7 @@ impl UnionObject {
 
     fn type_name(&self, declarations: &Declarations) -> String {
         format!(
-            "union offset for {}",
+            "&union {}",
             declarations.get_declaration(self.declaration).0
         )
     }

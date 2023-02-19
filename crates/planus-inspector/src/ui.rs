@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer};
+use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
 use planus_types::intermediate::Declarations;
 use tui::{
     backend::Backend,
@@ -56,6 +56,13 @@ const ADDRESS_STYLE: Style = Style {
 const DEFAULT_STYLE: Style = Style {
     fg: Some(GREY),
     bg: Some(BLACK),
+    add_modifier: Modifier::DIM,
+    sub_modifier: Modifier::empty(),
+};
+
+const OFFSET_STYLE: Style = Style {
+    fg: Some(GREY),
+    bg: None,
     add_modifier: Modifier::DIM,
     sub_modifier: Modifier::empty(),
 };
@@ -140,7 +147,7 @@ impl<'a> ViewState<'a> {
 
         let areas = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Length(top_area.width.saturating_sub(40)), Min(0)].as_ref())
+            .constraints([Length(top_area.width.saturating_sub(45)), Min(0)].as_ref())
             .split(top_area);
 
         let object_area = areas[0];
@@ -592,29 +599,6 @@ impl<'a> Widget for ObjectViewWidget<'a> {
         }
 
         if let Some(info_view_data) = &self.info_view_data {
-            for (line_index, (i, line)) in info_view_data
-                .lines
-                .iter()
-                .enumerate()
-                .skip(info_view_data.first_line_shown)
-                .enumerate()
-                .take(area.height as usize)
-            {
-                let style = if i == info_view_data.lines.index() && self.is_active {
-                    CURSOR_STYLE
-                } else {
-                    EMPTY_STYLE
-                };
-
-                buf.set_stringn(
-                    area.left() + line.indentation as u16,
-                    area.top() + line_index as u16,
-                    &line.line,
-                    area.width as usize - line.indentation,
-                    style,
-                );
-            }
-
             let selected_line = info_view_data.lines.cur();
             let mut inner_area = area;
 
@@ -640,6 +624,38 @@ impl<'a> Widget for ObjectViewWidget<'a> {
                 as u16;
 
             buf.set_style(inner_area, INNER_AREA_STYLE);
+
+            for (line_index, (i, line)) in info_view_data
+                .lines
+                .iter()
+                .enumerate()
+                .skip(info_view_data.first_line_shown)
+                .enumerate()
+                .take(area.height as usize)
+            {
+                let style = if i == info_view_data.lines.index() && self.is_active {
+                    CURSOR_STYLE
+                } else {
+                    EMPTY_STYLE
+                };
+
+                buf.set_stringn(
+                    area.left() + line.indentation as u16,
+                    area.top() + line_index as u16,
+                    &line.line,
+                    area.width as usize - line.indentation,
+                    style,
+                );
+
+                if matches!(line.object, Object::Offset(_) | Object::Union(_)) {
+                    buf.set_string(
+                        area.left(),
+                        area.top() + line_index as u16,
+                        "*",
+                        OFFSET_STYLE,
+                    );
+                }
+            }
         }
     }
 }
