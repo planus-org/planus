@@ -595,7 +595,7 @@ impl<'a> Inspector<'a> {
                     *index = index.saturating_sub(1);
                 }
                 KeyCode::Down => {
-                    *index = index.saturating_add(1);
+                    *index = index.saturating_add(1).min(self.view_stack.len());
                 }
                 KeyCode::Enter => {
                     if *index < self.view_stack.len() {
@@ -614,7 +614,12 @@ impl<'a> Inspector<'a> {
                     *index = index.saturating_sub(1);
                 }
                 KeyCode::Down => {
-                    *index = index.saturating_add(1);
+                    *index = index.saturating_add(1).min(
+                        self.view_state
+                            .info_view_data
+                            .as_ref()
+                            .map_or(0, |info| info.interpretations.len() - 1),
+                    );
                 }
                 KeyCode::Enter => {
                     if let Some(info_view_data) = self.view_state.info_view_data.as_mut() {

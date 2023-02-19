@@ -92,7 +92,13 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
         } else {
             centered_rect(60, 60, f.size())
         };
-        modal_view(f, modal_area, modal_state, inspector);
+        modal_view(
+            f,
+            modal_area,
+            modal_state,
+            inspector,
+            &inspector.hex_view_state,
+        );
     }
 }
 
@@ -101,6 +107,7 @@ fn modal_view<B: Backend>(
     area: Rect,
     modal_state: &ModalState,
     inspector: &Inspector,
+    hex_view_state: &HexViewState,
 ) {
     f.render_widget(Clear, area);
     let paragraph = match modal_state {
@@ -151,7 +158,10 @@ fn modal_view<B: Backend>(
                     DEFAULT_STYLE
                 };
                 text.push(Spans::from(Span::styled(
-                    format!("{line_no:02} 0x{byte_index:0>8x} {name}"),
+                    format!(
+                        "{byte_index:0width$x} {name}",
+                        width = hex_view_state.max_offset_hex_digits
+                    ),
                     style,
                 )));
             }
