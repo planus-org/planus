@@ -128,6 +128,7 @@ pub struct ViewState<'a> {
 
 #[derive(Clone, Debug)]
 pub struct InfoViewData<'a> {
+    pub first_line_shown: usize,
     pub lines: VecWithIndex<Line<'a>>,
     pub interpretations: VecWithIndex<Interpretation>,
     pub root_object_index: ObjectIndex,
@@ -152,6 +153,7 @@ impl<'a> InfoViewData<'a> {
             interpretations.push(interpretation);
         });
         Self {
+            first_line_shown: 0,
             lines: VecWithIndex::new(
                 object_mapping
                     .line_tree(root_object_index, buffer)
@@ -182,6 +184,7 @@ impl<'a> InfoViewData<'a> {
         let root_object_index = interpretation.root_object_index;
         let line_index = *interpretation.lines.last().unwrap();
         Some(Self {
+            first_line_shown: 0,
             lines: VecWithIndex::new(
                 object_mapping
                     .line_tree(root_object_index, buffer)

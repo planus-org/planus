@@ -2,16 +2,17 @@ use planus_buffer_inspection::InspectableFlatbuffer;
 use planus_types::intermediate::Declarations;
 use tui::{
     backend::Backend,
+    buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Widget, Wrap},
     Frame,
 };
 
 use crate::{
-    vec_with_index::VecWithIndex, ActiveWindow, HexViewState, Inspector, ModalState, RangeMatch,
-    ViewState,
+    vec_with_index::VecWithIndex, ActiveWindow, HexViewState, InfoViewData, Inspector, ModalState,
+    RangeMatch, ViewState,
 };
 
 const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
@@ -118,12 +119,12 @@ fn modal_view<B: Backend>(
         ModalState::GoToByte { input } => {
             let text = vec![
                 Spans::from(vec![
-                    Span::styled("0x", DEFAULT_STYLE),
+                    Span::styled("0x", EMPTY_STYLE),
                     Span::styled(input, ACTIVE_STYLE),
                 ]),
                 Spans::default(),
             ];
-            let block = block(true, " Go to offset ");
+            let block = block(true, " Go to offset ", DEFAULT_STYLE);
             f.set_cursor(
                 // Put cursor past the end of the input text
                 area.x + input.len() as u16 + 3,
@@ -134,10 +135,10 @@ fn modal_view<B: Backend>(
         }
         ModalState::XRefs { .. } => {
             let text = vec![
-                Spans::from(vec![Span::styled("0x", DEFAULT_STYLE)]),
+                Spans::from(vec![Span::styled("0x", EMPTY_STYLE)]),
                 Spans::default(),
             ];
-            let block = block(true, " XRefs ");
+            let block = block(true, " XRefs ", DEFAULT_STYLE);
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
         ModalState::ViewHistory { index } => {
@@ -159,7 +160,7 @@ fn modal_view<B: Backend>(
                 let style = if *index == line_no {
                     CURSOR_STYLE
                 } else {
-                    DEFAULT_STYLE
+                    EMPTY_STYLE
                 };
                 text.push(Spans::from(Span::styled(
                     format!(
@@ -170,7 +171,7 @@ fn modal_view<B: Backend>(
                 )));
             }
 
-            let block = block(true, " History ");
+            let block = block(true, " History ", DEFAULT_STYLE);
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
         ModalState::Interpretations { index } => {
@@ -191,7 +192,7 @@ fn modal_view<B: Backend>(
                     let style = if *index == line_no {
                         CURSOR_STYLE
                     } else {
-                        DEFAULT_STYLE
+                        EMPTY_STYLE
                     };
                     text.push(Spans::from(Span::styled(
                         format!("{line_no:2<} {name}"),
@@ -200,16 +201,16 @@ fn modal_view<B: Backend>(
                 }
             }
 
-            let block = block(true, " Interpretations ");
+            let block = block(true, " Interpretations ", DEFAULT_STYLE);
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
         ModalState::HelpMenu => {
             let text = vec![
-                Spans::from(Span::styled("Hotkeys", DEFAULT_STYLE)),
-                Spans::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
+                Spans::from(Span::styled("Hotkeys", EMPTY_STYLE)),
+                Spans::from(Span::styled("Arrow keys: move cursor", EMPTY_STYLE)),
             ];
 
-            let block = block(true, " Help ");
+            let block = block(true, " Help ", DEFAULT_STYLE);
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
     };
@@ -218,7 +219,7 @@ fn modal_view<B: Backend>(
 
 impl<'a> ViewState<'a> {
     fn draw_main_ui<B: Backend>(
-        &self,
+        &mut self,
         f: &mut Frame<B>,
         active_window: ActiveWindow,
         modal_is_active: bool,
@@ -275,7 +276,7 @@ impl<'a> ViewState<'a> {
         buffer: &InspectableFlatbuffer<'a>,
         hex_view_state: &mut HexViewState,
     ) {
-        let block = block(is_active, " Hex view ");
+        let block = block(is_active, " Hex view ", DEFAULT_STYLE);
         let inner_area = block.inner(area);
 
         hex_view_state.update_for_area(buffer.buffer.len(), self.byte_index, inner_area);
@@ -357,33 +358,26 @@ impl<'a> ViewState<'a> {
         Paragraph::new(view)
     }
 
-    pub fn draw_object_view<B: Backend>(&self, f: &mut Frame<B>, area: Rect, is_active: bool) {
-        let block = block(is_active, " Object view ");
+    pub fn draw_object_view<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect, is_active: bool) {
+        let block = block(is_active, " Object view ", OUTER_AREA_STYLE);
+        let inner_area = block.inner(area);
 
-        let paragraph = self.object_view().block(block);
-        f.render_widget(paragraph, area);
-    }
-
-    fn object_view(&self) -> Paragraph<'_> {
-        let mut text = Vec::new();
-
-        if let Some(info_view_data) = &self.info_view_data {
-            for (i, line) in info_view_data
-                .lines
-                .iter()
-                .enumerate()
-                .skip(info_view_data.lines.index().saturating_sub(1))
-            {
-                let style = if i == info_view_data.lines.index() {
-                    ACTIVE_STYLE
-                } else {
-                    DEFAULT_STYLE
-                };
-                text.push(Spans::from(Span::styled(line.line.as_str(), style)));
+        if let Some(info_view_data) = &mut self.info_view_data {
+            if area.height <= 4 {
+                info_view_data.first_line_shown = info_view_data.first_line_shown.clamp(
+                    (info_view_data.lines.index() + 1).saturating_sub(inner_area.height as usize),
+                    info_view_data.lines.index(),
+                );
+            } else {
+                info_view_data.first_line_shown = info_view_data.first_line_shown.clamp(
+                    (info_view_data.lines.index() + 2).saturating_sub(inner_area.height as usize),
+                    info_view_data.lines.index().saturating_sub(1),
+                );
             }
         }
 
-        Paragraph::new(text).wrap(Wrap { trim: false })
+        let widget = ObjectViewWidget::new(self.info_view_data.as_ref(), is_active).block(block);
+        f.render_widget(widget, area);
     }
 
     fn legend_view(&self, active_window: ActiveWindow) -> Paragraph {
@@ -411,7 +405,7 @@ impl<'a> ViewState<'a> {
         hex_view_state: &HexViewState,
         declarations: &Declarations,
     ) {
-        let block = block(false, " Info view ");
+        let block = block(false, " Info view ", DEFAULT_STYLE);
 
         let paragraph = self.info_view(hex_view_state, declarations).block(block);
         f.render_widget(paragraph, area);
@@ -492,17 +486,21 @@ impl<'a> ViewState<'a> {
     }
 }
 
-fn block(is_active: bool, title: &'static str) -> Block<'static> {
+fn block(is_active: bool, title: &'static str, inner_style: Style) -> Block<'static> {
     let res = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .title_alignment(Alignment::Center)
         .title(title)
-        .style(DEFAULT_STYLE);
+        .style(inner_style);
     if is_active {
         res.border_style(ACTIVE_STYLE)
     } else {
-        res.border_style(DEFAULT_STYLE)
+        let mut style = DEFAULT_STYLE;
+        if let Some(bg) = inner_style.bg {
+            style = style.bg(bg);
+        }
+        res.border_style(style)
     }
 }
 
@@ -530,6 +528,94 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             .as_ref(),
         )
         .split(popup_layout[1])[1]
+}
+
+struct ObjectViewWidget<'a> {
+    info_view_data: Option<&'a InfoViewData<'a>>,
+    block: Option<Block<'a>>,
+    is_active: bool,
+}
+
+impl<'a> ObjectViewWidget<'a> {
+    pub fn new(info_view_data: Option<&'a InfoViewData<'a>>, is_active: bool) -> Self {
+        Self {
+            info_view_data,
+            block: None,
+            is_active,
+        }
+    }
+
+    pub fn block(mut self, block: Block<'a>) -> Self {
+        self.block = Some(block);
+        self
+    }
+}
+
+impl<'a> Widget for ObjectViewWidget<'a> {
+    fn render(mut self, area: Rect, buf: &mut Buffer) {
+        let area = match self.block.take() {
+            Some(b) => {
+                let inner_area = b.inner(area);
+                b.render(area, buf);
+                inner_area
+            }
+            None => area,
+        };
+        if area.height == 0 {
+            return;
+        }
+
+        if let Some(info_view_data) = &self.info_view_data {
+            for (line_index, (i, line)) in info_view_data
+                .lines
+                .iter()
+                .enumerate()
+                .skip(info_view_data.first_line_shown)
+                .enumerate()
+                .take(area.height as usize)
+            {
+                let style = if i == info_view_data.lines.index() && self.is_active {
+                    CURSOR_STYLE
+                } else {
+                    EMPTY_STYLE
+                };
+
+                buf.set_stringn(
+                    area.left() + line.indentation as u16,
+                    area.top() + line_index as u16,
+                    &line.line,
+                    area.width as usize - line.indentation,
+                    style,
+                );
+            }
+
+            let selected_line = info_view_data.lines.cur();
+            let mut inner_area = area;
+
+            inner_area.x += selected_line.indentation as u16;
+            inner_area.width =
+                (inner_area.width as usize).saturating_sub(selected_line.indentation) as u16;
+
+            let first_selected_line = selected_line
+                .start_line_index
+                .max(info_view_data.first_line_shown)
+                - info_view_data.first_line_shown;
+            let last_selected_line = selected_line
+                .end_line_index
+                .min(info_view_data.first_line_shown + area.height as usize - 1)
+                - info_view_data.first_line_shown;
+            inner_area.y += first_selected_line as u16;
+            inner_area.height =
+                (inner_area.height as usize).saturating_sub(first_selected_line) as u16;
+
+            inner_area.width = (inner_area.width as usize).min(selected_line.object_width) as u16;
+            inner_area.height = (inner_area.height as usize)
+                .min(last_selected_line - first_selected_line + 1)
+                as u16;
+
+            buf.set_style(inner_area, INNER_AREA_STYLE);
+        }
+    }
 }
 
 struct Node<'a> {

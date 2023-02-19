@@ -63,11 +63,13 @@ pub struct LineTree<'a> {
 
 #[derive(Clone, Debug)]
 pub struct Line<'a> {
+    pub indentation: usize,
     pub start_line_index: LineIndex,
     pub end_line_index: LineIndex,
     pub parent_line_index: LineIndex,
     pub name: String,
     pub line: String,
+    pub object_width: usize,
     pub start: ByteIndex,
     pub end: ByteIndex,
     pub object: Object<'a>,
@@ -110,11 +112,7 @@ impl<'a> LineTree<'a> {
     ) {
         debug_assert_eq!(out.len(), self.start_line_index);
 
-        let mut line = format!(
-            "{indentation:>indentation_count$}",
-            indentation = "",
-            indentation_count = 2 * depth
-        );
+        let mut line = String::new();
 
         if let Some(field_name) = &self.field_name {
             line.push_str(&field_name);
@@ -132,8 +130,10 @@ impl<'a> LineTree<'a> {
             line.push_str(" {}");
         }
         out.push(Line {
+            object_width: line.len(),
             line,
             name,
+            indentation: 2 * depth,
             start_line_index: self.start_line_index,
             end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
             parent_line_index,
@@ -143,13 +143,19 @@ impl<'a> LineTree<'a> {
         });
 
         for child in &self.children {
+            let index = out.len();
             child.to_strings_helper(depth + 1, self.start_line_index, buffer, out);
+            out[self.start_line_index].object_width = out[self.start_line_index]
+                .object_width
+                .max(out[index].object_width + 2);
         }
 
         if let Some(end_line) = self.end_line_index {
             debug_assert_eq!(out.len(), end_line);
             out.push(Line {
+                object_width: out[self.start_line_index].object_width,
                 name: String::new(),
+                indentation: depth,
                 start_line_index: self.start_line_index,
                 end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
                 line: format!(
