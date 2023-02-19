@@ -124,7 +124,12 @@ fn modal_view<B: Backend>(
         ModalState::ViewHistory { index } => {
             let mut text = Vec::new();
 
-            for (line_no, view) in inspector.view_stack.iter().enumerate() {
+            for (line_no, view) in inspector
+                .view_stack
+                .iter()
+                .chain(std::iter::once(&inspector.view_state))
+                .enumerate()
+            {
                 let byte_index = view.byte_index;
                 let name = if let Some(info) = &view.info_view_data {
                     &info.lines.cur().name

@@ -335,7 +335,9 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Char('h') => {
-                self.toggle_modal(ModalState::ViewHistory { index: 0 });
+                self.toggle_modal(ModalState::ViewHistory {
+                    index: self.view_stack.len(),
+                });
                 true
             }
             KeyCode::Char('i') => {
@@ -560,9 +562,12 @@ impl<'a> Inspector<'a> {
                     *index = index.saturating_add(1);
                 }
                 KeyCode::Enter => {
-                    if !self.view_stack.is_empty() {
+                    if *index < self.view_stack.len() {
                         self.view_stack.truncate(*index + 1);
                         self.view_state = self.view_stack.pop().unwrap();
+                        return None;
+                    } else {
+                        // The last element in the list is current view state, so we do nothing
                         return None;
                     }
                 }
