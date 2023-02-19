@@ -45,12 +45,8 @@ impl<T> VecWithIndex<T> {
     where
         F: FnMut(&T) -> bool,
     {
-        let mut tmp = std::mem::take(&mut self.values);
-        let before = tmp.split_off(self.index);
-        self.values = before
-            .into_iter()
-            .chain(tmp.into_iter().skip_while(filter))
-            .collect::<Vec<_>>();
+        let after = self.values.split_off(self.index);
+        self.values.extend(after.into_iter().skip_while(filter));
     }
 }
 

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer, Object};
+use planus_buffer_inspection::{InspectableFlatbuffer, Object};
 use planus_types::intermediate::Declarations;
 use tui::{
     backend::Backend,
@@ -112,7 +112,6 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
             modal_state,
             &inspector.hex_view_state,
             &inspector.view_stack,
-            &inspector.object_mapping,
             &inspector.buffer.declarations,
         );
     }
@@ -396,7 +395,6 @@ impl<'a> ViewState<'a> {
         modal_state: &ModalState,
         hex_view_state: &HexViewState,
         view_stack: &[ViewState<'a>],
-        object_mapping: &ObjectMapping,
         declarations: &Declarations,
     ) {
         f.render_widget(Clear, area);
@@ -409,7 +407,7 @@ impl<'a> ViewState<'a> {
 
         let mut info_view_data = None;
 
-        let modal_view = match modal_state {
+        match modal_state {
             ModalState::GoToByte { input } => {
                 let text = vec![
                     Spans::from(vec![
@@ -425,7 +423,10 @@ impl<'a> ViewState<'a> {
                     // Move one line down, from the border to the input line
                     area.y + 1,
                 );
-                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+                f.render_widget(
+                    Paragraph::new(text).block(block).wrap(Wrap { trim: false }),
+                    area,
+                );
             }
             ModalState::XRefs { .. } => {
                 let text = vec![
@@ -433,7 +434,10 @@ impl<'a> ViewState<'a> {
                     Spans::default(),
                 ];
                 let block = block(true, " XRefs ", DEFAULT_STYLE);
-                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+                f.render_widget(
+                    Paragraph::new(text).block(block).wrap(Wrap { trim: false }),
+                    left,
+                );
             }
             ModalState::ViewHistory { index } => {
                 let mut text = Vec::new();
@@ -466,31 +470,10 @@ impl<'a> ViewState<'a> {
                 }
 
                 let block = block(true, " History ", DEFAULT_STYLE);
-                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-            }
-            ModalState::Interpretations { index } => {
-                let mut text = Vec::new();
-
-                if let Some(info) = &self.info_view_data {
-                    for (line_no, interpretation) in info.interpretations.iter().enumerate() {
-                        let root_object_index = interpretation.root_object_index;
-                        let root_object = object_mapping.root_objects.get_index(root_object_index);
-                        let name = root_object.unwrap().0.type_name(declarations);
-
-                        let style = if *index == line_no {
-                            CURSOR_STYLE
-                        } else {
-                            DEFAULT_STYLE
-                        };
-                        text.push(Spans::from(Span::styled(
-                            format!("{line_no:2<} {name}"),
-                            style,
-                        )));
-                    }
-                }
-
-                let block = block(true, " Interpretations ", DEFAULT_STYLE);
-                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+                f.render_widget(
+                    Paragraph::new(text).block(block).wrap(Wrap { trim: false }),
+                    left,
+                );
             }
             ModalState::HelpMenu => {
                 let text = vec![
@@ -499,22 +482,44 @@ impl<'a> ViewState<'a> {
                 ];
 
                 let block = block(true, " Help ", DEFAULT_STYLE);
-                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+                f.render_widget(
+                    Paragraph::new(text).block(block).wrap(Wrap { trim: false }),
+                    area,
+                );
             }
-            ModalState::TreeView { state } => tree_picker(state),
+            ModalState::TreeView { state, header } => {
+                f.render_widget(
+                    TreeStateWidget {
+                        tree_state: state,
+                        block: Some(block(true, header, DEFAULT_STYLE)),
+                    },
+                    left,
+                );
+
+                f.render_widget(
+                    ObjectViewWidget {
+                        info_view_data: state
+                            .lines
+                            .cur()
+                            .node
+                            .view_state
+                            .as_ref()
+                            .and_then(|v| v.info_view_data.as_ref()),
+                        block: Some(block(true, " Preview ", OUTER_AREA_STYLE)),
+                        is_active: false,
+                    },
+                    right,
+                );
+            }
         };
 
         if let Some(info_view_data) = info_view_data {
-            f.render_widget(modal_view, left);
-
             let info_view = self.info_view(
                 info_view_data.info_view_data.as_ref(),
                 hex_view_state,
                 declarations,
             );
             f.render_widget(info_view, right);
-        } else {
-            f.render_widget(modal_view, area);
         }
     }
 }
@@ -682,30 +687,26 @@ pub struct TreeState<'a> {
 
 impl<'a> TreeState<'a> {
     pub fn toggle_fold(&mut self) {
-        let mut new_lines: Option<Vec<_>> = None;
-        let mut indent_level = None;
-
         let line = self.lines.cur_mut();
         match line.fold_state {
             FoldState::NoChildren => (),
             FoldState::Folded => {
                 if let Some(children_gen) = &line.node.children {
                     let nodes = children_gen();
-                    new_lines = Some(
-                        nodes
-                            .into_iter()
-                            .map(|node| TreeStateLine {
-                                indent_level: line.indent_level + 1,
-                                fold_state: if node.children.is_some() {
-                                    FoldState::Folded
-                                } else {
-                                    FoldState::NoChildren
-                                },
-                                node,
-                            })
-                            .collect(),
-                    );
+                    let new_lines = nodes
+                        .into_iter()
+                        .map(|node| TreeStateLine {
+                            indent_level: line.indent_level + 2,
+                            fold_state: if node.children.is_some() {
+                                FoldState::Folded
+                            } else {
+                                FoldState::NoChildren
+                            },
+                            node,
+                        })
+                        .collect::<Vec<_>>();
                     line.fold_state = FoldState::Unfolded;
+                    self.lines.insert(new_lines);
                 } else {
                     // This should never happen, but we just ignore it
                     line.fold_state = FoldState::NoChildren;
@@ -713,14 +714,9 @@ impl<'a> TreeState<'a> {
             }
             FoldState::Unfolded => {
                 line.fold_state = FoldState::Folded;
-                indent_level = Some(line.indent_level);
+                let indent_level = line.indent_level;
+                self.lines.remove_while(|l| indent_level < l.indent_level);
             }
-        }
-
-        if let Some(new_lines) = new_lines {
-            self.lines.insert(new_lines);
-        } else if let Some(indent_level) = indent_level {
-            self.lines.remove_while(|l| indent_level < l.indent_level);
         }
     }
 }
@@ -739,18 +735,45 @@ pub enum FoldState {
     Unfolded,
 }
 
-fn tree_picker(tree_state: &TreeState<'_>) -> Paragraph<'static> {
-    let mut text = Vec::new();
+struct TreeStateWidget<'a, 'b> {
+    pub tree_state: &'b TreeState<'a>,
+    pub block: Option<Block<'a>>,
+}
 
-    for line in tree_state.lines.iter() {
-        let fold_icon = if let FoldState::Unfolded = line.fold_state {
-            "↳"
-        } else {
-            ""
+impl<'a, 'b> Widget for TreeStateWidget<'a, 'b> {
+    fn render(mut self, area: Rect, buf: &mut Buffer) {
+        let area = match self.block.take() {
+            Some(b) => {
+                let inner_area = b.inner(area);
+                b.render(area, buf);
+                inner_area
+            }
+            None => area,
         };
+        if area.height == 0 {
+            return;
+        }
 
-        text.push(Spans::from(Span::raw(format!("{fold_icon}"))));
+        for (i, line) in self.tree_state.lines.iter().enumerate() {
+            let style = if i == self.tree_state.lines.index() {
+                CURSOR_STYLE
+            } else {
+                EMPTY_STYLE
+            };
+
+            let suffix = match line.fold_state {
+                FoldState::NoChildren => "",
+                FoldState::Folded => " [+]",
+                FoldState::Unfolded => " [-]",
+            };
+
+            buf.set_stringn(
+                area.left() + 2 * line.indent_level as u16,
+                area.top() + i as u16,
+                format!("{}{suffix}", line.node.text),
+                area.width as usize - line.indent_level,
+                style,
+            );
+        }
     }
-
-    Paragraph::new(text).wrap(Wrap { trim: false })
 }

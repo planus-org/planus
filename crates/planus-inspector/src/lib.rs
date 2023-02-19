@@ -5,13 +5,17 @@ use std::{io, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use planus_buffer_inspection::{
+    object_info::ObjectName,
     object_mapping::{Interpretation, Line, ObjectIndex, ObjectMapping},
     InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, layout::Rect, Terminal};
 
-use crate::{ui::TreeState, vec_with_index::VecWithIndex};
+use crate::{
+    ui::{FoldState, Node, TreeState, TreeStateLine},
+    vec_with_index::VecWithIndex,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ActiveWindow {
@@ -21,12 +25,20 @@ pub enum ActiveWindow {
 
 #[derive(Debug)]
 pub enum ModalState<'a> {
-    GoToByte { input: String },
-    XRefs { xrefs: VecWithIndex<String> },
-    ViewHistory { index: usize },
+    GoToByte {
+        input: String,
+    },
+    XRefs {
+        xrefs: VecWithIndex<String>,
+    },
+    ViewHistory {
+        index: usize,
+    },
     HelpMenu,
-    Interpretations { index: usize },
-    TreeView { state: TreeState<'a> },
+    TreeView {
+        header: &'static str,
+        state: TreeState<'a>,
+    },
 }
 
 pub struct Inspector<'a> {
@@ -374,15 +386,47 @@ impl<'a> Inspector<'a> {
                 });
                 true
             }
-            KeyCode::Char('o') => {
-                let state = todo!();
-                self.toggle_modal(ModalState::TreeView { state });
-                true
-            }
             KeyCode::Char('i') => {
                 if let Some(info_view_data) = &self.view_state.info_view_data {
-                    self.toggle_modal(ModalState::Interpretations {
-                        index: info_view_data.interpretations.index(),
+                    let state = TreeState {
+                        lines: VecWithIndex::new(
+                            info_view_data
+                                .interpretations
+                                .iter()
+                                .enumerate()
+                                .map(|(i, interpretation)| {
+                                    let (object, _) = self
+                                        .object_mapping
+                                        .root_objects
+                                        .get_index(interpretation.root_object_index)
+                                        .unwrap();
+                                    let mut view_state = self.view_state.clone();
+                                    view_state
+                                        .info_view_data
+                                        .as_mut()
+                                        .unwrap()
+                                        .set_interpretation_index(
+                                            &self.object_mapping,
+                                            &self.buffer,
+                                            i,
+                                        );
+                                    TreeStateLine {
+                                        indent_level: 0,
+                                        node: Node {
+                                            text: object.print_object(&self.buffer),
+                                            view_state: Some(view_state),
+                                            children: None,
+                                        },
+                                        fold_state: FoldState::NoChildren,
+                                    }
+                                })
+                                .collect(),
+                            info_view_data.interpretations.index(),
+                        ),
+                    };
+                    self.toggle_modal(ModalState::TreeView {
+                        header: " Interpretations ",
+                        state,
                     });
 
                     true
@@ -621,32 +665,8 @@ impl<'a> Inspector<'a> {
                 }
                 _ => (),
             },
-            ModalState::Interpretations { index } => match key.code {
-                KeyCode::Up => {
-                    *index = index.saturating_sub(1);
-                }
-                KeyCode::Down => {
-                    *index = index.saturating_add(1).min(
-                        self.view_state
-                            .info_view_data
-                            .as_ref()
-                            .map_or(0, |info| info.interpretations.len() - 1),
-                    );
-                }
-                KeyCode::Enter => {
-                    if let Some(info_view_data) = self.view_state.info_view_data.as_mut() {
-                        info_view_data.set_interpretation_index(
-                            &self.object_mapping,
-                            &self.buffer,
-                            *index,
-                        );
-                        return None;
-                    }
-                }
-                _ => (),
-            },
             ModalState::HelpMenu => (),
-            ModalState::TreeView { state } => match key.code {
+            ModalState::TreeView { state, .. } => match key.code {
                 KeyCode::Up => {
                     state
                         .lines
