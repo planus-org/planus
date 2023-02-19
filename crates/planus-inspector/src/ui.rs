@@ -9,7 +9,10 @@ use tui::{
     Frame,
 };
 
-use crate::{ActiveWindow, HexViewState, Inspector, ModalState, RangeMatch, ViewState};
+use crate::{
+    vec_with_index::VecWithIndex, ActiveWindow, HexViewState, Inspector, ModalState, RangeMatch,
+    ViewState,
+};
 
 const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
 const DARK_GREEN: Color = Color::Rgb(100, 88, 55);
@@ -527,4 +530,26 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             .as_ref(),
         )
         .split(popup_layout[1])[1]
+}
+
+struct Node<'a> {
+    text: String,
+    view_state: Option<ViewState<'a>>,
+    children: Option<Box<dyn Fn() -> Vec<Node<'a>>>>,
+}
+
+struct TreeState<'a> {
+    lines: VecWithIndex<TreeStateLine<'a>>,
+}
+
+struct TreeStateLine<'a> {
+    indent_level: usize,
+    node: Node<'a>,
+    unfold_state: FoldState,
+}
+
+enum FoldState {
+    NoChildren,
+    Folded,
+    Unfolded,
 }
