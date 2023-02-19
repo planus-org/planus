@@ -155,18 +155,19 @@ impl<'a> ViewState<'a> {
         let object_area = areas[0];
         let info_area = areas[1];
 
-        self.object_view(
+        self.draw_object_view(
             f,
             object_area,
             matches!(active_window, ActiveWindow::ObjectView) && !modal_is_active,
         );
-        self.hex_view(
+        self.draw_hex_view(
             f,
             hex_area,
             matches!(active_window, ActiveWindow::HexView) && !modal_is_active,
             buffer,
             hex_view_state,
         );
+
         f.render_widget(
             Paragraph::new("Info!").block(block(false, " Info view ")),
             info_area,
@@ -174,7 +175,7 @@ impl<'a> ViewState<'a> {
         f.render_widget(Paragraph::new("wut").style(DEFAULT_STYLE), hotkey_area);
     }
 
-    pub fn hex_view<B: Backend>(
+    pub fn draw_hex_view<B: Backend>(
         &self,
         f: &mut Frame<B>,
         area: Rect,
@@ -183,8 +184,20 @@ impl<'a> ViewState<'a> {
         hex_view_state: &mut HexViewState,
     ) {
         let block = block(is_active, " Hex view ");
-        let inner_area = block.inner(area);
 
+        let paragraph = self
+            .hex_view(buffer, block.inner(area), is_active, hex_view_state)
+            .block(block);
+        f.render_widget(paragraph, area);
+    }
+
+    fn hex_view(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        area: Rect,
+        is_active: bool,
+        hex_view_state: &mut HexViewState,
+    ) -> Paragraph {
         let ranges = self.hex_ranges();
 
         let max_offset = buffer.buffer.len().max(1) as u64;
@@ -192,36 +205,35 @@ impl<'a> ViewState<'a> {
         let max_offset_hex_digits = max_offset_ilog2 / 4 + 1;
         let max_offset_hex_digits = (max_offset_hex_digits + (max_offset_hex_digits & 1)) as usize;
 
-        let remaining_width = inner_area.width as usize - max_offset_hex_digits - 2;
+        let remaining_width = area.width as usize - max_offset_hex_digits - 2;
         let eight_groups = (remaining_width + 1) / 25;
         hex_view_state.line_size = eight_groups * 8;
 
         let mut view = Vec::new();
-        if inner_area.height != 0 && hex_view_state.line_size != 0 {
+        if area.height != 0 && hex_view_state.line_size != 0 {
             let cursor_line = self.byte_index / hex_view_state.line_size;
             let mut first_line = hex_view_state.line_pos / hex_view_state.line_size;
             let total_lines = buffer.buffer.len() / hex_view_state.line_size;
 
-            if inner_area.height <= 4 {
+            if area.height <= 4 {
                 first_line = first_line.clamp(
-                    (cursor_line + 1).saturating_sub(inner_area.height as usize),
+                    (cursor_line + 1).saturating_sub(area.height as usize),
                     cursor_line,
                 );
             } else {
                 first_line = first_line.clamp(
-                    (cursor_line + 2).saturating_sub(inner_area.height as usize),
+                    (cursor_line + 2).saturating_sub(area.height as usize),
                     cursor_line.saturating_sub(1),
                 );
             }
-            first_line =
-                first_line.min((total_lines + 1).saturating_sub(inner_area.height as usize));
+            first_line = first_line.min((total_lines + 1).saturating_sub(area.height as usize));
             hex_view_state.line_pos = first_line * hex_view_state.line_size;
 
             for (line_no, chunk) in buffer
                 .buffer
                 .chunks(hex_view_state.line_size)
                 .skip(first_line)
-                .take(inner_area.height as usize)
+                .take(area.height as usize)
                 .enumerate()
             {
                 let mut line = vec![
@@ -273,13 +285,17 @@ impl<'a> ViewState<'a> {
             }
         }
 
-        let paragraph = Paragraph::new(view).block(block).wrap(Wrap { trim: true });
+        Paragraph::new(view).wrap(Wrap { trim: true })
+    }
+
+    pub fn draw_object_view<B: Backend>(&self, f: &mut Frame<B>, area: Rect, is_active: bool) {
+        let block = block(is_active, " Object view ");
+
+        let paragraph = self.object_view().block(block);
         f.render_widget(paragraph, area);
     }
 
-    fn object_view<B: Backend>(&self, f: &mut Frame<B>, area: Rect, is_active: bool) {
-        let block = block(is_active, " Object view ");
-
+    fn object_view(&self) -> Paragraph {
         let mut text = Vec::new();
 
         if let Some(info_view_data) = &self.info_view_data {
@@ -298,8 +314,7 @@ impl<'a> ViewState<'a> {
             }
         }
 
-        let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: false });
-        f.render_widget(paragraph, area);
+        Paragraph::new(text).wrap(Wrap { trim: false })
     }
 }
 
