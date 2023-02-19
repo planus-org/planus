@@ -1,4 +1,6 @@
-use planus_buffer_inspection::InspectableFlatbuffer;
+use std::fmt::Debug;
+
+use planus_buffer_inspection::{object_mapping::ObjectMapping, InspectableFlatbuffer};
 use planus_types::intermediate::Declarations;
 use tui::{
     backend::Backend,
@@ -97,124 +99,16 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
         } else {
             centered_rect(60, 60, f.size())
         };
-        modal_view(
+        inspector.view_state.draw_modal_view(
             f,
             modal_area,
             modal_state,
-            inspector,
             &inspector.hex_view_state,
+            &inspector.view_stack,
+            &inspector.object_mapping,
+            &inspector.buffer.declarations,
         );
     }
-}
-
-fn modal_view<B: Backend>(
-    f: &mut Frame<B>,
-    area: Rect,
-    modal_state: &ModalState,
-    inspector: &Inspector,
-    hex_view_state: &HexViewState,
-) {
-    f.render_widget(Clear, area);
-    let paragraph = match modal_state {
-        ModalState::GoToByte { input } => {
-            let text = vec![
-                Spans::from(vec![
-                    Span::styled("0x", EMPTY_STYLE),
-                    Span::styled(input, ACTIVE_STYLE),
-                ]),
-                Spans::default(),
-            ];
-            let block = block(true, " Go to offset ", DEFAULT_STYLE);
-            f.set_cursor(
-                // Put cursor past the end of the input text
-                area.x + input.len() as u16 + 3,
-                // Move one line down, from the border to the input line
-                area.y + 1,
-            );
-            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-        }
-        ModalState::XRefs { .. } => {
-            let text = vec![
-                Spans::from(vec![Span::styled("0x", EMPTY_STYLE)]),
-                Spans::default(),
-            ];
-            let block = block(true, " XRefs ", DEFAULT_STYLE);
-            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-        }
-        ModalState::ViewHistory { index } => {
-            let mut text = Vec::new();
-
-            for (line_no, view) in inspector
-                .view_stack
-                .iter()
-                .chain(std::iter::once(&inspector.view_state))
-                .enumerate()
-            {
-                let byte_index = view.byte_index;
-                let name = if let Some(info) = &view.info_view_data {
-                    &info.lines.cur().name
-                } else {
-                    "no object"
-                };
-
-                let style = if *index == line_no {
-                    CURSOR_STYLE
-                } else {
-                    EMPTY_STYLE
-                };
-                text.push(Spans::from(Span::styled(
-                    format!(
-                        "{byte_index:0width$x} {name}",
-                        width = hex_view_state.max_offset_hex_digits
-                    ),
-                    style,
-                )));
-            }
-
-            let block = block(true, " History ", DEFAULT_STYLE);
-            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-        }
-        ModalState::Interpretations { index } => {
-            let mut text = Vec::new();
-
-            if let Some(info) = &inspector.view_state.info_view_data {
-                for (line_no, interpretation) in info.interpretations.iter().enumerate() {
-                    let root_object_index = interpretation.root_object_index;
-                    let root_object = inspector
-                        .object_mapping
-                        .root_objects
-                        .get_index(root_object_index);
-                    let name = root_object
-                        .unwrap()
-                        .0
-                        .type_name(&inspector.buffer.declarations);
-
-                    let style = if *index == line_no {
-                        CURSOR_STYLE
-                    } else {
-                        EMPTY_STYLE
-                    };
-                    text.push(Spans::from(Span::styled(
-                        format!("{line_no:2<} {name}"),
-                        style,
-                    )));
-                }
-            }
-
-            let block = block(true, " Interpretations ", DEFAULT_STYLE);
-            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-        }
-        ModalState::HelpMenu => {
-            let text = vec![
-                Spans::from(Span::styled("Hotkeys", EMPTY_STYLE)),
-                Spans::from(Span::styled("Arrow keys: move cursor", EMPTY_STYLE)),
-            ];
-
-            let block = block(true, " Help ", DEFAULT_STYLE);
-            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
-        }
-    };
-    f.render_widget(paragraph, area);
 }
 
 impl<'a> ViewState<'a> {
@@ -407,12 +301,15 @@ impl<'a> ViewState<'a> {
     ) {
         let block = block(false, " Info view ", DEFAULT_STYLE);
 
-        let paragraph = self.info_view(hex_view_state, declarations).block(block);
+        let paragraph = self
+            .info_view(self.info_view_data.as_ref(), hex_view_state, declarations)
+            .block(block);
         f.render_widget(paragraph, area);
     }
 
     fn info_view(
         &self,
+        info_view_data: Option<&InfoViewData>,
         hex_view_state: &HexViewState,
         declarations: &Declarations,
     ) -> Paragraph<'_> {
@@ -426,7 +323,7 @@ impl<'a> ViewState<'a> {
                 width = hex_view_state.max_offset_hex_digits
             )),
         ]));
-        if let Some(info_view_area) = &self.info_view_data {
+        if let Some(info_view_area) = &info_view_data {
             let line = info_view_area.lines.cur();
             text.push(Spans::from(vec![
                 Span::styled("Inner", INNER_AREA_STYLE),
@@ -446,7 +343,7 @@ impl<'a> ViewState<'a> {
             text.push(Spans::from(Span::styled("Inner", INNER_AREA_STYLE)));
             text.push(Spans::from(Span::raw("  -")));
         }
-        if let Some(info_view_area) = &self.info_view_data {
+        if let Some(info_view_area) = &info_view_data {
             let line = &info_view_area.lines[0];
             text.push(Spans::from(vec![
                 Span::styled("Outer", OUTER_AREA_STYLE),
@@ -466,7 +363,7 @@ impl<'a> ViewState<'a> {
             text.push(Spans::from(Span::raw("  -")));
         }
 
-        if let Some(info_view_data) = &self.info_view_data {
+        if let Some(info_view_data) = &info_view_data {
             if info_view_data.interpretations.len() > 1 {
                 text.push(Spans::from(Span::raw("")));
                 text.push(Spans::from(Span::styled(
@@ -483,6 +380,135 @@ impl<'a> ViewState<'a> {
         }
 
         Paragraph::new(text).wrap(Wrap { trim: false })
+    }
+
+    fn draw_modal_view<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        area: Rect,
+        modal_state: &ModalState,
+        hex_view_state: &HexViewState,
+        view_stack: &[ViewState<'a>],
+        object_mapping: &ObjectMapping,
+        declarations: &Declarations,
+    ) {
+        f.render_widget(Clear, area);
+        let subareas = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(area);
+        let left = subareas[0];
+        let right = subareas[1];
+
+        let mut info_view_data = None;
+
+        let modal_view = match modal_state {
+            ModalState::GoToByte { input } => {
+                let text = vec![
+                    Spans::from(vec![
+                        Span::styled("0x", DEFAULT_STYLE),
+                        Span::styled(input, ACTIVE_STYLE),
+                    ]),
+                    Spans::default(),
+                ];
+                let block = block(true, " Go to offset ", DEFAULT_STYLE);
+                f.set_cursor(
+                    // Put cursor past the end of the input text
+                    area.x + input.len() as u16 + 3,
+                    // Move one line down, from the border to the input line
+                    area.y + 1,
+                );
+                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+            }
+            ModalState::XRefs { .. } => {
+                let text = vec![
+                    Spans::from(vec![Span::styled("0x", DEFAULT_STYLE)]),
+                    Spans::default(),
+                ];
+                let block = block(true, " XRefs ", DEFAULT_STYLE);
+                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+            }
+            ModalState::ViewHistory { index } => {
+                let mut text = Vec::new();
+
+                for (line_no, view) in view_stack.iter().chain(std::iter::once(self)).enumerate() {
+                    let byte_index = view.byte_index;
+                    let name = if let Some(info) = &view.info_view_data {
+                        &info.lines.cur().name
+                    } else {
+                        "no object"
+                    };
+
+                    let style = if *index == line_no {
+                        CURSOR_STYLE
+                    } else {
+                        DEFAULT_STYLE
+                    };
+                    text.push(Spans::from(Span::styled(
+                        format!(
+                            "{byte_index:0width$x} {name}",
+                            width = hex_view_state.max_offset_hex_digits
+                        ),
+                        style,
+                    )));
+                }
+                if *index < view_stack.len() {
+                    info_view_data = view_stack.get(*index);
+                } else {
+                    info_view_data = Some(self);
+                }
+
+                let block = block(true, " History ", DEFAULT_STYLE);
+                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+            }
+            ModalState::Interpretations { index } => {
+                let mut text = Vec::new();
+
+                if let Some(info) = &self.info_view_data {
+                    for (line_no, interpretation) in info.interpretations.iter().enumerate() {
+                        let root_object_index = interpretation.root_object_index;
+                        let root_object = object_mapping.root_objects.get_index(root_object_index);
+                        let name = root_object.unwrap().0.type_name(declarations);
+
+                        let style = if *index == line_no {
+                            CURSOR_STYLE
+                        } else {
+                            DEFAULT_STYLE
+                        };
+                        text.push(Spans::from(Span::styled(
+                            format!("{line_no:2<} {name}"),
+                            style,
+                        )));
+                    }
+                }
+
+                let block = block(true, " Interpretations ", DEFAULT_STYLE);
+                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+            }
+            ModalState::HelpMenu => {
+                let text = vec![
+                    Spans::from(Span::styled("Hotkeys", DEFAULT_STYLE)),
+                    Spans::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
+                ];
+
+                let block = block(true, " Help ", DEFAULT_STYLE);
+                Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+            }
+            ModalState::TreeView { state } => tree_picker(state),
+        };
+
+        if let Some(info_view_data) = info_view_data {
+            f.render_widget(modal_view, left);
+
+            let info_view = self.info_view(
+                info_view_data.info_view_data.as_ref(),
+                hex_view_state,
+                declarations,
+            );
+            f.render_widget(info_view, right);
+        } else {
+            f.render_widget(modal_view, area);
+        }
     }
 }
 
@@ -618,24 +644,91 @@ impl<'a> Widget for ObjectViewWidget<'a> {
     }
 }
 
-struct Node<'a> {
-    text: String,
-    view_state: Option<ViewState<'a>>,
-    children: Option<Box<dyn Fn() -> Vec<Node<'a>>>>,
+pub struct Node<'a> {
+    pub text: String,
+    pub view_state: Option<ViewState<'a>>,
+    pub children: Option<Box<dyn Fn() -> Vec<Node<'a>>>>,
 }
 
-struct TreeState<'a> {
-    lines: VecWithIndex<TreeStateLine<'a>>,
+impl<'a> Debug for Node<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Node")
+            .field("text", &self.text)
+            .field("view_state", &self.view_state)
+            .finish_non_exhaustive()
+    }
 }
 
-struct TreeStateLine<'a> {
-    indent_level: usize,
-    node: Node<'a>,
-    unfold_state: FoldState,
+#[derive(Debug)]
+pub struct TreeState<'a> {
+    pub lines: VecWithIndex<TreeStateLine<'a>>,
 }
 
-enum FoldState {
+impl<'a> TreeState<'a> {
+    pub fn toggle_fold(&mut self) {
+        let mut new_lines: Option<Vec<_>> = None;
+        let mut indent_level = None;
+
+        let line = self.lines.cur_mut();
+        match line.fold_state {
+            FoldState::NoChildren => (),
+            FoldState::Folded => {
+                if let Some(children_gen) = &line.node.children {
+                    let nodes = children_gen();
+                    new_lines = Some(
+                        nodes
+                            .into_iter()
+                            .map(|node| TreeStateLine {
+                                indent_level: line.indent_level + 1,
+                                node,
+                                fold_state: FoldState::Folded,
+                            })
+                            .collect(),
+                    );
+                } else {
+                    line.fold_state = FoldState::NoChildren;
+                    indent_level = Some(line.indent_level);
+                }
+            }
+            FoldState::Unfolded => {
+                line.fold_state = FoldState::Folded;
+            }
+        }
+
+        if let Some(new_lines) = new_lines {
+            self.lines.insert(new_lines);
+        } else if let Some(indent_level) = indent_level {
+            self.lines.remove_while(|l| indent_level < l.indent_level);
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct TreeStateLine<'a> {
+    pub indent_level: usize,
+    pub node: Node<'a>,
+    pub fold_state: FoldState,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum FoldState {
     NoChildren,
     Folded,
     Unfolded,
+}
+
+fn tree_picker(tree_state: &TreeState<'_>) -> Paragraph<'static> {
+    let mut text = Vec::new();
+
+    for line in tree_state.lines.iter() {
+        let fold_icon = if let FoldState::Unfolded = line.fold_state {
+            "↳"
+        } else {
+            ""
+        };
+
+        text.push(Spans::from(Span::raw(format!("{fold_icon}"))));
+    }
+
+    Paragraph::new(text).wrap(Wrap { trim: false })
 }

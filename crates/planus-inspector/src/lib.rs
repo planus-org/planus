@@ -11,13 +11,7 @@ use planus_buffer_inspection::{
 use planus_types::intermediate::DeclarationIndex;
 use tui::{backend::Backend, layout::Rect, Terminal};
 
-use crate::vec_with_index::VecWithIndex;
-
-pub struct TreeState<T> {
-    pub data: T,
-    pub unfolded: bool,
-    pub children: Option<Vec<TreeState<T>>>,
-}
+use crate::{ui::TreeState, vec_with_index::VecWithIndex};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ActiveWindow {
@@ -25,13 +19,14 @@ pub enum ActiveWindow {
     HexView,
 }
 
-#[derive(Clone, Debug)]
-pub enum ModalState {
+#[derive(Debug)]
+pub enum ModalState<'a> {
     GoToByte { input: String },
     XRefs { xrefs: VecWithIndex<String> },
     ViewHistory { index: usize },
     HelpMenu,
     Interpretations { index: usize },
+    TreeView { state: TreeState<'a> },
 }
 
 pub struct Inspector<'a> {
@@ -42,7 +37,7 @@ pub struct Inspector<'a> {
     pub active_window: ActiveWindow,
     pub view_state: ViewState<'a>,
     pub hex_view_state: HexViewState,
-    pub modal: Option<ModalState>,
+    pub modal: Option<ModalState<'a>>,
 }
 
 pub struct HexViewState {
@@ -379,6 +374,11 @@ impl<'a> Inspector<'a> {
                 });
                 true
             }
+            KeyCode::Char('o') => {
+                let state = todo!();
+                self.toggle_modal(ModalState::TreeView { state });
+                true
+            }
             KeyCode::Char('i') => {
                 if let Some(info_view_data) = &self.view_state.info_view_data {
                     self.toggle_modal(ModalState::Interpretations {
@@ -564,7 +564,11 @@ impl<'a> Inspector<'a> {
         true
     }
 
-    fn modal_view_key(&mut self, key: KeyEvent, mut modal_state: ModalState) -> Option<ModalState> {
+    fn modal_view_key(
+        &mut self,
+        key: KeyEvent,
+        mut modal_state: ModalState<'a>,
+    ) -> Option<ModalState<'a>> {
         if let KeyCode::Esc = key.code {
             return None;
         }
@@ -637,12 +641,35 @@ impl<'a> Inspector<'a> {
                 _ => (),
             },
             ModalState::HelpMenu => (),
+            ModalState::TreeView { state } => match key.code {
+                KeyCode::Up => {
+                    state
+                        .lines
+                        .try_set_index(state.lines.index().saturating_sub(1));
+                }
+                KeyCode::Down => {
+                    state
+                        .lines
+                        .try_set_index(state.lines.index().saturating_add(1));
+                }
+                KeyCode::Right => state.toggle_fold(),
+                KeyCode::Enter => {
+                    let line = state.lines.cur();
+                    if let Some(view_state) = &line.node.view_state {
+                        let old_view_state =
+                            std::mem::replace(&mut self.view_state, view_state.clone());
+                        self.view_stack.push(old_view_state);
+                        return None;
+                    }
+                }
+                _ => (),
+            },
         }
 
         Some(modal_state)
     }
 
-    fn toggle_modal(&mut self, modal: ModalState) {
+    fn toggle_modal(&mut self, modal: ModalState<'a>) {
         if self.modal.as_ref().map(|m| std::mem::discriminant(m))
             == Some(std::mem::discriminant(&modal))
         {

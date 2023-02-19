@@ -36,6 +36,22 @@ impl<T> VecWithIndex<T> {
     pub fn cur_mut(&mut self) -> &mut T {
         &mut self.values[self.index]
     }
+
+    pub fn insert(&mut self, values: impl IntoIterator<Item = T>) {
+        self.values.splice(self.index..self.index, values);
+    }
+
+    pub fn remove_while<F>(&mut self, filter: F)
+    where
+        F: FnMut(&T) -> bool,
+    {
+        let mut tmp = std::mem::take(&mut self.values);
+        let before = tmp.split_off(self.index);
+        self.values = before
+            .into_iter()
+            .chain(tmp.into_iter().skip_while(filter))
+            .collect::<Vec<_>>();
+    }
 }
 
 impl<T> std::ops::Deref for VecWithIndex<T> {
