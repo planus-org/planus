@@ -175,9 +175,15 @@ fn modal_view<B: Backend>(
 
             if let Some(info) = &inspector.view_state.info_view_data {
                 for (line_no, interpretation) in info.interpretations.iter().enumerate() {
-                    let line_index = interpretation.lines[0];
-                    let line = info.lines.get(line_index).unwrap();
-                    let name = &line.name;
+                    let root_object_index = interpretation.root_object_index;
+                    let root_object = inspector
+                        .object_mapping
+                        .root_objects
+                        .get_index(root_object_index);
+                    let name = root_object
+                        .unwrap()
+                        .0
+                        .type_name(&inspector.buffer.declarations);
 
                     let style = if *index == line_no {
                         CURSOR_STYLE
