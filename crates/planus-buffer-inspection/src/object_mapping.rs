@@ -68,9 +68,9 @@ pub struct Line<'a> {
     pub parent_line_index: LineIndex,
     pub name: String,
     pub line: String,
-    pub offset_object: Option<OffsetObject<'a>>,
     pub start: ByteIndex,
     pub end: ByteIndex,
+    pub object: Object<'a>,
 }
 
 impl<'a> LineTree<'a> {
@@ -110,12 +110,6 @@ impl<'a> LineTree<'a> {
     ) {
         debug_assert_eq!(out.len(), self.start_line_index);
 
-        let offset_object = if let Object::Offset(o) = self.object {
-            Some(o)
-        } else {
-            None
-        };
-
         let mut line = format!(
             "{indentation:>indentation_count$}",
             indentation = "",
@@ -143,7 +137,7 @@ impl<'a> LineTree<'a> {
             start_line_index: self.start_line_index,
             end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
             parent_line_index,
-            offset_object,
+            object: self.object,
             start: self.range.0,
             end: self.range.1,
         });
@@ -164,7 +158,7 @@ impl<'a> LineTree<'a> {
                     indentation_count = 2 * depth
                 ),
                 parent_line_index,
-                offset_object,
+                object: self.object,
                 start: self.range.0,
                 end: self.range.1,
             });

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{
@@ -169,6 +171,24 @@ impl<'a> Object<'a> {
             Object::String(_) => false,
         }
     }
+
+    pub fn type_name(&self, declarations: &Declarations) -> Cow<'static, str> {
+        match self {
+            Object::Offset(inner) => inner.type_name(declarations),
+            Object::VTable(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Table(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Struct(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::UnionTag(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Union(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Enum(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Vector(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Array(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Integer(inner) => Cow::Borrowed(inner.type_.flatbuffer_name()),
+            Object::Float(inner) => Cow::Borrowed(inner.type_.flatbuffer_name()),
+            Object::Bool(_) => Cow::Borrowed("bool"),
+            Object::String(_) => Cow::Borrowed("string"),
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -214,6 +234,14 @@ pub struct UnionTagObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
+impl UnionTagObject {
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "union tag for {}",
+            declarations.get_declaration(self.declaration).0
+        )
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnionObject {
@@ -239,6 +267,15 @@ pub struct ArrayObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
     pub size: u32,
+}
+impl<'a> ArrayObject<'a> {
+    pub fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "[{}; {}]",
+            declarations.format_type_kind(&self.type_.kind),
+            self.size
+        )
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -290,6 +327,24 @@ impl<'a> OffsetObject<'a> {
             OffsetObjectKind::String => Ok(Object::String(StringObject { offset })),
         }
     }
+
+    fn type_name(&self, declarations: &Declarations) -> Cow<'static, str> {
+        match self.kind {
+            OffsetObjectKind::VTable(index) => Cow::Owned(format!(
+                "offset to vtable for {}",
+                declarations.get_declaration(index).0
+            )),
+            OffsetObjectKind::Table(index) => Cow::Owned(format!(
+                "offset to table {}",
+                declarations.get_declaration(index).0
+            )),
+            OffsetObjectKind::Vector(type_) => Cow::Owned(format!(
+                "offset to [{}]",
+                declarations.format_type_kind(&type_.kind)
+            )),
+            OffsetObjectKind::String => Cow::Borrowed("offset to string"),
+        }
+    }
 }
 
 impl VTableObject {
@@ -317,6 +372,13 @@ impl VTableObject {
             let slice: &[u8; 2] = chunk.try_into().unwrap();
             u16::from_le_bytes(*slice)
         }))
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "vtable for {}",
+            declarations.get_declaration(self.declaration).0
+        )
     }
 }
 
@@ -386,6 +448,10 @@ impl TableObject {
         };
         Ok(Some(object))
     }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!("table {}", declarations.get_declaration(self.declaration).0)
+    }
 }
 
 impl StructObject {
@@ -425,11 +491,25 @@ impl StructObject {
         };
         Ok(object)
     }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "struct {}",
+            declarations.get_declaration(self.declaration).0
+        )
+    }
 }
 
 impl UnionObject {
     pub fn get_variant<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
         todo!()
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "union offset for {}",
+            declarations.get_declaration(self.declaration).0
+        )
     }
 }
 
@@ -451,6 +531,10 @@ impl EnumObject {
         let tag = self.tag(buffer)?;
         let val = tag.read(buffer)?;
         Ok(val.to_u64())
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!("enum {}", declarations.get_declaration(self.declaration).0)
     }
 }
 
@@ -573,5 +657,9 @@ impl<'a> VectorObject<'a> {
             },
         };
         Ok(Some(object))
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!("[{}]", declarations.format_type_kind(&self.type_.kind))
     }
 }

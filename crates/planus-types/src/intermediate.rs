@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fmt::Display};
+use std::{borrow::Cow, collections::BTreeSet, fmt::Display};
 
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
@@ -156,6 +156,39 @@ impl Declarations {
             .iter()
             .enumerate()
             .map(|(i, (k, v))| (DeclarationIndex(i), k, v))
+    }
+
+    pub fn format_type_kind(&self, type_: &TypeKind) -> Cow<'static, str> {
+        match type_ {
+            TypeKind::Table(index) => {
+                Cow::Owned(format!("table {}", self.get_declaration(*index).0))
+            }
+            TypeKind::Union(index) => {
+                Cow::Owned(format!("union {}", self.get_declaration(*index).0))
+            }
+            TypeKind::Vector(type_) => {
+                Cow::Owned(format!("[{}]", self.format_type_kind(&type_.kind)))
+            }
+            TypeKind::Array(type_, size) => {
+                Cow::Owned(format!("[{}; {size}]", self.format_type_kind(&type_.kind)))
+            }
+            TypeKind::SimpleType(type_) => self.format_simple_type(type_),
+            TypeKind::String => Cow::Borrowed("string"),
+        }
+    }
+
+    pub fn format_simple_type(&self, type_: &SimpleType) -> Cow<'static, str> {
+        match type_ {
+            SimpleType::Struct(index) => {
+                Cow::Owned(format!("struct {}", self.get_declaration(*index).0))
+            }
+            SimpleType::Enum(index) => {
+                Cow::Owned(format!("enum {}", self.get_declaration(*index).0))
+            }
+            SimpleType::Bool => Cow::Borrowed("bool"),
+            SimpleType::Integer(type_) => Cow::Borrowed(type_.flatbuffer_name()),
+            SimpleType::Float(type_) => Cow::Borrowed(type_.flatbuffer_name()),
+        }
     }
 }
 

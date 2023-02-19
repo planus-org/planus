@@ -9,7 +9,7 @@ use planus_buffer_inspection::{
     InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
-use tui::{backend::Backend, Terminal};
+use tui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::vec_with_index::VecWithIndex;
 
@@ -47,8 +47,48 @@ pub struct Inspector<'a> {
 
 pub struct HexViewState {
     pub line_size: usize,
-    pub height: usize,
     pub line_pos: usize,
+    pub max_offset_hex_digits: usize,
+}
+
+impl HexViewState {
+    pub fn new(buffer_size: usize) -> Self {
+        let max_offset = buffer_size.max(1) as u64;
+        let max_offset_ilog2 = 63 - max_offset.leading_zeros();
+        let max_offset_hex_digits = max_offset_ilog2 / 4 + 1;
+        let max_offset_hex_digits = (max_offset_hex_digits + (max_offset_hex_digits & 1)) as usize;
+        Self {
+            line_size: 0,
+            line_pos: 0,
+            max_offset_hex_digits,
+        }
+    }
+
+    pub fn update_for_area(&mut self, buffer_len: usize, byte_index: usize, area: Rect) {
+        let remaining_width = area.width as usize - self.max_offset_hex_digits - 2;
+        let eight_groups = (remaining_width + 1) / 25;
+        self.line_size = eight_groups * 8;
+
+        if area.height != 0 && self.line_size != 0 {
+            let cursor_line = byte_index / self.line_size;
+            let mut first_line = self.line_pos / self.line_size;
+            let max_line_index = (buffer_len - 1) / self.line_size;
+
+            if area.height <= 4 {
+                first_line = first_line.clamp(
+                    (cursor_line + 1).saturating_sub(area.height as usize),
+                    cursor_line,
+                );
+            } else {
+                first_line = first_line.clamp(
+                    (cursor_line + 2).saturating_sub(area.height as usize),
+                    cursor_line.saturating_sub(1),
+                );
+            }
+            first_line = first_line.min((max_line_index + 1).saturating_sub(area.height as usize));
+            self.line_pos = first_line * self.line_size;
+        }
+    }
 }
 
 pub struct Ranges {
@@ -291,11 +331,7 @@ impl<'a> Inspector<'a> {
             should_quit: false,
             view_stack: Vec::new(),
             active_window: ActiveWindow::ObjectView,
-            hex_view_state: HexViewState {
-                line_size: 0,
-                height: 0,
-                line_pos: 0,
-            },
+            hex_view_state: HexViewState::new(buffer.buffer.len()),
             modal: None,
         }
     }
@@ -378,7 +414,7 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Enter if self.modal.is_none() => {
                 if let Some(info_view_data) = &mut self.view_state.info_view_data {
-                    if let Some(offset_object) = info_view_data.lines.cur().offset_object {
+                    if let Object::Offset(offset_object) = info_view_data.lines.cur().object {
                         let inner = offset_object.get_inner(&self.buffer).unwrap();
                         let old_view_state = std::mem::replace(
                             &mut self.view_state,

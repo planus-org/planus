@@ -1,4 +1,5 @@
 use planus_buffer_inspection::InspectableFlatbuffer;
+use planus_types::intermediate::Declarations;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -64,6 +65,13 @@ const ACTIVE_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+};
+
+const ALERT_STYLE: Style = Style {
+    fg: None,
+    bg: None,
+    add_modifier: Modifier::BOLD,
+    sub_modifier: Modifier::DIM,
 };
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
@@ -217,7 +225,7 @@ impl<'a> ViewState<'a> {
 
         let areas = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Length(top_area.width.saturating_sub(20)), Min(0)].as_ref())
+            .constraints([Length(top_area.width.saturating_sub(40)), Min(0)].as_ref())
             .split(top_area);
 
         let object_area = areas[0];
@@ -235,11 +243,7 @@ impl<'a> ViewState<'a> {
             buffer,
             hex_view_state,
         );
-
-        f.render_widget(
-            Paragraph::new("Info!").block(block(false, " Info view ")),
-            info_area,
-        );
+        self.draw_info_view(f, info_area, hex_view_state, &buffer.declarations);
         self.draw_legend_view(f, legend_area, active_window);
     }
 
@@ -252,9 +256,12 @@ impl<'a> ViewState<'a> {
         hex_view_state: &mut HexViewState,
     ) {
         let block = block(is_active, " Hex view ");
+        let inner_area = block.inner(area);
+
+        hex_view_state.update_for_area(buffer.buffer.len(), self.byte_index, inner_area);
 
         let paragraph = self
-            .hex_view(buffer, block.inner(area), is_active, hex_view_state)
+            .hex_view(buffer, inner_area, is_active, hex_view_state)
             .block(block);
         f.render_widget(paragraph, area);
     }
@@ -264,38 +271,12 @@ impl<'a> ViewState<'a> {
         buffer: &InspectableFlatbuffer<'a>,
         area: Rect,
         is_active: bool,
-        hex_view_state: &mut HexViewState,
-    ) -> Paragraph {
-        let ranges = self.hex_ranges();
-
-        let max_offset = buffer.buffer.len().max(1) as u64;
-        let max_offset_ilog2 = 63 - max_offset.leading_zeros();
-        let max_offset_hex_digits = max_offset_ilog2 / 4 + 1;
-        let max_offset_hex_digits = (max_offset_hex_digits + (max_offset_hex_digits & 1)) as usize;
-
-        let remaining_width = area.width as usize - max_offset_hex_digits - 2;
-        let eight_groups = (remaining_width + 1) / 25;
-        hex_view_state.line_size = eight_groups * 8;
-
+        hex_view_state: &HexViewState,
+    ) -> Paragraph<'_> {
         let mut view = Vec::new();
         if area.height != 0 && hex_view_state.line_size != 0 {
-            let cursor_line = self.byte_index / hex_view_state.line_size;
-            let mut first_line = hex_view_state.line_pos / hex_view_state.line_size;
-            let total_lines = buffer.buffer.len() / hex_view_state.line_size;
-
-            if area.height <= 4 {
-                first_line = first_line.clamp(
-                    (cursor_line + 1).saturating_sub(area.height as usize),
-                    cursor_line,
-                );
-            } else {
-                first_line = first_line.clamp(
-                    (cursor_line + 2).saturating_sub(area.height as usize),
-                    cursor_line.saturating_sub(1),
-                );
-            }
-            first_line = first_line.min((total_lines + 1).saturating_sub(area.height as usize));
-            hex_view_state.line_pos = first_line * hex_view_state.line_size;
+            let first_line = hex_view_state.line_pos / hex_view_state.line_size;
+            let ranges = self.hex_ranges();
 
             for (line_no, chunk) in buffer
                 .buffer
@@ -309,7 +290,7 @@ impl<'a> ViewState<'a> {
                         format!(
                             "{:0width$x}",
                             (first_line + line_no) * hex_view_state.line_size,
-                            width = max_offset_hex_digits
+                            width = hex_view_state.max_offset_hex_digits
                         ),
                         ADDRESS_STYLE,
                     ),
@@ -353,7 +334,7 @@ impl<'a> ViewState<'a> {
             }
         }
 
-        Paragraph::new(view).wrap(Wrap { trim: true })
+        Paragraph::new(view)
     }
 
     pub fn draw_object_view<B: Backend>(&self, f: &mut Frame<B>, area: Rect, is_active: bool) {
@@ -363,7 +344,7 @@ impl<'a> ViewState<'a> {
         f.render_widget(paragraph, area);
     }
 
-    fn object_view(&self) -> Paragraph {
+    fn object_view(&self) -> Paragraph<'_> {
         let mut text = Vec::new();
 
         if let Some(info_view_data) = &self.info_view_data {
@@ -378,7 +359,7 @@ impl<'a> ViewState<'a> {
                 } else {
                     DEFAULT_STYLE
                 };
-                text.push(Spans::from(Span::styled(line.line.clone(), style)));
+                text.push(Spans::from(Span::styled(line.line.as_str(), style)));
             }
         }
 
@@ -401,6 +382,90 @@ impl<'a> ViewState<'a> {
     ) {
         let paragraph = self.legend_view(active_window);
         f.render_widget(paragraph, area);
+    }
+
+    pub fn draw_info_view<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        area: Rect,
+        hex_view_state: &HexViewState,
+        declarations: &Declarations,
+    ) {
+        let block = block(false, " Info view ");
+
+        let paragraph = self.info_view(hex_view_state, declarations).block(block);
+        f.render_widget(paragraph, area);
+    }
+
+    fn info_view(
+        &self,
+        hex_view_state: &HexViewState,
+        declarations: &Declarations,
+    ) -> Paragraph<'_> {
+        let mut text = Vec::new();
+
+        text.push(Spans::from(vec![
+            Span::styled("Cursor", CURSOR_STYLE),
+            Span::raw(format!(
+                " {:0width$x}",
+                self.byte_index,
+                width = hex_view_state.max_offset_hex_digits
+            )),
+        ]));
+        if let Some(info_view_area) = &self.info_view_data {
+            let line = info_view_area.lines.cur();
+            text.push(Spans::from(vec![
+                Span::styled("Inner", INNER_AREA_STYLE),
+                Span::raw(format!(
+                    "  {:0width$x}-{:0width$x}",
+                    line.start,
+                    line.end - 1,
+                    width = hex_view_state.max_offset_hex_digits
+                )),
+            ]));
+
+            text.push(Spans::from(Span::raw(format!(
+                "  {}",
+                line.object.type_name(declarations)
+            ))));
+        } else {
+            text.push(Spans::from(Span::styled("Inner", INNER_AREA_STYLE)));
+            text.push(Spans::from(Span::raw("  -")));
+        }
+        if let Some(info_view_area) = &self.info_view_data {
+            let line = &info_view_area.lines[0];
+            text.push(Spans::from(vec![
+                Span::styled("Outer", OUTER_AREA_STYLE),
+                Span::raw(format!(
+                    "  {:0width$x}-{:0width$x}",
+                    line.start,
+                    line.end - 1,
+                    width = hex_view_state.max_offset_hex_digits
+                )),
+            ]));
+            text.push(Spans::from(Span::raw(format!(
+                "  {}",
+                line.object.type_name(declarations)
+            ))));
+        } else {
+            text.push(Spans::from(Span::styled("Outer", OUTER_AREA_STYLE)));
+            text.push(Spans::from(Span::raw("  -")));
+        }
+
+        let interpretations = self
+            .info_view_data
+            .as_ref()
+            .map_or(0, |d| d.interpretations.len());
+
+        if interpretations > 1 {
+            text.push(Spans::from(Span::raw("")));
+            text.push(Spans::from(Span::styled(
+                format!("Interpretations: {interpretations}"),
+                ALERT_STYLE,
+            )));
+        }
+
+        Paragraph::new(text).wrap(Wrap { trim: false })
     }
 }
 
