@@ -133,10 +133,9 @@ impl DeclarationInfo for EnumObject {
 
 impl<'a> ObjectName<'a> for VTableObject {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!(
-            "vtable {}",
-            buffer.declarations.get_declaration(self.declaration).0
-        )
+        let path = buffer.declarations.get_declaration(self.declaration).0;
+        let path = path.0.last().unwrap();
+        format!("vtable {path}")
     }
 }
 
@@ -161,9 +160,10 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
             self.type_.kind
         {
             let (path, _) = buffer.declarations.get_declaration(declaration_index);
-            format!("vector({}, {})", len, path)
+            let path = path.0.last().unwrap();
+            format!("vector({len}, {path})")
         } else {
-            format!("vector({}, {:?})", len, self.type_.kind)
+            format!("vector({len}, {:?})", self.type_.kind)
         }
     }
 }
@@ -218,8 +218,9 @@ impl<'a> ObjectName<'a> for EnumObject {
             .get_declaration(self.declaration_index());
         if let DeclarationKind::Enum(e) = &decl.kind {
             let tag = tag.read(buffer).unwrap();
+            let path = path.0.last().unwrap();
             if let Some(variant) = e.variants.get(&tag) {
-                format!("enum {path}({}, {})", tag, variant.name)
+                format!("enum {path}({tag}, {})", variant.name)
             } else {
                 format!("enum {path}({tag}, ?)")
             }
