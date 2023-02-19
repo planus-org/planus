@@ -339,8 +339,15 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Char('i') => {
-                self.toggle_modal(ModalState::Interpretations { index: 0 });
-                true
+                if let Some(info_view_data) = &self.view_state.info_view_data {
+                    self.toggle_modal(ModalState::Interpretations {
+                        index: info_view_data.interpretations.index(),
+                    });
+
+                    true
+                } else {
+                    false
+                }
             }
             KeyCode::Char('?') => {
                 self.toggle_modal(ModalState::HelpMenu);
