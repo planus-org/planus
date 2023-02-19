@@ -185,7 +185,7 @@ fn modal_view<B: Backend>(
                         DEFAULT_STYLE
                     };
                     text.push(Spans::from(Span::styled(
-                        format!("{line_no:2} {name}"),
+                        format!("{line_no:2<} {name}"),
                         style,
                     )));
                 }
@@ -463,17 +463,20 @@ impl<'a> ViewState<'a> {
             text.push(Spans::from(Span::raw("  -")));
         }
 
-        let interpretations = self
-            .info_view_data
-            .as_ref()
-            .map_or(0, |d| d.interpretations.len());
-
-        if interpretations > 1 {
-            text.push(Spans::from(Span::raw("")));
-            text.push(Spans::from(Span::styled(
-                format!("Interpretations: {interpretations}"),
-                ALERT_STYLE,
-            )));
+        if let Some(info_view_data) = &self.info_view_data {
+            if info_view_data.interpretations.len() > 1 {
+                text.push(Spans::from(Span::raw("")));
+                text.push(Spans::from(Span::styled(
+                    format!(
+                        "Interpretation: {}/{}",
+                        info_view_data.interpretations.index() + 1,
+                        info_view_data.interpretations.len()
+                    ),
+                    ALERT_STYLE,
+                )));
+                text.push(Spans::from(Span::raw("[c]: Cycle interpretations")));
+                text.push(Spans::from(Span::raw("[i]: Pick interpretation")));
+            }
         }
 
         Paragraph::new(text).wrap(Wrap { trim: false })
