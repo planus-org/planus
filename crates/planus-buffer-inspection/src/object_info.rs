@@ -1,5 +1,5 @@
 use planus_types::intermediate::{
-    AbsolutePath, DeclarationIndex, DeclarationKind, Enum, Struct, Table, Union,
+    AbsolutePath, DeclarationIndex, DeclarationKind, Enum, Struct, Table, TypeKind, Union,
 };
 
 use crate::{
@@ -157,7 +157,14 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
     fn resolve_name(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         let len = self.len(buffer).map(|n| n.to_string());
         let len = len.as_deref().unwrap_or("invalid");
-        format!("vector({}, {:?})", len, self.type_.kind)
+        if let TypeKind::Table(declaration_index) | TypeKind::Union(declaration_index) =
+            self.type_.kind
+        {
+            let (path, _) = buffer.declarations.get_declaration(declaration_index);
+            format!("vector({}, {})", len, path)
+        } else {
+            format!("vector({}, {:?})", len, self.type_.kind)
+        }
     }
 }
 
