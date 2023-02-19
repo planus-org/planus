@@ -84,11 +84,16 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
         } else {
             centered_rect(60, 60, f.size())
         };
-        modal_view(f, modal_area, modal_state);
+        modal_view(f, modal_area, modal_state, inspector);
     }
 }
 
-fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState) {
+fn modal_view<B: Backend>(
+    f: &mut Frame<B>,
+    area: Rect,
+    modal_state: &ModalState,
+    inspector: &Inspector,
+) {
     f.render_widget(Clear, area);
     let paragraph = match modal_state {
         ModalState::GoToByte { input } => {
@@ -114,6 +119,31 @@ fn modal_view<B: Backend>(f: &mut Frame<B>, area: Rect, modal_state: &ModalState
                 Spans::default(),
             ];
             let block = block(true, " XRefs ");
+            Paragraph::new(text).block(block).wrap(Wrap { trim: false })
+        }
+        ModalState::ViewHistory { index } => {
+            let mut text = Vec::new();
+
+            for (line_no, view) in inspector.view_stack.iter().enumerate() {
+                let byte_index = view.byte_index;
+                let line = if let Some(info) = &view.info_view_data {
+                    &info.lines.cur().line
+                } else {
+                    "no object"
+                };
+
+                let style = if *index == line_no {
+                    CURSOR_STYLE
+                } else {
+                    DEFAULT_STYLE
+                };
+                text.push(Spans::from(Span::styled(
+                    format!("{line_no:02} 0x{byte_index:0>8x} {line}"),
+                    style,
+                )));
+            }
+
+            let block = block(true, " History ");
             Paragraph::new(text).block(block).wrap(Wrap { trim: false })
         }
     };

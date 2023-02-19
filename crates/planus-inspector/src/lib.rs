@@ -29,6 +29,7 @@ pub enum ActiveWindow {
 pub enum ModalState {
     GoToByte { input: String },
     XRefs { xrefs: VecWithIndex<String> },
+    ViewHistory { index: usize },
 }
 
 pub struct Inspector<'a> {
@@ -326,9 +327,21 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Char('x') => {
-                self.modal = Some(ModalState::XRefs {
-                    xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
-                });
+                if self.modal.is_none() {
+                    self.modal = Some(ModalState::XRefs {
+                        xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
+                    });
+                } else {
+                    self.modal = None;
+                }
+                true
+            }
+            KeyCode::Char('h') => {
+                if self.modal.is_none() {
+                    self.modal = Some(ModalState::ViewHistory { index: 0 });
+                } else {
+                    self.modal = None;
+                }
                 true
             }
             KeyCode::Char('q') => {
@@ -528,6 +541,22 @@ impl<'a> Inspector<'a> {
                 _ => (),
             },
             ModalState::XRefs { .. } => match key.code {
+                _ => (),
+            },
+            ModalState::ViewHistory { index } => match key.code {
+                KeyCode::Up => {
+                    *index = index.saturating_sub(1);
+                }
+                KeyCode::Down => {
+                    *index = index.saturating_add(1);
+                }
+                KeyCode::Enter => {
+                    if !self.view_stack.is_empty() {
+                        self.view_stack.truncate(*index + 1);
+                        self.view_state = self.view_stack.pop().unwrap();
+                        return None;
+                    }
+                }
                 _ => (),
             },
         }
