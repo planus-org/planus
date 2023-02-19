@@ -170,6 +170,12 @@ impl<'a> ObjectName<'a> for OffsetObject<'a> {
 
 impl<'a> ObjectName<'a> for VectorObject<'a> {
     fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = if let Ok(len) = self.len(buffer) {
+            len.to_string()
+        } else {
+            "?".to_string()
+        };
+
         if let TypeKind::Table(declaration_index)
         | TypeKind::Union(declaration_index)
         | TypeKind::SimpleType(SimpleType::Enum(declaration_index))
@@ -177,9 +183,9 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
         {
             let (path, _) = buffer.declarations.get_declaration(declaration_index);
             let path = path.0.last().unwrap();
-            format!("[{path}]")
+            format!("[{path}; {len}]",)
         } else {
-            format!("[{:?}]", self.type_.kind)
+            format!("[{:?}; {len}]", self.type_.kind)
         }
     }
 }
@@ -240,8 +246,45 @@ impl<'a> ObjectName<'a> for EnumObject {
 
 impl_object_name!(StructObject);
 impl_object_name!(TableObject);
-impl_object_name!(UnionObject);
-impl_object_name!(UnionTagObject);
+
+impl<'a> ObjectName<'a> for UnionTagObject {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let path = buffer.declarations.get_declaration(self.declaration).0;
+        let path = path.0.last().unwrap();
+        match self.tag_variant(buffer) {
+            Ok(Some((variant_name, _variant))) => {
+                format!("{path}::{variant_name}")
+            }
+            Ok(None) => {
+                format!(
+                    "{path}::UnknownVariant({})",
+                    self.tag_value(buffer).unwrap()
+                )
+            }
+            Err(_) => {
+                format!("{path}::ERROR")
+            }
+        }
+    }
+}
+
+impl<'a> ObjectName<'a> for UnionObject {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let path = buffer.declarations.get_declaration(self.declaration).0;
+        let path = path.0.last().unwrap();
+        match self.tag_variant(buffer) {
+            Ok(Some((variant_name, _variant))) => {
+                format!("{path}::{variant_name}")
+            }
+            Ok(None) => {
+                format!("{path}::UnknownVariant({})", self.tag)
+            }
+            Err(_) => {
+                format!("{path}::ERROR")
+            }
+        }
+    }
+}
 
 impl<'a> ObjectName<'a> for Object<'a> {
     fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {

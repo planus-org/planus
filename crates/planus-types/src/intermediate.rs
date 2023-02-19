@@ -527,12 +527,16 @@ impl Table {
     ) -> Option<(&str, &TableField, bool)> {
         for (field_name, field) in &self.fields {
             if vtable_index == field.vtable_index {
-                return Some((field_name, field, false));
+                return Some((
+                    field_name,
+                    field,
+                    matches!(field.type_.kind, TypeKind::Union(_)),
+                ));
             }
-            if matches!(field.type_.kind, TypeKind::Union(_))
-                && vtable_index == field.vtable_index + 1
+            if vtable_index == field.vtable_index + 1
+                && matches!(field.type_.kind, TypeKind::Union(_))
             {
-                return Some((field_name, field, true));
+                return Some((field_name, field, false));
             }
         }
         None

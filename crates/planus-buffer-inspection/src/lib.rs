@@ -4,7 +4,7 @@ use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{
         DeclarationIndex, DeclarationKind, Declarations, FloatLiteral, IntegerLiteral, SimpleType,
-        StructField, Type, TypeKind,
+        StructField, Type, TypeKind, UnionVariant,
     },
 };
 
@@ -189,14 +189,6 @@ impl<'a> Object<'a> {
             Object::String(_) => Cow::Borrowed("string"),
         }
     }
-
-    pub fn follow_offset(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<Option<Object<'a>>> {
-        match self {
-            Object::Offset(inner) => inner.follow_offset(buffer).map(Some),
-            Object::Union(inner) => inner.get_variant(buffer).map(Some),
-            _ => Ok(None),
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -242,12 +234,32 @@ pub struct UnionTagObject {
     pub offset: ByteIndex,
     pub declaration: DeclarationIndex,
 }
+
 impl UnionTagObject {
     fn type_name(&self, declarations: &Declarations) -> String {
         format!(
             "union tag {}",
             declarations.get_declaration(self.declaration).0
         )
+    }
+
+    pub fn tag_value(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u8> {
+        buffer.read_u8(self.offset)
+    }
+
+    pub fn tag_variant<'a>(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> Result<Option<(&'a str, &'a UnionVariant)>> {
+        let decl = self.resolve_declaration(buffer);
+        if let Some((k, v)) = decl
+            .variants
+            .get_index(self.tag_value(buffer)? as usize - 1)
+        {
+            Ok(Some((k, v)))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -406,12 +418,12 @@ impl TableObject {
         field_index: u32,
     ) -> Result<Option<Object<'a>>> {
         let decl = self.resolve_declaration(buffer);
-        let Some(offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)?
+        let Some(object_offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)?
         else {
             return Ok(None)
         };
 
-        let offset = self.offset + offset as u32;
+        let offset = self.offset + object_offset as u32;
         let (_field_name, field_decl, is_union_tag) =
             decl.get_field_for_vtable_index(field_index as u32).unwrap();
         let object = match field_decl.type_.kind {
@@ -423,11 +435,23 @@ impl TableObject {
                 offset,
                 declaration,
             }),
-            TypeKind::Union(declaration) => Object::Union(UnionObject {
-                tag: 0,
-                offset,
-                declaration,
-            }),
+            TypeKind::Union(declaration) => {
+                let Some(tag_offset) = self.get_vtable(buffer)?.get_offset(field_index - 1, buffer)?
+                else {
+                    return Ok(None)
+                };
+
+                let tag_offset = self.offset + tag_offset as u32;
+                if let Ok(tag) = buffer.read_u8(tag_offset) {
+                    Object::Union(UnionObject {
+                        tag,
+                        offset,
+                        declaration,
+                    })
+                } else {
+                    return Ok(None);
+                }
+            }
             TypeKind::Vector(ref type_) => Object::Offset(OffsetObject {
                 offset,
                 kind: OffsetObjectKind::Vector(type_),
@@ -506,8 +530,25 @@ impl StructObject {
 }
 
 impl UnionObject {
-    pub fn get_variant<'a>(&self, _buffer: &InspectableFlatbuffer<'a>) -> Result<Object<'a>> {
-        todo!()
+    pub fn inner_offset<'a>(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> Result<Option<OffsetObject<'a>>> {
+        if let Some((_name, variant)) = self.tag_variant(buffer)? {
+            Ok(Some(OffsetObject {
+                offset: self.offset,
+                kind: match &variant.type_.kind {
+                    TypeKind::Table(index) => OffsetObjectKind::Table(*index),
+                    TypeKind::Vector(type_) => OffsetObjectKind::Vector(type_),
+                    TypeKind::String => OffsetObjectKind::String,
+                    TypeKind::Array(_, _) | TypeKind::SimpleType(_) | TypeKind::Union(_) => {
+                        panic!("Inconsistent declarations")
+                    }
+                },
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     fn type_name(&self, declarations: &Declarations) -> String {
@@ -515,6 +556,18 @@ impl UnionObject {
             "&union {}",
             declarations.get_declaration(self.declaration).0
         )
+    }
+
+    pub fn tag_variant<'a>(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+    ) -> Result<Option<(&'a str, &'a UnionVariant)>> {
+        let decl = self.resolve_declaration(buffer);
+        if let Some((k, v)) = decl.variants.get_index(self.tag as usize - 1) {
+            Ok(Some((k, v)))
+        } else {
+            Ok(None)
+        }
     }
 }
 

@@ -417,17 +417,18 @@ impl<'a> Inspector<'a> {
             }
             KeyCode::Enter if self.modal.is_none() => {
                 if let Some(info_view_data) = &mut self.view_state.info_view_data {
-                    if let Ok(Some(inner)) = info_view_data
-                        .lines
-                        .cur()
-                        .object
-                        .follow_offset(&self.buffer)
-                    {
-                        let old_view_state = std::mem::replace(
-                            &mut self.view_state,
-                            ViewState::new_for_object(&self.object_mapping, &self.buffer, inner),
-                        );
-                        self.view_stack.push(old_view_state);
+                    if let Object::Offset(offset_object) = &info_view_data.lines.cur().object {
+                        if let Ok(inner) = offset_object.follow_offset(&self.buffer) {
+                            let old_view_state = std::mem::replace(
+                                &mut self.view_state,
+                                ViewState::new_for_object(
+                                    &self.object_mapping,
+                                    &self.buffer,
+                                    inner,
+                                ),
+                            );
+                            self.view_stack.push(old_view_state);
+                        }
                     }
                 }
                 true

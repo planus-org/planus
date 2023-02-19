@@ -162,14 +162,10 @@ impl<'a> LineTree<'a> {
             out.push(Line {
                 object_width: out[self.start_line_index].object_width,
                 name: String::new(),
-                indentation: depth,
+                indentation: 2 * depth,
                 start_line_index: self.start_line_index,
                 end_line_index: self.end_line_index.unwrap_or(self.start_line_index),
-                line: format!(
-                    "{indentation:>indentation_count$}}}",
-                    indentation = "",
-                    indentation_count = 2 * depth
-                ),
+                line: "}".to_string(),
                 parent_line_index,
                 object: self.object,
                 start: self.range.0,
@@ -241,7 +237,7 @@ impl<'a> ObjectMapping<'a> {
             let mut children = Vec::new();
             let mut range = current.byterange(buffer);
             current.children(buffer, |field_name, child| {
-                let child = handler(Some(field_name), child, buffer, next_line);
+                let child = handler(field_name, child, buffer, next_line);
                 range.0 = range.0.min(child.range.0);
                 range.1 = range.1.max(child.range.1);
                 children.push(child);

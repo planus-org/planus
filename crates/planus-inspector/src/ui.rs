@@ -647,7 +647,7 @@ impl<'a> Widget for ObjectViewWidget<'a> {
                     style,
                 );
 
-                if matches!(line.object, Object::Offset(_) | Object::Union(_)) {
+                if matches!(line.object, Object::Offset(_)) {
                     buf.set_string(
                         area.left(),
                         area.top() + line_index as u16,

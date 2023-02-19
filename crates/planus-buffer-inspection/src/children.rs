@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use planus_types::ast::IntegerType;
+use planus_types::{ast::IntegerType, intermediate::TypeKind};
 
 use crate::{
     object_info::DeclarationInfo, ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject,
@@ -12,7 +12,7 @@ pub trait Children<'a> {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     );
 }
 
@@ -24,7 +24,7 @@ impl<'a> Children<'a> for Object<'a> {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         match self {
             Object::Offset(_) => (),
@@ -48,7 +48,7 @@ impl<'a> Children<'a> for VTableObject {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         let vtable_size = self.get_vtable_size(buffer).unwrap();
         let decl = self.resolve_declaration(buffer);
@@ -62,13 +62,24 @@ impl<'a> Children<'a> for VTableObject {
                 type_: IntegerType::U16,
             });
             match i {
-                0 => callback(Cow::Borrowed("#vtable_size"), object),
-                1 => callback(Cow::Borrowed("#table_size"), object),
+                0 => callback(Some(Cow::Borrowed("#vtable_size")), object),
+                1 => callback(Some(Cow::Borrowed("#table_size")), object),
                 n => {
-                    if let Some((k, _)) = decl.fields.get_index(n - 2) {
-                        callback(Cow::Owned(format!("offset[{k}]")), object)
+                    let n = n - 2;
+                    if let Some((k, v)) = decl.fields.get_index(n) {
+                        if matches!(v.type_.kind, TypeKind::Union(_)) {
+                            callback(Some(Cow::Owned(format!("offset[union_tag[{k}]]"))), object)
+                        } else {
+                            callback(Some(Cow::Owned(format!("offset[{k}]"))), object)
+                        }
+                    } else if let Some((k, _v)) = decl
+                        .fields
+                        .get_index(n - 1)
+                        .filter(|(_k, v)| matches!(v.type_.kind, TypeKind::Union(_)))
+                    {
+                        callback(Some(Cow::Owned(format!("offset[union[{k}]]"))), object)
                     } else {
-                        callback(Cow::Owned(format!("offset[{}]", n - 2)), object)
+                        callback(Some(Cow::Owned(format!("offset[{n}]"))), object)
                     }
                 }
             }
@@ -80,10 +91,10 @@ impl<'a> Children<'a> for TableObject {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         callback(
-            Cow::Borrowed("#vtable"),
+            Some(Cow::Borrowed("#vtable")),
             Object::Offset(OffsetObject {
                 offset: self.offset,
                 kind: crate::OffsetObjectKind::VTable(self.declaration),
@@ -104,7 +115,7 @@ impl<'a> Children<'a> for TableObject {
                 Cow::Borrowed(field_name)
             };
             if let Some(field_value) = self.get_field(&buffer, i as u32).unwrap() {
-                callback(field_name, field_value);
+                callback(Some(field_name), field_value);
             }
         }
     }
@@ -114,14 +125,14 @@ impl<'a> Children<'a> for StructObject {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         let this = *self;
         let buffer = *buffer;
         let decl = self.resolve_declaration(&buffer);
         for (i, field_name) in decl.fields.keys().enumerate() {
             if let Ok(field) = this.get_field(&buffer, i) {
-                callback(Cow::Borrowed(field_name.as_str()), field);
+                callback(Some(Cow::Borrowed(field_name.as_str())), field);
             }
         }
     }
@@ -131,7 +142,7 @@ impl<'a> Children<'a> for UnionTagObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -139,9 +150,26 @@ impl<'a> Children<'a> for UnionTagObject {
 impl<'a> Children<'a> for UnionObject {
     fn children(
         &self,
-        _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
+        match self.inner_offset(buffer) {
+            Ok(Some(inner_offset)) => callback(None, Object::Offset(inner_offset)),
+            Ok(None) => callback(
+                Some(Cow::Borrowed("unknown offset")),
+                Object::Integer(IntegerObject {
+                    offset: self.offset,
+                    type_: IntegerType::U32,
+                }),
+            ),
+            Err(_) => callback(
+                Some(Cow::Borrowed("error offset")),
+                Object::Integer(IntegerObject {
+                    offset: self.offset,
+                    type_: IntegerType::U32,
+                }),
+            ),
+        }
     }
 }
 
@@ -149,7 +177,7 @@ impl<'a> Children<'a> for EnumObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -158,10 +186,10 @@ impl<'a> Children<'a> for VectorObject<'a> {
     fn children(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         callback(
-            Cow::Borrowed("length"),
+            Some(Cow::Borrowed("length")),
             Object::Integer(IntegerObject {
                 offset: self.offset,
                 type_: IntegerType::U32,
@@ -169,7 +197,7 @@ impl<'a> Children<'a> for VectorObject<'a> {
         );
         for i in 0..self.len(&buffer).unwrap_or(0) {
             if let Ok(Some(value)) = self.read(i, buffer) {
-                callback(Cow::Owned(i.to_string()), value);
+                callback(Some(Cow::Owned(i.to_string())), value);
             }
         }
     }
@@ -179,7 +207,7 @@ impl<'a> Children<'a> for ArrayObject<'a> {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -188,7 +216,7 @@ impl<'a> Children<'a> for IntegerObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -197,7 +225,7 @@ impl<'a> Children<'a> for FloatObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -206,7 +234,7 @@ impl<'a> Children<'a> for BoolObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
     }
 }
@@ -215,10 +243,10 @@ impl<'a> Children<'a> for StringObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        mut callback: impl FnMut(Cow<'a, str>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
         callback(
-            Cow::Borrowed("length"),
+            Some(Cow::Borrowed("length")),
             Object::Integer(IntegerObject {
                 offset: self.offset,
                 type_: IntegerType::U32,
