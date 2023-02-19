@@ -696,18 +696,24 @@ impl<'a> TreeState<'a> {
                             .into_iter()
                             .map(|node| TreeStateLine {
                                 indent_level: line.indent_level + 1,
+                                fold_state: if node.children.is_some() {
+                                    FoldState::Folded
+                                } else {
+                                    FoldState::NoChildren
+                                },
                                 node,
-                                fold_state: FoldState::Folded,
                             })
                             .collect(),
                     );
+                    line.fold_state = FoldState::Unfolded;
                 } else {
+                    // This should never happen, but we just ignore it
                     line.fold_state = FoldState::NoChildren;
-                    indent_level = Some(line.indent_level);
                 }
             }
             FoldState::Unfolded => {
                 line.fold_state = FoldState::Folded;
+                indent_level = Some(line.indent_level);
             }
         }
 
