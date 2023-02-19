@@ -17,6 +17,7 @@ const DARK_MAGENTA: Color = Color::Rgb(114, 77, 106);
 const WHITE: Color = Color::Rgb(241, 242, 216);
 const GREY: Color = Color::Rgb(145, 145, 133);
 const BLACK: Color = Color::Rgb(0, 0, 0);
+const RED: Color = Color::Red;
 
 const CURSOR_STYLE: Style = Style {
     fg: Some(WHITE),
@@ -68,7 +69,7 @@ const ACTIVE_STYLE: Style = Style {
 };
 
 const ALERT_STYLE: Style = Style {
-    fg: None,
+    fg: Some(RED),
     bg: None,
     add_modifier: Modifier::BOLD,
     sub_modifier: Modifier::DIM,
