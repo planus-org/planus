@@ -34,6 +34,13 @@ Features
 
 ![Planus View](planus-view.png)
 
+* `planus format`: formatter for `.fbs` files
+
+* `planus check`: check validity of `.fbs` files with good error messages
+
+* `planus dot`: generate a DOT graph for `.fbs` files
+
+* `planus rust`: generate Rust bindings for `.fbs` files
 
 Goals
 -----
