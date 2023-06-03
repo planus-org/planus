@@ -452,7 +452,7 @@ impl IntegerLiteral {
             IntegerLiteral::I16(v) => *v as u64,
             IntegerLiteral::U32(v) => *v as u64,
             IntegerLiteral::I32(v) => *v as u64,
-            IntegerLiteral::U64(v) => *v as u64,
+            IntegerLiteral::U64(v) => *v,
             IntegerLiteral::I64(v) => *v as u64,
         }
     }
