@@ -1,0 +1,82 @@
+views:
+  - object view
+    - shows the currently active root object
+    - highlighting of cursor, inner highlight, outer highlight
+    - if inner highlight and outer highlight completely overlaps, only show outer
+    - get rid of all offsets
+    - better scrolling (blocked)
+  - hex view
+    - has hex offsets to the side
+    - fills out all space available to it
+      - up to groups of 4 bytes?
+      - if so, centered?
+    - highlighting of cursor, inner highlight, outer highlight
+    - if inner highlight and outer highlight completely overlaps, only show outer
+    - better scrolling (blocked)
+  - info view
+    - shows info about what's on screen right now
+    - cursor:
+      - position
+      - interpretation count
+        - [press i to change]
+    - outer highlight:
+      - type
+      - range
+      - parent count
+        - [press x to follow]
+    - inner highlight (only of relevant):
+      - type
+        - [press enter to follow]
+      - range
+    - info is shown using the same color scheme as elsewhere
+  - active keys view
+    - shows all active keys
+    - might not show keys that are shown in the info view
+  - remove interpretations view (replaced with interpretations popup)
+
+popups:
+  - tree popup
+    - uses fold-out for children (for usability and to avoid exponential explosion)
+    - previews all objects and can go to them
+  - interpretations popup
+  - types popup
+    - shows all types used in the file
+    - uses fold-out to show all instances of those types
+    - previews those instances and can go to them
+
+keys:
+  - navigation:
+    - arrows
+      - in hex view it is obvious
+      - in object view only up, down and left to something
+    - ctrl-arrows
+      - in hex ???
+      - in object view only left and right. Does not decend into objects
+    - pageup/down
+    - home/end
+    - enter: follow offset
+  - bookmarks
+    - save bookmark
+    - go to bookmark
+  - tab to switch active view
+  - popups:
+    - o: open tree popup
+    - t: open types popup
+    - i: go to different interpretation
+    - x: go to parent(s)
+      - might have mini-popup with preview
+    - g: go to byte
+      - popup to enter address
+      - follows with interpretations popup if relevant
+
+ux:
+  - follow initial root reference
+  - handle bad data
+  - vtable children names
+
+misc:
+  - fix TODOs
+
+open questions:
+  - should object view show nothing if cursor is outside object?
+  - should we push the view-state if we leave an object to go into padding/a different object?
