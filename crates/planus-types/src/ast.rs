@@ -587,7 +587,7 @@ impl Docstrings {
             .map(|docstring| docstring.value.as_str())
             .chain(
                 (self.docstrings.is_empty() && !self.default_docstring.is_empty())
-                    .then(|| self.default_docstring.as_str()),
+                    .then_some(self.default_docstring.as_str()),
             )
             .chain(
                 (!self.locations.is_empty())
