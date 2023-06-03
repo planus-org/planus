@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Fixed
+
+### Removed
+
+## [0.4.0] - 2023-06-03
+
+### Added
+
 - \[Rust\]: Added more `impl`s for union and struct references
 - \[Rust\]: Add an `ENUM_VALUES` const to enums
 - \[Rust\]: Make `Vector` more similar to rust slices by adding more methods
@@ -82,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/planus-org/planus/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/planus-org/planus/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/planus-org/planus/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/planus-org/planus/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/planus-org/planus/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/planus-org/planus/compare/v0.1.0...v0.2.0

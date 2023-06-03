@@ -1,10 +1,10 @@
 [package]
 name = "array-init-cursor"
 version = "0.2.0"
-edition = "2021"
-license = "MIT/Apache-2.0"
-repository = "https://github.com/planus-org/planus"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 keywords = ["abstraction", "initialization", "no_std"]
 categories = ["data-structures", "no-std"]
-rust-version = "1.61"
+rust-version.workspace = true
 description = "Utility crate to help keep track of arrays of MaybeUninit"

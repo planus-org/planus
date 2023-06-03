@@ -1,13 +1,13 @@
 [package]
 name = "planus-cli"
-version = "0.3.1"
-edition = "2021"
-license = "MIT/Apache-2.0"
-repository = "https://github.com/planus-org/planus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
 readme = "../README.md"
-rust-version = "1.61"
+rust-version.workspace = true
 description = "Command-line utility for planus."
 
 [[bin]]
@@ -15,11 +15,11 @@ name = "planus"
 path = "src/main.rs"
 
 [dependencies]
-planus-codegen = { version = "0.3.1", path = "../planus-codegen" }
-planus-translation = { version = "0.3.1", path = "../planus-translation" }
-planus-lexer = { version = "0.3.1", path = "../planus-lexer" }
-planus-types = { version = "0.3.1", path = "../planus-types" }
-planus-inspector = { version = "0.3.1", path = "../planus-inspector" }
+planus-codegen = { version = "0.4.0", path = "../planus-codegen" }
+planus-translation = { version = "0.4.0", path = "../planus-translation" }
+planus-lexer = { version = "0.4.0", path = "../planus-lexer" }
+planus-types = { version = "0.4.0", path = "../planus-types" }
+planus-inspector = { version = "0.4.0", path = "../planus-inspector" }
 clap = { version = "3.2.25", features = ["derive", "deprecated"] }
 clap_complete = "3.2.5"
 codespan = "0.11.1"

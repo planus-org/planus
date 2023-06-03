@@ -1,11 +1,11 @@
 [package]
 name = "rust-test"
-version = "0.1.0"
-edition = "2021"
-license = "MIT/Apache-2.0"
-repository = "https://github.com/planus-org/planus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 build = "build.rs"
-rust-version = "1.61"
+rust-version.workspace = true
 
 [features]
 default = []
