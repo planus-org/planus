@@ -7,16 +7,16 @@ use color_eyre::Result;
 #[derive(Parser)]
 pub struct Command {
     #[clap(value_hint = ValueHint::FilePath)]
-    data_file: PathBuf,
+    schema_file: PathBuf,
 
     root_type: String,
 
-    #[clap(value_hint = ValueHint::FilePath, required = true)]
-    schema_files: Vec<PathBuf>,
+    #[clap(value_hint = ValueHint::FilePath)]
+    data_file: PathBuf,
 }
 
 impl Command {
     pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
-        planus_inspector::app::run_app(&self.data_file, &self.root_type, &self.schema_files)
+        planus_inspector::app::run_app(&self.schema_file, &self.root_type, &self.data_file)
     }
 }

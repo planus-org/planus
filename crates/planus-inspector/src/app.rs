@@ -30,10 +30,10 @@ pub struct App {
     schema_files: Vec<PathBuf>,
 }
 
-pub fn run_app(data_file: &Path, root_type: &str, schema_files: &[PathBuf]) -> Result<ExitCode> {
+pub fn run_app(schema_file: &Path, root_type: &str, data_file: &Path) -> Result<ExitCode> {
     let buffer = std::fs::read(data_file)?;
 
-    let Some(declarations) = translate_files(schema_files)
+    let Some(declarations) = translate_files(&[schema_file])
     else {
         return Ok(ExitCode::FAILURE);
     };
