@@ -11,6 +11,42 @@ Planus – alternative flatbuffer implementation
 
 Planus is an alternative compiler for [flatbuffers](https://google.github.io/flatbuffers/), an efficient cross platform serialization library.
 
+Getting started
+---------------
+
+First, install the command line utility
+```shell
+cargo install planus-cli
+```
+
+Next, write a flatbuffers file (or use an existing one). Then you can generate code using the command
+```shell
+planus rust -o <output_path.rs> <input_file.fbs>
+```
+
+For a complete example, see [examples/rust](examples/rust).
+
+
+Features
+--------
+
+* `planus view`: a TUI viewer for serialized flatbuffer files
+
+![Planus View](planus-view.png)
+
+To use it you need to specify the `.fbs` file, the root type and the binary file:
+```shell
+planus view test/rust/test_files/alignment.fbs Root test/rust/test_files/alignment/serialize/alignment.bin
+```
+
+* `planus format`: formatter for `.fbs` files
+
+* `planus check`: check validity of `.fbs` files with good error messages
+
+* `planus dot`: generate a DOT graph for `.fbs` files
+
+* `planus rust`: generate Rust bindings for `.fbs` files
+
 Goals
 -----
 
@@ -35,21 +71,6 @@ Languages supported
 -------------------
 
 Currently we only support Rust, though we plan to add support for more languages in the future. Pull requests are welcome!
-
-Getting started
----------------
-
-First, install the command line utility
-```shell
-cargo install planus-cli
-```
-
-Next, write a flatbuffers file (or use an existing one). Then you can generate code using the command
-```shell
-planus rust -o <output_path.rs> <input_file.fbs>
-```
-
-For a complete example, see [examples/rust](examples/rust).
 
 Community
 ---------

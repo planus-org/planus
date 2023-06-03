@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fmt::Display};
+use std::{borrow::Cow, collections::BTreeSet, fmt::Display};
 
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
@@ -53,7 +53,7 @@ pub struct RelativePath {
     pub remaining: Vec<String>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeclarationIndex(pub usize);
 impl DeclarationIndex {
     pub const INVALID: DeclarationIndex = DeclarationIndex(usize::MAX);
@@ -157,6 +157,39 @@ impl Declarations {
             .enumerate()
             .map(|(i, (k, v))| (DeclarationIndex(i), k, v))
     }
+
+    pub fn format_type_kind(&self, type_: &TypeKind) -> Cow<'static, str> {
+        match type_ {
+            TypeKind::Table(index) => {
+                Cow::Owned(format!("table {}", self.get_declaration(*index).0))
+            }
+            TypeKind::Union(index) => {
+                Cow::Owned(format!("union {}", self.get_declaration(*index).0))
+            }
+            TypeKind::Vector(type_) => {
+                Cow::Owned(format!("[{}]", self.format_type_kind(&type_.kind)))
+            }
+            TypeKind::Array(type_, size) => {
+                Cow::Owned(format!("[{}; {size}]", self.format_type_kind(&type_.kind)))
+            }
+            TypeKind::SimpleType(type_) => self.format_simple_type(type_),
+            TypeKind::String => Cow::Borrowed("string"),
+        }
+    }
+
+    pub fn format_simple_type(&self, type_: &SimpleType) -> Cow<'static, str> {
+        match type_ {
+            SimpleType::Struct(index) => {
+                Cow::Owned(format!("struct {}", self.get_declaration(*index).0))
+            }
+            SimpleType::Enum(index) => {
+                Cow::Owned(format!("enum {}", self.get_declaration(*index).0))
+            }
+            SimpleType::Bool => Cow::Borrowed("bool"),
+            SimpleType::Integer(type_) => Cow::Borrowed(type_.flatbuffer_name()),
+            SimpleType::Float(type_) => Cow::Borrowed(type_.flatbuffer_name()),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -195,6 +228,18 @@ pub enum DeclarationKind {
     Enum(Enum),
     Union(Union),
     RpcService(RpcService),
+}
+
+impl DeclarationKind {
+    pub fn kind_as_str(&self) -> &'static str {
+        match self {
+            DeclarationKind::Table(_) => "table",
+            DeclarationKind::Struct(_) => "struct",
+            DeclarationKind::Enum(_) => "enum",
+            DeclarationKind::Union(_) => "union",
+            DeclarationKind::RpcService(_) => "rpc_service",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -281,7 +326,7 @@ pub struct RpcMethod {
     pub return_type: Type,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Type {
     pub span: Span,
     pub kind: TypeKind,
@@ -319,7 +364,7 @@ impl TypeKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum TypeKind {
     Table(DeclarationIndex),
     Union(DeclarationIndex),
@@ -329,7 +374,7 @@ pub enum TypeKind {
     String,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SimpleType {
     Struct(DeclarationIndex),
     Enum(DeclarationIndex),
@@ -398,6 +443,19 @@ impl IntegerLiteral {
             IntegerLiteral::I64(n) => *n == 0,
         }
     }
+
+    pub fn to_u64(&self) -> u64 {
+        match self {
+            IntegerLiteral::U8(v) => *v as u64,
+            IntegerLiteral::I8(v) => *v as u64,
+            IntegerLiteral::U16(v) => *v as u64,
+            IntegerLiteral::I16(v) => *v as u64,
+            IntegerLiteral::U32(v) => *v as u64,
+            IntegerLiteral::I32(v) => *v as u64,
+            IntegerLiteral::U64(v) => *v,
+            IntegerLiteral::I64(v) => *v as u64,
+        }
+    }
 }
 
 impl Display for Literal {
@@ -461,6 +519,27 @@ impl Table {
             field.type_.kind.add_children(&mut children);
         }
         children.into_iter().collect()
+    }
+
+    pub fn get_field_for_vtable_index(
+        &self,
+        vtable_index: u32,
+    ) -> Option<(&str, &TableField, bool)> {
+        for (field_name, field) in &self.fields {
+            if vtable_index == field.vtable_index {
+                return Some((
+                    field_name,
+                    field,
+                    matches!(field.type_.kind, TypeKind::Union(_)),
+                ));
+            }
+            if vtable_index == field.vtable_index + 1
+                && matches!(field.type_.kind, TypeKind::Union(_))
+            {
+                return Some((field_name, field, false));
+            }
+        }
+        None
     }
 }
 

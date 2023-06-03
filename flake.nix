@@ -5,7 +5,7 @@
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, ... }:
+  outputs = { nixpkgs, rust-overlay, ... }:
     let
       system = "x86_64-linux";
       overlays = [ (import rust-overlay) ];
