@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
-readme = "../README.md"
+readme = "../../README.md"
 rust-version.workspace = true
 description = "Command-line utility for planus."
 
