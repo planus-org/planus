@@ -1562,7 +1562,7 @@ impl<'a> Translator<'a> {
                 .iter()
                 .enumerate()
                 .filter_map(|(variant_index, (k, _v))| {
-                    (k.is_zero()).then(|| Literal::EnumTag {
+                    (k.is_zero()).then_some(Literal::EnumTag {
                         variant_index,
                         value: *k,
                     })

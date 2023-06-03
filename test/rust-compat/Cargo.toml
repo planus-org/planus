@@ -1,10 +1,10 @@
 [package]
 name = "rust-compat"
-version = "0.1.0"
+version.workspace = true
 edition = "2018"
-license = "MIT/Apache-2.0"
-repository = "https://github.com/planus-org/planus"
-rust-version = "1.61"
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 
 [features]
 default = []
@@ -17,7 +17,7 @@ bytes-cache = ["planus/bytes-cache"]
 planus = { path = "../../crates/planus", default-features = false, features = [
   "extra-validation",
 ] }
-serde = { version = "1.0.163", default-features = false, features = ["derive"] }
+serde = { version = "1.0.163", default-features = false, features = ["derive", "alloc"] }
 
 [build-dependencies]
 color-eyre = "0.6.2"

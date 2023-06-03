@@ -1,13 +1,13 @@
 [package]
 name = "planus"
-version = "0.3.1"
-license = "MIT/Apache-2.0"
-repository = "https://github.com/planus-org/planus"
-edition = "2021"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+edition.workspace = true
 readme = "README.md"
 keywords = ["flatbuffers", "serialization", "zero-copy"]
 categories = ["encoding", "data-structures", "memory-management"]
-rust-version = "1.61"
+rust-version.workspace = true
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
 [dependencies]
