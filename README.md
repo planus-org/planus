@@ -35,7 +35,7 @@ Features
 ![Planus View](planus-view.png)
 
 To use it you need to specify the `.fbs` file, the root type and the binary file:
-```
+```shell
 planus view test/rust/test_files/alignment.fbs Root test/rust/test_files/alignment/serialize/alignment.bin
 ```
 
