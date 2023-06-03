@@ -1,6 +1,7 @@
 - Update version numbers in:
   - `Cargo.toml`
   - `crates/planus-codegen/src/templates/rust/namespace.template`
+  - `crates/planus/src/lib.rs`
 - Update CHANGELOG.md, including links at the bottom
 - Commit changes to a branch and make a PR
 - Run `cargo publish --dry-run` on PR branch
