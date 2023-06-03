@@ -1,5 +1,5 @@
 bitflags::bitflags! {
-    #[derive(Default)]
+    #[derive(Copy, Clone, Default, PartialEq, Eq)]
     pub struct ErrorKind: u32 {
         const DECLARATION_PARSE_ERROR = 0x1;
         const UNKNOWN_IDENTIFIER = 0x2;

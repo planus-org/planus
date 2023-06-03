@@ -13,13 +13,13 @@ description = "Internal translation library for planus."
 planus-lexer = { version = "0.3.1", path = "../planus-lexer" }
 planus-types = { version = "0.3.1", path = "../planus-types" }
 atty = "0.2.14"
-bitflags = "1.2.1"
+bitflags = "2.3.1"
 codespan = "0.11.1"
 codespan-reporting = "0.11.1"
-indexmap = "1.7.0"
-lalrpop-util = "0.19.5"
-num-traits = "0.2.14"
+indexmap = "1.9.3"
+lalrpop-util = "0.20.0"
+num-traits = "0.2.15"
 string-interner = "0.14.0"
 
 [build-dependencies]
-lalrpop = "0.19.5"
+lalrpop = "0.20.0"
