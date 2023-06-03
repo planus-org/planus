@@ -17,9 +17,9 @@ bitflags = "2.3.1"
 codespan = "0.11.1"
 codespan-reporting = "0.11.1"
 indexmap = "1.9.3"
-lalrpop-util = "0.19.12"
+lalrpop-util = "0.20.0"
 num-traits = "0.2.15"
 string-interner = "0.14.0"
 
 [build-dependencies]
-lalrpop = "0.19.12"
+lalrpop = "0.20.0"
