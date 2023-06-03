@@ -281,10 +281,7 @@ impl<'a> ViewState<'a> {
     }
 
     fn legend_view(&self, active_window: ActiveWindow) -> Paragraph {
-        let text = match active_window {
-            ActiveWindow::ObjectView => "up/down: move cursor  ?: help menu",
-            ActiveWindow::HexView => "arrow keys: move cursor",
-        };
+        let text = "?: help menu   arrow keys: move cursor   enter: follow pointer   tab: cycle view focus";
         Paragraph::new(Spans::from(Span::styled(text, DEFAULT_STYLE)))
     }
 
@@ -477,8 +474,27 @@ impl<'a> ViewState<'a> {
             }
             ModalState::HelpMenu => {
                 let text = vec![
-                    Spans::from(Span::styled("Hotkeys", DEFAULT_STYLE)),
+                    Spans::from(Span::styled(
+                        "Tab: cycle Object/Hex view focus",
+                        DEFAULT_STYLE,
+                    )),
                     Spans::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
+                    Spans::from(Span::styled(
+                        "Enter: go to entry / follow pointer",
+                        DEFAULT_STYLE,
+                    )),
+                    Spans::from(Span::styled(
+                        "Backspace: return from entry / pointer",
+                        DEFAULT_STYLE,
+                    )),
+                    Spans::from(Span::styled("H: open history modal", DEFAULT_STYLE)),
+                    Spans::from(Span::styled("G: go to offset", DEFAULT_STYLE)),
+                    Spans::from(Span::styled("I: open interpretations modal", DEFAULT_STYLE)),
+                    Spans::from(Span::styled(
+                        "C: cycle between interpretations",
+                        DEFAULT_STYLE,
+                    )),
+                    Spans::from(Span::styled("Q: quit", DEFAULT_STYLE)),
                 ];
 
                 let block = block(true, " Help ", DEFAULT_STYLE);

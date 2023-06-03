@@ -375,9 +375,10 @@ impl<'a> Inspector<'a> {
                 true
             }
             KeyCode::Char('x') => {
-                self.toggle_modal(ModalState::XRefs {
-                    xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
-                });
+                // TODO: implement
+                // self.toggle_modal(ModalState::XRefs {
+                //     xrefs: VecWithIndex::new(vec!["lol".to_owned()], 0),
+                // });
                 true
             }
             KeyCode::Char('h') => {
