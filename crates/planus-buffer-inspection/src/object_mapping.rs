@@ -123,7 +123,7 @@ impl<'a> LineTree<'a> {
             line.push_str("#vtable");
         } else {
             if let Some(field_name) = &self.field_name {
-                line.push_str(&field_name);
+                line.push_str(field_name);
                 line.push_str(": ");
             }
 

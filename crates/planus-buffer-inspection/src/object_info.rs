@@ -192,7 +192,7 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
 
 impl<'a> ObjectName<'a> for ArrayObject<'a> {
     fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        format!("ARRAY") // TODO
+        "ARRAY".to_string() // TODO
     }
 }
 

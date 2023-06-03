@@ -58,7 +58,7 @@ impl<'a> Children<'a> for VTableObject {
             .enumerate()
         {
             let object = Object::Integer(IntegerObject {
-                offset: offset,
+                offset,
                 type_: IntegerType::U16,
             });
             match i {
@@ -114,7 +114,7 @@ impl<'a> Children<'a> for TableObject {
             } else {
                 Cow::Borrowed(field_name)
             };
-            if let Some(field_value) = self.get_field(&buffer, i as u32).unwrap() {
+            if let Some(field_value) = self.get_field(buffer, i as u32).unwrap() {
                 callback(Some(field_name), field_value);
             }
         }
@@ -195,7 +195,7 @@ impl<'a> Children<'a> for VectorObject<'a> {
                 type_: IntegerType::U32,
             }),
         );
-        for i in 0..self.len(&buffer).unwrap_or(0) {
+        for i in 0..self.len(buffer).unwrap_or(0) {
             if let Ok(Some(value)) = self.read(i, buffer) {
                 callback(Some(Cow::Owned(i.to_string())), value);
             }

@@ -324,8 +324,8 @@ impl<'a> OffsetObject<'a> {
     pub fn get_byte_index(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<ByteIndex> {
         let res = if matches!(self.kind, OffsetObjectKind::VTable(_)) {
             self.offset
-                .checked_add_signed(-buffer.read_i32(self.offset)? as i32)
-                .ok_or_else(|| Error)?
+                .checked_add_signed(-buffer.read_i32(self.offset)?)
+                .ok_or(Error)?
         } else {
             self.offset + buffer.read_u32(self.offset)?
         };
@@ -403,7 +403,7 @@ impl TableObject {
     pub fn get_vtable(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<VTableObject> {
         let vtable_offset = self
             .offset
-            .checked_add_signed(-buffer.read_i32(self.offset)? as i32)
+            .checked_add_signed(-buffer.read_i32(self.offset)?)
             .unwrap();
 
         Ok(VTableObject {
@@ -425,7 +425,7 @@ impl TableObject {
 
         let offset = self.offset + object_offset as u32;
         let (_field_name, field_decl, is_union_tag) =
-            decl.get_field_for_vtable_index(field_index as u32).unwrap();
+            decl.get_field_for_vtable_index(field_index).unwrap();
         let object = match field_decl.type_.kind {
             TypeKind::Table(declaration) => Object::Offset(OffsetObject {
                 offset,
@@ -572,7 +572,7 @@ impl UnionObject {
 }
 
 impl EnumObject {
-    pub fn tag<'a>(&self, buffer: &InspectableFlatbuffer<'a>) -> Result<IntegerObject> {
+    pub fn tag(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<IntegerObject> {
         let (_, decl) = buffer.declarations.get_declaration(self.declaration);
 
         if let DeclarationKind::Enum(e) = &decl.kind {

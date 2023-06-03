@@ -590,7 +590,7 @@ impl<'a> Inspector<'a> {
                     if start_line_index != cur_index {
                         start_line_index
                     } else {
-                        cur_index.saturating_sub(1) as usize
+                        cur_index.saturating_sub(1)
                     }
                 }
                 KeyCode::Up => cur_index.saturating_sub(1),
@@ -600,7 +600,7 @@ impl<'a> Inspector<'a> {
                     if end_line_index != cur_index {
                         end_line_index
                     } else {
-                        cur_index.saturating_add(1) as usize
+                        cur_index.saturating_add(1)
                     }
                 }
                 KeyCode::Down => cur_index + 1,
@@ -634,7 +634,7 @@ impl<'a> Inspector<'a> {
                     }
                 }
                 KeyCode::Enter => {
-                    let addr = usize::from_str_radix(&input, 16).unwrap();
+                    let addr = usize::from_str_radix(input, 16).unwrap();
                     self.view_stack.push(self.view_state.clone());
                     self.update_byte_pos(addr);
                     self.active_window = ActiveWindow::HexView;
@@ -645,9 +645,7 @@ impl<'a> Inspector<'a> {
                 }
                 _ => (),
             },
-            ModalState::XRefs { .. } => match key.code {
-                _ => (),
-            },
+            ModalState::XRefs { .. } => (),
             ModalState::ViewHistory { index } => match key.code {
                 KeyCode::Up => {
                     *index = index.saturating_sub(1);
@@ -697,7 +695,7 @@ impl<'a> Inspector<'a> {
     }
 
     fn toggle_modal(&mut self, modal: ModalState<'a>) {
-        if self.modal.as_ref().map(|m| std::mem::discriminant(m))
+        if self.modal.as_ref().map(std::mem::discriminant)
             == Some(std::mem::discriminant(&modal))
         {
             self.modal = None;

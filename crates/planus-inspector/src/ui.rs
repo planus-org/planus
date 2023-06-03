@@ -112,7 +112,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
             modal_state,
             &inspector.hex_view_state,
             &inspector.view_stack,
-            &inspector.buffer.declarations,
+            inspector.buffer.declarations,
         );
     }
 }
@@ -164,7 +164,7 @@ impl<'a> ViewState<'a> {
             buffer,
             hex_view_state,
         );
-        self.draw_info_view(f, info_area, hex_view_state, &buffer.declarations);
+        self.draw_info_view(f, info_area, hex_view_state, buffer.declarations);
         self.draw_legend_view(f, legend_area, active_window);
     }
 
