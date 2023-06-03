@@ -2,6 +2,7 @@
   - `Cargo.toml`
   - `crates/planus-codegen/src/templates/rust/namespace.template`
   - `crates/planus/src/lib.rs`
+- Grep for the old version number
 - Run `cargo make regenerate-examples`
 - Update CHANGELOG.md, including links at the bottom
 - Commit changes to a branch and make a PR
