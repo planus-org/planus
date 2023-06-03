@@ -1,4 +1,9 @@
-use std::{io, ops::DerefMut, path::PathBuf, process::ExitCode};
+use std::{
+    io,
+    ops::DerefMut,
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
 
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
@@ -8,10 +13,11 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use fuzzy_matcher::FuzzyMatcher;
-use planus_inspector::{run_inspector, Inspector};
 use planus_translation::translate_files;
 use planus_types::intermediate::{AbsolutePath, DeclarationIndex, DeclarationKind};
 use tui::{backend::CrosstermBackend, Terminal};
+
+use crate::{run_inspector, Inspector};
 
 #[derive(Parser)]
 pub struct App {
@@ -24,17 +30,16 @@ pub struct App {
     schema_files: Vec<PathBuf>,
 }
 
-fn main() -> Result<ExitCode> {
-    let args = App::parse();
-    let buffer = std::fs::read(args.data_file)?;
+pub fn run_app(data_file: &Path, root_type: &str, schema_files: &[PathBuf]) -> Result<ExitCode> {
+    let buffer = std::fs::read(data_file)?;
 
-    let Some(declarations) = translate_files(&args.schema_files)
+    let Some(declarations) = translate_files(schema_files)
     else {
         return Ok(ExitCode::FAILURE);
     };
 
-    let root_type = AbsolutePath(args.root_type.split('.').map(|s| s.to_owned()).collect());
-    let Some((root_table_index, _, root_declaration)) = declarations.declarations.get_full(&root_type)
+    let root_type_path = AbsolutePath(root_type.split('.').map(|s| s.to_owned()).collect());
+    let Some((root_table_index, _, root_declaration)) = declarations.declarations.get_full(&root_type_path)
     else {
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
         let mut matching_paths = declarations
@@ -44,7 +49,7 @@ fn main() -> Result<ExitCode> {
             .filter_map(|(path, _declaration)| {
                 let path = path.to_string();
                 Some((
-                    std::cmp::Reverse(matcher.fuzzy_match(&path, &args.root_type)?),
+                    std::cmp::Reverse(matcher.fuzzy_match(&path, root_type)?),
                     path,
                 ))
             })
@@ -52,11 +57,11 @@ fn main() -> Result<ExitCode> {
 
         matching_paths.sort();
         if matching_paths.is_empty() {
-            println!("Could not find root type {:?}.", args.root_type);
+            println!("Could not find root type {:?}.", root_type);
         } else {
             println!(
                 "Could not find root type {:?}. These are a few of the closest matching tables:",
-                args.root_type
+                root_type
             );
             for (_score, path) in matching_paths.iter().take(5) {
                 println!("- {path}");
@@ -69,7 +74,7 @@ fn main() -> Result<ExitCode> {
     if !matches!(root_declaration.kind, DeclarationKind::Table(_)) {
         println!(
             "Type {} is not a table, but a {}",
-            args.root_type,
+            root_type,
             root_declaration.kind.kind_as_str()
         );
         return Ok(ExitCode::FAILURE);

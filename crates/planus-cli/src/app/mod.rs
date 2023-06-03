@@ -2,8 +2,8 @@ mod check;
 mod dot;
 mod format;
 mod gen_completions;
-mod inspect;
 mod rust;
+mod view;
 
 use std::process::ExitCode;
 
@@ -23,7 +23,7 @@ pub struct App {
 pub enum Command {
     Dot(dot::Command),
     Rust(rust::Command),
-    Inspect(inspect::Command),
+    View(view::Command),
     Format(format::Command),
     Check(check::Command),
     GenerateCompletions(gen_completions::Command),
@@ -40,7 +40,7 @@ impl App {
             Command::Format(command) => command.run(self.app_options),
             Command::Check(command) => command.run(self.app_options),
             Command::GenerateCompletions(command) => command.run(self.app_options),
-            Command::Inspect(command) => command.run(self.app_options),
+            Command::View(command) => command.run(self.app_options),
         }
     }
 }

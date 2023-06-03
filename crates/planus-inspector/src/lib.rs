@@ -1,3 +1,4 @@
+pub mod app;
 pub mod ui;
 pub mod vec_with_index;
 
