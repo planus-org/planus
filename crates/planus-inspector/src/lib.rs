@@ -695,9 +695,7 @@ impl<'a> Inspector<'a> {
     }
 
     fn toggle_modal(&mut self, modal: ModalState<'a>) {
-        if self.modal.as_ref().map(std::mem::discriminant)
-            == Some(std::mem::discriminant(&modal))
-        {
+        if self.modal.as_ref().map(std::mem::discriminant) == Some(std::mem::discriminant(&modal)) {
             self.modal = None;
         } else {
             self.modal = Some(modal);
