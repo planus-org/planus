@@ -35,6 +35,7 @@
             bacon
             flatbuffers
             cargo-make
+            cargo-release
             graphviz
           ];
 
