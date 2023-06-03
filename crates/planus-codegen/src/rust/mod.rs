@@ -6,6 +6,7 @@ use std::{
     process::{Command, Stdio},
 };
 
+use eyre::Context;
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
@@ -959,7 +960,7 @@ fn float_type(type_: &FloatType) -> &'static str {
     }
 }
 
-pub fn format_string(s: &str, max_width: Option<u64>) -> Result<String, crate::CodegenError> {
+pub fn format_string(s: &str, max_width: Option<u64>) -> eyre::Result<String> {
     let mut child = Command::new("rustfmt");
 
     child
@@ -973,27 +974,30 @@ pub fn format_string(s: &str, max_width: Option<u64>) -> Result<String, crate::C
         child.arg(format!("max_width={max_width}"));
     }
 
-    let mut child = child.spawn()?;
+    let mut child = child
+        .spawn()
+        .wrap_err("Unable to spawn rustfmt. Perhaps it is not installed?")?;
 
     {
         let child_stdin = child.stdin.as_mut().unwrap();
-        child_stdin.write_all(s.as_bytes())?;
+        child_stdin
+            .write_all(s.as_bytes())
+            .wrap_err("Unable to write the file to rustfmt")?;
     }
 
-    let output = child.wait_with_output()?;
+    let output = child
+        .wait_with_output()
+        .wrap_err("Unable to get the formatted file back from rustfmt")?;
 
     if output.status.success() && output.stderr.is_empty() {
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     } else if output.stderr.is_empty() {
-        Err(crate::CodegenError::Other(format!(
-            "rustfmt failed with exit code {}",
-            output.status
-        )))
+        eyre::bail!("rustfmt failed with exit code {}", output.status);
     } else {
-        Err(crate::CodegenError::Other(format!(
+        eyre::bail!(
             "rustfmt failed with exit code {} and message:\n{}",
             output.status,
             String::from_utf8_lossy(&output.stderr).into_owned(),
-        )))
+        )
     }
 }

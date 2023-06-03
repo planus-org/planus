@@ -12,6 +12,6 @@ description = "Internal type library for planus."
 [dependencies]
 planus-lexer = { version = "0.3.1", path = "../planus-lexer" }
 codespan = "0.11.1"
-lalrpop-util = "0.19.5"
-indexmap = "1.7.0"
+lalrpop-util = "0.20.0"
+indexmap = "1.9.3"
 string-interner = "0.14.0"

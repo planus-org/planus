@@ -111,7 +111,7 @@ impl Ctx {
                 span = Span::new(*location, *location);
                 msg = "invalid token".to_string();
             }
-            ParseError::UnrecognizedEOF { location, expected } => {
+            ParseError::UnrecognizedEof { location, expected } => {
                 span = Span::new(*location, *location);
                 msg = format!("unexpected EOF, expected one of {}", expected.join(", "));
             }

@@ -12,10 +12,10 @@ description = "Planus is an alternative compiler for flatbuffers, an efficient c
 
 [dependencies]
 array-init-cursor = { version = "0.2.0", path = "../array-init-cursor" }
-hashbrown = { version = "0.13.1", optional = true, features = ["raw"] }
+hashbrown = { version = "0.13.2", optional = true, features = ["raw"] }
 
 [dev-dependencies]
-rand = "0.8.4"
+rand = "0.8.5"
 planus-example = { path = "../../examples/rust" } # used for doctests
 
 [features]
