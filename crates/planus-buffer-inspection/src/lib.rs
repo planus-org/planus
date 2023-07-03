@@ -418,9 +418,8 @@ impl TableObject {
         field_index: u32,
     ) -> Result<Option<Object<'a>>> {
         let decl = self.resolve_declaration(buffer);
-        let Some(object_offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)?
-        else {
-            return Ok(None)
+        let Some(object_offset) = self.get_vtable(buffer)?.get_offset(field_index, buffer)? else {
+            return Ok(None);
         };
 
         let offset = self.offset + object_offset as u32;
@@ -436,9 +435,11 @@ impl TableObject {
                 declaration,
             }),
             TypeKind::Union(declaration) => {
-                let Some(tag_offset) = self.get_vtable(buffer)?.get_offset(field_index - 1, buffer)?
+                let Some(tag_offset) = self
+                    .get_vtable(buffer)?
+                    .get_offset(field_index - 1, buffer)?
                 else {
-                    return Ok(None)
+                    return Ok(None);
                 };
 
                 let tag_offset = self.offset + tag_offset as u32;
@@ -499,9 +500,8 @@ impl StructObject {
         buffer: &InspectableFlatbuffer<'a>,
         field_index: usize,
     ) -> Result<Object<'a>> {
-        let Some((_field_name, field)) = self.get_field_info(buffer, field_index)
-        else {
-            return Err(Error)
+        let Some((_field_name, field)) = self.get_field_info(buffer, field_index) else {
+            return Err(Error);
         };
 
         let offset = self.offset + field.offset;

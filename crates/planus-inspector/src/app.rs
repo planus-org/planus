@@ -33,13 +33,13 @@ pub struct App {
 pub fn run_app(schema_file: &Path, root_type: &str, data_file: &Path) -> Result<ExitCode> {
     let buffer = std::fs::read(data_file)?;
 
-    let Some(declarations) = translate_files(&[schema_file])
-    else {
+    let Some(declarations) = translate_files(&[schema_file]) else {
         return Ok(ExitCode::FAILURE);
     };
 
     let root_type_path = AbsolutePath(root_type.split('.').map(|s| s.to_owned()).collect());
-    let Some((root_table_index, _, root_declaration)) = declarations.declarations.get_full(&root_type_path)
+    let Some((root_table_index, _, root_declaration)) =
+        declarations.declarations.get_full(&root_type_path)
     else {
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
         let mut matching_paths = declarations
