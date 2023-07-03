@@ -19,9 +19,8 @@ pub struct Command {
 
 impl Command {
     pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
-        let Some(declarations) = translate_files(&self.files)
-        else {
-            return Ok(ExitCode::FAILURE)
+        let Some(declarations) = translate_files(&self.files) else {
+            return Ok(ExitCode::FAILURE);
         };
 
         let res = generate_dot(&declarations);
