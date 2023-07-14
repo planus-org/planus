@@ -340,8 +340,7 @@ impl<'input> MetadataValue<'input> {
             .chain(
                 self.comma
                     .as_ref()
-                    .map(|token| &token.token_metadata)
-                    .into_iter(),
+                    .map(|token| &token.token_metadata),
             )
     }
 }
