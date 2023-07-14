@@ -337,12 +337,7 @@ impl<'input> MetadataValue<'input> {
             .chain(self.assignment.iter().flat_map(|(equals, expr)| {
                 std::iter::once(&equals.token_metadata).chain(expr.kind.token_metas())
             }))
-            .chain(
-                self.comma
-                    .as_ref()
-                    .map(|token| &token.token_metadata)
-                    .into_iter(),
-            )
+            .chain(self.comma.as_ref().map(|token| &token.token_metadata))
     }
 }
 
