@@ -9,7 +9,7 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.0.0
         with:
           submodules: true
       - uses: actions-rs/toolchain@v1
