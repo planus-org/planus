@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use clap::{IntoApp, Parser};
+use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell};
 use color_eyre::Result;
 
@@ -9,7 +9,7 @@ use color_eyre::Result;
 #[clap(arg_required_else_help = true)]
 pub struct Command {
     /// Which shell to generate completions for
-    #[clap(arg_enum)]
+    #[arg(value_enum)]
     shell: Shell,
 }
 

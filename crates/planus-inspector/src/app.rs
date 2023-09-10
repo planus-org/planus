@@ -1,11 +1,5 @@
-use std::{
-    io,
-    ops::DerefMut,
-    path::{Path, PathBuf},
-    process::ExitCode,
-};
+use std::{io, ops::DerefMut, path::Path, process::ExitCode};
 
-use clap::{Parser, ValueHint};
 use color_eyre::Result;
 use crossterm::{
     cursor::Show,
@@ -18,17 +12,6 @@ use planus_types::intermediate::{AbsolutePath, DeclarationIndex, DeclarationKind
 use tui::{backend::CrosstermBackend, Terminal};
 
 use crate::{run_inspector, Inspector};
-
-#[derive(Parser)]
-pub struct App {
-    #[clap(value_hint = ValueHint::FilePath)]
-    data_file: PathBuf,
-
-    root_type: String,
-
-    #[clap(value_hint = ValueHint::FilePath, required = true)]
-    schema_files: Vec<PathBuf>,
-}
 
 pub fn run_app(schema_file: &Path, root_type: &str, data_file: &Path) -> Result<ExitCode> {
     let buffer = std::fs::read(data_file)?;

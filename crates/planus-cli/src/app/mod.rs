@@ -7,10 +7,22 @@ mod view;
 
 use std::process::ExitCode;
 
-use clap::Parser;
+use clap::{
+    builder::{styling::AnsiColor, Styles},
+    Parser,
+};
 use color_eyre::Result;
 
+fn clap_v3_styling() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Yellow.on_default())
+        .usage(AnsiColor::Green.on_default())
+        .literal(AnsiColor::Green.on_default())
+        .placeholder(AnsiColor::Green.on_default())
+}
+
 #[derive(Parser)]
+#[command(styles = clap_v3_styling())]
 pub struct App {
     #[clap(flatten)]
     app_options: AppOptions,
