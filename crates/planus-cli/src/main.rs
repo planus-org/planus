@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use clap::StructOpt;
+use clap::Parser;
 use color_eyre::Result;
 
 mod app;
