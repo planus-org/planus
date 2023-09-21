@@ -90,7 +90,6 @@ Things we do not currently support:
 - Vectors of unions
 - Any attribute besides `required`, `deprecated`, `id` or `force_align`.
 - Some of the more exotic literal values, like hexadecimal floats or unicode surrogate pair parsing.
-- JSON conversion.
 
 Things we will probably never support:
 
