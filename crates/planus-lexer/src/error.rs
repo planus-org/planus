@@ -5,6 +5,7 @@ pub struct LexicalError {
     pub err: String,
     pub span: Span,
 }
+
 impl std::fmt::Display for LexicalError {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.span.start().0 == 0 && self.span.end().0 == 0 {
@@ -14,6 +15,7 @@ impl std::fmt::Display for LexicalError {
         }
     }
 }
+
 impl LexicalError {
     pub fn new<E: ToString>(err: E, span: Span) -> Self {
         LexicalError {
