@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- \[Rust\]: Added `#[allow(dead_code)]` to the root of the generated rust code [#204](https://github.com/planus-org/planus/pull/204)
+
 ### Fixed
 
 ### Removed

@@ -8,6 +8,7 @@ const _: () = ::planus::check_version_compatibility("planus-0.4.0");
 /// {{ docstring }}
 {%- endfor %}
 #[no_implicit_prelude]
+#[allow(dead_code)]
 mod root {
 {%- else -%}
 {% for docstring in docstrings.iter_strings() %}
