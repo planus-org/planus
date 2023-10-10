@@ -23,7 +23,10 @@ jobs:
       - name: on-unknown
         if: ${{ github.event.workflow_run.conclusion != 'success' && github.event.workflow_run.conclusion != 'failure' }}
         run: echo "STATUS_MESSAGE=${{ github.event.workflow_run.conclusion }} ⁉️" >> $GITHUB_ENV
+      - name: map-commit-message
+        run: |
+          echo "COMMIT_MESSAGE=${{ github.event.workflow_run.head_commit.message }}" | head -n1 >> $GITHUB_ENV
       - name: send-message
         uses: Ilshidur/action-discord@master
         with:
-          args: "Workflow run:\n- Status: ${{ env.STATUS_MESSAGE }}\n- Link to run: [${{ github.event.workflow_run.name }}](<${{ github.event.workflow_run.html_url }}>)\n- Link to commit: [${{ github.event.workflow_run.head_commit.message }}](<${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}>)\n- Link to branch: [${{ github.event.workflow_run.head_branch }}](<${{ github.event.workflow_run.repository.html_url }}/tree/${{ github.event.workflow_run.head_branch }}>)"
+          args: "Workflow run:\n- Status: ${{ env.STATUS_MESSAGE }}\n- Link to run: [${{ github.event.workflow_run.name }}](<${{ github.event.workflow_run.html_url }}>)\n- Link to commit: [${{ env.COMMIT_MESSAGE }}](<${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}>)\n- Link to branch: [${{ github.event.workflow_run.head_branch }}](<${{ github.event.workflow_run.repository.html_url }}/tree/${{ github.event.workflow_run.head_branch }}>)"
