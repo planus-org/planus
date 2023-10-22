@@ -13,9 +13,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 use crate::{run_inspector, Inspector};
 
-pub fn run_app(schema_file: &Path, root_type: &str, data_file: &Path) -> Result<ExitCode> {
-    let buffer = std::fs::read(data_file)?;
-
+pub fn run_app(schema_file: &Path, root_type: &str, buffer: &[u8]) -> Result<ExitCode> {
     let Some(declarations) = translate_files(&[schema_file]) else {
         return Ok(ExitCode::FAILURE);
     };
