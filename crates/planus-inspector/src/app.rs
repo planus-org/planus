@@ -64,7 +64,7 @@ pub fn run_app(schema_file: &Path, root_type: &str, buffer: &[u8]) -> Result<Exi
     let inspector = Inspector::new(
         planus_buffer_inspection::InspectableFlatbuffer {
             declarations: &declarations,
-            buffer: &buffer,
+            buffer,
         },
         DeclarationIndex(root_table_index),
     );
