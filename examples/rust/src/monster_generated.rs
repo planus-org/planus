@@ -7,7 +7,7 @@ const _: () = ::planus::check_version_compatibility("planus-0.4.0");
 /// Generated from these locations:
 /// * File `examples/rust/monster.fbs`
 #[no_implicit_prelude]
-#[allow(dead_code)]
+#[allow(dead_code, clippy::unnecessary_fallible_conversions)]
 mod root {
     /// The namespace `MyGame`
     ///
