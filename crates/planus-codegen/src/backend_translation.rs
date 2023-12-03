@@ -262,22 +262,22 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
     );
     match decl {
         DeclInfo::Table(translated_decl, decl) => {
-            ResolvedType::Table(decl, translated_decl, relative_path)
+            ResolvedType::Table(index, decl, translated_decl, relative_path)
         }
         DeclInfo::Struct(translated_decl, decl) => {
-            ResolvedType::Struct(decl, translated_decl, relative_path)
+            ResolvedType::Struct(index, decl, translated_decl, relative_path)
         }
         DeclInfo::Enum(translated_decl, decl) => {
             if let BackendDeclaration::Enum(BackendEnum { variants, .. }) =
                 full_translated_decls.get(index.0).unwrap()
             {
-                ResolvedType::Enum(decl, translated_decl, relative_path, variants)
+                ResolvedType::Enum(index, decl, translated_decl, relative_path, variants)
             } else {
                 unreachable!()
             }
         }
         DeclInfo::Union(translated_decl, decl) => {
-            ResolvedType::Union(decl, translated_decl, relative_path)
+            ResolvedType::Union(index, decl, translated_decl, relative_path)
         }
         DeclInfo::RpcService(_translated_decl, _decl) => todo!(),
     }

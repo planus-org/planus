@@ -86,17 +86,18 @@ fn generate_test_code(
             // Generate test module
             let code_module_name = file_stem.to_string();
             let code_file_full_path = format!("{out_dir}/{code_module_name}.rs");
-            let mut code =
-                "#![allow(unused_unsafe, unused_imports, dead_code, clippy::all)]".to_string();
+            let mut code = String::new();
             writeln!(code, "#[path = {generated:?}]").unwrap();
-            writeln!(code, "mod generated;").unwrap();
+            writeln!(code, "#[allow(clippy::module_inception)]").unwrap();
+            writeln!(code, "pub mod generated;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use core::{{fmt::Debug, hash::Hash}};").unwrap();
             if generate_flatc && is_main_crate {
                 writeln!(code, "#[path = {flatc_generated:?}]").unwrap();
-                writeln!(code, "mod flatc;").unwrap();
+                writeln!(code, "#[allow(unused_imports, clippy::all)]").unwrap();
+                writeln!(code, "pub mod flatc;").unwrap();
             }
             writeln!(code).unwrap();
             writeln!(code, "#[allow(dead_code)]").unwrap();

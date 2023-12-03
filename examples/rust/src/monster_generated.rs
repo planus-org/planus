@@ -1144,18 +1144,10 @@ mod root {
                 #[allow(unreachable_code)]
                 fn try_from(value: MonsterRef<'a>) -> ::planus::Result<Self> {
                     ::core::result::Result::Ok(Self {
-                        pos: if let ::core::option::Option::Some(pos) = value.pos()? {
-                            ::core::option::Option::Some(::core::convert::TryInto::try_into(pos)?)
-                        } else {
-                            ::core::option::Option::None
-                        },
+                        pos: value.pos()?.map(::core::convert::Into::into),
                         mana: ::core::convert::TryInto::try_into(value.mana()?)?,
                         hp: ::core::convert::TryInto::try_into(value.hp()?)?,
-                        name: if let ::core::option::Option::Some(name) = value.name()? {
-                            ::core::option::Option::Some(::core::convert::TryInto::try_into(name)?)
-                        } else {
-                            ::core::option::Option::None
-                        },
+                        name: value.name()?.map(::core::convert::Into::into),
                         inventory: value.inventory()?.map(|v| v.to_vec()),
                         color: ::core::convert::TryInto::try_into(value.color()?)?,
                         weapons: if let ::core::option::Option::Some(weapons) = value.weapons()? {
@@ -1486,11 +1478,7 @@ mod root {
                 #[allow(unreachable_code)]
                 fn try_from(value: WeaponRef<'a>) -> ::planus::Result<Self> {
                     ::core::result::Result::Ok(Self {
-                        name: if let ::core::option::Option::Some(name) = value.name()? {
-                            ::core::option::Option::Some(::core::convert::TryInto::try_into(name)?)
-                        } else {
-                            ::core::option::Option::None
-                        },
+                        name: value.name()?.map(::core::convert::Into::into),
                         damage: ::core::convert::TryInto::try_into(value.damage()?)?,
                     })
                 }

@@ -194,15 +194,31 @@ impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Displa
 }
 
 pub enum ResolvedType<'a, B: ?Sized + Backend> {
-    Struct(&'a Struct, &'a B::StructInfo, RelativeNamespace<'a, B>),
-    Table(&'a Table, &'a B::TableInfo, RelativeNamespace<'a, B>),
+    Struct(
+        DeclarationIndex,
+        &'a Struct,
+        &'a B::StructInfo,
+        RelativeNamespace<'a, B>,
+    ),
+    Table(
+        DeclarationIndex,
+        &'a Table,
+        &'a B::TableInfo,
+        RelativeNamespace<'a, B>,
+    ),
     Enum(
+        DeclarationIndex,
         &'a Enum,
         &'a B::EnumInfo,
         RelativeNamespace<'a, B>,
         &'a [BackendVariant<B::EnumVariantInfo>],
     ),
-    Union(&'a Union, &'a B::UnionInfo, RelativeNamespace<'a, B>),
+    Union(
+        DeclarationIndex,
+        &'a Union,
+        &'a B::UnionInfo,
+        RelativeNamespace<'a, B>,
+    ),
     Vector(Box<ResolvedType<'a, B>>),
     Array(Box<ResolvedType<'a, B>>, u32),
     String,

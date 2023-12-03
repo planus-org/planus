@@ -197,7 +197,11 @@ impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_nam
             {% if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
                 ::core::convert::TryInto::try_into(value.{{field.info.name}}()?)?,
             {% elseif field.info.getter_return_type.ends_with("<'a>") -%}
-                ::core::convert::TryInto::try_into(value.{{field.info.name}}())?,
+                {%- if field.info.can_do_infallible_conversion -%}
+                    ::core::convert::Into::into(value.{{field.info.name}}()),
+                {%- else -%}
+                    ::core::convert::TryInto::try_into(value.{{field.info.name}}())?,
+                {%- endif -%}
             {% else -%}
                 value.{{field.info.name}}(),
             {% endif -%}

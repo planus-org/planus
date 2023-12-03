@@ -100,14 +100,18 @@ impl DotBackend {
 
 fn get_name(type_: &ResolvedType<'_, DotBackend>) -> (Cow<'static, str>, Option<DeclarationIndex>) {
     match type_ {
-        ResolvedType::Struct(_, Struct { name, decl_id }, _) => {
+        ResolvedType::Struct(_, _, Struct { name, decl_id }, _) => {
             (name.clone().into(), Some(*decl_id))
         }
-        ResolvedType::Table(_, Table { name, decl_id }, _) => (name.clone().into(), Some(*decl_id)),
-        ResolvedType::Enum(_, Enum { name, decl_id, .. }, _, _) => {
+        ResolvedType::Table(_, _, Table { name, decl_id }, _) => {
             (name.clone().into(), Some(*decl_id))
         }
-        ResolvedType::Union(_, Union { name, decl_id }, _) => (name.clone().into(), Some(*decl_id)),
+        ResolvedType::Enum(_, _, Enum { name, decl_id, .. }, _, _) => {
+            (name.clone().into(), Some(*decl_id))
+        }
+        ResolvedType::Union(_, _, Union { name, decl_id }, _) => {
+            (name.clone().into(), Some(*decl_id))
+        }
         ResolvedType::Vector(inner) => {
             let (name, decl_id) = get_name(inner);
             (format!("[{name}]").into(), decl_id)
@@ -233,10 +237,10 @@ impl Backend for DotBackend {
         let (type_, type_ref) = get_name(&resolved_type);
 
         let primitive_size = match resolved_type {
-            ResolvedType::Struct(decl, _, _) => decl.size,
-            ResolvedType::Table(_, _, _) => 4,
-            ResolvedType::Union(_, _, _) => 4,
-            ResolvedType::Enum(decl, _, _, _) => decl.type_.byte_size(),
+            ResolvedType::Struct(_, decl, _, _) => decl.size,
+            ResolvedType::Table(_, _, _, _) => 4,
+            ResolvedType::Union(_, _, _, _) => 4,
+            ResolvedType::Enum(_, decl, _, _, _) => decl.type_.byte_size(),
             ResolvedType::Vector(_) => 4,
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => 4,
@@ -249,7 +253,7 @@ impl Backend for DotBackend {
             (AssignMode::Optional, _) => "optional".into(),
             (
                 AssignMode::HasDefault(Literal::EnumTag { variant_index, .. }),
-                ResolvedType::Enum(_, _, _, variants),
+                ResolvedType::Enum(_, _, _, _, variants),
             ) => format!("default {}", variants[*variant_index].name).into(),
             (AssignMode::HasDefault(default), _) => format!("default {default}").into(),
         };
