@@ -96,6 +96,11 @@ fn generate_test_code(
             writeln!(code, "use core::{{fmt::Debug, hash::Hash}};").unwrap();
             if generate_flatc && is_main_crate {
                 writeln!(code, "#[path = {flatc_generated:?}]").unwrap();
+                writeln!(
+                    code,
+                    "#[allow(unused_imports, clippy::extra_unused_lifetimes)]"
+                )
+                .unwrap();
                 writeln!(code, "pub mod flatc;").unwrap();
             }
             writeln!(code).unwrap();

@@ -12,7 +12,6 @@ struct FallibleStruct {
 
 union FallibleUnion {
   S0: FallibleStruct,
-  S1: string
 }
 
 
@@ -26,7 +25,6 @@ struct InfallibleStruct {
 
 union InfallibleUnion {
   S0: InfallibleStruct,
-  S1: string
 }
 
 // This is only here to make sure we do all the codegen for field
