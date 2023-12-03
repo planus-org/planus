@@ -310,7 +310,7 @@ impl Backend for RustBackend {
         );
         let mut name_with_as = format!("{field_name}_as").to_snake_case();
         if name_with_as == "as" {
-            name_with_as = "_as".to_string();
+            name_with_as = format!("{field_name}_as");
         }
         let create_name = reserve_field_name(
             field_name,
