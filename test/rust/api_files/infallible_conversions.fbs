@@ -1,0 +1,48 @@
+enum Enum: uint8 {
+  A
+}
+
+struct FallibleStructInner {
+  f: Enum;
+}
+
+struct FallibleStruct {
+  f: FallibleStructInner;
+}
+
+union FallibleUnion {
+  S0: FallibleStruct,
+  S1: string
+}
+
+
+struct InfallibleStructInner {
+  f: uint8;
+}
+
+struct InfallibleStruct {
+  f: InfallibleStructInner;
+}
+
+union InfallibleUnion {
+  S0: InfallibleStruct,
+  S1: string
+}
+
+// This is only here to make sure we do all the codegen for field
+// conversion correct, it is not to test the external API
+table Table {
+  s0: FallibleStruct = null;
+  s1: FallibleStruct;
+  s2: FallibleStruct (required);
+  s3: InfallibleStruct = null;
+  s4: InfallibleStruct;
+  s5: InfallibleStruct (required);
+  u0: FallibleUnion = null;
+  u1: FallibleUnion;
+  u2: FallibleUnion (required);
+  u3: InfallibleUnion = null;
+  u4: InfallibleUnion;
+  u5: InfallibleUnion (required);
+  str: string;
+}

@@ -156,6 +156,8 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
             {% for variant in variants -%}
                 {% if variant.owned_type.starts_with("::planus::alloc::boxed::Box<") %}
                 {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::planus::alloc::boxed::Box::new(::core::convert::TryFrom::try_from(value)?)),
+                {% elseif variant.can_do_infallible_conversion %}
+                {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::core::convert::From::from(value)),
                 {% else %}
                 {{info.ref_name}}::{{ variant.enum_name }}(value) => Self::{{variant.enum_name}}(::core::convert::TryFrom::try_from(value)?),
                 {% endif %}

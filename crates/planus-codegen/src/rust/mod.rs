@@ -74,6 +74,7 @@ pub struct StructField {
     pub owned_type: String,
     pub getter_return_type: String,
     pub getter_code: String,
+    pub can_do_infallible_conversion: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -107,6 +108,7 @@ pub struct UnionVariant {
     pub owned_type: String,
     pub ref_type: String,
     pub is_struct: bool,
+    pub can_do_infallible_conversion: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -306,7 +308,10 @@ impl Backend for RustBackend {
             "name",
             &mut translation_context.declaration_names,
         );
-        let name_with_as = format!("{field_name}_as").to_snake_case();
+        let mut name_with_as = format!("{field_name}_as").to_snake_case();
+        if name_with_as == "as" {
+            name_with_as = "_as".to_string();
+        }
         let create_name = reserve_field_name(
             field_name,
             "create_name",
@@ -337,6 +342,7 @@ impl Backend for RustBackend {
 
         match resolved_type {
             ResolvedType::Struct(
+                field_decl_id,
                 decl,
                 Struct {
                     owned_name,
@@ -357,6 +363,9 @@ impl Backend for RustBackend {
                         );
                         owned_type = vtable_type.clone();
                         create_trait = format!("WriteAs<{owned_type}>");
+                        if self.infallible_analysis[field_decl_id.0] {
+                            try_from_code = format!("::core::convert::Into::into(value.{name}()?)");
+                        }
                     }
                     AssignMode::Optional => {
                         read_type = format!(
@@ -365,11 +374,19 @@ impl Backend for RustBackend {
                         );
                         owned_type = format!("::core::option::Option<{vtable_type}>");
                         create_trait = format!("WriteAsOptional<{vtable_type}>");
+                        if self.infallible_analysis[field_decl_id.0] {
+                            try_from_code = format!(
+                                r#"
+                                    value.{name}()?.map(::core::convert::Into::into)
+                                "#
+                            );
+                        }
                     }
                     _ => unreachable!(),
                 }
             }
             ResolvedType::Table(
+                _,
                 _,
                 Table {
                     owned_name,
@@ -418,6 +435,7 @@ impl Backend for RustBackend {
                 }
             }
             ResolvedType::Union(
+                field_decl_id,
                 _,
                 Union {
                     owned_name,
@@ -438,6 +456,9 @@ impl Backend for RustBackend {
                                 .to_string();
                         owned_type = owned_name.clone();
                         create_trait = format!("WriteAsUnion<{owned_name}>");
+                        if self.infallible_analysis[field_decl_id.0] {
+                            try_from_code = format!("::core::convert::Into::into(value.{name}()?)");
+                        }
                     }
                     AssignMode::Optional => {
                         read_type = format!(
@@ -446,11 +467,18 @@ impl Backend for RustBackend {
                         );
                         owned_type = format!("::core::option::Option<{owned_name}>");
                         create_trait = format!("WriteAsOptionalUnion<{owned_name}>");
+                        if self.infallible_analysis[field_decl_id.0] {
+                            try_from_code = format!(
+                                r#"
+                                    value.{name}()?.map(::core::convert::Into::into)
+                                "#
+                            );
+                        }
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
             }
-            ResolvedType::Enum(decl, info, relative_namespace, variants) => {
+            ResolvedType::Enum(_, decl, info, relative_namespace, variants) => {
                 vtable_type =
                     format_relative_namespace(&relative_namespace, &info.name).to_string();
                 is_copy = true;
@@ -480,22 +508,22 @@ impl Backend for RustBackend {
             ResolvedType::Vector(type_) => {
                 fn vector_offset_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
                     match type_ {
-                        ResolvedType::Struct(_, info, relative_namespace) => {
+                        ResolvedType::Struct(_, _, info, relative_namespace) => {
                             format_relative_namespace(relative_namespace, &info.owned_name)
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Table(_, info, relative_namespace) => format!(
+                        ResolvedType::Table(_, _, info, relative_namespace) => format!(
                             "::planus::Offset<{}>",
                             format_relative_namespace(relative_namespace, &info.owned_name)
                         )
                         .into(),
-                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                        ResolvedType::Enum(_, _, info, relative_namespace, _) => {
                             format_relative_namespace(relative_namespace, &info.name)
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _) => {
+                        ResolvedType::Union(_, _, _, _) => {
                             unreachable!("This should have been rejected in type-check")
                         }
                         ResolvedType::Vector(_) => {
@@ -512,23 +540,23 @@ impl Backend for RustBackend {
                 }
                 fn vector_owned_type<'a>(type_: &ResolvedType<'a, RustBackend>) -> Cow<'a, str> {
                     match type_ {
-                        ResolvedType::Table(_, info, relative_namespace) => {
+                        ResolvedType::Table(_, _, info, relative_namespace) => {
                             format_relative_namespace(relative_namespace, &info.owned_name)
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Struct(_, info, relative_namespace) => {
+                        ResolvedType::Struct(_, _, info, relative_namespace) => {
                             format_relative_namespace(relative_namespace, &info.owned_name)
                                 .to_string()
                                 .into()
                         }
 
-                        ResolvedType::Enum(_, info, relative_namespace, _) => {
+                        ResolvedType::Enum(_, _, info, relative_namespace, _) => {
                             format_relative_namespace(relative_namespace, &info.name)
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _) => {
+                        ResolvedType::Union(_, _, _, _) => {
                             unreachable!("This should have been rejected in type-check")
                         }
                         ResolvedType::Vector(_) => {
@@ -545,19 +573,19 @@ impl Backend for RustBackend {
                 }
                 fn vector_read_type(type_: &ResolvedType<'_, RustBackend>) -> String {
                     match type_ {
-                        ResolvedType::Struct(_, info, relative_namespace) => format!(
+                        ResolvedType::Struct(_, _, info, relative_namespace) => format!(
                             "::planus::Vector<'a, {}<'a>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
                         ),
-                        ResolvedType::Table(_, info, relative_namespace) => format!(
+                        ResolvedType::Table(_, _, info, relative_namespace) => format!(
                             "::planus::Vector<'a, ::planus::Result<{}<'a>>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
                         ),
-                        ResolvedType::Enum(_, info, relative_namespace, _) => format!(
+                        ResolvedType::Enum(_, _, info, relative_namespace, _) => format!(
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
                         ),
-                        ResolvedType::Union(_, _, _) => {
+                        ResolvedType::Union(_, _, _, _) => {
                             unreachable!("This should have been rejected in type-check")
                         }
                         ResolvedType::Vector(_) => {
@@ -656,6 +684,7 @@ impl Backend for RustBackend {
                         read_type = "&'a ::core::primitive::str".to_string();
                         owned_type = "::planus::alloc::string::String".to_string();
                         create_trait = "WriteAs<::planus::Offset<str>>".to_string();
+                        try_from_code = format!("::core::convert::Into::into(value.{name}()?)");
                     }
                     AssignMode::Optional => {
                         read_type =
@@ -664,6 +693,11 @@ impl Backend for RustBackend {
                             "::core::option::Option<::planus::alloc::string::String>".to_string();
                         create_trait =
                             "WriteAsOptional<::planus::Offset<::core::primitive::str>>".to_string();
+                        try_from_code = format!(
+                            r#"
+                                value.{name}()?.map(::core::convert::Into::into)
+                            "#
+                        );
                     }
                     AssignMode::HasDefault(Literal::String(s)) => {
                         read_type = "&'a ::core::primitive::str".to_string();
@@ -675,6 +709,7 @@ impl Backend for RustBackend {
                         impl_default_code = format!("::core::convert::Into::into({s:?})").into();
                         serialize_default = Some(format!("{s:?}").into());
                         deserialize_default = Some(impl_default_code.clone());
+                        try_from_code = format!("::core::convert::Into::into(value.{name}()?)");
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }
@@ -783,16 +818,18 @@ impl Backend for RustBackend {
         let owned_type;
         let getter_code;
         let getter_return_type;
+        let can_do_infallible_conversion;
 
         match resolved_type {
-            ResolvedType::Struct(_, info, relative_namespace) => {
+            ResolvedType::Struct(decl_id, _, info, relative_namespace) => {
                 owned_type =
                     format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
                 let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
                 getter_return_type = format!("{ref_name}<'a>");
                 getter_code = "::core::convert::From::from(buffer)".to_string();
+                can_do_infallible_conversion = self.infallible_analysis[decl_id.0];
             }
-            ResolvedType::Enum(decl, info, relative_namespace, _) => {
+            ResolvedType::Enum(_, decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
                 getter_return_type = format!(
                     "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
@@ -809,21 +846,25 @@ impl Backend for RustBackend {
                     parent_info.ref_name,
                     name
                 );
+                can_do_infallible_conversion = false;
             }
             ResolvedType::Bool => {
                 owned_type = "bool".to_string();
                 getter_return_type = owned_type.clone();
                 getter_code = "buffer.as_array()[0] != 0".to_string();
+                can_do_infallible_conversion = true;
             }
             ResolvedType::Integer(typ) => {
                 owned_type = integer_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
                 getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
+                can_do_infallible_conversion = true;
             }
             ResolvedType::Float(typ) => {
                 owned_type = float_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
                 getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
+                can_do_infallible_conversion = true;
             }
             _ => unreachable!(),
         }
@@ -832,6 +873,7 @@ impl Backend for RustBackend {
             owned_type,
             getter_return_type,
             getter_code,
+            can_do_infallible_conversion,
         }
     }
 
@@ -881,9 +923,10 @@ impl Backend for RustBackend {
         let owned_type;
         let ref_type;
         let mut is_struct = false;
+        let can_do_infallible_conversion;
 
         match resolved_type {
-            ResolvedType::Table(_, info, relative_namespace) => {
+            ResolvedType::Table(_, _, info, relative_namespace) => {
                 owned_type = format!(
                     "::planus::alloc::boxed::Box<{}>",
                     format_relative_namespace(&relative_namespace, &info.owned_name)
@@ -896,8 +939,9 @@ impl Backend for RustBackend {
                     "WriteAsOffset<{}>",
                     format_relative_namespace(&relative_namespace, &info.owned_name)
                 );
+                can_do_infallible_conversion = false;
             }
-            ResolvedType::Struct(_, info, relative_namespace) => {
+            ResolvedType::Struct(decl_id, _, info, relative_namespace) => {
                 owned_type =
                     format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
                 ref_type = format!(
@@ -909,11 +953,13 @@ impl Backend for RustBackend {
                     format_relative_namespace(&relative_namespace, &info.owned_name)
                 );
                 is_struct = true;
+                can_do_infallible_conversion = self.infallible_analysis[decl_id.0];
             }
             ResolvedType::String => {
                 owned_type = "::planus::alloc::string::String".to_string();
                 ref_type = "&'a str".to_string();
                 create_trait = "WriteAsOffset<str>".to_string();
+                can_do_infallible_conversion = true;
             }
             _ => todo!(),
         }
@@ -925,6 +971,7 @@ impl Backend for RustBackend {
             owned_type,
             ref_type,
             is_struct,
+            can_do_infallible_conversion,
         }
     }
 
