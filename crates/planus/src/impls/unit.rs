@@ -6,7 +6,7 @@ use crate::{
 
 impl<P: Primitive> WriteAsPrimitive<P> for Void {
     #[inline]
-    #[allow(clippy::uninhabited_reference)]
+    #[allow(clippy::uninhabited_references)]
     fn write<const N: usize>(&self, _cursor: Cursor<'_, N>, _buffer_position: u32) {
         match *self {}
     }
