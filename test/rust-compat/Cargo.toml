@@ -7,7 +7,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
-default = []
+default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
 std = ["planus/std", "serde/std"]
 vtable-cache = ["planus/vtable-cache"]
 string-cache = ["planus/string-cache"]
@@ -17,7 +17,10 @@ bytes-cache = ["planus/bytes-cache"]
 planus = { path = "../../crates/planus", default-features = false, features = [
   "extra-validation",
 ] }
-serde = { version = "1.0.163", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0.163", default-features = false, features = [
+  "derive",
+  "alloc",
+] }
 
 [build-dependencies]
 color-eyre = "0.6.2"
