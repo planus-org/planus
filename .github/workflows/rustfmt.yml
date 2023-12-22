@@ -2,7 +2,7 @@ name: Automatically run nightly rustfmt
 
 on:
   schedule:
-    - cron: "30 5 * * 1"
+    - cron: "30 3 * * 1" # runs weekly on Monday at 3:30 UTC
   workflow_dispatch:
 
 jobs:
@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
-        with:
-          submodules: true
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
