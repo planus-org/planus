@@ -38,6 +38,7 @@
 
           # used at build-time
           nativeBuildInputs = with pkgs; [
+            cargo-make
             flatbuffers
             graphviz
             rustfmt
@@ -49,6 +50,7 @@
 
         planus = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          cargoTestCommand = "cargo make full-test";
         });
       in
       {
