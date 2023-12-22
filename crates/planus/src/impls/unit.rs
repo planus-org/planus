@@ -6,7 +6,7 @@ use crate::{
 
 impl<P: Primitive> WriteAsPrimitive<P> for Void {
     #[inline]
-    #[allow(clippy::uninhabited_references)]
+    #[allow(unknown_lints, clippy::uninhabited_references)] // We need unknown_lints, because the lint was turned on by default immediately after introduction
     fn write<const N: usize>(&self, _cursor: Cursor<'_, N>, _buffer_position: u32) {
         match *self {}
     }
