@@ -9,19 +9,31 @@ use planus_types::{ast::*, cst};
 use crate::{ctx::Ctx, error::ErrorKind, pretty_print::PrettyPrinter};
 
 struct CstConverter<'ctx> {
-    pub schema: Schema,
-    pub ctx: &'ctx Ctx,
-    pub current_span: Span,
-    pub allow_outer_docstrings: bool,
+    schema: Schema,
+    ctx: &'ctx Ctx,
+    current_span: Span,
+    allow_outer_docstrings: bool,
+    converter_options: ConverterOptions,
 }
 
-pub fn convert(ctx: &Ctx, file_id: FileId, schema: cst::Schema<'_>) -> Schema {
+#[derive(Copy, Clone, Default, Debug)]
+pub struct ConverterOptions {
+    pub ignore_docstring_errors: bool,
+}
+
+pub fn convert(
+    ctx: &Ctx,
+    file_id: FileId,
+    schema: cst::Schema<'_>,
+    converter_options: ConverterOptions,
+) -> Schema {
     let location = format!("* File `{}`", ctx.get_filename(file_id).display());
     let mut converter = CstConverter {
         schema: Schema::new(file_id, location),
         ctx,
         current_span: schema.span,
         allow_outer_docstrings: true,
+        converter_options,
     };
     for decl in &schema.declarations {
         converter.convert_declaration(decl);
@@ -1199,7 +1211,7 @@ impl<'ctx> CstConverter<'ctx> {
                                 span: comment.span,
                                 value: comment.content.to_owned(),
                             });
-                        } else {
+                        } else if !self.converter_options.ignore_docstring_errors {
                             self.emit_error(
                                 ErrorKind::FILE_ORDER,
                                 [Label::primary(self.schema.file_id, comment.span)],
@@ -1229,11 +1241,13 @@ impl<'ctx> CstConverter<'ctx> {
         match comment.kind {
             CommentKind::Comment => (),
             CommentKind::OuterDocstring => {
-                self.emit_error(
-                    ErrorKind::MISC_SEMANTIC_ERROR,
-                    [Label::primary(self.schema.file_id, comment.span)],
-                    Some("Doc comments are not meaningful here."),
-                );
+                if !self.converter_options.ignore_docstring_errors {
+                    self.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(self.schema.file_id, comment.span)],
+                        Some("Doc comments are not meaningful here."),
+                    );
+                }
                 self.allow_outer_docstrings = false;
             }
             CommentKind::InnerDocstring => {
@@ -1243,11 +1257,13 @@ impl<'ctx> CstConverter<'ctx> {
                         value: comment.content.to_owned(),
                     });
                 } else {
-                    self.emit_error(
-                        ErrorKind::MISC_SEMANTIC_ERROR,
-                        [Label::primary(self.schema.file_id, comment.span)],
-                        Some("Inner doc comments are not meaningful here."),
-                    );
+                    if !self.converter_options.ignore_docstring_errors {
+                        self.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [Label::primary(self.schema.file_id, comment.span)],
+                            Some("Inner doc comments are not meaningful here."),
+                        );
+                    }
                 }
             }
         }

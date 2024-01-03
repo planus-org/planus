@@ -12,6 +12,7 @@ use clap::{
     Parser,
 };
 use color_eyre::Result;
+use planus_translation::ConverterOptions;
 
 fn clap_v3_styling() -> Styles {
     Styles::styled()
@@ -42,7 +43,18 @@ pub enum Command {
 }
 
 #[derive(Default, Parser)]
-pub struct AppOptions {}
+pub struct AppOptions {
+    #[clap(long)]
+    pub ignore_docstring_errors: bool,
+}
+
+impl AppOptions {
+    pub fn to_converter_options(&self) -> ConverterOptions {
+        ConverterOptions {
+            ignore_docstring_errors: self.ignore_docstring_errors,
+        }
+    }
+}
 
 impl App {
     pub fn run(self) -> Result<ExitCode> {
