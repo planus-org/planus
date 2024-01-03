@@ -1256,14 +1256,12 @@ impl<'ctx> CstConverter<'ctx> {
                         span: comment.span,
                         value: comment.content.to_owned(),
                     });
-                } else {
-                    if !self.converter_options.ignore_docstring_errors {
-                        self.emit_error(
-                            ErrorKind::MISC_SEMANTIC_ERROR,
-                            [Label::primary(self.schema.file_id, comment.span)],
-                            Some("Inner doc comments are not meaningful here."),
-                        );
-                    }
+                } else if !self.converter_options.ignore_docstring_errors {
+                    self.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(self.schema.file_id, comment.span)],
+                        Some("Inner doc comments are not meaningful here."),
+                    );
                 }
             }
         }
