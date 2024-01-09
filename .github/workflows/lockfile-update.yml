@@ -1,0 +1,33 @@
+name: Automatically update lock files
+
+on:
+  schedule:
+    - cron: "30 4 1 * *"  # runs on the 1st of every month at 4:30 UTC
+  workflow_dispatch:
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+      - name: Cargo update
+        run: |
+          cargo update
+      - name: Nix update
+        run: |
+          nix flake update
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update lockfiles
+          title: "[Automated] Update lockfiles"
+          branch: automated/lockfile-update
+          body: >
+            This is an auto-generated PR running `cargo update` and `nix flake update`
