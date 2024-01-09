@@ -109,7 +109,7 @@ script = '''
         pushd $dir
         for std in "" "std"; do
             for cache in "" "vtable-cache string-cache bytes-cache"; do
-                cargo test --features "${std} ${cache}"
+                cargo test --no-default-features --features "${std} ${cache}"
             done
         done
         popd

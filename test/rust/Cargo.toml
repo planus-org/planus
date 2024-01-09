@@ -8,7 +8,7 @@ build = "build.rs"
 rust-version.workspace = true
 
 [features]
-default = []
+default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
 std = ["planus/std", "serde/std"]
 vtable-cache = ["planus/vtable-cache"]
 string-cache = ["planus/string-cache"]
