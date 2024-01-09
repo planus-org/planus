@@ -3,7 +3,7 @@ use std::{io::Write, path::PathBuf, process::ExitCode};
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
 use planus_codegen::generate_dot;
-use planus_translation::translate_files;
+use planus_translation::translate_files_with_options;
 
 /// Generate a dot graph
 #[derive(Parser)]
@@ -18,8 +18,10 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
-        let Some(declarations) = translate_files(&self.files) else {
+    pub fn run(self, options: super::AppOptions) -> Result<ExitCode> {
+        let Some(declarations) =
+            translate_files_with_options(&self.files, options.to_converter_options())
+        else {
             return Ok(ExitCode::FAILURE);
         };
 

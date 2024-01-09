@@ -16,8 +16,13 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(self, _options: super::AppOptions) -> Result<ExitCode> {
+    pub fn run(self, options: super::AppOptions) -> Result<ExitCode> {
         let buffer = std::fs::read(&self.data_file)?;
-        planus_inspector::app::run_app(&self.schema_file, &self.root_type, &buffer)
+        planus_inspector::app::run_app(
+            &self.schema_file,
+            &self.root_type,
+            &buffer,
+            options.to_converter_options(),
+        )
     }
 }

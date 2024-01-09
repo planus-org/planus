@@ -3,6 +3,7 @@ use codespan_reporting::diagnostic::Label;
 use planus_types::ast::Schema;
 
 use crate::{
+    ast_convert::ConverterOptions,
     ctx::Ctx,
     util::sorted_map::{sorted_map, SortedMap, SortedSet},
 };
@@ -10,9 +11,17 @@ use crate::{
 #[derive(Default)]
 pub struct AstMap {
     asts: SortedMap<FileId, (Schema, Vec<FileId>)>,
+    converter_options: ConverterOptions,
 }
 
 impl AstMap {
+    pub fn new_with_options(converter_options: ConverterOptions) -> Self {
+        Self {
+            asts: Default::default(),
+            converter_options,
+        }
+    }
+
     pub fn add_files_recursively(&mut self, ctx: &mut Ctx, file_id: FileId) {
         let mut queue = vec![file_id];
 
@@ -21,7 +30,8 @@ impl AstMap {
                 sorted_map::Entry::Occupied(_) => continue,
                 sorted_map::Entry::Vacant(entry) => {
                     if let Some(cst) = ctx.parse_file(file_id) {
-                        let ast = crate::ast_convert::convert(ctx, file_id, cst);
+                        let ast =
+                            crate::ast_convert::convert(ctx, file_id, cst, self.converter_options);
                         let dependencies = ast
                             .includes
                             .iter()
@@ -117,7 +127,11 @@ mod tests {
                 (Schema::new(file_id2, String::new()), vec![file_id3]),
             );
             asts.insert(file_id3, (Schema::new(file_id3, String::new()), vec![]));
-            let reachability = AstMap { asts }.reachability();
+            let reachability = AstMap {
+                asts,
+                converter_options: Default::default(),
+            }
+            .reachability();
             let mut file_id1_reach = [file_id1, file_id2, file_id3];
             let mut file_id2_reach = [file_id2, file_id3];
             let file_id3_reach = [file_id3];

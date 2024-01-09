@@ -7,14 +7,19 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use fuzzy_matcher::FuzzyMatcher;
-use planus_translation::translate_files;
+use planus_translation::{translate_files_with_options, ConverterOptions};
 use planus_types::intermediate::{AbsolutePath, DeclarationIndex, DeclarationKind};
 use tui::{backend::CrosstermBackend, Terminal};
 
 use crate::{run_inspector, Inspector};
 
-pub fn run_app(schema_file: &Path, root_type: &str, buffer: &[u8]) -> Result<ExitCode> {
-    let Some(declarations) = translate_files(&[schema_file]) else {
+pub fn run_app(
+    schema_file: &Path,
+    root_type: &str,
+    buffer: &[u8],
+    converter_options: ConverterOptions,
+) -> Result<ExitCode> {
+    let Some(declarations) = translate_files_with_options(&[schema_file], converter_options) else {
         return Ok(ExitCode::FAILURE);
     };
 
