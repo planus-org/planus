@@ -1,7 +1,7 @@
 # Planus – alternative flatbuffer implementation
 
 [![Build Status](https://github.com/planus-org/planus/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/planus-org/planus/actions/workflows/rust.yml)
-![Rustc Version 1.64+](https://img.shields.io/badge/rustc-1.64+-lightgray.svg)
+![Rustc Version 1.70+](https://img.shields.io/badge/rustc-1.70+-lightgray.svg)
 [![License](https://img.shields.io/crates/l/planus)](https://crates.io/crates/planus)
 [![Crates.io](https://img.shields.io/crates/v/planus)](https://crates.io/crates/planus)
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/planus)
@@ -99,7 +99,7 @@ Things we will probably never support:
 
 ## Minimum Supported Rust Version (MSRV)
 
-Our current Minimum Supported Rust Version is 1.64.0. When adding features, we will follow these guidelines:
+Our current Minimum Supported Rust Version is 1.70.0. When adding features, we will follow these guidelines:
 
 - We will aim to support the latest five minor Rust versions. This gives you a 6 month window to upgrade your compiler.
 - Any change to the MSRV will be accompanied with a minor version bump

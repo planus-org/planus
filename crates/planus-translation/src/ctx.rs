@@ -1,5 +1,6 @@
 use std::{
     cell::{Cell, RefCell},
+    io::IsTerminal,
     path::{Path, PathBuf},
     sync::RwLock,
 };
@@ -37,7 +38,7 @@ pub struct Ctx {
 
 impl Default for Ctx {
     fn default() -> Self {
-        let color_choice = if atty::is(atty::Stream::Stderr) {
+        let color_choice = if std::io::stderr().is_terminal() {
             ColorChoice::Auto
         } else {
             ColorChoice::Never
