@@ -26,6 +26,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v5
         with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           commit-message: Update lockfiles
           title: "[Automated] Update lockfiles"
           branch: automated/lockfile-update
