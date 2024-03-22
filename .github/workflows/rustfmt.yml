@@ -22,6 +22,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           commit-message: Run nightly rustfmt
           title: "[Automated] Run nightly rustfmt"
           branch: automated/rustfmt
