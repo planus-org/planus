@@ -291,15 +291,6 @@ pub trait Backend {
         decl: &Union,
     ) -> Self::UnionInfo;
 
-    fn generate_rpc_service(
-        &mut self,
-        declaration_names: &mut DeclarationNames<'_, '_>,
-        translated_namespaces: &[Self::NamespaceInfo],
-        decl_id: DeclarationIndex,
-        decl_name: &AbsolutePath,
-        decl: &RpcService,
-    ) -> Self::RpcServiceInfo;
-
     fn generate_table_field(
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
@@ -340,14 +331,4 @@ pub trait Backend {
         value: &UnionVariant,
         resolved_type: ResolvedType<'_, Self>,
     ) -> Self::UnionVariantInfo;
-
-    #[allow(clippy::too_many_arguments)]
-    fn generate_rpc_method(
-        &mut self,
-        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
-        parent_info: &Self::RpcServiceInfo,
-        parent: &RpcService,
-        method_name: &str,
-        method: &RpcMethod,
-    ) -> Self::RpcMethodInfo;
 }

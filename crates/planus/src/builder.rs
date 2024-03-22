@@ -272,8 +272,6 @@ impl Builder {
 
 #[cfg(test)]
 mod tests {
-    use alloc::vec::Vec;
-
     use rand::{thread_rng, Rng};
 
     use super::*;
@@ -282,7 +280,7 @@ mod tests {
     fn test_buffer_random() {
         let mut slice = [0; 128];
         let mut rng = thread_rng();
-        let mut back_offsets: Vec<(usize, usize, usize)> = Vec::new();
+        let mut back_offsets: alloc::vec::Vec<(usize, usize, usize)> = alloc::vec::Vec::new();
 
         for _ in 0..50 {
             let mut builder = Builder::new();

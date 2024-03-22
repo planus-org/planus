@@ -1,16 +1,15 @@
-use alloc::string::String;
 use core::mem::MaybeUninit;
 
 use crate::{builder::Builder, traits::*, Cursor, Offset};
 
-impl WriteAsOffset<str> for String {
+impl WriteAsOffset<str> for alloc::string::String {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Offset<str> {
         WriteAsOffset::prepare(self.as_str(), builder)
     }
 }
 
-impl WriteAs<Offset<str>> for String {
+impl WriteAs<Offset<str>> for alloc::string::String {
     type Prepared = Offset<str>;
 
     #[inline]
@@ -19,7 +18,7 @@ impl WriteAs<Offset<str>> for String {
     }
 }
 
-impl WriteAsDefault<Offset<str>, str> for String {
+impl WriteAsDefault<Offset<str>, str> for alloc::string::String {
     type Prepared = Offset<str>;
 
     #[inline]
@@ -32,7 +31,7 @@ impl WriteAsDefault<Offset<str>, str> for String {
     }
 }
 
-impl WriteAsOptional<Offset<str>> for String {
+impl WriteAsOptional<Offset<str>> for alloc::string::String {
     type Prepared = Offset<str>;
 
     #[inline]
@@ -41,7 +40,7 @@ impl WriteAsOptional<Offset<str>> for String {
     }
 }
 
-impl VectorWrite<Offset<str>> for String {
+impl VectorWrite<Offset<str>> for alloc::string::String {
     type Value = Offset<str>;
 
     const STRIDE: usize = 4;

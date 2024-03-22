@@ -211,20 +211,6 @@ impl Backend for DotBackend {
         }
     }
 
-    fn generate_rpc_service(
-        &mut self,
-        _declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        decl_id: DeclarationIndex,
-        decl_name: &AbsolutePath,
-        _decl: &intermediate::RpcService,
-    ) -> RpcService {
-        RpcService {
-            decl_id,
-            name: decl_name.to_string(),
-        }
-    }
-
     fn generate_table_field(
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
@@ -319,16 +305,5 @@ impl Backend for DotBackend {
             type_ref,
             color: self.random_color(),
         }
-    }
-
-    fn generate_rpc_method(
-        &mut self,
-        _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
-        _parent_info: &Self::RpcServiceInfo,
-        _parent: &intermediate::RpcService,
-        _method_name: &str,
-        _method: &intermediate::RpcMethod,
-    ) -> RpcMethod {
-        todo!()
     }
 }

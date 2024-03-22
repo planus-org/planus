@@ -474,20 +474,7 @@ pub fn run_backend<B: ?Sized + Backend>(
                     ),
                     decl,
                 ),
-                DeclarationKind::RpcService(decl) => DeclInfo::RpcService(
-                    backend.generate_rpc_service(
-                        &mut DeclarationNames {
-                            global_names,
-                            namespace_names,
-                            declaration_names,
-                        },
-                        &translated_namespaces,
-                        DeclarationIndex(decl_id),
-                        decl_name,
-                        decl,
-                    ),
-                    decl,
-                ),
+                DeclarationKind::RpcService(_decl) => todo!(),
             };
             (decl_name.clone(), decl)
         })

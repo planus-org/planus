@@ -1,5 +1,3 @@
-use core::convert::TryInto;
-
 use crate::{errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion};
 
 #[derive(Copy, Clone, Debug)]

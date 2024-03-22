@@ -128,8 +128,6 @@ impl Drop for BackVec {
 
 #[cfg(test)]
 mod tests {
-    use alloc::vec::Vec;
-
     use rand::{thread_rng, Rng};
 
     use super::*;
@@ -139,7 +137,7 @@ mod tests {
         let mut rng = thread_rng();
         let mut vec = BackVec::with_capacity(rng.gen::<usize>() % 64);
         let mut slice = [0; 50];
-        let mut saved = Vec::new();
+        let mut saved = alloc::vec::Vec::new();
         let limit = if cfg!(miri) { 1_000 } else { 100_000 };
         for _ in 0..limit {
             assert!(vec.len() <= vec.capacity);

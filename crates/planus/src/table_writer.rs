@@ -1,7 +1,4 @@
-use core::{
-    convert::TryInto,
-    mem::{self, MaybeUninit},
-};
+use core::mem::{self, MaybeUninit};
 
 use crate::{Builder, Primitive, WriteAsPrimitive};
 
