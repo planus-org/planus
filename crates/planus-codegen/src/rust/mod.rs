@@ -283,17 +283,6 @@ impl Backend for RustBackend {
         }
     }
 
-    fn generate_rpc_service(
-        &mut self,
-        _declaration_names: &mut DeclarationNames<'_, '_>,
-        _translated_namespaces: &[Self::NamespaceInfo],
-        _decl_id: DeclarationIndex,
-        _decl_name: &AbsolutePath,
-        _decl: &intermediate::RpcService,
-    ) -> RpcService {
-        RpcService {}
-    }
-
     fn generate_table_field(
         &mut self,
         translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
@@ -973,17 +962,6 @@ impl Backend for RustBackend {
             is_struct,
             can_do_infallible_conversion,
         }
-    }
-
-    fn generate_rpc_method(
-        &mut self,
-        _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
-        _parent_info: &Self::RpcServiceInfo,
-        _parent: &intermediate::RpcService,
-        _method_name: &str,
-        _method: &intermediate::RpcMethod,
-    ) -> RpcMethod {
-        todo!()
     }
 }
 

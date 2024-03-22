@@ -382,7 +382,7 @@ impl VTableObject {
     pub fn get_offsets<'a>(
         &self,
         buffer: &InspectableFlatbuffer<'a>,
-    ) -> Result<impl 'a + ExactSizeIterator + DoubleEndedIterator + Iterator<Item = u16>> {
+    ) -> Result<impl 'a + ExactSizeIterator<Item = u16> + DoubleEndedIterator> {
         let size = self.get_vtable_size(buffer)?;
         let slice: &[u8] = buffer.read_slice(self.offset, size as usize)?;
         Ok(slice[4..].chunks_exact(2).map(move |chunk| {

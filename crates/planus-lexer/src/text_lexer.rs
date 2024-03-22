@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use codespan::Span;
 use logos::Logos;
 

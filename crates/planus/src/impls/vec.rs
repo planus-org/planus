@@ -1,8 +1,6 @@
-use alloc::vec::Vec;
-
 use crate::{builder::Builder, traits::*, Offset};
 
-impl<T, P> WriteAsOffset<[P]> for Vec<T>
+impl<T, P> WriteAsOffset<[P]> for alloc::vec::Vec<T>
 where
     [T]: WriteAsOffset<[P]>,
 {
@@ -12,7 +10,7 @@ where
     }
 }
 
-impl<T, P> WriteAs<Offset<[P]>> for Vec<T>
+impl<T, P> WriteAs<Offset<[P]>> for alloc::vec::Vec<T>
 where
     [T]: WriteAsOffset<[P]>,
 {
@@ -24,7 +22,7 @@ where
     }
 }
 
-impl<T, P> WriteAsDefault<Offset<[P]>, ()> for Vec<T>
+impl<T, P> WriteAsDefault<Offset<[P]>, ()> for alloc::vec::Vec<T>
 where
     [T]: WriteAsOffset<[P]>,
 {
@@ -40,7 +38,7 @@ where
     }
 }
 
-impl<T, P> WriteAsOptional<Offset<[P]>> for Vec<T>
+impl<T, P> WriteAsOptional<Offset<[P]>> for alloc::vec::Vec<T>
 where
     [T]: WriteAsOffset<[P]>,
 {
