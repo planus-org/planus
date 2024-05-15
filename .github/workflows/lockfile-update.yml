@@ -16,7 +16,7 @@ jobs:
           profile: minimal
           override: true
       - name: Install Nix
-        uses: cachix/install-nix-action@v26
+        uses: cachix/install-nix-action@V27
       - name: Cargo update
         run: |
           cargo update
