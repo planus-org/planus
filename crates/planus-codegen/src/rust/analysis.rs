@@ -52,6 +52,10 @@ impl DeclarationAnalysis for DefaultAnalysis {
                                 break;
                             }
                         }
+                        TypeKind::Vector(_) | TypeKind::String => {
+                            // Required vectors and strings default to being empty
+                            continue;
+                        }
                         _ => {
                             // For other types, we can only do default if our assign_mode matches
                             cur_default_possible = false;
