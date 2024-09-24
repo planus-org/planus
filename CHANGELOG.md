@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \[Rust\]: Added `#[allow(dead_code)]` to the root of the generated rust code [#204](https://github.com/planus-org/planus/pull/204)
 - Added the option `ignore_docstring_errors` to the app. [#216](https://github.com/planus-org/planus/pull/216)
 - Get rid of dependency on `atty` and bump the Minimum Support Rust Version (MSRV) to 1.70.0. [#220](https://github.com/planus-org/planus/pull/220)
+- \[Rust\]: Allow default implementations to be generated for tables that have fields with (required) vectors, strings, integers and bools. [#243](https://github.com/planus-org/planus/pull/243)
 
 ### Fixed
 
