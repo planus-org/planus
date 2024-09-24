@@ -52,8 +52,11 @@ impl DeclarationAnalysis for DefaultAnalysis {
                                 break;
                             }
                         }
-                        TypeKind::Vector(_) | TypeKind::String => {
-                            // Required vectors and strings default to being empty
+                        TypeKind::Vector(_)
+                        | TypeKind::String
+                        | TypeKind::SimpleType(SimpleType::Integer(_))
+                        | TypeKind::SimpleType(SimpleType::Bool) => {
+                            // The above types should have a default even when (required)
                             continue;
                         }
                         _ => {
