@@ -75,17 +75,17 @@ pub struct UnionVariant {
 
 #[derive(Clone, Debug)]
 pub struct RpcService {
-    pub decl_id: DeclarationIndex,
-    pub name: String,
+    pub _decl_id: DeclarationIndex,
+    pub _name: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct RpcMethod {
-    pub name: String,
-    pub arg_type: String,
-    pub arg_type_ref: Option<DeclarationIndex>,
-    pub return_type: String,
-    pub return_type_ref: Option<DeclarationIndex>,
+    pub _name: String,
+    pub _arg_type: String,
+    pub _arg_type_ref: Option<DeclarationIndex>,
+    pub _return_type: String,
+    pub _return_type_ref: Option<DeclarationIndex>,
 }
 
 impl DotBackend {
