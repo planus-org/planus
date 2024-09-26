@@ -1,6 +1,5 @@
 use std::{
-    cmp::{Ordering, PartialOrd},
-    f32::{INFINITY, NAN},
+    cmp::{Ordering, PartialOrd}
 };
 
 // The idea is to put all of the values into a tree
@@ -126,33 +125,33 @@ let f2_cases = Tree::Leaf(vec![
     Union::F2(Box::new(InnerTable { v0: 1, v1: 1 })),
 ]);
 let f3_cases0 = Tree::Incomparable {
-    incomparable: vec![Union::F3(InnerF32 { v0: 0.0, v1: NAN })],
+    incomparable: vec![Union::F3(InnerF32 { v0: 0.0, v1: f32::NAN })],
     inner: Box::new(Tree::Leaf(vec![
         Union::F3(InnerF32 { v0: 0.0, v1: -10.0 }),
         Union::F3(InnerF32 { v0: 0.0, v1: 0.0 }),
         Union::F3(InnerF32 { v0: 0.0, v1: 10.0 }),
         Union::F3(InnerF32 {
             v0: 0.0,
-            v1: INFINITY,
+            v1: f32::INFINITY,
         }),
     ])),
 };
 let f3_cases1 = Tree::Incomparable {
-    incomparable: vec![Union::F3(InnerF32 { v0: 1.0, v1: NAN })],
+    incomparable: vec![Union::F3(InnerF32 { v0: 1.0, v1: f32::NAN })],
     inner: Box::new(Tree::Leaf(vec![
         Union::F3(InnerF32 { v0: 1.0, v1: -10.0 }),
         Union::F3(InnerF32 { v0: 1.0, v1: 0.0 }),
         Union::F3(InnerF32 { v0: 1.0, v1: 10.0 }),
         Union::F3(InnerF32 {
             v0: 1.0,
-            v1: INFINITY,
+            v1: f32::INFINITY,
         }),
     ])),
 };
 let f3_cases = Tree::Incomparable {
     incomparable: vec![
-        Union::F3(InnerF32 { v0: NAN, v1: 0.0 }),
-        Union::F3(InnerF32 { v0: NAN, v1: 1.0 }),
+        Union::F3(InnerF32 { v0: f32::NAN, v1: 0.0 }),
+        Union::F3(InnerF32 { v0: f32::NAN, v1: 1.0 }),
     ],
     inner: Box::new(Tree::Node {
         left: Box::new(f3_cases0),
