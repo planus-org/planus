@@ -34,8 +34,8 @@ pub enum BackendDeclaration<B: ?Sized + Backend> {
 pub struct BackendTable<B: ?Sized + Backend> {
     pub docstrings: Docstrings,
     pub max_vtable_size: u32,
-    pub max_size: u32,
-    pub max_alignment: u32,
+    pub _max_size: u32,
+    pub _max_alignment: u32,
     pub info: B::TableInfo,
     pub fields: BackendTableFields<B::TableFieldInfo>,
 }
@@ -66,9 +66,9 @@ pub struct BackendUnion<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendRpcService<B: ?Sized + Backend> {
-    pub docstrings: Docstrings,
-    pub info: B::RpcServiceInfo,
-    pub methods: Vec<B::RpcMethodInfo>,
+    pub _docstrings: Docstrings,
+    pub _info: B::RpcServiceInfo,
+    pub _methods: Vec<B::RpcMethodInfo>,
 }
 
 #[derive(Debug, Clone)]
@@ -402,7 +402,7 @@ pub fn run_backend<B: ?Sized + Backend>(
         .map(|((namespace_name, namespace), namespace_names)| {
             backend.generate_namespace(
                 &mut NamespaceNames {
-                    global_names,
+                    _global_names: global_names,
                     namespace_names,
                 },
                 namespace_name,
@@ -421,8 +421,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                 DeclarationKind::Table(decl) => DeclInfo::Table(
                     backend.generate_table(
                         &mut DeclarationNames {
-                            global_names,
-                            namespace_names,
+                            _global_names: global_names,
+                            _namespace_names: namespace_names,
                             declaration_names,
                         },
                         &translated_namespaces,
@@ -435,8 +435,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                 DeclarationKind::Struct(decl) => DeclInfo::Struct(
                     backend.generate_struct(
                         &mut DeclarationNames {
-                            global_names,
-                            namespace_names,
+                            _global_names: global_names,
+                            _namespace_names: namespace_names,
                             declaration_names,
                         },
                         &translated_namespaces,
@@ -449,8 +449,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                 DeclarationKind::Enum(decl) => DeclInfo::Enum(
                     backend.generate_enum(
                         &mut DeclarationNames {
-                            global_names,
-                            namespace_names,
+                            _global_names: global_names,
+                            _namespace_names: namespace_names,
                             declaration_names,
                         },
                         &translated_namespaces,
@@ -463,8 +463,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                 DeclarationKind::Union(decl) => DeclInfo::Union(
                     backend.generate_union(
                         &mut DeclarationNames {
-                            global_names,
-                            namespace_names,
+                            _global_names: global_names,
+                            _namespace_names: namespace_names,
                             declaration_names,
                         },
                         &translated_namespaces,
@@ -507,8 +507,8 @@ pub fn run_backend<B: ?Sized + Backend>(
                             variant: backend.generate_enum_variant(
                                 &mut DeclarationTranslationContext {
                                     declaration_names: DeclarationNames {
-                                        global_names,
-                                        namespace_names,
+                                        _global_names: global_names,
+                                        _namespace_names: namespace_names,
                                         declaration_names,
                                     },
                                     translated_namespaces: &translated_namespaces,
@@ -536,8 +536,8 @@ pub fn run_backend<B: ?Sized + Backend>(
         let namespace_names = &mut namespace_names[orig_decl.1.namespace_id.0];
         let mut translation_context = DeclarationTranslationContext {
             declaration_names: DeclarationNames {
-                global_names,
-                namespace_names,
+                _global_names: global_names,
+                _namespace_names: namespace_names,
                 declaration_names,
             },
             translated_namespaces: &translated_namespaces,
@@ -547,8 +547,8 @@ pub fn run_backend<B: ?Sized + Backend>(
             DeclInfo::Enum(..) => continue,
             DeclInfo::Table(translated_decl, decl) => BackendDeclaration::Table(BackendTable {
                 max_vtable_size: decl.max_vtable_size,
-                max_size: decl.max_size,
-                max_alignment: decl.max_alignment,
+                _max_size: decl.max_size,
+                _max_alignment: decl.max_alignment,
                 info: translated_decl.clone(),
                 fields: BackendTableFields::new(
                     declarations,

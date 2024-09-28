@@ -15,13 +15,13 @@ pub struct Names<'keywords> {
 }
 
 pub struct NamespaceNames<'a, 'keywords> {
-    pub global_names: &'a mut Names<'keywords>,
+    pub _global_names: &'a mut Names<'keywords>,
     pub namespace_names: &'a mut Names<'keywords>,
 }
 
 pub struct DeclarationNames<'a, 'keywords> {
-    pub global_names: &'a mut Names<'keywords>,
-    pub namespace_names: &'a mut Names<'keywords>,
+    pub _global_names: &'a mut Names<'keywords>,
+    pub _namespace_names: &'a mut Names<'keywords>,
     pub declaration_names: &'a mut Names<'keywords>,
 }
 
@@ -200,12 +200,14 @@ pub enum ResolvedType<'a, B: ?Sized + Backend> {
         &'a B::StructInfo,
         RelativeNamespace<'a, B>,
     ),
+    #[allow(dead_code)]
     Table(
         DeclarationIndex,
         &'a Table,
         &'a B::TableInfo,
         RelativeNamespace<'a, B>,
     ),
+    #[allow(dead_code)]
     Enum(
         DeclarationIndex,
         &'a Enum,
@@ -213,6 +215,7 @@ pub enum ResolvedType<'a, B: ?Sized + Backend> {
         RelativeNamespace<'a, B>,
         &'a [BackendVariant<B::EnumVariantInfo>],
     ),
+    #[allow(dead_code)]
     Union(
         DeclarationIndex,
         &'a Union,
