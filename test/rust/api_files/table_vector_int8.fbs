@@ -5,7 +5,7 @@ table Example {
   value_required: [int8] (required);
 }
 
-table ExampleWithDefault {
+table Example2 {
   value: [int8];
   value_null: [int8] = null;
   value_default_empty: [int8] = [];
