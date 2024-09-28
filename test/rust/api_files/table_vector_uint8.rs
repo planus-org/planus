@@ -19,21 +19,21 @@ assert_traits!(
     ExampleRef<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example>} + !{Into<Example>},
 );
 
-check_type!(ExampleWithDefault => value : Option<Vec<u8>>);
-check_type!(ExampleWithDefault => value_null : Option<Vec<u8>>);
-check_type!(ExampleWithDefault => value_default_empty : Vec<u8>);
-check_type!(ExampleWithDefault => create(&mut planus::Builder, Vec<u8>, Vec<u8>, Vec<u8>) : planus::Offset<ExampleWithDefault>);
-check_type!(ExampleWithDefault => create(&mut planus::Builder, (), (), Vec<u8>) : planus::Offset<ExampleWithDefault>);
-check_type!(ExampleWithDefault => create(&mut planus::Builder, Option<Vec<u8>>, Option<Vec<u8>>, Vec<u8>) : planus::Offset<ExampleWithDefault>);
-check_type!(+['a, 'b, 'c] ExampleWithDefault => create(&mut planus::Builder, &'a [u8], &'b [u8], &'c [u8]) : planus::Offset<ExampleWithDefault>);
-check_type!(+['a, 'b, 'c] ExampleWithDefault => create(&mut planus::Builder, Option<&'a [u8]>, Option<&'b [u8]>, &'c [u8]) : planus::Offset<ExampleWithDefault>);
+check_type!(Example2 => value : Option<Vec<u8>>);
+check_type!(Example2 => value_null : Option<Vec<u8>>);
+check_type!(Example2 => value_default_empty : Vec<u8>);
+check_type!(Example2 => create(&mut planus::Builder, Vec<u8>, Vec<u8>, Vec<u8>) : planus::Offset<Example2>);
+check_type!(Example2 => create(&mut planus::Builder, (), (), Vec<u8>) : planus::Offset<Example2>);
+check_type!(Example2 => create(&mut planus::Builder, Option<Vec<u8>>, Option<Vec<u8>>, Vec<u8>) : planus::Offset<Example2>);
+check_type!(+['a, 'b, 'c] Example2 => create(&mut planus::Builder, &'a [u8], &'b [u8], &'c [u8]) : planus::Offset<Example2>);
+check_type!(+['a, 'b, 'c] Example2 => create(&mut planus::Builder, Option<&'a [u8]>, Option<&'b [u8]>, &'c [u8]) : planus::Offset<Example2>);
 
-check_type!(+['a] ExampleWithDefaultRef<'a> => &self.value() : planus::Result<Option<&'a [u8]>>);
-check_type!(+['a] ExampleWithDefaultRef<'a> => &self.value_null() : planus::Result<Option<&'a [u8]>>);
-check_type!(+['a] ExampleWithDefaultRef<'a> => &self.value_default_empty() : planus::Result<&'a [u8]>);
-check_type!(+['a] ExampleWithDefaultRef<'a> => impl planus::ReadAsRoot<'a>);
+check_type!(+['a] Example2Ref<'a> => &self.value() : planus::Result<Option<&'a [u8]>>);
+check_type!(+['a] Example2Ref<'a> => &self.value_null() : planus::Result<Option<&'a [u8]>>);
+check_type!(+['a] Example2Ref<'a> => &self.value_default_empty() : planus::Result<&'a [u8]>);
+check_type!(+['a] Example2Ref<'a> => impl planus::ReadAsRoot<'a>);
 
 assert_traits!(
-    ExampleWithDefault: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
-    ExampleWithDefaultRef<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<ExampleWithDefault>} + !{Into<ExampleWithDefault>},
+    Example2: !Copy + Clone + Debug + PartialEq + PartialOrd + Eq + Ord + Hash + Default,
+    Example2Ref<'_>: Copy + Clone + Debug + !PartialEq + !PartialOrd + !Eq + !Ord + !Hash + !Default + {TryInto<Example2>} + !{Into<Example2>},
 );

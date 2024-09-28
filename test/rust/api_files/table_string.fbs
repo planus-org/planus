@@ -6,7 +6,7 @@ table Example {
   value_required: string (required);
 }
 
-table ExampleWithDefault {
+table Example2 {
   value: string;
   value_null: string = null;
   value_default_empty: string = "";
