@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-planus = { version = "0.4.0", path = "../../crates/planus", default-features = false }
+planus = { version = "1.0.0", path = "../../crates/planus", default-features = false }
 serde = { version = "1", default-features = false, features = [
   "derive",
   "std",

@@ -10,8 +10,8 @@ rust-version.workspace = true
 description = "Internal translation library for planus."
 
 [dependencies]
-planus-lexer = { version = "0.4.0", path = "../planus-lexer" }
-planus-types = { version = "0.4.0", path = "../planus-types" }
+planus-lexer = { version = "1.0.0", path = "../planus-lexer" }
+planus-types = { version = "1.0.0", path = "../planus-types" }
 bitflags = "2.3.1"
 codespan = "0.11.1"
 codespan-reporting = "0.11.1"

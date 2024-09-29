@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Fixed
+
+### Removed
+
+## [1.0.0] - 2024-09-29
+
+### Added
+
 - \[Rust\]: Added `#[allow(dead_code)]` to the root of the generated rust code [#204](https://github.com/planus-org/planus/pull/204)
 - Added the option `ignore_docstring_errors` to the app. [#216](https://github.com/planus-org/planus/pull/216)
 - Get rid of dependency on `atty` and bump the Minimum Support Rust Version (MSRV) to 1.70.0. [#220](https://github.com/planus-org/planus/pull/220)
@@ -95,7 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/planus-org/planus/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/planus-org/planus/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/planus-org/planus/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/planus-org/planus/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/planus-org/planus/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/planus-org/planus/compare/v0.2.0...v0.3.0
