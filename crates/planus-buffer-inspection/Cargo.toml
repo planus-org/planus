@@ -11,5 +11,5 @@ description = "Internal buffer inspection library for planus."
 
 [dependencies]
 indexmap = "1.9.2"
-planus-types = { version = "0.4.0", path = "../planus-types" }
+planus-types = { version = "1.0.0", path = "../planus-types" }
 rust-lapper = "1.1.0"

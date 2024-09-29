@@ -15,11 +15,11 @@ name = "planus"
 path = "src/main.rs"
 
 [dependencies]
-planus-codegen = { version = "0.4.0", path = "../planus-codegen" }
-planus-translation = { version = "0.4.0", path = "../planus-translation" }
-planus-lexer = { version = "0.4.0", path = "../planus-lexer" }
-planus-types = { version = "0.4.0", path = "../planus-types" }
-planus-inspector = { version = "0.4.0", path = "../planus-inspector" }
+planus-codegen = { version = "1.0.0", path = "../planus-codegen" }
+planus-translation = { version = "1.0.0", path = "../planus-translation" }
+planus-lexer = { version = "1.0.0", path = "../planus-lexer" }
+planus-types = { version = "1.0.0", path = "../planus-types" }
+planus-inspector = { version = "1.0.0", path = "../planus-inspector" }
 clap = { version = "4.4.2", features = ["derive", "color"] }
 clap_complete = "4.4.1"
 codespan = "0.11.1"

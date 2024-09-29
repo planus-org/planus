@@ -37,9 +37,9 @@ pub use crate::{
 #[doc(hidden)]
 pub const fn check_version_compatibility(s: &str) {
     match s.as_bytes() {
-        b"planus-0.4.0" => (),
+        b"planus-1.0.0" => (),
         _ => panic!(
-            "Your generated code is out of date, please regenerate using planus version 0.4.0"
+            "Your generated code is out of date, please regenerate using planus version 1.0.0"
         ),
     }
 }
