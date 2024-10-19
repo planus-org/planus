@@ -605,7 +605,7 @@ impl<'a> ObjectViewWidget<'a> {
     }
 }
 
-impl<'a> Widget for ObjectViewWidget<'a> {
+impl Widget for ObjectViewWidget<'_> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         let area = match self.block.take() {
             Some(b) => {
@@ -687,7 +687,7 @@ pub struct Node<'a> {
     pub children: Option<Box<dyn Fn() -> Vec<Node<'a>>>>,
 }
 
-impl<'a> Debug for Node<'a> {
+impl Debug for Node<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Node")
             .field("text", &self.text)
@@ -701,7 +701,7 @@ pub struct TreeState<'a> {
     pub lines: VecWithIndex<TreeStateLine<'a>>,
 }
 
-impl<'a> TreeState<'a> {
+impl TreeState<'_> {
     pub fn toggle_fold(&mut self) {
         let line = self.lines.cur_mut();
         match line.fold_state {
@@ -756,7 +756,7 @@ struct TreeStateWidget<'a, 'b> {
     pub block: Option<Block<'a>>,
 }
 
-impl<'a, 'b> Widget for TreeStateWidget<'a, 'b> {
+impl Widget for TreeStateWidget<'_, '_> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         let area = match self.block.take() {
             Some(b) => {

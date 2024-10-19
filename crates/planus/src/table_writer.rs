@@ -83,7 +83,7 @@ pub struct ObjectWriter<'a> {
     bytes: &'a mut [MaybeUninit<u8>],
 }
 
-impl<'a> ObjectWriter<'a> {
+impl ObjectWriter<'_> {
     /// # Safety
     ///
     /// Must be called in alignment order with the most-aligned object first

@@ -27,7 +27,7 @@ pub struct TokenMetadata<'a> {
 #[derive(Clone, Eq, PartialEq)]
 pub struct TokenWithMetadata<'a>(pub Token<'a>, pub TokenMetadata<'a>);
 
-impl<'a> std::fmt::Debug for TokenWithMetadata<'a> {
+impl std::fmt::Debug for TokenWithMetadata<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }

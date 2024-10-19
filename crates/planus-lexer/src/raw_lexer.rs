@@ -130,7 +130,7 @@ pub struct Whitespace {
     pub contains_newline: bool,
 }
 
-impl<'input> std::fmt::Debug for Token<'input> {
+impl std::fmt::Debug for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::Ident(s) => write!(f, "identifier {s:?}"),

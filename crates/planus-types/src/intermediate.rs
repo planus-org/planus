@@ -603,7 +603,7 @@ impl IntegerLiteral {
     }
 }
 
-impl<'a> From<&'a crate::ast::BuiltinType> for TypeKind {
+impl From<&crate::ast::BuiltinType> for TypeKind {
     fn from(value: &crate::ast::BuiltinType) -> TypeKind {
         match value {
             crate::ast::BuiltinType::Bool => TypeKind::SimpleType(SimpleType::Bool),

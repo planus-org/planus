@@ -15,8 +15,8 @@ pub struct Vector<'buf, T: ?Sized> {
     _marker: PhantomData<&'buf T>,
 }
 
-impl<'buf, T: ?Sized> Copy for Vector<'buf, T> {}
-impl<'buf, T: ?Sized> Clone for Vector<'buf, T> {
+impl<T: ?Sized> Copy for Vector<'_, T> {}
+impl<T: ?Sized> Clone for Vector<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         *self
