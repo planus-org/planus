@@ -74,7 +74,7 @@ pub enum DeclInfo<'a, B: ?Sized + Backend> {
     RpcService(B::RpcServiceInfo, &'a RpcService),
 }
 
-impl<'a, B: ?Sized + Backend> Clone for DeclInfo<'a, B> {
+impl<B: ?Sized + Backend> Clone for DeclInfo<'_, B> {
     fn clone(&self) -> Self {
         match self {
             Self::Table(translated_decl, decl) => Self::Table(translated_decl.clone(), decl),
@@ -158,8 +158,8 @@ impl<'a, B: ?Sized + Backend> RelativeNamespace<'a, B> {
     }
 }
 
-impl<'a, B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Display
-    for FormattedRelativeNamespace<'a, B, F>
+impl<B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Display
+    for FormattedRelativeNamespace<'_, B, F>
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for _ in 0..self.value.ascend_count {

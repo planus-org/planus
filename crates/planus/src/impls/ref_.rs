@@ -2,21 +2,21 @@ use core::mem::MaybeUninit;
 
 use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset};
 
-impl<'a, P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &'a T {
+impl<P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &T {
     #[inline]
     fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32) {
         T::write(*self, cursor, buffer_position)
     }
 }
 
-impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOffset<T1>> WriteAsOffset<T1> for &'a T2 {
+impl<T1: ?Sized, T2: ?Sized + WriteAsOffset<T1>> WriteAsOffset<T1> for &T2 {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Offset<T1> {
         T2::prepare(self, builder)
     }
 }
 
-impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
+impl<P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &T {
     type Prepared = T::Prepared;
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> T::Prepared {
@@ -24,7 +24,7 @@ impl<'a, P: Primitive, T: ?Sized + WriteAs<P>> WriteAs<P> for &'a T {
     }
 }
 
-impl<'a, P: Primitive, D: ?Sized, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for &'a T {
+impl<P: Primitive, D: ?Sized, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefault<P, D> for &T {
     type Prepared = T::Prepared;
     #[inline]
     fn prepare(&self, builder: &mut Builder, default: &D) -> Option<T::Prepared> {
@@ -32,7 +32,7 @@ impl<'a, P: Primitive, D: ?Sized, T: ?Sized + WriteAsDefault<P, D>> WriteAsDefau
     }
 }
 
-impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'a T {
+impl<P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &T {
     type Prepared = T::Prepared;
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<T::Prepared> {
@@ -40,21 +40,21 @@ impl<'a, P: Primitive, T: ?Sized + WriteAsOptional<P>> WriteAsOptional<P> for &'
     }
 }
 
-impl<'a, T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for &'a T2 {
+impl<T1: ?Sized, T2: ?Sized + WriteAsUnion<T1>> WriteAsUnion<T1> for &T2 {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> UnionOffset<T1> {
         T2::prepare(self, builder)
     }
 }
 
-impl<'a, T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for &'a T2 {
+impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1> for &T2 {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<UnionOffset<T1>> {
         T2::prepare(self, builder)
     }
 }
 
-impl<'a, P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &'a T {
+impl<P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &T {
     const STRIDE: usize = T::STRIDE;
     type Value = T::Value;
 

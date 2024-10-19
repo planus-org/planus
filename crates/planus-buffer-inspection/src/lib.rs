@@ -135,7 +135,7 @@ pub enum Object<'a> {
     String(StringObject),
 }
 
-impl<'a> Object<'a> {
+impl Object<'_> {
     pub fn offset(&self) -> ByteIndex {
         match self {
             Object::Offset(inner) => inner.offset,
@@ -288,7 +288,7 @@ pub struct ArrayObject<'a> {
     pub type_: &'a Type,
     pub size: u32,
 }
-impl<'a> ArrayObject<'a> {
+impl ArrayObject<'_> {
     pub fn type_name(&self, declarations: &Declarations) -> String {
         format!(
             "[{}; {}]",

@@ -86,7 +86,7 @@ impl<'a, T, const N: usize> Cursor<'a, T, N> {
     }
 }
 
-impl<'a, T, const N: usize> Drop for Cursor<'a, T, N> {
+impl<T, const N: usize> Drop for Cursor<'_, T, N> {
     /// Will panic unless cursor has been completely initialized
     fn drop(&mut self) {
         if N > 0 {

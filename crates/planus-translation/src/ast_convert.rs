@@ -42,7 +42,7 @@ pub fn convert(
     converter.schema
 }
 
-impl<'ctx> CstConverter<'ctx> {
+impl CstConverter<'_> {
     fn emit_error(
         &self,
         error_type: ErrorKind,

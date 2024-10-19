@@ -255,7 +255,7 @@ impl<'a> Children<'a> for StringObject {
     }
 }
 
-impl<'a> Byterange for Object<'a> {
+impl Byterange for Object<'_> {
     fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         match self {
             Object::Offset(obj) => obj.byterange(buffer),
@@ -275,7 +275,7 @@ impl<'a> Byterange for Object<'a> {
     }
 }
 
-impl<'a> Byterange for OffsetObject<'a> {
+impl Byterange for OffsetObject<'_> {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         (self.offset, self.offset + 4)
     }
@@ -320,13 +320,13 @@ impl Byterange for EnumObject {
     }
 }
 
-impl<'a> Byterange for VectorObject<'a> {
+impl Byterange for VectorObject<'_> {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         (self.offset, self.offset)
     }
 }
 
-impl<'a> Byterange for ArrayObject<'a> {
+impl Byterange for ArrayObject<'_> {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         (self.offset, self.offset)
     }

@@ -26,7 +26,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Iter<'bu
     }
 }
 
-impl<'buf, T> Clone for Iter<'buf, T> {
+impl<T> Clone for Iter<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self { v: self.v }
@@ -124,7 +124,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Chunks<'
     }
 }
 
-impl<'buf, T> Clone for Chunks<'buf, T> {
+impl<T> Clone for Chunks<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -240,7 +240,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunks<
     }
 }
 
-impl<'buf, T> Clone for RChunks<'buf, T> {
+impl<T> Clone for RChunks<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -369,7 +369,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for ChunksEx
     }
 }
 
-impl<'buf, T> Clone for ChunksExact<'buf, T> {
+impl<T> Clone for ChunksExact<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -503,7 +503,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunksE
     }
 }
 
-impl<'buf, T> Clone for RChunksExact<'buf, T> {
+impl<T> Clone for RChunksExact<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -629,7 +629,7 @@ impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Windows<
     }
 }
 
-impl<'buf, T> Clone for Windows<'buf, T> {
+impl<T> Clone for Windows<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
