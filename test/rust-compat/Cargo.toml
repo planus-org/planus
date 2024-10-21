@@ -14,7 +14,9 @@ string-cache = ["planus/string-cache"]
 vtable-cache = ["planus/vtable-cache"]
 
 [dependencies]
-planus.workspace = true
+planus = { workspace = true, default-features = false, features = [
+  "extra-validation",
+] }
 serde = { workspace = true, default-features = false, features = [
   "derive",
   "alloc",
