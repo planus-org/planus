@@ -52,6 +52,5 @@ planus-lexer = { version = "1.0.0", path = "crates/planus-lexer" }
 planus-translation = { version = "1.0.0", path = "crates/planus-translation" }
 planus-types = { version = "1.0.0", path = "crates/planus-types" }
 
-
 # used for doctests
 planus-example = { path = "examples/rust" }
