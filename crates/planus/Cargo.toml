@@ -10,18 +10,20 @@ categories = ["encoding", "data-structures", "memory-management"]
 rust-version.workspace = true
 description = "Planus is an alternative compiler for flatbuffers, an efficient cross platform serialization library."
 
-[dependencies]
-array-init-cursor = { version = "0.2.0", path = "../array-init-cursor" }
-hashbrown = { version = "0.13.2", optional = true, features = ["raw"] }
-
-[dev-dependencies]
-rand = "0.8.5"
-planus-example = { path = "../../examples/rust" } # used for doctests
-
 [features]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
 std = []
 extra-validation = []
-vtable-cache = ["hashbrown"]
-string-cache = ["hashbrown"]
 bytes-cache = ["hashbrown"]
+string-cache = ["hashbrown"]
+vtable-cache = ["hashbrown"]
+
+[dependencies]
+hashbrown = { workspace = true, optional = true, features = ["raw"] }
+
+# Our crates
+array-init-cursor.workspace = true
+
+[dev-dependencies]
+planus-example.workspace = true # used for doctests
+rand.workspace = true

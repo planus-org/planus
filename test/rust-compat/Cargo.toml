@@ -14,15 +14,10 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-planus = { path = "../../crates/planus", default-features = false, features = [
-  "extra-validation",
-] }
-serde = { version = "1.0.163", default-features = false, features = [
-  "derive",
-  "alloc",
-] }
+planus.workspace = true
+serde.workspace = true
 
 [build-dependencies]
-color-eyre = "0.6.2"
-planus-codegen = { path = "../../crates/planus-codegen" }
-planus-translation = { path = "../../crates/planus-translation" }
+color-eyre.workspace = true
+planus-codegen.workspace = true
+planus-translation.workspace = true

@@ -1,15 +1,46 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/planus"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
-    directory: "/planus-cli"
+    directory: "crates/planus"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-buffer-inspection"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-cli"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-codegen"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-inspector"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-lexer"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-translation"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "crates/planus-types"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
     directory: "/test/rust"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/test/rust-compat"
     schedule:
       interval: "daily"
   - package-ecosystem: "github-actions"

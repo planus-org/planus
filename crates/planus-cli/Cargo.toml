@@ -15,12 +15,14 @@ name = "planus"
 path = "src/main.rs"
 
 [dependencies]
-planus-codegen = { version = "1.0.0", path = "../planus-codegen" }
-planus-translation = { version = "1.0.0", path = "../planus-translation" }
-planus-lexer = { version = "1.0.0", path = "../planus-lexer" }
-planus-types = { version = "1.0.0", path = "../planus-types" }
-planus-inspector = { version = "1.0.0", path = "../planus-inspector" }
-clap = { version = "4.4.2", features = ["derive", "color"] }
-clap_complete = "4.4.1"
-codespan = "0.11.1"
-color-eyre = "0.6.2"
+clap.workspace = true
+clap_complete.workspace = true
+codespan.workspace = true
+color-eyre.workspace = true
+
+# Our crates
+planus-codegen.workspace = true
+planus-inspector.workspace = true
+planus-lexer.workspace = true
+planus-translation.workspace = true
+planus-types.workspace = true

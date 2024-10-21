@@ -10,8 +10,10 @@ rust-version.workspace = true
 description = "Internal type library for planus."
 
 [dependencies]
-planus-lexer = { version = "1.0.0", path = "../planus-lexer" }
-codespan = "0.11.1"
-lalrpop-util = "0.20.0"
-indexmap = "1.9.3"
-string-interner = "0.14.0"
+codespan.workspace = true
+indexmap.workspace = true
+lalrpop-util.workspace = true
+string-interner.workspace = true
+
+# Our crates
+planus-lexer.workspace = true

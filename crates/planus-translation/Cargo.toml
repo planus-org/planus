@@ -10,15 +10,17 @@ rust-version.workspace = true
 description = "Internal translation library for planus."
 
 [dependencies]
-planus-lexer = { version = "1.0.0", path = "../planus-lexer" }
-planus-types = { version = "1.0.0", path = "../planus-types" }
-bitflags = "2.3.1"
-codespan = "0.11.1"
-codespan-reporting = "0.11.1"
-indexmap = "1.9.3"
-lalrpop-util = "0.20.0"
-num-traits = "0.2.15"
-string-interner = "0.14.0"
+bitflags.workspace = true
+codespan-reporting.workspace = true
+codespan.workspace = true
+indexmap.workspace = true
+lalrpop-util.workspace = true
+num-traits.workspace = true
+string-interner.workspace = true
+
+# Our crates
+planus-lexer.workspace = true
+planus-types.workspace = true
 
 [build-dependencies]
-lalrpop = "0.20.0"
+lalrpop.workspace = true

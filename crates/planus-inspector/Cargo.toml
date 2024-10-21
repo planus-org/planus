@@ -10,10 +10,12 @@ rust-version.workspace = true
 description = "Internal library for planus."
 
 [dependencies]
-planus-buffer-inspection = { version = "1.0.0", path = "../planus-buffer-inspection" }
-planus-types = { version = "1.0.0", path = "../planus-types" }
-planus-translation = { version = "1.0.0", path = "../planus-translation" }
-tui = "0.19.0"
-crossterm = "0.27.0"
-color-eyre = "0.6.2"
-fuzzy-matcher = "0.3.7"
+color-eyre.workspace = true
+crossterm.workspace = true
+fuzzy-matcher.workspace = true
+tui.workspace = true
+
+# Our crates
+planus-buffer-inspection.workspace = true
+planus-translation.workspace = true
+planus-types.workspace = true
