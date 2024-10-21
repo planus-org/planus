@@ -1,21 +1,24 @@
 [package]
-name = "rust-compat"
-version.workspace = true
 edition = "2018"
 license.workspace = true
+name = "rust-compat"
 repository.workspace = true
 rust-version.workspace = true
+version.workspace = true
 
 [features]
+bytes-cache = ["planus/bytes-cache"]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
 std = ["planus/std", "serde/std"]
-vtable-cache = ["planus/vtable-cache"]
 string-cache = ["planus/string-cache"]
-bytes-cache = ["planus/bytes-cache"]
+vtable-cache = ["planus/vtable-cache"]
 
 [dependencies]
 planus.workspace = true
-serde.workspace = true
+serde = { workspace = true, default-features = false, features = [
+  "derive",
+  "alloc",
+] }
 
 [build-dependencies]
 color-eyre.workspace = true
