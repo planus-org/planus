@@ -10,6 +10,8 @@ rust-version.workspace = true
 description = "Internal buffer inspection library for planus."
 
 [dependencies]
-indexmap = "1.9.2"
-planus-types = { version = "1.0.0", path = "../planus-types" }
-rust-lapper = "1.1.0"
+indexmap.workspace = true
+rust-lapper.workspace = true
+
+# Our crates
+planus-types.workspace = true

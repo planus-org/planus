@@ -4,11 +4,11 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-planus = { version = "1.0.0", path = "../../crates/planus", default-features = false }
-serde = { version = "1", default-features = false, features = [
+planus = { workspace = true, default-features = false }
+serde = { workspace = true, default-features = false, features = [
   "derive",
   "std",
 ] }
 
 [dev-dependencies]
-serde_json = "1.0.96"
+serde_json.workspace = true
