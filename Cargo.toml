@@ -34,7 +34,7 @@ rand = "0.8.5"
 random_color = "0.6.1"
 rust-lapper = "1.1.0"
 serde = { version = "1.0.197", default-features = false }
-serde_json = "1.0.96"
+serde_json = "1.0.132"
 similar-asserts = "1.4.2"
 static_assertions = "1.1.0"
 string-interner = "0.14.0"
