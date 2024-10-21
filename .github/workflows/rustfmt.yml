@@ -20,7 +20,7 @@ jobs:
         run: |
           cargo fmt -- --config imports_granularity=Crate --config group_imports=StdExternalCrate
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           commit-message: Run nightly rustfmt
