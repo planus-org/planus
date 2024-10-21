@@ -25,7 +25,7 @@ flatbuffers = { version = "=23.5.26", git = "https://github.com/google/flatbuffe
 fuzzy-matcher = "0.3.7"
 hashbrown = "0.13.2"
 heck = "0.5.0"
-indexmap = "1.9.3"
+indexmap = "2.2.6"
 lalrpop = "0.20.0"
 lalrpop-util = "0.20.0"
 logos = "0.12.1"
