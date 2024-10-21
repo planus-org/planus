@@ -33,7 +33,7 @@ num-traits = "0.2.15"
 rand = "0.8.5"
 random_color = "0.6.1"
 rust-lapper = "1.1.0"
-serde = { version = "1.0.197", default-features = false }
+serde = { version = "1.0.210", default-features = false }
 serde_json = "1.0.132"
 similar-asserts = "1.4.2"
 static_assertions = "1.1.0"
