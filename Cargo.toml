@@ -24,7 +24,7 @@ eyre = "0.6.8"
 flatbuffers = { version = "=23.5.26", git = "https://github.com/google/flatbuffers.git", tag = "v23.5.26" }
 fuzzy-matcher = "0.3.7"
 hashbrown = "0.13.2"
-heck = "0.4.1"
+heck = "0.5.0"
 indexmap = "1.9.3"
 lalrpop = "0.20.0"
 lalrpop-util = "0.20.0"
