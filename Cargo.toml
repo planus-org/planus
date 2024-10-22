@@ -23,7 +23,7 @@ derive_more = "0.99.18"
 eyre = "0.6.8"
 flatbuffers = { version = "=23.5.26", git = "https://github.com/google/flatbuffers.git", tag = "v23.5.26" }
 fuzzy-matcher = "0.3.7"
-hashbrown = "0.14.3"
+hashbrown = "0.14.5"
 heck = "0.5.0"
 indexmap = "2.2.6"
 lalrpop = "0.20.0"
