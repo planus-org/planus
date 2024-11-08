@@ -34,7 +34,7 @@ digraph G
       </TR>
     </TABLE>>
   ];
-  decl1:p0:e -> decl4:name [color = "#f411d2"];
+  decl1:p0:e -> decl4:name [color = "#6e4ac9"];
 
   decl2[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
@@ -122,11 +122,11 @@ digraph G
         <TD PORT="p8">optional</TD>
       </TR></TABLE>>
   ];
-  decl3:p0:e -> decl2:name [color = "#0804f7"];
-  decl3:p5:e -> decl0:name [color = "#d8755f"];
-  decl3:p6:e -> decl4:name [color = "#fc0213"];
-  decl3:p7:e -> decl1:name [color = "#ba982a"];
-  decl3:p8:e -> decl2:name [color = "#66db23"];
+  decl3:p0:e -> decl2:name [color = "#5216ad"];
+  decl3:p5:e -> decl0:name [color = "#4410d3"];
+  decl3:p6:e -> decl4:name [color = "#47a3ad"];
+  decl3:p7:e -> decl1:name [color = "#f20444"];
+  decl3:p8:e -> decl2:name [color = "#053975"];
 
   decl4[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">

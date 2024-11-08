@@ -92,7 +92,7 @@ impl DotBackend {
     fn random_color(&mut self) -> String {
         self.color_seed += 1;
         random_color::RandomColor::new()
-            .luminosity(random_color::Luminosity::Bright)
+            .luminosity(random_color::options::Luminosity::Bright)
             .seed(self.color_seed)
             .to_hex()
     }

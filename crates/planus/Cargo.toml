@@ -19,7 +19,7 @@ string-cache = ["hashbrown"]
 vtable-cache = ["hashbrown"]
 
 [dependencies]
-hashbrown = { workspace = true, optional = true, features = ["raw"] }
+hashbrown = { workspace = true, optional = true }
 
 # Our crates
 array-init-cursor.workspace = true

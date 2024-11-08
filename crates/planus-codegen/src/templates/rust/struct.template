@@ -196,7 +196,7 @@ impl<'a> ::core::convert::TryFrom<{{ info.ref_name }}<'a>> for {{ info.owned_nam
             {{ field.info.name }}:
             {% if field.info.getter_return_type.starts_with("::core::result::Result<") -%}
                 ::core::convert::TryInto::try_into(value.{{field.info.name}}()?)?,
-            {% elseif field.info.getter_return_type.ends_with("<'a>") -%}
+            {% else if field.info.getter_return_type.ends_with("<'a>") -%}
                 {%- if field.info.can_do_infallible_conversion -%}
                     ::core::convert::Into::into(value.{{field.info.name}}()),
                 {%- else -%}

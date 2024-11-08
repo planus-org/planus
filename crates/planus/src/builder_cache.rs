@@ -1,7 +1,4 @@
-use core::{
-    hash::{BuildHasher, Hash, Hasher},
-    marker::PhantomData,
-};
+use core::{hash::BuildHasher, marker::PhantomData};
 
 use crate::Offset;
 
@@ -70,8 +67,8 @@ impl GetCacheKey for ByteVec {
 
 pub(crate) struct Cache<C> {
     _marker: PhantomData<C>,
-    cache: hashbrown::raw::RawTable<CacheOffset>,
-    hash_builder: hashbrown::hash_map::DefaultHashBuilder,
+    cache: hashbrown::HashTable<CacheOffset>,
+    hash_builder: hashbrown::DefaultHashBuilder,
 }
 
 impl<C> Default for Cache<C> {
@@ -90,15 +87,9 @@ impl<C> core::fmt::Debug for Cache<C> {
     }
 }
 
-fn hash_one<H: BuildHasher>(hash_builder: &H, value: &[u8]) -> u64 {
-    let mut hasher = hash_builder.build_hasher();
-    value.hash(&mut hasher);
-    hasher.finish()
-}
-
 impl<C: GetCacheKey> Cache<C> {
     pub(crate) fn hash(&self, serialized_data: &[u8]) -> u64 {
-        hash_one(&self.hash_builder, serialized_data)
+        self.hash_builder.hash_one(serialized_data)
     }
 
     pub(crate) fn get(
@@ -108,7 +99,7 @@ impl<C: GetCacheKey> Cache<C> {
         key: &[u8],
     ) -> Option<CacheOffset> {
         self.cache
-            .get(key_hash, |back_offset| {
+            .find(key_hash, |back_offset| {
                 C::get_cache_key(serialized_data, *back_offset)
                     .map_or(false, |old_key| old_key == key)
             })
@@ -118,7 +109,7 @@ impl<C: GetCacheKey> Cache<C> {
     /// Should only be called if `get` returned `None`
     pub(crate) fn insert(&mut self, key_hash: u64, offset: CacheOffset, serialized_data: &[u8]) {
         self.cache
-            .insert(key_hash, CacheOffset(offset.0), |back_offset| {
+            .insert_unique(key_hash, CacheOffset(offset.0), |back_offset| {
                 C::get_cache_key(serialized_data, *back_offset).map_or_else(
                     || {
                         #[cfg(debug_assertions)]
@@ -126,12 +117,12 @@ impl<C: GetCacheKey> Cache<C> {
                         #[cfg(not(debug_assertions))]
                         0
                     },
-                    |old_key| hash_one(&self.hash_builder, old_key),
+                    |old_key| self.hash_builder.hash_one(old_key),
                 )
             });
     }
 
     pub(crate) fn clear(&mut self) {
-        self.cache.clear_no_drop();
+        self.cache.clear();
     }
 }

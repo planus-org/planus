@@ -1,4 +1,4 @@
-error: unrecognized token `identifier "blabla"`, expected one of "attribute", "enum", "file_extension", "file_identifier", "include", "namespace", "native_include", "root_type", "rpc_service", "struct", "table", "union", end_of_stream
+error: unrecognized token `identifier "blabla"`, expected one of "include", "native_include", "namespace", "attribute", "table", "struct", "enum", "union", "root_type", "rpc_service", "file_extension", "file_identifier", end_of_stream
   ┌─ test/files/invalid/bad_token.fbs:1:1
   │
 1 │ blabla "foo";
