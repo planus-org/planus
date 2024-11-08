@@ -15,7 +15,7 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-color-eyre = "0.6.2"
+color-eyre = "0.6.3"
 flatbuffers.workspace = true
 planus = { workspace = true, default-features = false, features = [
   "extra-validation",

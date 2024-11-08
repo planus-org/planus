@@ -4,7 +4,7 @@ use codespan::{FileId, Span};
 use indexmap::IndexMap;
 
 pub type RawIdentifier = string_interner::DefaultSymbol;
-pub type Interner = string_interner::StringInterner;
+pub type Interner = string_interner::StringInterner<string_interner::DefaultBackend>;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Identifier {

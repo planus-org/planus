@@ -6,8 +6,6 @@ use crate::error::LexicalError;
 #[derive(Logos, Debug, PartialEq)]
 #[allow(clippy::enum_variant_names)]
 pub(crate) enum Text {
-    #[error]
-    Error,
     #[regex(r#"[^"'\\]+"#)]
     Text,
     #[regex(r"\\.")]
@@ -32,9 +30,11 @@ impl Text {
             let span = lex.span();
             let span = Span::new(span.start as u32, span.end as u32);
             match token {
-                Text::Text => out += lex.slice(),
-                Text::Byte => out.push(u8::from_str_radix(&lex.slice()[2..], 16).unwrap() as char),
-                Text::Codepoint => {
+                Ok(Text::Text) => out += lex.slice(),
+                Ok(Text::Byte) => {
+                    out.push(u8::from_str_radix(&lex.slice()[2..], 16).unwrap() as char)
+                }
+                Ok(Text::Codepoint) => {
                     let codepoint = u32::from_str_radix(&lex.slice()[2..], 16).unwrap();
                     match codepoint.try_into() {
                         Ok(c) => out.push(c),
@@ -46,7 +46,7 @@ impl Text {
                         }
                     }
                 }
-                Text::EscapeCharacter => match &lex.slice()[1..] {
+                Ok(Text::EscapeCharacter) => match &lex.slice()[1..] {
                     "n" => out.push('\n'),
                     "t" => out.push('\t'),
                     "r" => out.push('\r'),
@@ -59,7 +59,7 @@ impl Text {
                         error.get_or_insert(LexicalError::new("Invalid escape sequence", span));
                     }
                 },
-                Text::Quote => {
+                Ok(Text::Quote) => {
                     let cur_quote_type = lex.slice().chars().next().unwrap();
                     if cur_quote_type == end_quote_type {
                         return out;
@@ -67,7 +67,7 @@ impl Text {
                         out.push(cur_quote_type);
                     }
                 }
-                Text::Error => {
+                Err(()) => {
                     error.get_or_insert(LexicalError::new("Invalid string", span));
                 }
             }

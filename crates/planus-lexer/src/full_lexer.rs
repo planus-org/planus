@@ -45,7 +45,7 @@ pub struct Lexer<'input> {
     // and put it back if we do not want it. We cannot simply
     // use Peekable, because it interferes with our ability
     // to morph the Lexer.
-    saved_token: Option<Token<'input>>,
+    saved_token: Option<Result<Token<'input>, ()>>,
 
     end_of_stream_reached: bool,
     pre_comment_blocks: Vec<CommentBlock<'input>>,
@@ -95,7 +95,7 @@ impl<'input> Lexer<'input> {
         Span::new(span.start as u32, span.end as u32)
     }
 
-    fn next_raw_token(&mut self) -> Option<Token<'input>> {
+    fn next_raw_token(&mut self) -> Option<Result<Token<'input>, ()>> {
         if let Some(token) = self.saved_token.take() {
             Some(token)
         } else {
@@ -111,11 +111,11 @@ impl<'input> Lexer<'input> {
             newlines = 0;
 
             return match self.next_raw_token() {
-                Some(Token::Newline) => {
+                Some(Ok(Token::Newline)) => {
                     newlines = saved_newlines + 1;
                     continue;
                 }
-                Some(Token::Comment(c)) => {
+                Some(Ok(Token::Comment(c))) => {
                     if token_begins_paragraph && !self.current_comment_block.0.is_empty() {
                         self.pre_comment_blocks
                             .push(std::mem::take(&mut self.current_comment_block));
@@ -128,15 +128,15 @@ impl<'input> Lexer<'input> {
                     });
                     continue;
                 }
-                Some(Token::UnexpectedToken) => {
+                Some(Err(())) => {
                     let err = format!("Unknown token {}", self.lex().slice());
                     Some(Err(LexicalError::new(err, self.span())))
                 }
-                Some(Token::StringLiteral(_)) => Some(
+                Some(Ok(Token::StringLiteral(_))) => Some(
                     self.consume_string_token()
                         .map(|(span, t)| (span, token_begins_paragraph, t)),
                 ),
-                Some(t) => Some(Ok((self.span(), token_begins_paragraph, t))),
+                Some(Ok(t)) => Some(Ok((self.span(), token_begins_paragraph, t))),
                 None if !self.end_of_stream_reached => {
                     self.end_of_stream_reached = true;
                     Some(Ok((
@@ -152,7 +152,7 @@ impl<'input> Lexer<'input> {
 
     fn next_post_comment(&mut self) -> Option<Comment<'input>> {
         match self.next_raw_token()? {
-            Token::Comment(c) => Some(Comment {
+            Ok(Token::Comment(c)) => Some(Comment {
                 span: self.span(),
                 kind: c.kind,
                 content: c.content.trim_end(),

@@ -11,5 +11,5 @@ description = "Internal lexer library for planus."
 
 [dependencies]
 codespan.workspace = true
-derive_more.workspace = true
+derive_more = { workspace = true, features = ["is_variant"] }
 logos.workspace = true
