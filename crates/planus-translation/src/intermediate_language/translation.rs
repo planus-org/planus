@@ -1332,7 +1332,7 @@ impl<'a> Translator<'a> {
         }
 
         fn round_up(value: u32, alignment: u32) -> u32 {
-            ((value + alignment - 1) / alignment) * alignment
+            value.div_ceil(alignment) * alignment
         }
 
         let mut offset = 0;
