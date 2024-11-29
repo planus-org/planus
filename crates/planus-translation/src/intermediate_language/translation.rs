@@ -199,7 +199,7 @@ impl<'a> Translator<'a> {
                 if self
                     .reachability
                     .get(&current_file_id)
-                    .map_or(false, |reachable| reachable.contains(&decl.file_id))
+                    .is_some_and(|reachable| reachable.contains(&decl.file_id))
                 {
                     return Some(result);
                 } else if seen_hints.insert((decl.file_id, decl.definition_span)) {

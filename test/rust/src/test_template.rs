@@ -17,7 +17,7 @@ fn test_serialize() {
         if !file_path.is_dir()
             && file_path
                 .extension()
-                .map_or(false, |extension| extension == "json")
+                .is_some_and(|extension| extension == "json")
         {
             let json = std::fs::read_to_string(&file_path).unwrap();
             let root: Root = serde_json::from_str(&json).unwrap();
@@ -80,7 +80,7 @@ fn test_deserialize() {
             let file_path = entry.path();
             if file_path
                 .extension()
-                .map_or(false, |extension| extension == "bin")
+                .is_some_and(|extension| extension == "bin")
             {
                 let data = std::fs::read(&file_path).unwrap();
 
