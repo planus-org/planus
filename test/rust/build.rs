@@ -58,7 +58,7 @@ fn generate_test_code(
         if !file_path.is_dir()
             && file_path
                 .extension()
-                .map_or(false, |extension| extension == "fbs")
+                .is_some_and(|extension| extension == "fbs")
         {
             let file_stem = file_path.file_stem().unwrap().to_str().unwrap();
 

@@ -101,7 +101,7 @@ impl<C: GetCacheKey> Cache<C> {
         self.cache
             .find(key_hash, |back_offset| {
                 C::get_cache_key(serialized_data, *back_offset)
-                    .map_or(false, |old_key| old_key == key)
+                    .is_some_and(|old_key| old_key == key)
             })
             .copied()
     }
