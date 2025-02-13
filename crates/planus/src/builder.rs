@@ -272,14 +272,14 @@ impl Builder {
 
 #[cfg(test)]
 mod tests {
-    use rand::{thread_rng, Rng};
+    use rand::Rng;
 
     use super::*;
 
     #[test]
     fn test_buffer_random() {
         let mut slice = [0; 128];
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let mut back_offsets: alloc::vec::Vec<(usize, usize, usize)> = alloc::vec::Vec::new();
 
         for _ in 0..50 {
@@ -287,12 +287,12 @@ mod tests {
             back_offsets.clear();
 
             for byte in 1..50 {
-                let size: usize = rng.gen::<usize>() % slice.len();
+                let size: usize = rng.random::<u32>() as usize % slice.len();
                 let slice = &mut slice[..size];
                 for p in &mut *slice {
                     *p = byte;
                 }
-                let alignment: usize = 1 << (rng.gen::<u32>() % 5);
+                let alignment: usize = 1 << (rng.random::<u32>() % 5);
                 let alignment_mask = alignment - 1;
                 let offset = builder.prepare_write(size, alignment_mask);
                 let len_before = builder.inner.len();
@@ -301,10 +301,10 @@ mod tests {
                 assert!(builder.inner.len() < len_before + slice.len() + alignment);
                 back_offsets.push((builder.inner.len(), size, alignment));
             }
-            let random_padding: usize = rng.gen::<usize>() % slice.len();
+            let random_padding: usize = rng.random::<u32>() as usize % slice.len();
             let slice = &mut slice[..random_padding];
             for p in &mut *slice {
-                *p = rng.gen();
+                *p = rng.random();
             }
             builder.prepare_write(random_padding, 1);
             builder.write(slice);

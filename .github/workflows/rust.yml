@@ -2,7 +2,7 @@ name: CI
 
 env:
   CARGO_TERM_COLOR: always
-  FLATBUFFER_VERSION: 23.5.26
+  FLATBUFFER_VERSION: 24.3.25
 
 on:
   push:

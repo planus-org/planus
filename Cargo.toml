@@ -21,7 +21,7 @@ criterion = "0.5"
 crossterm = "0.28.1"
 derive_more = "2.0.1"
 eyre = "0.6.12"
-flatbuffers = { version = "=23.5.26", git = "https://github.com/google/flatbuffers.git", tag = "v23.5.26" }
+flatbuffers = { version = "=24.3.25", git = "https://github.com/google/flatbuffers.git", tag = "v24.3.25" }
 fuzzy-matcher = "0.3.7"
 hashbrown = "0.15.2"
 heck = "0.5.0"

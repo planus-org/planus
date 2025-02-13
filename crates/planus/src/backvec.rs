@@ -128,14 +128,14 @@ impl Drop for BackVec {
 
 #[cfg(test)]
 mod tests {
-    use rand::{thread_rng, Rng};
+    use rand::Rng;
 
     use super::*;
 
     #[test]
     fn test_backvec() {
-        let mut rng = thread_rng();
-        let mut vec = BackVec::with_capacity(rng.gen::<usize>() % 64);
+        let mut rng = rand::rng();
+        let mut vec = BackVec::with_capacity(rng.random::<u32>() as usize % 64);
         let mut slice = [0; 50];
         let mut saved = alloc::vec::Vec::new();
         let limit = if cfg!(miri) { 1_000 } else { 100_000 };
@@ -143,7 +143,7 @@ mod tests {
             assert!(vec.len() <= vec.capacity);
             assert_eq!(vec.as_slice().len(), vec.len());
 
-            match rng.gen::<u32>() % 20 {
+            match rng.random::<u32>() % 20 {
                 0 | 1 => {
                     let old_capacity = vec.capacity;
                     vec.clear();
@@ -151,7 +151,7 @@ mod tests {
                     assert_eq!(vec.len(), 0);
                 }
                 2 => {
-                    let capacity = rng.gen::<usize>() % 64;
+                    let capacity = rng.random::<u32>() as usize % 64;
                     vec = BackVec::with_capacity(capacity);
                     assert_eq!(vec.len(), 0);
                     assert_eq!(vec.capacity, capacity.max(16));
@@ -160,13 +160,13 @@ mod tests {
                     saved.clear();
                     saved.extend_from_slice(vec.as_slice());
 
-                    let count = rng.gen::<usize>() % slice.len();
+                    let count = rng.random::<u32>() as usize % slice.len();
                     let new_len = vec.len() + count;
                     let old_capacity = vec.capacity;
 
-                    if rng.gen() {
+                    if rng.random() {
                         for p in &mut slice[..count] {
-                            *p = rng.gen();
+                            *p = rng.random();
                         }
                         vec.extend_from_slice(&slice[..count]);
                         assert_eq!(&vec.as_slice()[..count], &slice[..count]);
