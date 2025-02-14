@@ -131,7 +131,7 @@ impl<'buf> VectorReadInner<'buf> for &'buf str {
     }
 }
 
-impl VectorWrite<Offset<str>> for str {
+unsafe impl VectorWrite<Offset<str>> for str {
     type Value = Offset<str>;
 
     const STRIDE: usize = 4;

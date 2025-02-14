@@ -4,9 +4,9 @@ use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
 };
 
-macro_rules! gen_primitive_types {
+macro_rules! unsafe_gen_primitive_types {
     ($ty:ty, $size:expr) => {
-        impl Primitive for $ty {
+        unsafe impl Primitive for $ty {
             const ALIGNMENT: usize = $size;
             const SIZE: usize = $size;
         }
@@ -60,9 +60,9 @@ macro_rules! gen_primitive_types {
     };
 }
 
-macro_rules! gen_primitive_types_with_vectors {
+macro_rules! unsafe_gen_primitive_types_with_vectors {
     ($ty:ty, $size:expr) => {
-        gen_primitive_types!($ty, $size);
+        unsafe_gen_primitive_types!($ty, $size);
         impl<'buf> VectorRead<'buf> for $ty {
             const STRIDE: usize = $size;
             #[inline]
@@ -72,7 +72,7 @@ macro_rules! gen_primitive_types_with_vectors {
             }
         }
 
-        impl VectorWrite<$ty> for $ty {
+        unsafe impl VectorWrite<$ty> for $ty {
             const STRIDE: usize = $size;
             type Value = $ty;
             #[inline]
@@ -98,13 +98,13 @@ macro_rules! gen_primitive_types_with_vectors {
     };
 }
 
-gen_primitive_types!(i8, 1);
-gen_primitive_types!(u8, 1);
-gen_primitive_types_with_vectors!(i16, 2);
-gen_primitive_types_with_vectors!(u16, 2);
-gen_primitive_types_with_vectors!(i32, 4);
-gen_primitive_types_with_vectors!(u32, 4);
-gen_primitive_types_with_vectors!(i64, 8);
-gen_primitive_types_with_vectors!(u64, 8);
-gen_primitive_types_with_vectors!(f32, 4);
-gen_primitive_types_with_vectors!(f64, 8);
+unsafe_gen_primitive_types!(i8, 1);
+unsafe_gen_primitive_types!(u8, 1);
+unsafe_gen_primitive_types_with_vectors!(i16, 2);
+unsafe_gen_primitive_types_with_vectors!(u16, 2);
+unsafe_gen_primitive_types_with_vectors!(i32, 4);
+unsafe_gen_primitive_types_with_vectors!(u32, 4);
+unsafe_gen_primitive_types_with_vectors!(i64, 8);
+unsafe_gen_primitive_types_with_vectors!(u64, 8);
+unsafe_gen_primitive_types_with_vectors!(f32, 4);
+unsafe_gen_primitive_types_with_vectors!(f64, 8);

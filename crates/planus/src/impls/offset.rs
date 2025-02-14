@@ -2,7 +2,7 @@ use core::mem::MaybeUninit;
 
 use crate::{builder::Builder, traits::*, Cursor, Offset};
 
-impl<T: ?Sized> Primitive for Offset<T> {
+unsafe impl<T: ?Sized> Primitive for Offset<T> {
     const ALIGNMENT: usize = 4;
     const SIZE: usize = 4;
 }
@@ -38,7 +38,7 @@ impl<T: ?Sized> WriteAsOptional<Offset<T>> for Offset<T> {
     }
 }
 
-impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
+unsafe impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
     const STRIDE: usize = 4;
     type Value = Offset<T>;
 

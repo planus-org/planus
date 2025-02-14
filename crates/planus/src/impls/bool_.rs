@@ -4,7 +4,7 @@ use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
 };
 
-impl Primitive for bool {
+unsafe impl Primitive for bool {
     const ALIGNMENT: usize = 1;
     const SIZE: usize = 1;
 }
@@ -63,7 +63,7 @@ impl<'buf> VectorRead<'buf> for bool {
     }
 }
 
-impl VectorWrite<bool> for bool {
+unsafe impl VectorWrite<bool> for bool {
     const STRIDE: usize = 1;
 
     type Value = bool;
