@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[doc(hidden)]
-pub trait Primitive {
+pub unsafe trait Primitive {
     const ALIGNMENT: usize;
     const ALIGNMENT_MASK: usize = Self::ALIGNMENT - 1;
     const SIZE: usize;
@@ -130,7 +130,7 @@ pub trait VectorReadInner<'buf>: 'buf + Sized {
 }
 
 /// Trait used by generated code to write elements to vectors.
-pub trait VectorWrite<P> {
+pub unsafe trait VectorWrite<P> {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]

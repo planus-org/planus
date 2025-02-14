@@ -54,7 +54,7 @@ impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1>
     }
 }
 
-impl<P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &T {
+unsafe impl<P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &T {
     const STRIDE: usize = T::STRIDE;
     type Value = T::Value;
 

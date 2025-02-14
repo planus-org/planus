@@ -15,7 +15,7 @@ pub struct {{ info.owned_name }} {
     {% endfor %}
 }
 
-impl ::planus::Primitive for {{ info.owned_name }} {
+unsafe impl ::planus::Primitive for {{ info.owned_name }} {
     const ALIGNMENT: usize = {{ alignment }};
     const SIZE: usize = {{ size }};
 }
@@ -228,7 +228,7 @@ impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
     }
 }
 
-impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
+unsafe impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
     const STRIDE: usize = {{ size }};
 
     type Value = {{ info.owned_name }};
