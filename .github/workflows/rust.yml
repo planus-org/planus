@@ -25,6 +25,10 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install --no-install-recommends graphviz
       - uses: actions/checkout@v4.2.1
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-make
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
