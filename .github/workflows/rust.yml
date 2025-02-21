@@ -47,6 +47,9 @@ jobs:
         with:
           command: install
           args: cargo-make
+      - name: Removing 2024 tests when testing our MSRV
+        if: matrix.rust == "1.75"
+        run: rm -rf test/rust-test-2024
       - uses: actions-rs/cargo@v1
         with:
           command: make
