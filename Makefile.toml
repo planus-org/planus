@@ -86,7 +86,7 @@ script = '''
 [tasks.commit-check]
 script = '''
     if [ "$CI" = true ]; then
-        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | grep -v '^ M examples/rust/monster.svg$' | wc -l)
+        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | grep -v -e '^ M examples/rust/monster.svg$' -e '^ M test/Cargo.lock$' -e '^ D test/rust-test-2024/' | wc -l)
     else
         uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | wc -l)
     fi
