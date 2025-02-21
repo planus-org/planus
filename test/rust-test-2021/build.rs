@@ -101,7 +101,11 @@ fn generate_test_code(
             .unwrap();
             if generate_flatc {
                 writeln!(code, "#[path = {flatc_generated:?}]").unwrap();
-                writeln!(code, "#[allow(unsafe_op_in_unsafe_fn, unused_imports, clippy::all)]").unwrap();
+                writeln!(
+                    code,
+                    "#[allow(unsafe_op_in_unsafe_fn, unused_imports, clippy::all)]"
+                )
+                .unwrap();
                 writeln!(code, "pub mod flatc;").unwrap();
             }
             writeln!(code).unwrap();
