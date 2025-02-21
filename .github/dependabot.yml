@@ -64,14 +64,21 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
   - package-ecosystem: "cargo"
-    directory: "/test/rust"
+    directory: "/test/rust-test-2018"
     schedule:
       interval: "daily"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
   - package-ecosystem: "cargo"
-    directory: "/test/rust-compat"
+    directory: "/test/rust-test-2021"
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
+  - package-ecosystem: "cargo"
+    directory: "/test/rust-test-2024"
     schedule:
       interval: "daily"
     ignore:

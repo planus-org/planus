@@ -1,7 +1,7 @@
 [package]
-name = "rust-test"
+name = "rust-test-2018"
 version.workspace = true
-edition.workspace = true
+edition = "2018"
 license.workspace = true
 repository.workspace = true
 build = "build.rs"
@@ -15,24 +15,15 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-color-eyre = "0.6.3"
-flatbuffers.workspace = true
 planus = { workspace = true, default-features = false, features = [
   "extra-validation",
 ] }
-serde = { workspace = true, default-features = false, features = ["derive"] }
-static_assertions.workspace = true
+serde = { workspace = true, default-features = false, features = [
+  "derive",
+  "alloc",
+] }
 
 [build-dependencies]
 color-eyre.workspace = true
 planus-codegen.workspace = true
 planus-translation.workspace = true
-
-[dev-dependencies]
-criterion.workspace = true
-serde_json.workspace = true
-similar-asserts.workspace = true
-
-[[bench]]
-name = "benchmark"
-harness = false

@@ -1397,7 +1397,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
-name = "rust-compat"
+name = "rust-lapper"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee43d8e721ac803031dbab6a944b957b49a3b11eadbc099880c8aaaebf23ed27"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "rust-test-2018"
 version = "1.0.0"
 dependencies = [
  "color-eyre",
@@ -1408,16 +1417,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-lapper"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee43d8e721ac803031dbab6a944b957b49a3b11eadbc099880c8aaaebf23ed27"
+name = "rust-test-2021"
+version = "1.0.0"
 dependencies = [
- "num-traits",
+ "color-eyre",
+ "planus",
+ "planus-codegen",
+ "planus-translation",
+ "serde",
 ]
 
 [[package]]
-name = "rust-test"
+name = "rust-test-2024"
 version = "1.0.0"
 dependencies = [
  "color-eyre",
