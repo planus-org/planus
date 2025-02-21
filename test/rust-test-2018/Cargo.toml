@@ -14,8 +14,11 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
+color-eyre.workspace = true
+flatbuffers.workspace = true
 planus.workspace = true
 serde.workspace = true
+static_assertions.workspace = true
 
 [build-dependencies]
 color-eyre.workspace = true

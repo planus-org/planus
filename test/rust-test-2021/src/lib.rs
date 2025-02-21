@@ -1,5 +1,7 @@
 #![recursion_limit = "1024"]
 
+extern crate alloc;
+
 #[macro_use]
 pub mod macros;
 

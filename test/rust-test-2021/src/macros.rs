@@ -6,7 +6,7 @@ macro_rules! check_type {
         const _: for<'a> fn(&'a $obj) = |obj| unsafe {
             let _ = obj.$method(
                 $(
-                    std::mem::zeroed::<$arg>()
+                    core::mem::zeroed::<$arg>()
                 ),*
             );
         };
@@ -20,7 +20,7 @@ macro_rules! check_type {
         const _: for<'a> fn(&'a mut $obj) = |obj| unsafe {
             obj.$method(
                 $(
-                    std::mem::zeroed::<$arg>()
+                    core::mem::zeroed::<$arg>()
                 ),*
             );
         };
@@ -31,7 +31,7 @@ macro_rules! check_type {
         const _: fn($obj) = |obj| unsafe {
             obj.$method(
                 $(
-                    std::mem::zeroed::<$arg>()
+                    core::mem::zeroed::<$arg>()
                 ),*
             );
         };
@@ -75,8 +75,8 @@ macro_rules! check_enum_variants {
     ($obj:ty : $typ:ty {
         $($name:ident = $value:expr),* $(,)?
     }) => {
-        const _: fn($typ) -> Result<$obj, planus::errors::UnknownEnumTagKind> = std::convert::TryFrom::try_from;
-        const _: fn($obj) -> $typ = std::convert::From::from;
+        const _: fn($typ) -> Result<$obj, planus::errors::UnknownEnumTagKind> = core::convert::TryFrom::try_from;
+        const _: fn($obj) -> $typ = core::convert::From::from;
         #[allow(clippy::match_single_binding)]
         const _: fn($obj) -> ! = |obj| match obj {
             $(
@@ -86,12 +86,12 @@ macro_rules! check_enum_variants {
         const _: () = {
             $(
                 assert!(<$obj>::$name as $typ == $value);
-                assert!(unsafe { std::mem::transmute::<$obj, $typ>(<$obj>::$name) } == $value);
+                assert!(unsafe { core::mem::transmute::<$obj, $typ>(<$obj>::$name) } == $value);
             )*
         };
         $(
             assert_eq!(<$typ>::from(<$obj>::$name), $value);
-            assert_eq!(<$obj>::try_from($value).unwrap(), <$obj>::$name);
+            assert_eq!(<$obj as core::convert::TryFrom<_>>::try_from($value).unwrap(), <$obj>::$name);
         )*
     }
 }

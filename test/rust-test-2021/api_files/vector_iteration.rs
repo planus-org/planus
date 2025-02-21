@@ -1,8 +1,8 @@
 use planus::ReadAsRoot;
 
-trait Testable<'buf>: 'static + Sized + std::fmt::Debug + PartialEq + Clone
+trait Testable<'buf>: 'static + Sized + core::fmt::Debug + PartialEq + Clone
 {
-    type Ref: Sized + std::fmt::Debug + planus::VectorRead<'buf>;
+    type Ref: Sized + core::fmt::Debug + planus::VectorRead<'buf>;
     fn serialize(builder: &mut planus::Builder, values: &[Self]) -> planus::Offset<Root>;
     fn deserialize(buf: RootRef<'buf>) -> planus::Vector<'buf, Self::Ref>;
     fn to_owned(v: Self::Ref) -> Self;
@@ -95,13 +95,13 @@ fn eq<I1, I2>(iter1: I1, iter2: I2)
 where
     I1: Clone + Iterator + ExactSizeIterator,
     I2: Clone + Iterator + ExactSizeIterator,
-    I1::Item: std::fmt::Debug + PartialEq<I2::Item>,
-    I2::Item: std::fmt::Debug,
+    I1::Item: core::fmt::Debug + PartialEq<I2::Item>,
+    I2::Item: core::fmt::Debug,
 {
     if !iter1.clone().eq(iter2.clone()) {
         let iter1 = iter1.collect::<Vec<_>>();
         let iter2 = iter2.collect::<Vec<_>>();
-        panic!("Not equal: {iter1:?} {iter2:?}");
+        panic!("Not equal: {iter1:?} {iter2:?}", iter1 = iter1, iter2 = iter2);
     }
     let mut len = iter2.len();
     assert_eq!(len, iter1.len());
@@ -117,9 +117,9 @@ fn cmp<I1, I2, F, T>(iter1: I1, iter2: I2, f: F)
 where
     I1: Clone + Iterator + DoubleEndedIterator + ExactSizeIterator,
     I2: Clone + Iterator + DoubleEndedIterator + ExactSizeIterator,
-    I1::Item: std::fmt::Debug + PartialEq<T>,
+    I1::Item: core::fmt::Debug + PartialEq<T>,
     F: Copy + Fn(I2::Item) -> T,
-    T: std::fmt::Debug,
+    T: core::fmt::Debug,
 {
     eq(iter1.clone(), iter2.clone().map(f));
     eq(iter1.clone().rev(), iter2.clone().rev().map(f));

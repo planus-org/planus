@@ -47,11 +47,6 @@ fn generate_test_code(
 
     let mut mod_code = String::new();
 
-    // We want the same generated files as here in rust-build, but not the tests.
-    // Symlinking the relevant files and adding this check was the least bad option
-    // I could think of, but it's still not pretty.
-    let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust-test-2021";
-
     for entry in std::fs::read_dir(in_dir).wrap_err_with(|| eyre!("Cannot read dir: {}", in_dir))? {
         let entry = entry.wrap_err("Error doing readdir")?;
         let file_path = entry.path();
@@ -74,7 +69,7 @@ fn generate_test_code(
                 .wrap_err_with(|| eyre!("Cannot write output to {}", generated_full_path))?;
 
             let flatc_generated = format!("{file_stem}_generated.rs");
-            if generate_flatc && is_main_crate {
+            if generate_flatc {
                 assert!(Command::new("flatc")
                     .args(["--rust", "-o", out_dir])
                     .arg(&file_path)
@@ -93,8 +88,18 @@ fn generate_test_code(
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(code, "use generated::*;").unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();
-            writeln!(code, "use core::{{fmt::Debug, hash::Hash}};").unwrap();
-            if generate_flatc && is_main_crate {
+            writeln!(
+                code,
+                "use core::{{convert::TryInto, fmt::Debug, hash::Hash}};"
+            )
+            .unwrap();
+            writeln!(code, "#[allow(unused_imports)]").unwrap();
+            writeln!(
+                code,
+                "use alloc::{{boxed::Box, format, string::String, vec, vec::Vec}};"
+            )
+            .unwrap();
+            if generate_flatc {
                 writeln!(code, "#[path = {flatc_generated:?}]").unwrap();
                 writeln!(code, "#[allow(unused_imports, clippy::all)]").unwrap();
                 writeln!(code, "pub mod flatc;").unwrap();
@@ -117,7 +122,7 @@ fn generate_test_code(
                     code += start;
                     code += end;
                 }
-            } else if is_main_crate {
+            } else {
                 let mut path = file_path.to_owned();
                 path.set_extension("rs");
                 if let Ok(test_code) = std::fs::read_to_string(&path) {
