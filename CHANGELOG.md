@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added extra unsafe blocks to templates to fix warnings for the 2024 edition
+
 ### Removed
 
 ## [1.0.0] - 2024-09-29
