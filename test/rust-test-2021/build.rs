@@ -50,7 +50,7 @@ fn generate_test_code(
     // We want the same generated files as here in rust-build, but not the tests.
     // Symlinking the relevant files and adding this check was the least bad option
     // I could think of, but it's still not pretty.
-    let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust-test";
+    let is_main_crate = std::env::var("CARGO_PKG_NAME").unwrap() == "rust-test-2021";
 
     for entry in std::fs::read_dir(in_dir).wrap_err_with(|| eyre!("Cannot read dir: {}", in_dir))? {
         let entry = entry.wrap_err("Error doing readdir")?;

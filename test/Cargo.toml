@@ -1,5 +1,5 @@
 [workspace]
-members = ["rust", "rust-compat"]
+members = ["rust-test-*"]
 resolver = "2"
 
 [workspace.package]

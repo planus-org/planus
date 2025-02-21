@@ -1,10 +1,10 @@
 [package]
-name = "rust-compat"
+name = "rust-test-2018"
 version.workspace = true
-edition = "2018"
 license.workspace = true
 repository.workspace = true
-rust-version.workspace = true
+build = "build.rs"
+edition = "2018"
 
 [features]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
@@ -14,13 +14,8 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-planus = { workspace = true, default-features = false, features = [
-  "extra-validation",
-] }
-serde = { workspace = true, default-features = false, features = [
-  "derive",
-  "alloc",
-] }
+planus.workspace = true
+serde.workspace = true
 
 [build-dependencies]
 color-eyre.workspace = true
