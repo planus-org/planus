@@ -19,18 +19,18 @@ fn main() -> Result<()> {
     // Create serialize/deserialize tests
     let planus_test_dir = format!("{out_dir}/planus_test");
     let planus_test_no_flatc_dir = format!("{out_dir}/planus_test_no_flatc");
-    let serialize_template = std::fs::read_to_string("src/test_template.rs").ok();
+    let serialize_template = std::fs::read_to_string("src/test_template.rs").unwrap();
     generate_test_code(
         "test_files",
         &planus_test_dir,
-        serialize_template.as_deref(),
+        Some(&serialize_template),
         true,
     )?;
 
     generate_test_code(
         "test_files_no_flatc",
         &planus_test_no_flatc_dir,
-        serialize_template.as_deref(),
+        Some(&serialize_template),
         false,
     )?;
 
@@ -90,7 +90,7 @@ fn generate_test_code(
             writeln!(code, "#[allow(unused_imports)]").unwrap();
             writeln!(
                 code,
-                "use core::{{convert::TryInto, fmt::Debug, hash::Hash}};"
+                "use core::{{convert::{{TryFrom, TryInto}}, fmt::Debug, hash::Hash}};"
             )
             .unwrap();
             writeln!(code, "#[allow(unused_imports)]").unwrap();

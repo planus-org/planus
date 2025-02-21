@@ -1134,11 +1134,14 @@ name = "rust-test-2018"
 version = "1.0.0"
 dependencies = [
  "color-eyre",
+ "criterion",
  "flatbuffers",
  "planus",
  "planus-codegen",
  "planus-translation",
  "serde",
+ "serde_json",
+ "similar-asserts",
  "static_assertions",
 ]
 

@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "1024"]
 
 extern crate alloc;
@@ -7,13 +8,15 @@ pub mod macros;
 
 pub mod planus_api;
 pub mod planus_test;
+#[cfg(feature = "std")]
 pub mod planus_test_no_flatc;
 
+#[cfg(feature = "std")]
 pub mod hexdump;
 
 mod table_reader;
 
-#[cfg(test)]
+#[cfg(all(feature = "std", test))]
 pub mod tests {
     use std::path::Path;
 
