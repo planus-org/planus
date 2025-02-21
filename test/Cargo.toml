@@ -1,0 +1,27 @@
+[workspace]
+members = ["rust", "rust-compat"]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0"
+repository = "https://github.com/planus-org/planus"
+license = "MIT/Apache-2.0"
+
+[workspace.dependencies]
+color-eyre = "0.6.3"
+criterion = "0.5"
+flatbuffers = { version = "=24.3.25", git = "https://github.com/google/flatbuffers.git", tag = "v24.3.25" }
+serde = { version = "1.0.217", default-features = false, features = [
+  "derive",
+  "alloc",
+] }
+serde_json = "1.0.138"
+similar-asserts = "1.6.1"
+static_assertions = "1.1.0"
+
+# Our crates
+planus = { path = "../crates/planus", default-features = false, features = [
+  "extra-validation",
+] }
+planus-codegen = { path = "../crates/planus-codegen" }
+planus-translation = { path = "../crates/planus-translation" }
