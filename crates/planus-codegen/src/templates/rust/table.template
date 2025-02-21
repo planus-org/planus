@@ -375,7 +375,7 @@ impl<'a> ::planus::VectorReadInner<'a> for {{info.ref_name}}<'a> {
     }
 }
 
-impl ::planus::VectorWrite<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
+unsafe impl ::planus::VectorWrite<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Value = ::planus::Offset<{{info.owned_name}}>;
     const STRIDE: usize = 4;
     #[inline]
