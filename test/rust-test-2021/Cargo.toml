@@ -1,10 +1,10 @@
 [package]
-name = "rust-compat"
+name = "rust-test-2021"
 version.workspace = true
-edition = "2018"
 license.workspace = true
 repository.workspace = true
-rust-version.workspace = true
+build = "build.rs"
+edition = "2021"
 
 [features]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
@@ -14,15 +14,22 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-planus = { workspace = true, default-features = false, features = [
-  "extra-validation",
-] }
-serde = { workspace = true, default-features = false, features = [
-  "derive",
-  "alloc",
-] }
+color-eyre.workspace = true
+flatbuffers.workspace = true
+planus.workspace = true
+serde.workspace = true
+static_assertions.workspace = true
 
 [build-dependencies]
 color-eyre.workspace = true
 planus-codegen.workspace = true
 planus-translation.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+serde_json.workspace = true
+similar-asserts.workspace = true
+
+[[bench]]
+name = "benchmark"
+harness = false

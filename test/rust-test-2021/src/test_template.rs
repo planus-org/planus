@@ -2,12 +2,13 @@
 #[allow(unused_imports)]
 use planus::{ReadAsRoot, WriteAsOffset};
 #[allow(unused_imports)]
+#[cfg(feature = "std")]
 use std::{
     convert::identity,
-    fs::{File, OpenOptions},
     io::{Read, Write},
 };
 
+#[cfg(feature = "std")]
 #[test]
 fn test_serialize() {
     let should_regenerate = std::env::var("PLANUS_REGENERATE").is_ok();
@@ -71,6 +72,7 @@ fn test_serialize() {
     }
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_deserialize() {
     if let Ok(refs_dir) = std::fs::read_dir(format!("{}/{}", FILE_PATH, "deserialize")) {

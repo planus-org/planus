@@ -1,4 +1,4 @@
-use std::{
+use core::{
     cmp::{Ordering, PartialOrd}
 };
 
@@ -165,7 +165,7 @@ let inner_u8_cases = Tree::Leaf(vec![
     Union::InnerU8(InnerU8 { v0: 1, v1: 1 }),
 ]);
 
-let all_cases = [f0_cases, f1_cases, f2_cases, f3_cases, inner_u8_cases]
+let all_cases = vec![f0_cases, f1_cases, f2_cases, f3_cases, inner_u8_cases]
     .into_iter()
     .reduce(|left, right| Tree::Node {
         left: Box::new(left),

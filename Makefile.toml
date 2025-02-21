@@ -77,12 +77,16 @@ script = '''
     cargo fmt --all -- --check
     cargo clippy --no-default-features --all-targets -- -D warnings
     cargo clippy --all-features --all-targets -- -D warnings
+    cd test
+    cargo fmt --all -- --check
+    cargo clippy --no-default-features --all-targets -- -D warnings
+    cargo clippy --all-features --all-targets -- -D warnings
 '''
 
 [tasks.commit-check]
 script = '''
     if [ "$CI" = true ]; then
-        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | grep -v '^ M examples/rust/monster.svg$' | wc -l)
+        uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | grep -v -e '^ M examples/rust/monster.svg$' -e '^ M test/Cargo.lock$' -e '^ D test/rust-test-2024/' | wc -l)
     else
         uncommited_changes=$(git status --porcelain=v1 --untracked-files=no 2>/dev/null | wc -l)
     fi
@@ -105,7 +109,7 @@ script_runner = "bash"
 script_extension = "sh"
 script = '''
     set -euo pipefail
-    for dir in test/rust test/rust-compat; do
+    for dir in test/rust-test-*; do
         pushd $dir
         for std in "" "std"; do
             for cache in "" "vtable-cache string-cache bytes-cache"; do
