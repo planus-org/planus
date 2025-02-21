@@ -1162,6 +1162,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-test-2024"
+version = "1.0.0"
+dependencies = [
+ "color-eyre",
+ "criterion",
+ "flatbuffers",
+ "planus",
+ "planus-codegen",
+ "planus-translation",
+ "serde",
+ "serde_json",
+ "similar-asserts",
+ "static_assertions",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"

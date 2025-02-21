@@ -109,7 +109,7 @@ script_runner = "bash"
 script_extension = "sh"
 script = '''
     set -euo pipefail
-    for dir in test/rust-test-2018 test/rust-test-2021; do
+    for dir in test/rust-test-2018 test/rust-test-2021 test/rust-test-2024; do
         pushd $dir
         for std in "" "std"; do
             for cache in "" "vtable-cache string-cache bytes-cache"; do
