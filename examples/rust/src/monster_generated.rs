@@ -153,7 +153,7 @@ mod root {
                     offset: usize,
                 ) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTag>
                 {
-                    let value = *buffer.buffer.get_unchecked(offset) as i8;
+                    let value = unsafe { *buffer.buffer.get_unchecked(offset) as i8 };
                     let value: ::core::result::Result<Self, _> =
                         ::core::convert::TryInto::try_into(value);
                     value.map_err(|error_kind| {
@@ -186,7 +186,7 @@ mod root {
                     for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
                         ::planus::WriteAsPrimitive::write(
                             v,
-                            ::planus::Cursor::new(&mut *bytes.add(i)),
+                            ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
                             buffer_position - i as u32,
                         );
                     }
@@ -528,7 +528,7 @@ mod root {
                     buffer: ::planus::SliceWithStartOffset<'a>,
                     offset: usize,
                 ) -> Self {
-                    Self(buffer.unchecked_advance_as_array(offset))
+                    Self(unsafe { buffer.unchecked_advance_as_array(offset) })
                 }
             }
 
@@ -552,7 +552,7 @@ mod root {
                     for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
                         ::planus::WriteAsPrimitive::write(
                             v,
-                            ::planus::Cursor::new(&mut *bytes.add(i)),
+                            ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
                             buffer_position - (12 * i) as u32,
                         );
                     }
@@ -1221,7 +1221,7 @@ mod root {
                     for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
                         ::planus::WriteAsPrimitive::write(
                             v,
-                            ::planus::Cursor::new(&mut *bytes.add(i)),
+                            ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
                             buffer_position - (Self::STRIDE * i) as u32,
                         );
                     }
@@ -1532,7 +1532,7 @@ mod root {
                     for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
                         ::planus::WriteAsPrimitive::write(
                             v,
-                            ::planus::Cursor::new(&mut *bytes.add(i)),
+                            ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
                             buffer_position - (Self::STRIDE * i) as u32,
                         );
                     }
