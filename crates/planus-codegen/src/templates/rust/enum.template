@@ -107,7 +107,7 @@ impl<'buf> ::planus::VectorReadInner<'buf> for {{info.name}} {
         {%- else if info.repr_type == "i8" -%}
         let value = unsafe { *buffer.buffer.get_unchecked(offset) as i8 };
         {%- else -%}
-        let value = <{{info.repr_type}} as ::planus::VectorRead>::from_buffer(buffer, offset);
+        let value = unsafe { <{{info.repr_type}} as ::planus::VectorRead>::from_buffer(buffer, offset) };
         {%- endif -%}
         let value: ::core::result::Result<Self, _> = ::core::convert::TryInto::try_into(value);
         value.map_err(|error_kind| error_kind.with_error_location(
