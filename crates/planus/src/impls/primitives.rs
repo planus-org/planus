@@ -6,6 +6,8 @@ use crate::{
 
 macro_rules! unsafe_gen_primitive_types {
     ($ty:ty, $size:expr) => {
+        /// # Safety
+        /// `ALIGNMENT` and `SIZE` should match the actual alignment and size of the type.
         unsafe impl Primitive for $ty {
             const ALIGNMENT: usize = $size;
             const SIZE: usize = $size;
@@ -72,6 +74,8 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
             }
         }
 
+        // # Safety
+        // write_values initalizes bytes.
         unsafe impl VectorWrite<$ty> for $ty {
             const STRIDE: usize = $size;
             type Value = $ty;
@@ -98,13 +102,13 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
     };
 }
 
-unsafe_gen_primitive_types!(i8, 1);
-unsafe_gen_primitive_types!(u8, 1);
-unsafe_gen_primitive_types_with_vectors!(i16, 2);
-unsafe_gen_primitive_types_with_vectors!(u16, 2);
-unsafe_gen_primitive_types_with_vectors!(i32, 4);
-unsafe_gen_primitive_types_with_vectors!(u32, 4);
-unsafe_gen_primitive_types_with_vectors!(i64, 8);
-unsafe_gen_primitive_types_with_vectors!(u64, 8);
-unsafe_gen_primitive_types_with_vectors!(f32, 4);
-unsafe_gen_primitive_types_with_vectors!(f64, 8);
+unsafe_gen_primitive_types!(i8, std::mem::size_of::<i8>());
+unsafe_gen_primitive_types!(u8, std::mem::size_of::<u8>());
+unsafe_gen_primitive_types_with_vectors!(i16, std::mem::size_of::<i16>());
+unsafe_gen_primitive_types_with_vectors!(u16, std::mem::size_of::<u16>());
+unsafe_gen_primitive_types_with_vectors!(i32, std::mem::size_of::<i32>());
+unsafe_gen_primitive_types_with_vectors!(u32, std::mem::size_of::<u32>());
+unsafe_gen_primitive_types_with_vectors!(i64, std::mem::size_of::<i64>());
+unsafe_gen_primitive_types_with_vectors!(u64, std::mem::size_of::<u64>());
+unsafe_gen_primitive_types_with_vectors!(f32, std::mem::size_of::<f32>());
+unsafe_gen_primitive_types_with_vectors!(f64, std::mem::size_of::<f64>());
