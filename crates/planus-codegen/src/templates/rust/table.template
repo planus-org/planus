@@ -375,6 +375,9 @@ impl<'a> ::planus::VectorReadInner<'a> for {{info.ref_name}}<'a> {
     }
 }
 
+// #Safety
+// The planus compiler generates implementations that initialize
+// the bytes in `write_values`.
 unsafe impl ::planus::VectorWrite<::planus::Offset<{{info.owned_name}}>> for {{info.owned_name}} {
     type Value = ::planus::Offset<{{info.owned_name}}>;
     const STRIDE: usize = 4;

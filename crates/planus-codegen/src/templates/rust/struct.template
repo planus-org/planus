@@ -15,6 +15,8 @@ pub struct {{ info.owned_name }} {
     {% endfor %}
 }
 
+// # Safety
+// The Planus compiler correctly calculates `ALIGNMENT` and `SIZE`.
 unsafe impl ::planus::Primitive for {{ info.owned_name }} {
     const ALIGNMENT: usize = {{ alignment }};
     const SIZE: usize = {{ size }};
@@ -228,6 +230,9 @@ impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
     }
 }
 
+// #Safety
+// The planus compiler generates implementations that initialize
+// the bytes in `write_values`.
 unsafe impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {
     const STRIDE: usize = {{ size }};
 
