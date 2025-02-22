@@ -54,6 +54,8 @@ impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1>
     }
 }
 
+// # Safety
+// `T` must implement `VectorWrite` following the safety requirements from the trait.
 unsafe impl<P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &T {
     const STRIDE: usize = T::STRIDE;
     type Value = T::Value;

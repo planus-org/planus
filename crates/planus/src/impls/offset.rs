@@ -2,6 +2,8 @@ use core::mem::MaybeUninit;
 
 use crate::{builder::Builder, traits::*, Cursor, Offset};
 
+// # Safety
+// An offset is a 32-bit unsigned integer + a zero-sized type.
 unsafe impl<T: ?Sized> Primitive for Offset<T> {
     const ALIGNMENT: usize = 4;
     const SIZE: usize = 4;
@@ -38,6 +40,8 @@ impl<T: ?Sized> WriteAsOptional<Offset<T>> for Offset<T> {
     }
 }
 
+// # Safety
+// The implementation of `write_values` initializes all the bytes.
 unsafe impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
     const STRIDE: usize = 4;
     type Value = Offset<T>;

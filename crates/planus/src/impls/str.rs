@@ -131,6 +131,8 @@ impl<'buf> VectorReadInner<'buf> for &'buf str {
     }
 }
 
+// # Safety
+// The implementation of `write_values` initializes all the bytes.
 unsafe impl VectorWrite<Offset<str>> for str {
     type Value = Offset<str>;
 
