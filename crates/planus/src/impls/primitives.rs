@@ -102,13 +102,13 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
     };
 }
 
-unsafe_gen_primitive_types!(i8, std::mem::size_of::<i8>());
-unsafe_gen_primitive_types!(u8, std::mem::size_of::<u8>());
-unsafe_gen_primitive_types_with_vectors!(i16, std::mem::size_of::<i16>());
-unsafe_gen_primitive_types_with_vectors!(u16, std::mem::size_of::<u16>());
-unsafe_gen_primitive_types_with_vectors!(i32, std::mem::size_of::<i32>());
-unsafe_gen_primitive_types_with_vectors!(u32, std::mem::size_of::<u32>());
-unsafe_gen_primitive_types_with_vectors!(i64, std::mem::size_of::<i64>());
-unsafe_gen_primitive_types_with_vectors!(u64, std::mem::size_of::<u64>());
-unsafe_gen_primitive_types_with_vectors!(f32, std::mem::size_of::<f32>());
-unsafe_gen_primitive_types_with_vectors!(f64, std::mem::size_of::<f64>());
+unsafe_gen_primitive_types!(i8, core::mem::size_of::<i8>());
+unsafe_gen_primitive_types!(u8, core::mem::size_of::<u8>());
+unsafe_gen_primitive_types_with_vectors!(i16, core::mem::size_of::<i16>());
+unsafe_gen_primitive_types_with_vectors!(u16, core::mem::size_of::<u16>());
+unsafe_gen_primitive_types_with_vectors!(i32, core::mem::size_of::<i32>());
+unsafe_gen_primitive_types_with_vectors!(u32, core::mem::size_of::<u32>());
+unsafe_gen_primitive_types_with_vectors!(i64, core::mem::size_of::<i64>());
+unsafe_gen_primitive_types_with_vectors!(u64, core::mem::size_of::<u64>());
+unsafe_gen_primitive_types_with_vectors!(f32, core::mem::size_of::<f32>());
+unsafe_gen_primitive_types_with_vectors!(f64, core::mem::size_of::<f64>());

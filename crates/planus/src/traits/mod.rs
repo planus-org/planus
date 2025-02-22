@@ -8,7 +8,7 @@ use crate::{
 #[doc(hidden)]
 /// #Safety
 /// `ALIGNMENT` match the actual alignment requirements of the type. It most likely is a power of two.
-/// `SIZE` match the actual size of the type. For primitive types, that is std::mem::size_of::<Self>().
+/// `SIZE` match the actual size of the type. For primitive types, that is core::mem::size_of::<Self>().
 pub unsafe trait Primitive {
     const ALIGNMENT: usize;
     const ALIGNMENT_MASK: usize = Self::ALIGNMENT - 1;
