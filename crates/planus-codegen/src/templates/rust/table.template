@@ -396,7 +396,7 @@ unsafe impl ::planus::VectorWrite<::planus::Offset<{{info.owned_name}}>> for {{i
         for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
             ::planus::WriteAsPrimitive::write(
                 v,
-                ::planus::Cursor::new(&mut *bytes.add(i)),
+                ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
                 buffer_position - (Self::STRIDE * i) as u32,
             );
         }

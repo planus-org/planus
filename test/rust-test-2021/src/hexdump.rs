@@ -1,4 +1,5 @@
-use std::fmt::Write;
+use alloc::string::String;
+use core::{convert::TryInto, fmt::Write};
 
 pub fn hexdump_flatbuffer_table(buf: &[u8]) -> String {
     let mut out = String::new();

@@ -19,7 +19,7 @@ pub fn normalize_path(path: &Path) -> PathBuf {
             }
             Component::CurDir => {}
             Component::ParentDir => {
-                if let Some(Component::Normal(_)) = ret.components().last() {
+                if let Some(Component::Normal(_)) = ret.components().next_back() {
                     ret.pop();
                 } else {
                     ret.push(Component::ParentDir);

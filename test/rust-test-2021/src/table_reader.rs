@@ -20,7 +20,7 @@ impl<'buf> TableReadUnion<'buf> for A {
 fn access_union() {
     use planus::table_reader::Table;
     #[rustfmt::skip]
-    let data: Vec<u8> = vec![
+    let data = alloc::vec![
         // object offset (u32)
         12, 0, 0, 0,
         // vtable size (u16) and object size (u16)

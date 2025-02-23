@@ -1,11 +1,10 @@
 [package]
-name = "rust-test"
+name = "rust-test-2024"
 version.workspace = true
-edition.workspace = true
 license.workspace = true
 repository.workspace = true
 build = "build.rs"
-rust-version.workspace = true
+edition = "2024"
 
 [features]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
@@ -15,12 +14,10 @@ string-cache = ["planus/string-cache"]
 bytes-cache = ["planus/bytes-cache"]
 
 [dependencies]
-color-eyre = "0.6.3"
+color-eyre.workspace = true
 flatbuffers.workspace = true
-planus = { workspace = true, default-features = false, features = [
-  "extra-validation",
-] }
-serde = { workspace = true, default-features = false, features = ["derive"] }
+planus.workspace = true
+serde.workspace = true
 static_assertions.workspace = true
 
 [build-dependencies]
