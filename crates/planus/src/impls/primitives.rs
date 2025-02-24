@@ -74,8 +74,8 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
             }
         }
 
-        // # Safety
-        // write_values initalizes bytes.
+        /// # Safety
+        /// write_values initalizes bytes.
         unsafe impl VectorWrite<$ty> for $ty {
             const STRIDE: usize = $size;
             type Value = $ty;

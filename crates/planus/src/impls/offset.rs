@@ -2,8 +2,8 @@ use core::mem::MaybeUninit;
 
 use crate::{builder::Builder, traits::*, Cursor, Offset};
 
-// # Safety
-// An offset is a 32-bit unsigned integer + a zero-sized type.
+/// # Safety
+/// An offset is a 32-bit unsigned integer + a zero-sized type.
 unsafe impl<T: ?Sized> Primitive for Offset<T> {
     const ALIGNMENT: usize = 4;
     const SIZE: usize = 4;
