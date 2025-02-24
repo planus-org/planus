@@ -40,7 +40,9 @@ impl WriteAsOptional<Offset<str>> for alloc::string::String {
     }
 }
 
-impl VectorWrite<Offset<str>> for alloc::string::String {
+/// # Safety
+/// The implementation of `write_values` initializes all the bytes.
+unsafe impl VectorWrite<Offset<str>> for alloc::string::String {
     type Value = Offset<str>;
 
     const STRIDE: usize = 4;

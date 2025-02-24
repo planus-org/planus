@@ -79,7 +79,9 @@ mod root {
                 }
             }
 
-            impl ::planus::Primitive for Color {
+            /// # Safety
+            /// The Planus compiler correctly calculates `ALIGNMENT` and `SIZE`.
+            unsafe impl ::planus::Primitive for Color {
                 const ALIGNMENT: usize = 1;
                 const SIZE: usize = 1;
             }
@@ -166,7 +168,10 @@ mod root {
                 }
             }
 
-            impl ::planus::VectorWrite<Color> for Color {
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
+            unsafe impl ::planus::VectorWrite<Color> for Color {
                 const STRIDE: usize = 1;
 
                 type Value = Self;
@@ -368,7 +373,9 @@ mod root {
                 pub z: f32,
             }
 
-            impl ::planus::Primitive for Vec3 {
+            /// # Safety
+            /// The Planus compiler correctly calculates `ALIGNMENT` and `SIZE`.
+            unsafe impl ::planus::Primitive for Vec3 {
                 const ALIGNMENT: usize = 4;
                 const SIZE: usize = 12;
             }
@@ -532,7 +539,10 @@ mod root {
                 }
             }
 
-            impl ::planus::VectorWrite<Vec3> for Vec3 {
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
+            unsafe impl ::planus::VectorWrite<Vec3> for Vec3 {
                 const STRIDE: usize = 12;
 
                 type Value = Vec3;
@@ -1203,7 +1213,10 @@ mod root {
                 }
             }
 
-            impl ::planus::VectorWrite<::planus::Offset<Monster>> for Monster {
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
+            unsafe impl ::planus::VectorWrite<::planus::Offset<Monster>> for Monster {
                 type Value = ::planus::Offset<Monster>;
                 const STRIDE: usize = 4;
                 #[inline]
@@ -1514,7 +1527,10 @@ mod root {
                 }
             }
 
-            impl ::planus::VectorWrite<::planus::Offset<Weapon>> for Weapon {
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
+            unsafe impl ::planus::VectorWrite<::planus::Offset<Weapon>> for Weapon {
                 type Value = ::planus::Offset<Weapon>;
                 const STRIDE: usize = 4;
                 #[inline]

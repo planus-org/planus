@@ -43,7 +43,9 @@ impl ::core::convert::From<{{info.name}}> for {{info.repr_type}} {
     }
 }
 
-impl ::planus::Primitive for {{ info.name }} {
+/// # Safety
+/// The Planus compiler correctly calculates `ALIGNMENT` and `SIZE`.
+unsafe impl ::planus::Primitive for {{ info.name }} {
     const ALIGNMENT: usize = {{ size }};
     const SIZE: usize = {{ size }};
 }
@@ -118,7 +120,10 @@ impl<'buf> ::planus::VectorReadInner<'buf> for {{info.name}} {
     }
 }
 
-impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
+/// # Safety
+/// The planus compiler generates implementations that initialize
+/// the bytes in `write_values`.
+unsafe impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
     const STRIDE: usize = {{ size }};
 
     type Value = Self;

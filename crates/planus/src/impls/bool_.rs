@@ -4,7 +4,9 @@ use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
 };
 
-impl Primitive for bool {
+/// # Safety
+/// `ALIGNMENT` and `SIZE` should are 1 for bool.
+unsafe impl Primitive for bool {
     const ALIGNMENT: usize = 1;
     const SIZE: usize = 1;
 }
@@ -63,7 +65,9 @@ impl<'buf> VectorRead<'buf> for bool {
     }
 }
 
-impl VectorWrite<bool> for bool {
+/// # Safety
+/// The implementation of `write_values` initializes all the bytes.
+unsafe impl VectorWrite<bool> for bool {
     const STRIDE: usize = 1;
 
     type Value = bool;

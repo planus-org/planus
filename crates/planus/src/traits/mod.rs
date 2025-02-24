@@ -6,7 +6,10 @@ use crate::{
 };
 
 #[doc(hidden)]
-pub trait Primitive {
+/// # Safety
+/// `ALIGNMENT` match the actual alignment requirements of the type. It most likely is a power of two.
+/// `SIZE` match the actual size of the type. For primitive types, that is core::mem::size_of::<Self>().
+pub unsafe trait Primitive {
     const ALIGNMENT: usize;
     const ALIGNMENT_MASK: usize = Self::ALIGNMENT - 1;
     const SIZE: usize;
@@ -130,7 +133,11 @@ pub trait VectorReadInner<'buf>: 'buf + Sized {
 }
 
 /// Trait used by generated code to write elements to vectors.
-pub trait VectorWrite<P> {
+///
+/// # Safety
+/// The implementation of write_values should initialize the bytes as
+/// downstream code will assume so.
+pub unsafe trait VectorWrite<P> {
     #[doc(hidden)]
     const STRIDE: usize;
     #[doc(hidden)]
