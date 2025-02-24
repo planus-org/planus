@@ -1527,9 +1527,9 @@ mod root {
                 }
             }
 
-            // # Safety
-            // The planus compiler generates implementations that initialize
-            // the bytes in `write_values`.
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
             unsafe impl ::planus::VectorWrite<::planus::Offset<Weapon>> for Weapon {
                 type Value = ::planus::Offset<Weapon>;
                 const STRIDE: usize = 4;
