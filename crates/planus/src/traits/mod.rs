@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[doc(hidden)]
-/// #Safety
+/// # Safety
 /// `ALIGNMENT` match the actual alignment requirements of the type. It most likely is a power of two.
 /// `SIZE` match the actual size of the type. For primitive types, that is core::mem::size_of::<Self>().
 pub unsafe trait Primitive {

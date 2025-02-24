@@ -230,7 +230,7 @@ impl<'a> ::planus::VectorRead<'a> for {{ info.ref_name }}<'a> {
     }
 }
 
-// #Safety
+// # Safety
 // The planus compiler generates implementations that initialize
 // the bytes in `write_values`.
 unsafe impl ::planus::VectorWrite<{{ info.owned_name }}> for {{ info.owned_name }} {

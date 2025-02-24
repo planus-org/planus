@@ -120,7 +120,7 @@ impl<'buf> ::planus::VectorReadInner<'buf> for {{info.name}} {
     }
 }
 
-// #Safety
+// # Safety
 // The planus compiler generates implementations that initialize
 // the bytes in `write_values`.
 unsafe impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {

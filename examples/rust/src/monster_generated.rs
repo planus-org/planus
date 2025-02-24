@@ -168,7 +168,7 @@ mod root {
                 }
             }
 
-            // #Safety
+            // # Safety
             // The planus compiler generates implementations that initialize
             // the bytes in `write_values`.
             unsafe impl ::planus::VectorWrite<Color> for Color {
@@ -539,7 +539,7 @@ mod root {
                 }
             }
 
-            // #Safety
+            // # Safety
             // The planus compiler generates implementations that initialize
             // the bytes in `write_values`.
             unsafe impl ::planus::VectorWrite<Vec3> for Vec3 {
@@ -1213,7 +1213,7 @@ mod root {
                 }
             }
 
-            // #Safety
+            // # Safety
             // The planus compiler generates implementations that initialize
             // the bytes in `write_values`.
             unsafe impl ::planus::VectorWrite<::planus::Offset<Monster>> for Monster {
@@ -1527,7 +1527,7 @@ mod root {
                 }
             }
 
-            // #Safety
+            // # Safety
             // The planus compiler generates implementations that initialize
             // the bytes in `write_values`.
             unsafe impl ::planus::VectorWrite<::planus::Offset<Weapon>> for Weapon {
