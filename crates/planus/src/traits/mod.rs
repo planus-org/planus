@@ -123,7 +123,7 @@ pub trait TableReadUnion<'buf>: 'buf + Sized {
 pub trait TableReadUnionVector<'buf>: Sized {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
-        tag_offset: usize,
+        tags_offset: usize,
         values_offset: usize,
     ) -> core::result::Result<Self, ErrorKind>;
 }

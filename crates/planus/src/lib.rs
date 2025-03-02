@@ -33,6 +33,7 @@ pub use crate::{
     errors::Error,
     slice_helpers::{ArrayWithStartOffset, SliceWithStartOffset},
     traits::*,
+    union_vectors::UnionVector,
     vectors::Vector,
 };
 

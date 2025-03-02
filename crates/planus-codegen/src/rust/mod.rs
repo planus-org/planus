@@ -10,7 +10,7 @@ use eyre::Context;
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal},
+    intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal, TableFieldTagKind},
 };
 
 use super::backend::{
@@ -641,19 +641,31 @@ impl Backend for RustBackend {
                     AssignMode::Required => {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
-                        create_trait = format!("WriteAs<{vtable_type}>");
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsUnionVector<{vtable_type}>");
+                        } else {
+                            create_trait = format!("WriteAs<{vtable_type}>");
+                        }
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{read_name}>",);
                         owned_type = format!(
                             "::core::option::Option<::planus::alloc::vec::Vec<{owned_name}>>"
                         );
-                        create_trait = format!("WriteAsOptional<{vtable_type}>");
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsUnionVectorOptional<{vtable_type}>");
+                        } else {
+                            create_trait = format!("WriteAsOptional<{vtable_type}>");
+                        }
                     }
                     AssignMode::HasDefault(Literal::Vector(v)) if v.is_empty() => {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
-                        create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsUnionVectorDefault<{vtable_type}>");
+                        } else {
+                            create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
+                        }
 
                         serialize_default = Some("&()".into());
                         deserialize_default = Some(
