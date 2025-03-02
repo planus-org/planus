@@ -78,6 +78,6 @@ where
 {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
-        Some(WriteAsUnionVector::prepare(self, builder))
+        Some(WriteAsUnionVector::prepare(self.as_slice(), builder))
     }
 }
