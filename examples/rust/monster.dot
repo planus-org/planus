@@ -117,13 +117,13 @@ digraph G
       <TR>
         <TD>8 / 9</TD>
         <TD>equipped</TD>
-        <TD>MyGame.Sample.Equipment (4 bytes)</TD>
+        <TD>MyGame.Sample.Equipment (5 bytes)</TD>
         <TD PORT="p7">optional</TD>
       </TR>
       <TR>
-        <TD>11</TD>
+        <TD>10 / 11</TD>
         <TD>drops</TD>
-        <TD>[MyGame.Sample.Equipment] (4 bytes)</TD>
+        <TD>[MyGame.Sample.Equipment] (8 bytes)</TD>
         <TD PORT="p8">optional</TD>
       </TR>
       <TR>

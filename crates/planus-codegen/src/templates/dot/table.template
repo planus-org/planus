@@ -5,13 +5,13 @@
       </TR>
       {%- for (field_id, field) in fields.declaration_order().enumerate() %}
       <TR>
-      {%- if field.field_type == BackendTableFieldType::UnionValue %}
+      {%- if field.field_type == BackendTableFieldType::UnionValue || field.field_type == BackendTableFieldType::UnionValueVector %}
         <TD>{{field.vtable_index-1}} / {{field.vtable_index}}</TD>
       {%- else %}
         <TD>{{field.vtable_index}}</TD>
       {%- endif %}
         <TD>{{field.info.name}}</TD>
-        <TD>{{field.info.type_}} ({{field.info.primitive_size}} bytes)</TD>
+        <TD>{{field.info.type_}} ({{field.info.field_size}} bytes)</TD>
         <TD PORT="p{{field_id}}">{{field.info.assign_mode}}</TD>
       </TR>
       {%- endfor -%}
