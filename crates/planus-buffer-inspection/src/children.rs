@@ -43,6 +43,7 @@ impl<'a> Children<'a> for Object<'a> {
             Object::String(obj) => obj.children(buffer, callback),
             Object::UnionVectorTags(obj) => obj.children(buffer, callback),
             Object::UnionVectorValues(obj) => obj.children(buffer, callback),
+            Object::Unknown(_) => (),
         }
     }
 }
@@ -300,18 +301,28 @@ impl<'a> Children<'a> for UnionVectorValuesObject {
             }),
         );
 
-        let tag_offset = self.tags_offset.unwrap();
-
         for i in 0..self.len(buffer).unwrap_or(0) {
-            let tag = buffer.read_u8(tag_offset + 4 + i).unwrap();
-
             let offset = offset + 4 + 4 * i;
-            let value = UnionObject {
-                offset,
-                tag,
-                declaration: self.declaration,
-            };
-            callback(Some(Cow::Owned(i.to_string())), Object::Union(value));
+            let tag = self
+                .tags_offset
+                .and_then(|tag_offset| buffer.read_u8(tag_offset + 4 + i).ok());
+
+            if let Some(tag) = tag {
+                let value = UnionObject {
+                    offset,
+                    tag,
+                    declaration: self.declaration,
+                };
+                callback(Some(Cow::Owned(i.to_string())), Object::Union(value));
+            } else {
+                callback(
+                    Some(Cow::Owned(i.to_string())),
+                    Object::Offset(OffsetObject {
+                        offset: offset,
+                        kind: crate::OffsetObjectKind::Unknown,
+                    }),
+                );
+            }
         }
     }
 }
@@ -334,6 +345,7 @@ impl Byterange for Object<'_> {
             Object::String(obj) => obj.byterange(buffer),
             Object::UnionVectorTags(obj) => obj.byterange(buffer),
             Object::UnionVectorValues(obj) => obj.byterange(buffer),
+            Object::Unknown(offset) => (*offset, *offset),
         }
     }
 }
