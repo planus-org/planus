@@ -274,7 +274,9 @@ pub enum TableFieldTagKind {
     UnionTagVector,
 }
 
+/// Indicates whether a [`TableField`] has a preceding tag. Used by unions and union vectors.
 impl TableFieldTagKind {
+    /// The size of the preceding tag or 0 if not present.
     pub fn size(self) -> u32 {
         match self {
             TableFieldTagKind::None => 0,

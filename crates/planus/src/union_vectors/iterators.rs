@@ -14,9 +14,9 @@ fn div_ceil(lhs: usize, rhs: usize) -> usize {
     }
 }
 
-/// An iterator over the elements of a `Vector`.
+/// An iterator over the elements of a [`UnionVector`].
 ///
-/// This struct is created by the [`iter`][`Vector::iter`] method on [`Vector`]s.
+/// This struct is created by the [`iter`][`UnionVector::iter`] method on [`UnionVector`]s.
 pub struct Iter<'buf, T> {
     v: UnionVector<'buf, T>,
 }
@@ -104,13 +104,13 @@ impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for Iter<'buf
 
 impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for Iter<'buf, T> {}
 
-/// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
-/// elements at a time), starting at the beginning of the [`Vector`].
+/// An iterator over a [`UnionVector`] in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the beginning of the [`UnionVector`].
 ///
-/// When the [`Vector`] len is not evenly divided by the chunk size, the last
-/// [`Vector`] of the iteration will be the remainder.
+/// When the [`UnionVector`] len is not evenly divided by the chunk size, the last
+/// [`UnionVector`] of the iteration will be the remainder.
 ///
-/// This struct is created by the [`chunks`][`Vector::chunks`] method on [`Vector`]s.
+/// This struct is created by the [`chunks`][`UnionVector::chunks`] method on [`UnionVector`]s.
 pub struct Chunks<'buf, T> {
     v: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
@@ -223,13 +223,13 @@ impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for Chunks<'b
 
 impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for Chunks<'buf, T> {}
 
-/// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
-/// elements at a time), starting at the end of the [`Vector`].
+/// An iterator over a [`UnionVector`] in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the end of the [`UnionVector`].
 ///
-/// When the [`Vector`] len is not evenly divided by the chunk size, the last [`Vector`]
+/// When the [`UnionVector`] len is not evenly divided by the chunk size, the last [`UnionVector`]
 /// of the iteration will be the remainder.
 ///
-/// This struct is created by the [`rchunks`][`Vector::rchunks`] method on [`Vector`]s.
+/// This struct is created by the [`rchunks`][`UnionVector::rchunks`] method on [`UnionVector`]s.
 pub struct RChunks<'buf, T> {
     v: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
@@ -346,14 +346,14 @@ impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for RChunks<'
 
 impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {}
 
-/// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size` elements
+/// An iterator over a [`UnionVector`] in (non-overlapping) chunks (`chunk_size` elements
 /// at a time), starting at the beginning of the slice.
 ///
-/// When the [`Vector`] len is not evenly divided by the chunk size, the last
+/// When the [`UnionVector`] len is not evenly divided by the chunk size, the last
 /// up to `chunk_size-1` elements will be omitted but can be retrieved from
 /// the [`remainder`] function from the iterator.
 ///
-/// This struct is created by the [`chunks_exact`] method on [`Vector`]s.
+/// This struct is created by the [`chunks_exact`] method on [`UnionVector`]s.
 ///
 /// [`chunks_exact`]: UnionVector::chunks_exact
 /// [`remainder`]: ChunksExact::remainder
@@ -392,8 +392,8 @@ impl<'buf, T: VectorReadUnion<'buf>> ChunksExact<'buf, T> {
         Self { v, rem, chunk_size }
     }
 
-    /// Returns the remainder of the original Unionvector that is not going to be
-    /// returned by the iterator. The returned Unionvector has at most `chunk_size-1`
+    /// Returns the remainder of the original vector that is not going to be
+    /// returned by the iterator. The returned vector has at most `chunk_size-1`
     /// elements.
     #[inline]
     #[must_use]
@@ -483,14 +483,14 @@ impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for ChunksExa
 
 impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for ChunksExact<'buf, T> {}
 
-/// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
+/// An iterator over a [`UnionVector`] in (non-overlapping) chunks (`chunk_size`
 /// elements at a time), starting at the end of the slice.
 ///
-/// When the [`Vector`] len is not evenly divided by the chunk size, the last
+/// When the [`UnionVector`] len is not evenly divided by the chunk size, the last
 /// up to `chunk_size-1` elements will be omitted but can be retrieved from
 /// the [`remainder`] function from the iterator.
 ///
-/// This struct is created by the [`rchunks_exact`] method on [`Vector`]s.
+/// This struct is created by the [`rchunks_exact`] method on [`UnionVector`]s.
 ///
 /// [`remainder`]: RChunksExact::remainder
 /// [`rchunks_exact`]: UnionVector::rchunks_exact
@@ -529,8 +529,8 @@ impl<'buf, T: VectorReadUnion<'buf>> RChunksExact<'buf, T> {
         Self { v, rem, chunk_size }
     }
 
-    /// Returns the remainder of the original Unionvector that is not going to be
-    /// returned by the iterator. The returned Unionvector has at most `chunk_size-1`
+    /// Returns the remainder of the original vector that is not going to be
+    /// returned by the iterator. The returned vector has at most `chunk_size-1`
     /// elements.
     #[inline]
     #[must_use]
@@ -622,7 +622,7 @@ impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for RChunksExact<
 
 /// An iterator over overlapping sub-vectors of length `size`.
 ///
-/// This struct is created by the [`windows`] method on [`Vector`]s.
+/// This struct is created by the [`windows`] method on [`UnionVector`]s.
 ///
 /// [`windows`]: UnionVector::windows
 pub struct Windows<'buf, T> {
