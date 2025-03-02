@@ -28,6 +28,13 @@ pub enum ErrorKind {
     InvalidOffset,
     /// The buffer was too short while validating a length field.
     InvalidLength,
+    /// A vector of unions had different lengths for the tag and value vectors.
+    UnionVectorLengthsMismatched {
+        /// The length of the tags vector
+        tags_len: usize,
+        /// The length of the values vector
+        values_len: usize,
+    },
     /// An enum contained an unknown value. For forward compatibility this
     /// error should be handled appropriately.
     UnknownEnumTag {
@@ -61,6 +68,12 @@ impl core::fmt::Display for ErrorKind {
         match self {
             ErrorKind::InvalidOffset => write!(f, "Invalid offset"),
             ErrorKind::InvalidLength => write!(f, "Invalid length"),
+            ErrorKind::UnionVectorLengthsMismatched {
+                tags_len,
+                values_len,
+            } => {
+                write!(f, "Mismatched lengths between tag and value vectors. Length of tags = {tags_len}, length of values = {values_len}")
+            }
             ErrorKind::UnknownEnumTag { source } => source.fmt(f),
             ErrorKind::UnknownUnionTag { tag } => write!(f, "Unknown union (tag = {tag})"),
             ErrorKind::InvalidVtableLength { length } => {
@@ -79,6 +92,7 @@ impl std::error::Error for ErrorKind {
         match self {
             ErrorKind::InvalidOffset => None,
             ErrorKind::InvalidLength => None,
+            ErrorKind::UnionVectorLengthsMismatched { .. } => None,
             ErrorKind::UnknownEnumTag { source } => Some(source),
             ErrorKind::UnknownUnionTag { .. } => None,
             ErrorKind::InvalidVtableLength { .. } => None,

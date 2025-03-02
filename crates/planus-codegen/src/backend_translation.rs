@@ -116,7 +116,7 @@ impl<F> BackendTableFields<F> {
             .enumerate()
             .filter(|(_index, (_field_name, field))| !field.deprecated)
             .map(|(index, (field_name, field))| {
-                match field.type_.kind {
+                match &field.type_.kind {
                     TypeKind::Union(_) => {
                         declaration_order.push((
                             index,
@@ -127,6 +127,18 @@ impl<F> BackendTableFields<F> {
                             index,
                             field.vtable_index + 1,
                             BackendTableFieldType::UnionValue,
+                        ));
+                    }
+                    TypeKind::Vector(v) if matches!(v.kind, TypeKind::Union(_)) => {
+                        declaration_order.push((
+                            index,
+                            field.vtable_index,
+                            BackendTableFieldType::UnionKeyVector,
+                        ));
+                        declaration_order.push((
+                            index,
+                            field.vtable_index + 1,
+                            BackendTableFieldType::UnionValueVector,
                         ));
                     }
                     _ => {
@@ -184,7 +196,7 @@ impl<F> BackendTableFields<F> {
     pub fn declaration_order(&self) -> impl Iterator<Item = BackendTableField<'_, F>> {
         self.declaration_order
             .iter()
-            .filter(|(_, _, field_type)| *field_type != BackendTableFieldType::UnionKey)
+            .filter(|(_, _, field_type)| !field_type.is_key())
             .map(
                 move |&(index, vtable_index, field_type)| BackendTableField {
                     field_type,
@@ -234,7 +246,15 @@ pub struct BackendTableField<'a, F> {
 pub enum BackendTableFieldType {
     UnionKey,
     UnionValue,
+    UnionKeyVector,
+    UnionValueVector,
     Other,
+}
+
+impl BackendTableFieldType {
+    pub fn is_key(self) -> bool {
+        matches!(self, Self::UnionKey | Self::UnionKeyVector)
+    }
 }
 
 #[derive(Debug, Clone)]

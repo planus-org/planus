@@ -334,8 +334,8 @@ mod root {
             impl<'a> ::planus::TableReadUnion<'a> for EquipmentRef<'a> {
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
-                    field_offset: usize,
                     tag: u8,
+                    field_offset: usize,
                 ) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
                     match tag {
                         1 => ::core::result::Result::Ok(Self::Weapon(
@@ -346,6 +346,10 @@ mod root {
                         ),
                     }
                 }
+            }
+
+            impl<'a> ::planus::VectorReadUnion<'a> for EquipmentRef<'a> {
+                const VECTOR_NAME: &'static str = "[EquipmentRef]";
             }
 
             ///  Vector in three dimensions

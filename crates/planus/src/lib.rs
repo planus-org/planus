@@ -9,6 +9,8 @@ mod traits;
 
 /// Error types for serialization/deserialization
 pub mod errors;
+/// Types for interacting with vectors of unions in serialized data
+pub mod union_vectors;
 /// Types for interacting with vectors in serialized data
 pub mod vectors;
 
@@ -96,6 +98,16 @@ impl<T: ?Sized> Clone for Offset<T> {
     }
 }
 
+impl<T: ?Sized> Offset<T> {
+    #[doc(hidden)]
+    pub fn downcast(&self) -> Offset<()> {
+        Offset {
+            offset: self.offset,
+            phantom: core::marker::PhantomData,
+        }
+    }
+}
+
 /// An offset to a serialized union value of type T inside a buffer currently being built.
 pub struct UnionOffset<T: ?Sized> {
     tag: u8,
@@ -110,20 +122,10 @@ impl<T: ?Sized> Clone for UnionOffset<T> {
     }
 }
 
-impl<T: ?Sized> Offset<T> {
-    #[doc(hidden)]
-    pub fn downcast(&self) -> Offset<()> {
-        Offset {
-            offset: self.offset,
-            phantom: core::marker::PhantomData,
-        }
-    }
-}
-
 impl<T: ?Sized> UnionOffset<T> {
     #[doc(hidden)]
     #[inline]
-    pub fn new(tag: u8, offset: Offset<()>) -> UnionOffset<T> {
+    pub fn new(tag: u8, offset: Offset<()>) -> Self {
         Self {
             tag,
             offset,
@@ -141,5 +143,43 @@ impl<T: ?Sized> UnionOffset<T> {
     #[inline]
     pub fn offset(&self) -> Offset<()> {
         self.offset
+    }
+}
+
+/// An offset to a serialized vector of union values of type T and vector of union tags inside a buffer currently being built
+pub struct UnionVectorOffset<T: ?Sized> {
+    tags: Offset<[u8]>,
+    offsets: Offset<[Offset<()>]>,
+    phantom: core::marker::PhantomData<T>,
+}
+impl<T: ?Sized> Copy for UnionVectorOffset<T> {}
+impl<T: ?Sized> Clone for UnionVectorOffset<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> UnionVectorOffset<T> {
+    #[doc(hidden)]
+    #[inline]
+    pub fn new(tags: Offset<[u8]>, offsets: Offset<[Offset<()>]>) -> Self {
+        Self {
+            tags,
+            offsets,
+            phantom: core::marker::PhantomData,
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn tags(&self) -> Offset<[u8]> {
+        self.tags
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn offsets(&self) -> Offset<[Offset<()>]> {
+        self.offsets
     }
 }

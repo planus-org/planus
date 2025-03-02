@@ -90,12 +90,13 @@ impl<'buf> Table<'buf> {
         type_: &'static str,
         method: &'static str,
     ) -> crate::Result<Option<T>> {
+        let source_location = crate::errors::ErrorLocation {
+            type_,
+            method,
+            byte_offset: self.object.offset_from_start,
+        };
         let make_error = |error_kind| crate::errors::Error {
-            source_location: crate::errors::ErrorLocation {
-                type_,
-                method,
-                byte_offset: self.object.offset_from_start,
-            },
+            source_location,
             error_kind,
         };
 
@@ -104,7 +105,7 @@ impl<'buf> Table<'buf> {
             let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
             let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
             if tag_offset != 0 && value_offset != 0 && tag != 0 {
-                T::from_buffer(self.object, value_offset, tag)
+                T::from_buffer(self.object, tag, value_offset)
                     .map(Some)
                     .map_err(make_error)
             } else {

@@ -2,7 +2,7 @@ use core::mem::MaybeUninit;
 
 use crate::{
     builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, Cursor, Offset,
-    Result, UnionOffset,
+    Result, UnionOffset, UnionVectorOffset,
 };
 
 #[doc(hidden)]
@@ -85,6 +85,18 @@ pub trait WriteAsOptionalUnion<T: ?Sized> {
     fn prepare(&self, builder: &mut Builder) -> Option<UnionOffset<T>>;
 }
 
+/// Trait used by generated code to serialize offsets to unions.
+pub trait WriteAsUnionVector<T: ?Sized> {
+    #[doc(hidden)]
+    fn prepare(&self, builder: &mut Builder) -> UnionVectorOffset<T>;
+}
+
+/// Trait used by generated code to serialize offsets to optional unions.
+pub trait WriteAsOptionalUnionVector<T: ?Sized> {
+    #[doc(hidden)]
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<T>>;
+}
+
 #[doc(hidden)]
 pub trait WriteAsPrimitive<P> {
     fn write<const N: usize>(&self, cursor: Cursor<'_, N>, buffer_position: u32);
@@ -99,11 +111,20 @@ pub trait TableRead<'buf>: Sized {
 }
 
 #[doc(hidden)]
-pub trait TableReadUnion<'buf>: Sized {
+pub trait TableReadUnion<'buf>: 'buf + Sized {
     fn from_buffer(
         buffer: SliceWithStartOffset<'buf>,
-        offset: usize,
         tag: u8,
+        offset: usize,
+    ) -> core::result::Result<Self, ErrorKind>;
+}
+
+#[doc(hidden)]
+pub trait TableReadUnionVector<'buf>: Sized {
+    fn from_buffer(
+        buffer: SliceWithStartOffset<'buf>,
+        tag_offset: usize,
+        values_offset: usize,
     ) -> core::result::Result<Self, ErrorKind>;
 }
 
@@ -113,6 +134,19 @@ pub trait VectorRead<'buf>: 'buf {
     const STRIDE: usize;
     #[doc(hidden)]
     unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> Self;
+}
+
+#[doc(hidden)]
+pub trait VectorReadUnion<'buf>: 'buf + Sized + TableReadUnion<'buf> {
+    const VECTOR_NAME: &'static str;
+    fn from_buffer(
+        buffer: SliceWithStartOffset<'buf>,
+        tag: u8,
+        offset: usize,
+    ) -> crate::Result<Self> {
+        <Self as TableReadUnion>::from_buffer(buffer, tag, offset)
+            .map_err(|e| e.with_error_location(Self::VECTOR_NAME, "get", buffer.offset_from_start))
+    }
 }
 
 /// This trait is a hack to get around the coherence restriction.

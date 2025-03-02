@@ -715,17 +715,12 @@ impl<'a> Translator<'a> {
             TypeKind::Table(_) => (),
             TypeKind::SimpleType(_) => (),
             TypeKind::String => (),
+            TypeKind::Union(_) => (),
 
             TypeKind::Vector(_) => self.ctx.emit_error(
                 ErrorKind::TYPE_ERROR,
                 [Label::primary(current_file_id, type_.span)
                     .with_message("Vectors in vectors are not currently supported")],
-                Some("Unsupported type"),
-            ),
-            TypeKind::Union(_) => self.ctx.emit_error(
-                ErrorKind::TYPE_ERROR,
-                [Label::primary(current_file_id, type_.span)
-                    .with_message("Unions in vectors are not currently supported")],
                 Some("Unsupported type"),
             ),
             TypeKind::Array(_, _) => self.ctx.emit_error(
@@ -890,7 +885,7 @@ impl<'a> Translator<'a> {
                         *is_negative,
                         value,
                     ) {
-                        if matches!(type_.kind, TypeKind::Union(_)) {
+                        if type_.kind.is_type_with_tag() {
                             if new_index > 0 {
                                 // The specification says that the id assignment for unions specifies the second
                                 // of the two IDs, while we use the first in our code
@@ -901,7 +896,7 @@ impl<'a> Translator<'a> {
                                     [Label::primary(current_file_id, *span).with_message(
                                         "This attribute implies the key will have an id of -1",
                                     )],
-                                    Some("Id assignments for fields of union type specify the id of the value."),
+                                    Some("Id assignments for fields of union or union vector types specify the id of the value."),
                                 );
                                 vtable_index = 0;
                             }
@@ -923,7 +918,7 @@ impl<'a> Translator<'a> {
             }
         }
 
-        if matches!(&type_.kind, TypeKind::Union(_)) {
+        if type_.kind.is_type_with_tag() {
             *next_vtable_index = vtable_index + 2;
         } else {
             *next_vtable_index = vtable_index + 1;
@@ -960,7 +955,7 @@ impl<'a> Translator<'a> {
             assign_mode,
             vtable_index,
             object_value_size: u32::MAX,
-            object_tag_size: u32::MAX,
+            object_tag_kind: TableFieldTagKind::None,
             object_alignment_mask: u32::MAX,
             object_alignment: u32::MAX,
             deprecated,
@@ -1107,7 +1102,7 @@ impl<'a> Translator<'a> {
 
         for field in fields.values() {
             insert(field.vtable_index, field.span);
-            if matches!(field.type_.kind, TypeKind::Union(_)) {
+            if field.type_.kind.is_type_with_tag() {
                 insert(field.vtable_index + 1, field.span);
             }
         }
@@ -1429,42 +1424,48 @@ impl<'a> Translator<'a> {
             let mut max_alignment = 0;
             if let DeclarationKind::Table(decl) = &mut decl.kind {
                 for field in decl.fields.values_mut() {
-                    let (value_size, tag_size, alignment) = match &field.type_.kind {
-                        TypeKind::Table(_) | TypeKind::Vector(_) | TypeKind::String => (4, 0, 4),
-                        TypeKind::Union(_) => (4, 1, 4),
-                        TypeKind::Array(_, _) => (1, 0, 1), // TODO: Fix this once arrays are supported
+                    let mut tag_kind = TableFieldTagKind::None;
+                    let (value_size, alignment) = match &field.type_.kind {
+                        TypeKind::Table(_) | TypeKind::String => (4, 4),
+                        TypeKind::Vector(inner) => {
+                            if matches!(&inner.kind, TypeKind::Union(_)) {
+                                tag_kind = TableFieldTagKind::UnionTagVector;
+                            }
+                            (4, 4)
+                        }
+                        TypeKind::Union(_) => {
+                            tag_kind = TableFieldTagKind::UnionTag;
+                            (4, 4)
+                        }
+                        TypeKind::Array(_, _) => (1, 1), // TODO: Fix this once arrays are supported
                         TypeKind::SimpleType(SimpleType::Struct(index))
                         | TypeKind::SimpleType(SimpleType::Enum(index)) => {
                             match &self.descriptions[index.0] {
-                                TypeDescription::Struct { size, alignment } => {
-                                    (*size, 0, *alignment)
-                                }
+                                TypeDescription::Struct { size, alignment } => (*size, *alignment),
                                 TypeDescription::Enum(decl) => {
-                                    (decl.type_.byte_size(), 0, decl.alignment)
+                                    (decl.type_.byte_size(), decl.alignment)
                                 }
                                 _ => panic!("BUG"),
                             }
                         }
                         TypeKind::SimpleType(SimpleType::Bool)
                         | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I8))
-                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U8)) => {
-                            (1, 0, 1)
-                        }
+                        | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U8)) => (1, 1),
                         TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I16))
                         | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U16)) => {
-                            (2, 0, 2)
+                            (2, 2)
                         }
                         TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I32))
                         | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U32))
-                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F32)) => (4, 0, 4),
+                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F32)) => (4, 4),
                         TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::I64))
                         | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U64))
-                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 0, 8),
+                        | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 8),
                     };
-                    max_size = max_size.saturating_add(value_size + tag_size);
+                    max_size = max_size.saturating_add(value_size + tag_kind.size());
                     max_alignment = max_alignment.max(alignment);
                     field.object_value_size = value_size;
-                    field.object_tag_size = tag_size;
+                    field.object_tag_kind = tag_kind;
                     field.object_alignment = alignment;
                     field.object_alignment_mask = alignment - 1;
                 }

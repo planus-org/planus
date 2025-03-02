@@ -1,7 +1,8 @@
 use core::num::NonZeroUsize;
 
-use super::Vector;
-use crate::VectorRead;
+use crate::VectorReadUnion;
+
+use super::UnionVector;
 
 fn div_ceil(lhs: usize, rhs: usize) -> usize {
     let d = lhs / rhs;
@@ -17,10 +18,10 @@ fn div_ceil(lhs: usize, rhs: usize) -> usize {
 ///
 /// This struct is created by the [`iter`][`Vector::iter`] method on [`Vector`]s.
 pub struct Iter<'buf, T> {
-    v: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Iter<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for Iter<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Iter").field("v", &self.v).finish()
     }
@@ -33,18 +34,18 @@ impl<T> Clone for Iter<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iter<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> Iter<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>) -> Self {
         Self { v }
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for Iter<'buf, T> {
-    type Item = T;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for Iter<'buf, T> {
+    type Item = crate::Result<T>;
 
     #[inline]
-    fn next(&mut self) -> Option<T> {
+    fn next(&mut self) -> Option<crate::Result<T>> {
         if let Some((first, remaining)) = self.v.split_first() {
             self.v = remaining;
             Some(first)
@@ -55,7 +56,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Iter<'buf, T> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = self.v.get(n..).unwrap_or_else(|| Vector::new_empty());
+        self.v = self.v.get(n..).unwrap_or_else(|| UnionVector::new_empty());
         self.next()
     }
 
@@ -76,7 +77,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Iter<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Iter<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for Iter<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some((last, remaining)) = self.v.split_last() {
@@ -94,14 +95,14 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Iter<'buf, T
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Iter<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for Iter<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         self.v.len()
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Iter<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for Iter<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
 /// elements at a time), starting at the beginning of the [`Vector`].
@@ -111,11 +112,11 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Iter<'buf, T> {}
 ///
 /// This struct is created by the [`chunks`][`Vector::chunks`] method on [`Vector`]s.
 pub struct Chunks<'buf, T> {
-    v: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Chunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for Chunks<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Chunks")
             .field("v", &self.v)
@@ -134,32 +135,35 @@ impl<T> Clone for Chunks<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Chunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> Chunks<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         Self { v, chunk_size }
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for Chunks<'buf, T> {
-    type Item = Vector<'buf, T>;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for Chunks<'buf, T> {
+    type Item = UnionVector<'buf, T>;
 
     #[inline]
-    fn next(&mut self) -> Option<Vector<'buf, T>> {
+    fn next(&mut self) -> Option<UnionVector<'buf, T>> {
         if self.v.is_empty() {
             None
         } else if let Some((first, remaining)) = self.v.split_at(self.chunk_size.get()) {
             self.v = remaining;
             Some(first)
         } else {
-            Some(core::mem::replace(&mut self.v, Vector::new_empty()))
+            Some(core::mem::replace(&mut self.v, UnionVector::new_empty()))
         }
     }
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
         let skip = n.saturating_mul(self.chunk_size.get());
-        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
+        self.v = self
+            .v
+            .get(skip..)
+            .unwrap_or_else(|| UnionVector::new_empty());
         self.next()
     }
 
@@ -180,7 +184,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Chunks<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Chunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for Chunks<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.v.is_empty() {
@@ -209,7 +213,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Chunks<'buf,
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Chunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for Chunks<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         let len = self.v.len();
@@ -217,7 +221,7 @@ impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Chunks<'buf, T
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Chunks<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for Chunks<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
 /// elements at a time), starting at the end of the [`Vector`].
@@ -227,11 +231,11 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Chunks<'buf, T> {}
 ///
 /// This struct is created by the [`rchunks`][`Vector::rchunks`] method on [`Vector`]s.
 pub struct RChunks<'buf, T> {
-    v: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for RChunks<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("RChunks")
             .field("v", &self.v)
@@ -250,18 +254,18 @@ impl<T> Clone for RChunks<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> RChunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> RChunks<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         Self { v, chunk_size }
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for RChunks<'buf, T> {
-    type Item = Vector<'buf, T>;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for RChunks<'buf, T> {
+    type Item = UnionVector<'buf, T>;
 
     #[inline]
-    fn next(&mut self) -> Option<Vector<'buf, T>> {
+    fn next(&mut self) -> Option<UnionVector<'buf, T>> {
         if self.v.is_empty() {
             None
         } else {
@@ -304,7 +308,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunks<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.v.is_empty() {
@@ -333,14 +337,14 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunks<'buf
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for RChunks<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for RChunks<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         div_ceil(self.v.len(), self.chunk_size.get())
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size` elements
 /// at a time), starting at the beginning of the slice.
@@ -351,15 +355,15 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunks<'buf, T> {
 ///
 /// This struct is created by the [`chunks_exact`] method on [`Vector`]s.
 ///
-/// [`chunks_exact`]: Vector::chunks_exact
+/// [`chunks_exact`]: UnionVector::chunks_exact
 /// [`remainder`]: ChunksExact::remainder
 pub struct ChunksExact<'buf, T> {
-    v: Vector<'buf, T>,
-    rem: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
+    rem: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for ChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for ChunksExact<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ChunksExact")
             .field("v", &self.v)
@@ -380,29 +384,29 @@ impl<T> Clone for ChunksExact<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> ChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> ChunksExact<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         let len = v.len() / chunk_size.get() * chunk_size.get();
         let (v, rem) = unsafe { v.split_at_unchecked(len) };
         Self { v, rem, chunk_size }
     }
 
-    /// Returns the remainder of the original vector that is not going to be
-    /// returned by the iterator. The returned vector has at most `chunk_size-1`
+    /// Returns the remainder of the original Unionvector that is not going to be
+    /// returned by the iterator. The returned Unionvector has at most `chunk_size-1`
     /// elements.
     #[inline]
     #[must_use]
-    pub fn remainder(&self) -> Vector<'buf, T> {
+    pub fn remainder(&self) -> UnionVector<'buf, T> {
         self.rem
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for ChunksExact<'buf, T> {
-    type Item = Vector<'buf, T>;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for ChunksExact<'buf, T> {
+    type Item = UnionVector<'buf, T>;
 
     #[inline]
-    fn next(&mut self) -> Option<Vector<'buf, T>> {
+    fn next(&mut self) -> Option<UnionVector<'buf, T>> {
         debug_assert!(self.v.len() % self.chunk_size == 0);
         if self.v.is_empty() {
             None
@@ -416,7 +420,10 @@ impl<'buf, T: VectorRead<'buf>> Iterator for ChunksExact<'buf, T> {
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
         let skip = n.saturating_mul(self.chunk_size.get());
-        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
+        self.v = self
+            .v
+            .get(skip..)
+            .unwrap_or_else(|| UnionVector::new_empty());
         self.next()
     }
 
@@ -437,7 +444,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for ChunksExact<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for ChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for ChunksExact<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         debug_assert!(self.v.len() % self.chunk_size == 0);
@@ -467,14 +474,14 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for ChunksExact<
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for ChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for ChunksExact<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         self.v.len() / self.chunk_size
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for ChunksExact<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for ChunksExact<'buf, T> {}
 
 /// An iterator over a [`Vector`] in (non-overlapping) chunks (`chunk_size`
 /// elements at a time), starting at the end of the slice.
@@ -486,14 +493,14 @@ impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for ChunksExact<'buf, 
 /// This struct is created by the [`rchunks_exact`] method on [`Vector`]s.
 ///
 /// [`remainder`]: RChunksExact::remainder
-/// [`rchunks_exact`]: Vector::rchunks_exact
+/// [`rchunks_exact`]: UnionVector::rchunks_exact
 pub struct RChunksExact<'buf, T> {
-    v: Vector<'buf, T>,
-    rem: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
+    rem: UnionVector<'buf, T>,
     chunk_size: NonZeroUsize,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for RChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for RChunksExact<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("RChunksExact")
             .field("v", &self.v)
@@ -514,29 +521,29 @@ impl<T> Clone for RChunksExact<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> RChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> RChunksExact<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
         let rem_size = v.len() % chunk_size;
         let (rem, v) = unsafe { v.split_at_unchecked(rem_size) };
         Self { v, rem, chunk_size }
     }
 
-    /// Returns the remainder of the original vector that is not going to be
-    /// returned by the iterator. The returned vector has at most `chunk_size-1`
+    /// Returns the remainder of the original Unionvector that is not going to be
+    /// returned by the iterator. The returned Unionvector has at most `chunk_size-1`
     /// elements.
     #[inline]
     #[must_use]
-    pub fn remainder(&self) -> Vector<'buf, T> {
+    pub fn remainder(&self) -> UnionVector<'buf, T> {
         self.rem
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for RChunksExact<'buf, T> {
-    type Item = Vector<'buf, T>;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for RChunksExact<'buf, T> {
+    type Item = UnionVector<'buf, T>;
 
     #[inline]
-    fn next(&mut self) -> Option<Vector<'buf, T>> {
+    fn next(&mut self) -> Option<UnionVector<'buf, T>> {
         debug_assert!(self.v.len() % self.chunk_size == 0);
         if self.v.is_empty() {
             None
@@ -580,7 +587,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for RChunksExact<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for RChunksExact<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         debug_assert!(self.v.len() % self.chunk_size == 0);
@@ -596,31 +603,34 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for RChunksExact
     #[inline]
     fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
         let skip = n.saturating_mul(self.chunk_size.get());
-        self.v = self.v.get(skip..).unwrap_or_else(|| Vector::new_empty());
+        self.v = self
+            .v
+            .get(skip..)
+            .unwrap_or_else(|| UnionVector::new_empty());
         self.next_back()
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for RChunksExact<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for RChunksExact<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         self.v.len() / self.chunk_size
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for RChunksExact<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for RChunksExact<'buf, T> {}
 
 /// An iterator over overlapping sub-vectors of length `size`.
 ///
 /// This struct is created by the [`windows`] method on [`Vector`]s.
 ///
-/// [`windows`]: Vector::windows
+/// [`windows`]: UnionVector::windows
 pub struct Windows<'buf, T> {
-    v: Vector<'buf, T>,
+    v: UnionVector<'buf, T>,
     size: NonZeroUsize,
 }
 
-impl<'buf, T: VectorRead<'buf> + core::fmt::Debug> core::fmt::Debug for Windows<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf> + core::fmt::Debug> core::fmt::Debug for Windows<'buf, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Windows")
             .field("v", &self.v)
@@ -639,18 +649,18 @@ impl<T> Clone for Windows<'_, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Windows<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> Windows<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: Vector<'buf, T>, size: NonZeroUsize) -> Self {
+    pub(crate) fn new(v: UnionVector<'buf, T>, size: NonZeroUsize) -> Self {
         Self { v, size }
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> Iterator for Windows<'buf, T> {
-    type Item = Vector<'buf, T>;
+impl<'buf, T: VectorReadUnion<'buf>> Iterator for Windows<'buf, T> {
+    type Item = UnionVector<'buf, T>;
 
     #[inline]
-    fn next(&mut self) -> Option<Vector<'buf, T>> {
+    fn next(&mut self) -> Option<UnionVector<'buf, T>> {
         let window = self.v.get(..self.size.get())?;
         self.v = unsafe { self.v.get_unchecked(1..) };
         Some(window)
@@ -658,7 +668,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Windows<'buf, T> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.v = self.v.get(n..).unwrap_or_else(|| Vector::new_empty());
+        self.v = self.v.get(n..).unwrap_or_else(|| UnionVector::new_empty());
         self.next()
     }
 
@@ -679,7 +689,7 @@ impl<'buf, T: VectorRead<'buf>> Iterator for Windows<'buf, T> {
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Windows<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::DoubleEndedIterator for Windows<'buf, T> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         let index = self.v.len().checked_sub(self.size.get())?;
@@ -695,11 +705,11 @@ impl<'buf, T: VectorRead<'buf>> core::iter::DoubleEndedIterator for Windows<'buf
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::ExactSizeIterator for Windows<'buf, T> {
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::ExactSizeIterator for Windows<'buf, T> {
     #[inline]
     fn len(&self) -> usize {
         self.v.len().saturating_sub(self.size.get() - 1)
     }
 }
 
-impl<'buf, T: VectorRead<'buf>> core::iter::FusedIterator for Windows<'buf, T> {}
+impl<'buf, T: VectorReadUnion<'buf>> core::iter::FusedIterator for Windows<'buf, T> {}

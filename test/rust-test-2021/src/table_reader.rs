@@ -9,8 +9,8 @@ struct A {
 impl<'buf> TableReadUnion<'buf> for A {
     fn from_buffer(
         _: SliceWithStartOffset<'buf>,
-        offset: usize,
         tag: u8,
+        offset: usize,
     ) -> core::result::Result<Self, planus::errors::ErrorKind> {
         Ok(Self { tag, offset })
     }

@@ -170,13 +170,13 @@ impl<'a> ::core::convert::TryFrom<{{info.ref_name}}<'a>> for {{info.owned_name}}
 {% if variants.is_empty() %}
 impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}} {
     #[inline]
-    fn from_buffer(_buffer: ::planus::SliceWithStartOffset<'a>, _field_offset: usize, tag: u8) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
+    fn from_buffer(_buffer: ::planus::SliceWithStartOffset<'a>, tag: u8, _field_offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         ::core::result::Result::Err(::planus::errors::ErrorKind::UnknownUnionTag { tag })
     }
 }
 {% else %}
 impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
-    fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, field_offset: usize, tag: u8) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
+    fn from_buffer(buffer: ::planus::SliceWithStartOffset<'a>, tag: u8, field_offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
         match tag {
             {% for variant in variants -%}
                 {%- if variant.is_struct -%}
@@ -191,5 +191,15 @@ impl<'a> ::planus::TableReadUnion<'a> for {{info.ref_name}}<'a> {
             _ => ::core::result::Result::Err(::planus::errors::ErrorKind::UnknownUnionTag { tag }),
         }
     }
+}
+{% endif %}
+
+{% if variants.is_empty() %}
+impl<'a> ::planus::VectorReadUnion<'a> for {{info.ref_name}} {
+    const VECTOR_NAME: &'static str = "[{{info.ref_name}}]";
+}
+{% else %}
+impl<'a> ::planus::VectorReadUnion<'a> for {{info.ref_name}}<'a> {
+    const VECTOR_NAME: &'static str = "[{{info.ref_name}}]";
 }
 {% endif %}
