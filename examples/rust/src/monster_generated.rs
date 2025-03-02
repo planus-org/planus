@@ -217,7 +217,7 @@ mod root {
                 ///  Equipment of the weapon-type
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
 
-                /// The variant of type `Shield` in the union `Equipment`
+                ///  Equipment of the shield-type
                 Shield(::planus::alloc::boxed::Box<self::Shield>),
             }
 
@@ -411,7 +411,7 @@ mod root {
             ///  Vector in three dimensions
             ///
             /// Generated from these locations:
-            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:23`
+            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:24`
             #[derive(
                 Copy,
                 Clone,
@@ -632,7 +632,7 @@ mod root {
             ///  An enemy in the game
             ///
             /// Generated from these locations:
-            /// * Table `Monster` in the file `examples/rust/monster.fbs:33`
+            /// * Table `Monster` in the file `examples/rust/monster.fbs:34`
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
@@ -651,10 +651,10 @@ mod root {
                 pub color: self::Color,
                 ///  List of all weapons
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
-                ///  Currently equiped item
-                pub equipped: ::core::option::Option<::planus::alloc::vec::Vec<self::Equipment>>,
-                /// The field `equipped2` in the table `Monster`
-                pub equipped2: ::core::option::Option<self::Equipment>,
+                ///  Currently equipped item
+                pub equipped: ::core::option::Option<self::Equipment>,
+                ///  Equipment that will be dropped on death
+                pub drops: ::core::option::Option<::planus::alloc::vec::Vec<self::Equipment>>,
                 ///  The projected path of the monster
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
             }
@@ -671,7 +671,7 @@ mod root {
                         color: self::Color::Blue,
                         weapons: ::core::default::Default::default(),
                         equipped: ::core::default::Default::default(),
-                        equipped2: ::core::default::Default::default(),
+                        drops: ::core::default::Default::default(),
                         path: ::core::default::Default::default(),
                     }
                 }
@@ -696,8 +696,8 @@ mod root {
                     field_weapons: impl ::planus::WriteAsOptional<
                         ::planus::Offset<[::planus::Offset<self::Weapon>]>,
                     >,
-                    field_equipped: impl ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    field_equipped2: impl ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    field_equipped: impl ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    field_drops: impl ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                     field_path: impl ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 ) -> ::planus::Offset<Self> {
                     let prepared_pos = field_pos.prepare(builder);
@@ -708,7 +708,7 @@ mod root {
                     let prepared_color = field_color.prepare(builder, &self::Color::Blue);
                     let prepared_weapons = field_weapons.prepare(builder);
                     let prepared_equipped = field_equipped.prepare(builder);
-                    let prepared_equipped2 = field_equipped2.prepare(builder);
+                    let prepared_drops = field_drops.prepare(builder);
                     let prepared_path = field_path.prepare(builder);
 
                     let mut table_writer: ::planus::table_writer::TableWriter<30> =
@@ -727,16 +727,16 @@ mod root {
                             .write_entry::<::planus::Offset<[::planus::Offset<self::Weapon>]>>(7);
                     }
                     if prepared_equipped.is_some() {
-                        table_writer.write_entry::<::planus::Offset<[u8]>>(8);
+                        table_writer.write_entry::<::planus::Offset<self::Equipment>>(9);
                     }
-                    if prepared_equipped.is_some() {
+                    if prepared_drops.is_some() {
+                        table_writer.write_entry::<::planus::Offset<[u8]>>(10);
+                    }
+                    if prepared_drops.is_some() {
                         table_writer
                             .write_entry::<::planus::Offset<[::planus::Offset<self::Equipment>]>>(
-                                9,
+                                11,
                             );
-                    }
-                    if prepared_equipped2.is_some() {
-                        table_writer.write_entry::<::planus::Offset<self::Equipment>>(11);
                     }
                     if prepared_path.is_some() {
                         table_writer.write_entry::<::planus::Offset<[self::Vec3]>>(12);
@@ -750,8 +750,8 @@ mod root {
                     if prepared_color.is_some() {
                         table_writer.write_entry::<self::Color>(6);
                     }
-                    if prepared_equipped2.is_some() {
-                        table_writer.write_entry::<u8>(10);
+                    if prepared_equipped.is_some() {
+                        table_writer.write_entry::<u8>(8);
                     }
 
                     unsafe {
@@ -774,17 +774,13 @@ mod root {
                             if let ::core::option::Option::Some(prepared_equipped) =
                                 prepared_equipped
                             {
-                                object_writer.write::<_, _, 4>(&prepared_equipped.tags_offset());
+                                object_writer.write::<_, _, 4>(&prepared_equipped.offset());
                             }
-                            if let ::core::option::Option::Some(prepared_equipped) =
-                                prepared_equipped
-                            {
-                                object_writer.write::<_, _, 4>(&prepared_equipped.values_offset());
+                            if let ::core::option::Option::Some(prepared_drops) = prepared_drops {
+                                object_writer.write::<_, _, 4>(&prepared_drops.tags_offset());
                             }
-                            if let ::core::option::Option::Some(prepared_equipped2) =
-                                prepared_equipped2
-                            {
-                                object_writer.write::<_, _, 4>(&prepared_equipped2.offset());
+                            if let ::core::option::Option::Some(prepared_drops) = prepared_drops {
+                                object_writer.write::<_, _, 4>(&prepared_drops.values_offset());
                             }
                             if let ::core::option::Option::Some(prepared_path) = prepared_path {
                                 object_writer.write::<_, _, 4>(&prepared_path);
@@ -798,10 +794,10 @@ mod root {
                             if let ::core::option::Option::Some(prepared_color) = prepared_color {
                                 object_writer.write::<_, _, 1>(&prepared_color);
                             }
-                            if let ::core::option::Option::Some(prepared_equipped2) =
-                                prepared_equipped2
+                            if let ::core::option::Option::Some(prepared_equipped) =
+                                prepared_equipped
                             {
-                                object_writer.write::<_, _, 1>(&prepared_equipped2.tag());
+                                object_writer.write::<_, _, 1>(&prepared_equipped.tag());
                             }
                         });
                     }
@@ -843,7 +839,7 @@ mod root {
                         self.color,
                         &self.weapons,
                         &self.equipped,
-                        &self.equipped2,
+                        &self.drops,
                         &self.path,
                     )
                 }
@@ -1008,7 +1004,7 @@ mod root {
                     value: T7,
                 ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7)>
                 where
-                    T7: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
                 {
                     let (v0, v1, v2, v3, v4, v5, v6) = self.0;
                     MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, value))
@@ -1023,27 +1019,25 @@ mod root {
             }
 
             impl<T0, T1, T2, T3, T4, T5, T6, T7> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7)> {
-                /// Setter for the [`equipped2` field](Monster#structfield.equipped2).
+                /// Setter for the [`drops` field](Monster#structfield.drops).
                 #[inline]
                 #[allow(clippy::type_complexity)]
-                pub fn equipped2<T8>(
+                pub fn drops<T8>(
                     self,
                     value: T8,
                 ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
                 where
-                    T8: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                 {
                     let (v0, v1, v2, v3, v4, v5, v6, v7) = self.0;
                     MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, v7, value))
                 }
 
-                /// Sets the [`equipped2` field](Monster#structfield.equipped2) to null.
+                /// Sets the [`drops` field](Monster#structfield.drops) to null.
                 #[inline]
                 #[allow(clippy::type_complexity)]
-                pub fn equipped2_as_null(
-                    self,
-                ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, ())> {
-                    self.equipped2(())
+                pub fn drops_as_null(self) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, ())> {
+                    self.drops(())
                 }
             }
 
@@ -1093,8 +1087,8 @@ mod root {
                     T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                     T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAs<::planus::Offset<Monster>>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
@@ -1115,8 +1109,8 @@ mod root {
                     T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                     T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAsOptional<::planus::Offset<Monster>>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
@@ -1140,8 +1134,8 @@ mod root {
                     T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                     T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAsOffset<Monster>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
@@ -1217,19 +1211,19 @@ mod root {
                 #[inline]
                 pub fn equipped(
                     &self,
+                ) -> ::planus::Result<::core::option::Option<self::EquipmentRef<'a>>>
+                {
+                    self.0.access_union(8, "Monster", "equipped")
+                }
+
+                /// Getter for the [`drops` field](Monster#structfield.drops).
+                #[inline]
+                pub fn drops(
+                    &self,
                 ) -> ::planus::Result<
                     ::core::option::Option<::planus::UnionVector<'a, self::EquipmentRef<'a>>>,
                 > {
-                    self.0.access_union_vector(8, "Monster", "equipped")
-                }
-
-                /// Getter for the [`equipped2` field](Monster#structfield.equipped2).
-                #[inline]
-                pub fn equipped2(
-                    &self,
-                ) -> ::planus::Result<::core::option::Option<self::EquipmentRef<'a>>>
-                {
-                    self.0.access_union(10, "Monster", "equipped2")
+                    self.0.access_union_vector(10, "Monster", "drops")
                 }
 
                 /// Getter for the [`path` field](Monster#structfield.path).
@@ -1268,10 +1262,8 @@ mod root {
                     {
                         f.field("equipped", &field_equipped);
                     }
-                    if let ::core::option::Option::Some(field_equipped2) =
-                        self.equipped2().transpose()
-                    {
-                        f.field("equipped2", &field_equipped2);
+                    if let ::core::option::Option::Some(field_drops) = self.drops().transpose() {
+                        f.field("drops", &field_drops);
                     }
                     if let ::core::option::Option::Some(field_path) = self.path().transpose() {
                         f.field("path", &field_path);
@@ -1300,16 +1292,14 @@ mod root {
                         equipped: if let ::core::option::Option::Some(equipped) =
                             value.equipped()?
                         {
-                            ::core::option::Option::Some(equipped.to_vec()?)
+                            ::core::option::Option::Some(::core::convert::TryInto::try_into(
+                                equipped,
+                            )?)
                         } else {
                             ::core::option::Option::None
                         },
-                        equipped2: if let ::core::option::Option::Some(equipped2) =
-                            value.equipped2()?
-                        {
-                            ::core::option::Option::Some(::core::convert::TryInto::try_into(
-                                equipped2,
-                            )?)
+                        drops: if let ::core::option::Option::Some(drops) = value.drops()? {
+                            ::core::option::Option::Some(drops.to_vec()?)
                         } else {
                             ::core::option::Option::None
                         },
@@ -1398,7 +1388,7 @@ mod root {
             ///  A weapon is equipment that can be used for attacking
             ///
             /// Generated from these locations:
-            /// * Table `Weapon` in the file `examples/rust/monster.fbs:57`
+            /// * Table `Weapon` in the file `examples/rust/monster.fbs:59`
             #[derive(
                 Clone,
                 Debug,
@@ -1709,10 +1699,10 @@ mod root {
                 }
             }
 
-            /// The table `Shield` in the namespace `MyGame.Sample`
+            ///  A shield is equipment that can be used for defending
             ///
             /// Generated from these locations:
-            /// * Table `Shield` in the file `examples/rust/monster.fbs:64`
+            /// * Table `Shield` in the file `examples/rust/monster.fbs:67`
             #[derive(
                 Clone,
                 Debug,
@@ -1725,9 +1715,9 @@ mod root {
                 ::serde::Deserialize,
             )]
             pub struct Shield {
-                /// The field `name` in the table `Shield`
+                ///  The name of the shield
                 pub name: ::core::option::Option<::planus::alloc::string::String>,
-                /// The field `armor` in the table `Shield`
+                ///  The armor of the shield
                 pub armor: i16,
             }
 

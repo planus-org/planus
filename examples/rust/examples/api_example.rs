@@ -29,7 +29,11 @@ fn main() {
                 damage: 5,
             },
         ]),
-        equipped: Some(vec![
+        equipped: Some(Equipment::Weapon(Box::new(Weapon {
+            name: Some("Sword".to_string()),
+            damage: 3,
+        }))),
+        drops: Some(vec![
             Equipment::Weapon(Box::new(Weapon {
                 name: Some("Sword".to_string()),
                 damage: 3,
@@ -39,10 +43,6 @@ fn main() {
                 armor: 3,
             })),
         ]),
-        equipped2: Some(Equipment::Weapon(Box::new(Weapon {
-            name: Some("Sword".to_string()),
-            damage: 3,
-        }))),
         path: Some(vec![
             Vec3 {
                 x: 1.0,
@@ -73,7 +73,7 @@ fn main() {
             .finish(&mut builder),
         Weapon::builder().name("Axe").damage(5).finish(&mut builder),
     ];
-    let equipped = [
+    let equipment = [
         Equipment::builder().weapon(weapons[1]).finish(&mut builder),
         Equipment::builder()
             .shield(
@@ -96,8 +96,8 @@ fn main() {
         .inventory([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         .color(Color::Red)
         .weapons(weapons)
-        .equipped(equipped)
-        .equipped2(equipped[0])
+        .equipped(equipment[0])
+        .drops(equipment)
         .path([
             Vec3 {
                 x: 1.0,
@@ -118,18 +118,18 @@ fn main() {
 
     // We can decode the data using planus::ReadAsRoot
     let monster_ref = MonsterRef::read_as_root(finished_data).unwrap();
-    print_equipment(monster_ref).unwrap();
+    print_drops(monster_ref).unwrap();
 
     // And we can get an owned version by using TryInto
     let _monster: Monster = monster_ref.try_into().unwrap();
 }
 
-fn print_equipment(monster: MonsterRef<'_>) -> Result<(), planus::Error> {
+fn print_drops(monster: MonsterRef<'_>) -> Result<(), planus::Error> {
     // All accessors on tables return Result<_, planus::Error>
     // If the field is optional, then an Result<Option<_>, planus::Error>.
-    if let Some(equipped) = monster.equipped()? {
+    if let Some(drops) = monster.drops()? {
         // Unions translate to rust enums with data
-        for item in equipped {
+        for item in drops {
             let item = item?;
             match item {
                 EquipmentRef::Weapon(weapon) => {

@@ -16,6 +16,7 @@ enum Color:byte {
 union Equipment {
   /// Equipment of the weapon-type
   Weapon,
+  /// Equipment of the shield-type
   Shield,
 }
 
@@ -46,9 +47,10 @@ table Monster {
   color:Color = Blue;
   /// List of all weapons
   weapons:[Weapon];
-  /// Currently equiped item
-  equipped:[Equipment];
-  equipped2:Equipment;
+  /// Currently equipped item
+  equipped:Equipment;
+  /// Equipment that will be dropped on death
+  drops:[Equipment];
   /// The projected path of the monster
   path:[Vec3];
 }
@@ -61,8 +63,11 @@ table Weapon {
   damage:short;
 }
 
+/// A shield is equipment that can be used for defending
 table Shield {
+  /// The name of the shield
   name:string;
+  /// The armor of the shield
   armor:short;
 }
 
