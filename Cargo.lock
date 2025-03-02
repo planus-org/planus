@@ -902,7 +902,7 @@ checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
 
 [[package]]
 name = "planus"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "array-init-cursor",
  "hashbrown",
@@ -912,7 +912,7 @@ dependencies = [
 
 [[package]]
 name = "planus-buffer-inspection"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "indexmap",
  "planus-types",
@@ -921,7 +921,7 @@ dependencies = [
 
 [[package]]
 name = "planus-cli"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "clap",
  "clap_complete",
@@ -936,7 +936,7 @@ dependencies = [
 
 [[package]]
 name = "planus-codegen"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "askama",
  "eyre",
@@ -949,7 +949,7 @@ dependencies = [
 
 [[package]]
 name = "planus-example"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "planus",
  "serde",
@@ -958,7 +958,7 @@ dependencies = [
 
 [[package]]
 name = "planus-inspector"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "color-eyre",
  "crossterm 0.28.1",
@@ -971,7 +971,7 @@ dependencies = [
 
 [[package]]
 name = "planus-lexer"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "codespan",
  "derive_more",
@@ -980,7 +980,7 @@ dependencies = [
 
 [[package]]
 name = "planus-translation"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "bitflags 2.9.0",
  "codespan",
@@ -996,7 +996,7 @@ dependencies = [
 
 [[package]]
 name = "planus-types"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "codespan",
  "indexmap",
