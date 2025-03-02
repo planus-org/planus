@@ -1,0 +1,15 @@
+namespace Example;
+
+table StringData {
+    data: [string];
+}
+
+table IntData {
+    data: [ulong];
+}
+
+union ExampleUnion { StringData, IntData }
+
+table ExampleTable {
+    data: [ExampleUnion];
+}
