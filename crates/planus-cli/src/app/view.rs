@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::ExitCode};
 use clap::{Parser, ValueHint};
 use color_eyre::Result;
 
-/// Check validity of .fbs files
+/// View a binary file with a schema in the TUI viewer
 #[derive(Parser)]
 pub struct Command {
     #[clap(value_hint = ValueHint::FilePath)]
