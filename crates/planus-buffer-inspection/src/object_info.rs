@@ -6,7 +6,7 @@ use planus_types::intermediate::{
 use crate::{
     ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer, IntegerObject, Object,
     OffsetObject, StringObject, StructObject, TableObject, UnionObject, UnionTagObject,
-    UnionVectorObject, VTableObject, VectorObject,
+    UnionVectorTagsObject, UnionVectorValuesObject, VTableObject, VectorObject,
 };
 
 pub trait DeclarationInfo {
@@ -190,7 +190,7 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
     }
 }
 
-impl<'a> ObjectName<'a> for UnionVectorObject<'a> {
+impl<'a> ObjectName<'a> for UnionVectorTagsObject {
     fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
         let len = if let Ok(len) = self.len(buffer) {
             len.to_string()
@@ -198,17 +198,23 @@ impl<'a> ObjectName<'a> for UnionVectorObject<'a> {
             "?".to_string()
         };
 
-        if let TypeKind::Table(declaration_index)
-        | TypeKind::Union(declaration_index)
-        | TypeKind::SimpleType(SimpleType::Enum(declaration_index))
-        | TypeKind::SimpleType(SimpleType::Struct(declaration_index)) = self.type_.kind
-        {
-            let (path, _) = buffer.declarations.get_declaration(declaration_index);
-            let path = path.0.last().unwrap();
-            format!("[{path}; {len}]",)
+        let (path, _) = buffer.declarations.get_declaration(self.declaration);
+        let path = path.0.last().unwrap();
+        format!("[{path}; {len}]",)
+    }
+}
+
+impl<'a> ObjectName<'a> for UnionVectorValuesObject {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = if let Ok(len) = self.len(buffer) {
+            len.to_string()
         } else {
-            format!("[{:?}; {len}]", self.type_.kind)
-        }
+            "?".to_string()
+        };
+
+        let (path, _) = buffer.declarations.get_declaration(self.declaration);
+        let path = path.0.last().unwrap();
+        format!("[{path}; {len}]",)
     }
 }
 
@@ -324,7 +330,8 @@ impl<'a> ObjectName<'a> for Object<'a> {
             Object::Float(obj) => obj.print_object(buffer),
             Object::Bool(obj) => obj.print_object(buffer),
             Object::String(obj) => obj.print_object(buffer),
-            Object::UnionVector(obj) => obj.print_object(buffer),
+            Object::UnionVectorTags(obj) => obj.print_object(buffer),
+            Object::UnionVectorValues(obj) => obj.print_object(buffer),
         }
     }
 }
