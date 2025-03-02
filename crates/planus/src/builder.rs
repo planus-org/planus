@@ -1,6 +1,8 @@
 use core::{marker::PhantomData, mem::MaybeUninit};
 
-use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
+use crate::{
+    backvec::BackVec, Offset, Primitive, UnionVectorOffset, WriteAsOffset, WriteAsUnionVector,
+};
 
 #[derive(Debug)]
 /// Builder for serializing flatbuffers.
@@ -114,6 +116,14 @@ impl Builder {
 
     /// Serializes a slice and returns the offset to it
     pub fn create_vector<T>(&mut self, v: impl WriteAsOffset<[T]>) -> Offset<[T]> {
+        v.prepare(self)
+    }
+
+    /// Serializes a slice of union values and returns the offset to it
+    pub fn create_union_vector<T>(
+        &mut self,
+        v: impl WriteAsUnionVector<T>,
+    ) -> UnionVectorOffset<T> {
         v.prepare(self)
     }
 
