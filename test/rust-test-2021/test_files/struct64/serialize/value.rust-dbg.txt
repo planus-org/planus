@@ -1,0 +1,7 @@
+RootRef {
+    value: Ok(
+        Struct64Ref {
+            value: 17,
+        },
+    ),
+}

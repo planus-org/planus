@@ -462,7 +462,7 @@ mod root {
                 #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Vec3> {
                     unsafe {
-                        builder.write_with(12, 4, |buffer_position, bytes| {
+                        builder.write_with(12, 3, |buffer_position, bytes| {
                             let bytes = bytes.as_mut_ptr();
 
                             ::planus::WriteAsPrimitive::write(

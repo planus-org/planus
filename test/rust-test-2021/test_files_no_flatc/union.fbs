@@ -6,6 +6,7 @@ union Union {
   String: string,
   InnerTable,
   InnerStruct,
+  InnerStruct64,
 }
 
 table Root {
@@ -18,4 +19,8 @@ table InnerTable {
 
 struct InnerStruct {
   value: uint8;
+}
+
+struct InnerStruct64 {
+  value: uint64;
 }

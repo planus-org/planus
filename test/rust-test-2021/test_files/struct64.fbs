@@ -1,0 +1,7 @@
+struct Struct64 {
+  value: uint64;
+}
+
+table Root {
+  value: Struct64;
+}

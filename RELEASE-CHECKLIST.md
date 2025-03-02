@@ -5,6 +5,7 @@
 - Grep for the old version number
 - Run `cargo make regenerate-examples`
 - Update CHANGELOG.md, including links at the bottom
+- Remember to update `Cargo.lock`
 - Commit changes to a branch and make a PR
 - Run `cargo publish --dry-run` on PR branch
 - Wait for CI and merge PR to main branch

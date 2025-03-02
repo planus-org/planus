@@ -1,0 +1,12 @@
+struct Struct {
+  value: uint64;
+}
+
+union Union {
+  Struct,
+  String: string
+}
+
+table Root {
+  unions: [Union];
+}

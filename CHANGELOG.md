@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- \[Rust\]: Fix the alignment of structs in unions [#289](https://github.com/planus-org/planus/pull/289)
+
 ### Removed
 
 ## [1.1.0] - 2025-03-02
