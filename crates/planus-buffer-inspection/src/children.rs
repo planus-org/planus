@@ -287,6 +287,7 @@ impl<'a> Children<'a> for UnionVectorObject<'a> {
                 };
                 callback(Some(Cow::Owned(i.to_string())), Object::UnionTag(value));
             }
+            return;
         } else {
             let offset = self.values_offset.unwrap();
             callback(
@@ -308,7 +309,7 @@ impl<'a> Children<'a> for UnionVectorObject<'a> {
             for i in 0..self.len(buffer).unwrap_or(0) {
                 let tag = buffer.read_u8(tag_offset + 4 + i).unwrap();
 
-                let offset = offset + 4 + i;
+                let offset = offset + 4 + 4 * i;
                 let value = UnionObject {
                     offset,
                     tag,

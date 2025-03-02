@@ -216,11 +216,11 @@ pub enum OffsetObjectKind<'a> {
     Vector(&'a Type),
     UnionVectorTags {
         type_: &'a Type,
-        values: Option<ByteIndex>,
+        values_offset: Option<ByteIndex>,
     },
     UnionVector {
         type_: &'a Type,
-        tags: Option<ByteIndex>,
+        tags_offset: Option<ByteIndex>,
     },
     String,
 }
@@ -372,23 +372,32 @@ impl<'a> OffsetObject<'a> {
                 declaration,
             })),
             OffsetObjectKind::Vector(type_) => Ok(Object::Vector(VectorObject { offset, type_ })),
-            OffsetObjectKind::UnionVector { type_, tags } => {
+            OffsetObjectKind::UnionVector { type_, tags_offset } => {
                 Ok(Object::UnionVector(UnionVectorObject {
                     is_tags: false,
-                    tags_offset: tags,
+                    tags_offset: if let Some(tags_offset) = tags_offset {
+                        Some(tags_offset + buffer.read_u32(tags_offset)?)
+                    } else {
+                        None
+                    },
                     values_offset: Some(offset),
                     type_,
                 }))
             }
 
-            OffsetObjectKind::UnionVectorTags { type_, values } => {
-                Ok(Object::UnionVector(UnionVectorObject {
-                    is_tags: false,
-                    tags_offset: Some(offset),
-                    values_offset: values,
-                    type_,
-                }))
-            }
+            OffsetObjectKind::UnionVectorTags {
+                type_,
+                values_offset,
+            } => Ok(Object::UnionVector(UnionVectorObject {
+                is_tags: true,
+                tags_offset: Some(offset),
+                values_offset: if let Some(values_offset) = values_offset {
+                    Some(values_offset + buffer.read_u32(values_offset)?)
+                } else {
+                    None
+                },
+                type_,
+            })),
             OffsetObjectKind::String => Ok(Object::String(StringObject { offset })),
         }
     }
@@ -508,7 +517,10 @@ impl TableObject {
 
                 Object::Offset(OffsetObject {
                     offset,
-                    kind: OffsetObjectKind::UnionVectorTags { type_, values },
+                    kind: OffsetObjectKind::UnionVectorTags {
+                        type_,
+                        values_offset: values,
+                    },
                 })
             }
             TypeKind::Vector(ref type_) if matches!(type_.kind, TypeKind::Union(_)) => {
@@ -519,7 +531,10 @@ impl TableObject {
 
                 Object::Offset(OffsetObject {
                     offset,
-                    kind: OffsetObjectKind::UnionVector { type_, tags },
+                    kind: OffsetObjectKind::UnionVector {
+                        type_,
+                        tags_offset: tags,
+                    },
                 })
             }
             TypeKind::Vector(ref type_) => Object::Offset(OffsetObject {
