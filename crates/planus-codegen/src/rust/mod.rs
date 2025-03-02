@@ -578,10 +578,19 @@ impl Backend for RustBackend {
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
                         ),
-                        ResolvedType::Union(_, _, info, relative_namespace) => format!(
-                            "::planus::UnionVector<'a, {}<'a>>",
-                            format_relative_namespace(relative_namespace, &info.ref_name)
-                        ),
+                        ResolvedType::Union(_, union, info, relative_namespace) => {
+                            if union.variants.is_empty() {
+                                format!(
+                                    "::planus::UnionVector<'a, {}>",
+                                    format_relative_namespace(relative_namespace, &info.ref_name)
+                                )
+                            } else {
+                                format!(
+                                    "::planus::UnionVector<'a, {}<'a>>",
+                                    format_relative_namespace(relative_namespace, &info.ref_name)
+                                )
+                            }
+                        },
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
                         }
