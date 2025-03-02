@@ -5,6 +5,8 @@ check_type!(Example => value_required : Vec<bool>);
 check_type!(Example => create(&mut planus::Builder, Vec<bool>, Vec<bool>, Vec<bool>, Vec<bool>) : planus::Offset<Example>);
 check_type!(Example => create(&mut planus::Builder, (), (), Vec<bool>, Vec<bool>) : planus::Offset<Example>);
 check_type!(Example => create(&mut planus::Builder, Option<Vec<bool>>, Option<Vec<bool>>, Vec<bool>, Vec<bool>) : planus::Offset<Example>);
+check_type!(Example => create(&mut planus::Builder, planus::Offset<[bool]>, planus::Offset<[bool]>, planus::Offset<[bool]>, planus::Offset<[bool]>) : planus::Offset<Example>);
+check_type!(Example => create(&mut planus::Builder, Option<planus::Offset<[bool]>>, Option<planus::Offset<[bool]>>, planus::Offset<[bool]>, planus::Offset<[bool]>) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, &'a [bool], &'b [bool], &'c [bool], &'d [bool]) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [bool]>, Option<&'b [bool]>, &'c [bool], &'d [bool]) : planus::Offset<Example>);
 

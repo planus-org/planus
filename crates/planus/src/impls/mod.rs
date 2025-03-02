@@ -11,6 +11,7 @@ mod slice;
 mod str;
 mod string;
 mod union_offset;
+mod union_vector_offset;
 mod unit;
 mod vec;
 
