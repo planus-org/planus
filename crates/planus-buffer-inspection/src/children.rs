@@ -318,7 +318,7 @@ impl<'a> Children<'a> for UnionVectorValuesObject {
                 callback(
                     Some(Cow::Owned(i.to_string())),
                     Object::Offset(OffsetObject {
-                        offset: offset,
+                        offset,
                         kind: crate::OffsetObjectKind::Unknown,
                     }),
                 );
@@ -434,13 +434,13 @@ impl Byterange for StringObject {
     }
 }
 
-impl<'a> Byterange for UnionVectorTagsObject {
+impl Byterange for UnionVectorTagsObject {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         (self.tags_offset, self.tags_offset)
     }
 }
 
-impl<'a> Byterange for UnionVectorValuesObject {
+impl Byterange for UnionVectorValuesObject {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         (self.values_offset, self.values_offset)
     }

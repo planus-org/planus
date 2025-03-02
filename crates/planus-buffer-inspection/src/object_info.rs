@@ -332,7 +332,7 @@ impl<'a> ObjectName<'a> for Object<'a> {
             Object::String(obj) => obj.print_object(buffer),
             Object::UnionVectorTags(obj) => obj.print_object(buffer),
             Object::UnionVectorValues(obj) => obj.print_object(buffer),
-            Object::Unknown(_) => format!("?"),
+            Object::Unknown(_) => "?".to_string(),
         }
     }
 }
