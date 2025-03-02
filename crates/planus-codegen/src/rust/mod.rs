@@ -662,19 +662,20 @@ impl Backend for RustBackend {
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
                         if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
                             create_trait = format!("WriteAsDefaultUnionVector<{owned_name}>");
+                            serialize_default = Some("".into());
+                            deserialize_default = Some("::planus::UnionVector::new_empty()".into());
                         } else {
                             create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
+                            serialize_default = Some("&()".into());
+                            deserialize_default = Some(
+                                if is_byte_slice {
+                                    "&[]"
+                                } else {
+                                    "::planus::Vector::new_empty()"
+                                }
+                                .into(),
+                            );
                         }
-
-                        serialize_default = Some("&()".into());
-                        deserialize_default = Some(
-                            if is_byte_slice {
-                                "&[]"
-                            } else {
-                                "::planus::Vector::new_empty()"
-                            }
-                            .into(),
-                        );
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }

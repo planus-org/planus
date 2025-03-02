@@ -54,14 +54,14 @@ impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1>
     }
 }
 
-impl<P: Primitive, T: ?Sized + WriteAsUnionVector<P>> WriteAsUnionVector<P> for &T {
+impl<P, T: ?Sized + WriteAsUnionVector<P>> WriteAsUnionVector<P> for &T {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> UnionVectorOffset<P> {
         T::prepare(self, builder)
     }
 }
 
-impl<P: Primitive, T: ?Sized + WriteAsDefaultUnionVector<P>> WriteAsDefaultUnionVector<P> for &T {
+impl<P, T: ?Sized + WriteAsDefaultUnionVector<P>> WriteAsDefaultUnionVector<P> for &T {
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
         T::prepare(self, builder)

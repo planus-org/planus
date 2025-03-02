@@ -50,7 +50,7 @@ where
     }
 }
 
-impl<T, P> WriteAsUnionVector<P> for Vec<T>
+impl<T, P> WriteAsUnionVector<P> for alloc::vec::Vec<T>
 where
     T: WriteAsUnion<P>,
 {
@@ -59,7 +59,7 @@ where
     }
 }
 
-impl<T, P> WriteAsDefaultUnionVector<P> for Vec<T>
+impl<T, P> WriteAsDefaultUnionVector<P> for alloc::vec::Vec<T>
 where
     T: WriteAsUnion<P>,
 {
@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<T, P> WriteAsOptionalUnionVector<P> for Vec<T>
+impl<T, P> WriteAsOptionalUnionVector<P> for alloc::vec::Vec<T>
 where
     T: WriteAsUnion<P>,
 {

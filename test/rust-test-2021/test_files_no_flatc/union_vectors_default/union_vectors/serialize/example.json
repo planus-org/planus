@@ -1,0 +1,17 @@
+{
+  "value": [
+    {
+      "InnerStruct": {
+        "value": 17
+      }
+    },
+    {
+      "InnerTable": {
+        "value": 18
+      }
+    },
+    {
+      "String": "foo"
+    }
+  ]
+}

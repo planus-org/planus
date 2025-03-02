@@ -80,6 +80,12 @@ impl<P: Primitive, D: ?Sized> WriteAsDefault<P, D> for DefaultValue {
     }
 }
 
+impl<P> WriteAsDefaultUnionVector<P> for DefaultValue {
+    fn prepare(&self, _builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        None
+    }
+}
+
 impl From<Void> for crate::Error {
     fn from(v: Void) -> Self {
         match v {}
