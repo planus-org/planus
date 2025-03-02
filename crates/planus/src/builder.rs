@@ -208,6 +208,9 @@ impl Builder {
     }
 
     #[doc(hidden)]
+    /// # Safety
+    ///
+    /// If you call this function, then the inner close needs to *always* initialize all the bytes in the slice
     pub unsafe fn write_with(
         &mut self,
         size: usize,

@@ -48,7 +48,8 @@ impl<'buf> SliceWithStartOffset<'buf> {
     }
 
     /// # Safety
-    /// TODO
+    ///
+    /// Calling this function is only safe if you guarantee that `amount + N < self.len()`
     pub unsafe fn unchecked_advance_as_array<const N: usize>(
         &self,
         amount: usize,

@@ -11,10 +11,10 @@ where
         for v in self.iter() {
             tmp.push(v.prepare(builder));
         }
-        // SAFETY: We need to make sure we always write the 4+stride*len bytes in the closure
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `write_values` with `tmp.len()` values each of length `T::STRIDE`.
         unsafe {
             builder.write_with(
-                T::STRIDE.checked_mul(self.len()).unwrap(),
+                T::STRIDE.checked_mul(tmp.len()).unwrap(),
                 P::ALIGNMENT_MASK.max(u32::ALIGNMENT_MASK),
                 |buffer_position, bytes| {
                     let bytes = bytes.as_mut_ptr();
@@ -22,6 +22,10 @@ where
                     T::write_values(&tmp, bytes, buffer_position);
                 },
             );
+        }
+
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `copy_from_slice` with an array of len 4
+        unsafe {
             builder.write_with(4, 0, |_buffer_position, bytes| {
                 let len = (self.len() as u32).to_le_bytes().map(MaybeUninit::new);
                 bytes.copy_from_slice(&len);
@@ -84,7 +88,7 @@ where
             tmp_values.push(union_offset.offset());
         }
 
-        // SAFETY: TODO
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `write_values` with `tmp_values.len()` values each of length `T::STRIDE`.
         unsafe {
             builder.write_with(
                 Offset::<()>::STRIDE.checked_mul(self.len()).unwrap(),
@@ -95,30 +99,41 @@ where
                     Offset::<()>::write_values(&tmp_values, bytes, buffer_position);
                 },
             );
+        }
+
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `copy_from_slice` with an array of len 4
+        unsafe {
             builder.write_with(4, 0, |_buffer_position, bytes| {
                 let len = (self.len() as u32).to_le_bytes().map(MaybeUninit::new);
                 bytes.copy_from_slice(&len);
             });
-            let values_offset = builder.current_offset();
+        }
+        let values_offset = builder.current_offset();
+
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `copy_from_slice` using the same length in both places
+        unsafe {
             builder.write_with(
-                self.len(),
+                tmp_tags.len(),
                 u32::ALIGNMENT_MASK,
                 |_buffer_position, bytes| {
-                    let bytes = bytes.as_mut_ptr();
-
-                    bytes.copy_from(tmp_tags.as_ptr(), self.len());
+                    bytes.copy_from_slice(&tmp_tags);
                 },
             );
+        }
+
+        // SAFETY: The inner closure always initializes the entire buffer, because it calls `copy_from_slice` with an array of len 4
+        unsafe {
             builder.write_with(4, 0, |_buffer_position, bytes| {
                 let len = (self.len() as u32).to_le_bytes().map(MaybeUninit::new);
                 bytes.copy_from_slice(&len);
             });
-            let tags_offset = builder.current_offset();
-            crate::UnionVectorOffset {
-                tags_offset,
-                values_offset,
-                phantom: core::marker::PhantomData,
-            }
+        }
+
+        let tags_offset = builder.current_offset();
+        crate::UnionVectorOffset {
+            tags_offset,
+            values_offset,
+            phantom: core::marker::PhantomData,
         }
     }
 }
