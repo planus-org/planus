@@ -113,6 +113,12 @@ pub enum Object<'a> {
     /// 4 bytes of offset to the inner object
     Union(UnionObject),
 
+    /// 4 bytes of offset to the tags vector
+    UnionVectorTags(UnionVectorTagsObject),
+
+    /// 4 bytes of offset to the values vector
+    UnionVectorValues(UnionVectorValuesObject),
+
     /// 1, 2, 4 or 8 bytes of enum tag
     Enum(EnumObject),
 
@@ -133,6 +139,9 @@ pub enum Object<'a> {
 
     /// 4+n bytes of length and strings
     String(StringObject),
+
+    /// Unknown value
+    Unknown(ByteIndex),
 }
 
 impl Object<'_> {
@@ -151,6 +160,9 @@ impl Object<'_> {
             Object::Float(inner) => inner.offset,
             Object::Bool(inner) => inner.offset,
             Object::String(inner) => inner.offset,
+            Object::UnionVectorTags(inner) => inner.tags_offset,
+            Object::UnionVectorValues(inner) => inner.values_offset,
+            Object::Unknown(offset) => *offset,
         }
     }
 
@@ -169,6 +181,9 @@ impl Object<'_> {
             Object::Float(_) => false,
             Object::Bool(_) => false,
             Object::String(_) => false,
+            Object::UnionVectorTags(_) => true,
+            Object::UnionVectorValues(_) => true,
+            Object::Unknown(_) => false,
         }
     }
 
@@ -187,6 +202,9 @@ impl Object<'_> {
             Object::Float(inner) => Cow::Borrowed(inner.type_.flatbuffer_name()),
             Object::Bool(_) => Cow::Borrowed("bool"),
             Object::String(_) => Cow::Borrowed("string"),
+            Object::UnionVectorTags(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::UnionVectorValues(inner) => Cow::Owned(inner.type_name(declarations)),
+            Object::Unknown(_) => Cow::Borrowed("?"),
         }
     }
 }
@@ -202,7 +220,15 @@ pub enum OffsetObjectKind<'a> {
     VTable(DeclarationIndex),
     Table(DeclarationIndex),
     Vector(&'a Type),
+    UnionVectorTags {
+        declaration: DeclarationIndex,
+    },
+    UnionVector {
+        declaration: DeclarationIndex,
+        tags_offset: Option<ByteIndex>,
+    },
     String,
+    Unknown,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -283,11 +309,25 @@ pub struct VectorObject<'a> {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct UnionVectorTagsObject {
+    tags_offset: ByteIndex,
+    declaration: DeclarationIndex,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct UnionVectorValuesObject {
+    tags_offset: Option<ByteIndex>,
+    values_offset: ByteIndex,
+    declaration: DeclarationIndex,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct ArrayObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
     pub size: u32,
 }
+
 impl ArrayObject<'_> {
     pub fn type_name(&self, declarations: &Declarations) -> String {
         format!(
@@ -344,7 +384,27 @@ impl<'a> OffsetObject<'a> {
                 declaration,
             })),
             OffsetObjectKind::Vector(type_) => Ok(Object::Vector(VectorObject { offset, type_ })),
+            OffsetObjectKind::UnionVector {
+                declaration,
+                tags_offset,
+            } => Ok(Object::UnionVectorValues(UnionVectorValuesObject {
+                tags_offset: if let Some(tags_offset) = tags_offset {
+                    Some(tags_offset + buffer.read_u32(tags_offset)?)
+                } else {
+                    None
+                },
+                values_offset: offset,
+                declaration,
+            })),
+
+            OffsetObjectKind::UnionVectorTags { declaration } => {
+                Ok(Object::UnionVectorTags(UnionVectorTagsObject {
+                    tags_offset: offset,
+                    declaration,
+                }))
+            }
             OffsetObjectKind::String => Ok(Object::String(StringObject { offset })),
+            OffsetObjectKind::Unknown => Ok(Object::Unknown(offset)),
         }
     }
 
@@ -359,7 +419,17 @@ impl<'a> OffsetObject<'a> {
             OffsetObjectKind::Vector(type_) => {
                 Cow::Owned(format!("&[{}]", declarations.format_type_kind(&type_.kind)))
             }
+            OffsetObjectKind::UnionVector { declaration, .. } => Cow::Owned(format!(
+                "&[{}]",
+                declarations.get_declaration(declaration).0
+            )),
+
+            OffsetObjectKind::UnionVectorTags { declaration, .. } => Cow::Owned(format!(
+                "&[{}] (tags)",
+                declarations.get_declaration(declaration).0
+            )),
             OffsetObjectKind::String => Cow::Borrowed("&string"),
+            OffsetObjectKind::Unknown => Cow::Borrowed("&?"),
         }
     }
 }
@@ -452,6 +522,34 @@ impl TableObject {
                 } else {
                     return Ok(None);
                 }
+            }
+            TypeKind::Vector(ref type_) if is_union_tag => Object::Offset(OffsetObject {
+                offset,
+                kind: OffsetObjectKind::UnionVectorTags {
+                    declaration: if let TypeKind::Union(declaration) = &type_.kind {
+                        *declaration
+                    } else {
+                        return Ok(None);
+                    },
+                },
+            }),
+            TypeKind::Vector(ref type_) if matches!(type_.kind, TypeKind::Union(_)) => {
+                let tags = self
+                    .get_vtable(buffer)?
+                    .get_offset(field_index - 1, buffer)?
+                    .map(|tag_offset| self.offset + tag_offset as u32);
+
+                Object::Offset(OffsetObject {
+                    offset,
+                    kind: OffsetObjectKind::UnionVector {
+                        declaration: if let TypeKind::Union(declaration) = &type_.kind {
+                            *declaration
+                        } else {
+                            return Ok(None);
+                        },
+                        tags_offset: tags,
+                    },
+                })
             }
             TypeKind::Vector(ref type_) => Object::Offset(OffsetObject {
                 offset,
@@ -719,5 +817,28 @@ impl<'a> VectorObject<'a> {
 
     fn type_name(&self, declarations: &Declarations) -> String {
         format!("[{}]", declarations.format_type_kind(&self.type_.kind))
+    }
+}
+
+impl UnionVectorTagsObject {
+    pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
+        buffer.read_u32(self.tags_offset)
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!(
+            "[{}] (tags)",
+            declarations.get_declaration(self.declaration).0
+        )
+    }
+}
+
+impl UnionVectorValuesObject {
+    pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
+        buffer.read_u32(self.values_offset)
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!("[{}]", declarations.get_declaration(self.declaration).0)
     }
 }

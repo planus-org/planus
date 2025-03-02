@@ -1,7 +1,7 @@
 use crate::{
     builder::Builder,
     traits::{Primitive, WriteAsOptional, WriteAsOptionalUnion, WriteAsPrimitive},
-    Cursor, UnionOffset, Void,
+    Cursor, UnionOffset, UnionVectorOffset, Void, WriteAsOptionalUnionVector,
 };
 
 impl<P: Primitive> WriteAsPrimitive<P> for Void {
@@ -22,6 +22,13 @@ impl<P: Primitive> WriteAsOptional<P> for () {
 impl<T: ?Sized> WriteAsOptionalUnion<T> for () {
     #[inline]
     fn prepare(&self, _builder: &mut Builder) -> Option<UnionOffset<T>> {
+        None
+    }
+}
+
+impl<T: ?Sized> WriteAsOptionalUnionVector<T> for () {
+    #[inline]
+    fn prepare(&self, _builder: &mut Builder) -> Option<UnionVectorOffset<T>> {
         None
     }
 }

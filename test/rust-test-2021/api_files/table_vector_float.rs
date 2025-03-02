@@ -5,6 +5,8 @@ check_type!(Example => value_required : Vec<f32>);
 check_type!(Example => create(&mut planus::Builder, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) : planus::Offset<Example>);
 check_type!(Example => create(&mut planus::Builder, (), (), Vec<f32>, Vec<f32>) : planus::Offset<Example>);
 check_type!(Example => create(&mut planus::Builder, Option<Vec<f32>>, Option<Vec<f32>>, Vec<f32>, Vec<f32>) : planus::Offset<Example>);
+check_type!(Example => create(&mut planus::Builder, planus::Offset<[f32]>, planus::Offset<[f32]>, planus::Offset<[f32]>, planus::Offset<[f32]>) : planus::Offset<Example>);
+check_type!(Example => create(&mut planus::Builder, Option<planus::Offset<[f32]>>, Option<planus::Offset<[f32]>>, planus::Offset<[f32]>, planus::Offset<[f32]>) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, &'a [f32], &'b [f32], &'c [f32], &'d [f32]) : planus::Offset<Example>);
 check_type!(+['a, 'b, 'c, 'd] Example => create(&mut planus::Builder, Option<&'a [f32]>, Option<&'b [f32]>, &'c [f32], &'d [f32]) : planus::Offset<Example>);
 

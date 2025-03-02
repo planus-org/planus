@@ -216,6 +216,9 @@ mod root {
             pub enum Equipment {
                 ///  Equipment of the weapon-type
                 Weapon(::planus::alloc::boxed::Box<self::Weapon>),
+
+                ///  Equipment of the shield-type
+                Shield(::planus::alloc::boxed::Box<self::Shield>),
             }
 
             impl Equipment {
@@ -232,6 +235,14 @@ mod root {
                 ) -> ::planus::UnionOffset<Self> {
                     ::planus::UnionOffset::new(1, value.prepare(builder).downcast())
                 }
+
+                #[inline]
+                pub fn create_shield(
+                    builder: &mut ::planus::Builder,
+                    value: impl ::planus::WriteAsOffset<self::Shield>,
+                ) -> ::planus::UnionOffset<Self> {
+                    ::planus::UnionOffset::new(2, value.prepare(builder).downcast())
+                }
             }
 
             impl ::planus::WriteAsUnion<Equipment> for Equipment {
@@ -239,6 +250,7 @@ mod root {
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::UnionOffset<Self> {
                     match self {
                         Self::Weapon(value) => Self::create_weapon(builder, value),
+                        Self::Shield(value) => Self::create_shield(builder, value),
                     }
                 }
             }
@@ -266,6 +278,15 @@ mod root {
                 pub fn weapon<T>(self, value: T) -> EquipmentBuilder<::planus::Initialized<1, T>>
                 where
                     T: ::planus::WriteAsOffset<self::Weapon>,
+                {
+                    EquipmentBuilder(::planus::Initialized(value))
+                }
+
+                /// Creates an instance of the [`Shield` variant](Equipment#variant.Shield).
+                #[inline]
+                pub fn shield<T>(self, value: T) -> EquipmentBuilder<::planus::Initialized<2, T>>
+                where
+                    T: ::planus::WriteAsOffset<self::Shield>,
                 {
                     EquipmentBuilder(::planus::Initialized(value))
                 }
@@ -310,11 +331,37 @@ mod root {
                     ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
                 }
             }
+            impl<T> ::planus::WriteAsUnion<Equipment> for EquipmentBuilder<::planus::Initialized<2, T>>
+            where
+                T: ::planus::WriteAsOffset<self::Shield>,
+            {
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::planus::UnionOffset<Equipment> {
+                    ::planus::UnionOffset::new(2, (self.0).0.prepare(builder).downcast())
+                }
+            }
+
+            impl<T> ::planus::WriteAsOptionalUnion<Equipment> for EquipmentBuilder<::planus::Initialized<2, T>>
+            where
+                T: ::planus::WriteAsOffset<self::Shield>,
+            {
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::UnionOffset<Equipment>> {
+                    ::core::option::Option::Some(::planus::WriteAsUnion::prepare(self, builder))
+                }
+            }
 
             /// Reference to a deserialized [Equipment].
             #[derive(Copy, Clone, Debug)]
             pub enum EquipmentRef<'a> {
                 Weapon(self::WeaponRef<'a>),
+                Shield(self::ShieldRef<'a>),
             }
 
             impl<'a> ::core::convert::TryFrom<EquipmentRef<'a>> for Equipment {
@@ -327,6 +374,12 @@ mod root {
                                 ::core::convert::TryFrom::try_from(value)?,
                             ))
                         }
+
+                        EquipmentRef::Shield(value) => {
+                            Self::Shield(::planus::alloc::boxed::Box::new(
+                                ::core::convert::TryFrom::try_from(value)?,
+                            ))
+                        }
                     })
                 }
             }
@@ -334,11 +387,14 @@ mod root {
             impl<'a> ::planus::TableReadUnion<'a> for EquipmentRef<'a> {
                 fn from_buffer(
                     buffer: ::planus::SliceWithStartOffset<'a>,
-                    field_offset: usize,
                     tag: u8,
+                    field_offset: usize,
                 ) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
                     match tag {
                         1 => ::core::result::Result::Ok(Self::Weapon(
+                            ::planus::TableRead::from_buffer(buffer, field_offset)?,
+                        )),
+                        2 => ::core::result::Result::Ok(Self::Shield(
                             ::planus::TableRead::from_buffer(buffer, field_offset)?,
                         )),
                         _ => ::core::result::Result::Err(
@@ -348,10 +404,14 @@ mod root {
                 }
             }
 
+            impl<'a> ::planus::VectorReadUnion<'a> for EquipmentRef<'a> {
+                const VECTOR_NAME: &'static str = "[EquipmentRef]";
+            }
+
             ///  Vector in three dimensions
             ///
             /// Generated from these locations:
-            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:23`
+            /// * Struct `Vec3` in the file `examples/rust/monster.fbs:24`
             #[derive(
                 Copy,
                 Clone,
@@ -572,7 +632,7 @@ mod root {
             ///  An enemy in the game
             ///
             /// Generated from these locations:
-            /// * Table `Monster` in the file `examples/rust/monster.fbs:33`
+            /// * Table `Monster` in the file `examples/rust/monster.fbs:34`
             #[derive(
                 Clone, Debug, PartialEq, PartialOrd, ::serde::Serialize, ::serde::Deserialize,
             )]
@@ -591,8 +651,10 @@ mod root {
                 pub color: self::Color,
                 ///  List of all weapons
                 pub weapons: ::core::option::Option<::planus::alloc::vec::Vec<self::Weapon>>,
-                ///  Currently equiped item
+                ///  Currently equipped item
                 pub equipped: ::core::option::Option<self::Equipment>,
+                ///  Equipment that will be dropped on death
+                pub drops: ::core::option::Option<::planus::alloc::vec::Vec<self::Equipment>>,
                 ///  The projected path of the monster
                 pub path: ::core::option::Option<::planus::alloc::vec::Vec<self::Vec3>>,
             }
@@ -609,6 +671,7 @@ mod root {
                         color: self::Color::Blue,
                         weapons: ::core::default::Default::default(),
                         equipped: ::core::default::Default::default(),
+                        drops: ::core::default::Default::default(),
                         path: ::core::default::Default::default(),
                     }
                 }
@@ -634,6 +697,7 @@ mod root {
                         ::planus::Offset<[::planus::Offset<self::Weapon>]>,
                     >,
                     field_equipped: impl ::planus::WriteAsOptionalUnion<self::Equipment>,
+                    field_drops: impl ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                     field_path: impl ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 ) -> ::planus::Offset<Self> {
                     let prepared_pos = field_pos.prepare(builder);
@@ -644,9 +708,10 @@ mod root {
                     let prepared_color = field_color.prepare(builder, &self::Color::Blue);
                     let prepared_weapons = field_weapons.prepare(builder);
                     let prepared_equipped = field_equipped.prepare(builder);
+                    let prepared_drops = field_drops.prepare(builder);
                     let prepared_path = field_path.prepare(builder);
 
-                    let mut table_writer: ::planus::table_writer::TableWriter<26> =
+                    let mut table_writer: ::planus::table_writer::TableWriter<30> =
                         ::core::default::Default::default();
                     if prepared_pos.is_some() {
                         table_writer.write_entry::<self::Vec3>(0);
@@ -664,8 +729,17 @@ mod root {
                     if prepared_equipped.is_some() {
                         table_writer.write_entry::<::planus::Offset<self::Equipment>>(9);
                     }
+                    if prepared_drops.is_some() {
+                        table_writer.write_entry::<::planus::Offset<[u8]>>(10);
+                    }
+                    if prepared_drops.is_some() {
+                        table_writer
+                            .write_entry::<::planus::Offset<[::planus::Offset<self::Equipment>]>>(
+                                11,
+                            );
+                    }
                     if prepared_path.is_some() {
-                        table_writer.write_entry::<::planus::Offset<[self::Vec3]>>(10);
+                        table_writer.write_entry::<::planus::Offset<[self::Vec3]>>(12);
                     }
                     if prepared_mana.is_some() {
                         table_writer.write_entry::<i16>(1);
@@ -701,6 +775,12 @@ mod root {
                                 prepared_equipped
                             {
                                 object_writer.write::<_, _, 4>(&prepared_equipped.offset());
+                            }
+                            if let ::core::option::Option::Some(prepared_drops) = prepared_drops {
+                                object_writer.write::<_, _, 4>(&prepared_drops.tags_offset());
+                            }
+                            if let ::core::option::Option::Some(prepared_drops) = prepared_drops {
+                                object_writer.write::<_, _, 4>(&prepared_drops.values_offset());
                             }
                             if let ::core::option::Option::Some(prepared_path) = prepared_path {
                                 object_writer.write::<_, _, 4>(&prepared_path);
@@ -759,6 +839,7 @@ mod root {
                         self.color,
                         &self.weapons,
                         &self.equipped,
+                        &self.drops,
                         &self.path,
                     )
                 }
@@ -938,29 +1019,56 @@ mod root {
             }
 
             impl<T0, T1, T2, T3, T4, T5, T6, T7> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7)> {
-                /// Setter for the [`path` field](Monster#structfield.path).
+                /// Setter for the [`drops` field](Monster#structfield.drops).
                 #[inline]
                 #[allow(clippy::type_complexity)]
-                pub fn path<T8>(
+                pub fn drops<T8>(
                     self,
                     value: T8,
                 ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
                 where
-                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
                 {
                     let (v0, v1, v2, v3, v4, v5, v6, v7) = self.0;
                     MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, v7, value))
                 }
 
-                /// Sets the [`path` field](Monster#structfield.path) to null.
+                /// Sets the [`drops` field](Monster#structfield.drops) to null.
                 #[inline]
                 #[allow(clippy::type_complexity)]
-                pub fn path_as_null(self) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, ())> {
-                    self.path(())
+                pub fn drops_as_null(self) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, ())> {
+                    self.drops(())
                 }
             }
 
             impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)> {
+                /// Setter for the [`path` field](Monster#structfield.path).
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn path<T9>(
+                    self,
+                    value: T9,
+                ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
+                where
+                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                {
+                    let (v0, v1, v2, v3, v4, v5, v6, v7, v8) = self.0;
+                    MonsterBuilder((v0, v1, v2, v3, v4, v5, v6, v7, v8, value))
+                }
+
+                /// Sets the [`path` field](Monster#structfield.path) to null.
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn path_as_null(
+                    self,
+                ) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, ())> {
+                    self.path(())
+                }
+            }
+
+            impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>
+                MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
+            {
                 /// Finish writing the builder to get an [Offset](::planus::Offset) to a serialized [Monster].
                 #[inline]
                 pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster>
@@ -980,9 +1088,10 @@ mod root {
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
                     T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAs<::planus::Offset<Monster>>
-                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 type Prepared = ::planus::Offset<Monster>;
 
@@ -1001,9 +1110,10 @@ mod root {
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
                     T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAsOptional<::planus::Offset<Monster>>
-                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 type Prepared = ::planus::Offset<Monster>;
 
@@ -1025,14 +1135,15 @@ mod root {
                     T5: ::planus::WriteAsDefault<self::Color, self::Color>,
                     T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
                     T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
                 > ::planus::WriteAsOffset<Monster>
-                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+                for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Monster> {
-                    let (v0, v1, v2, v3, v4, v5, v6, v7, v8) = &self.0;
-                    Monster::create(builder, v0, v1, v2, v3, v4, v5, v6, v7, v8)
+                    let (v0, v1, v2, v3, v4, v5, v6, v7, v8, v9) = &self.0;
+                    Monster::create(builder, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9)
                 }
             }
 
@@ -1105,13 +1216,23 @@ mod root {
                     self.0.access_union(8, "Monster", "equipped")
                 }
 
+                /// Getter for the [`drops` field](Monster#structfield.drops).
+                #[inline]
+                pub fn drops(
+                    &self,
+                ) -> ::planus::Result<
+                    ::core::option::Option<::planus::UnionVector<'a, self::EquipmentRef<'a>>>,
+                > {
+                    self.0.access_union_vector(10, "Monster", "drops")
+                }
+
                 /// Getter for the [`path` field](Monster#structfield.path).
                 #[inline]
                 pub fn path(
                     &self,
                 ) -> ::planus::Result<::core::option::Option<::planus::Vector<'a, self::Vec3Ref<'a>>>>
                 {
-                    self.0.access(10, "Monster", "path")
+                    self.0.access(12, "Monster", "path")
                 }
             }
 
@@ -1140,6 +1261,9 @@ mod root {
                         self.equipped().transpose()
                     {
                         f.field("equipped", &field_equipped);
+                    }
+                    if let ::core::option::Option::Some(field_drops) = self.drops().transpose() {
+                        f.field("drops", &field_drops);
                     }
                     if let ::core::option::Option::Some(field_path) = self.path().transpose() {
                         f.field("path", &field_path);
@@ -1171,6 +1295,11 @@ mod root {
                             ::core::option::Option::Some(::core::convert::TryInto::try_into(
                                 equipped,
                             )?)
+                        } else {
+                            ::core::option::Option::None
+                        },
+                        drops: if let ::core::option::Option::Some(drops) = value.drops()? {
+                            ::core::option::Option::Some(drops.to_vec()?)
                         } else {
                             ::core::option::Option::None
                         },
@@ -1259,7 +1388,7 @@ mod root {
             ///  A weapon is equipment that can be used for attacking
             ///
             /// Generated from these locations:
-            /// * Table `Weapon` in the file `examples/rust/monster.fbs:56`
+            /// * Table `Weapon` in the file `examples/rust/monster.fbs:59`
             #[derive(
                 Clone,
                 Debug,
@@ -1566,6 +1695,320 @@ mod root {
                     )
                     .map_err(|error_kind| {
                         error_kind.with_error_location("[WeaponRef]", "read_as_root", 0)
+                    })
+                }
+            }
+
+            ///  A shield is equipment that can be used for defending
+            ///
+            /// Generated from these locations:
+            /// * Table `Shield` in the file `examples/rust/monster.fbs:67`
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq,
+                PartialOrd,
+                Eq,
+                Ord,
+                Hash,
+                ::serde::Serialize,
+                ::serde::Deserialize,
+            )]
+            pub struct Shield {
+                ///  The name of the shield
+                pub name: ::core::option::Option<::planus::alloc::string::String>,
+                ///  The armor of the shield
+                pub armor: i16,
+            }
+
+            #[allow(clippy::derivable_impls)]
+            impl ::core::default::Default for Shield {
+                fn default() -> Self {
+                    Self {
+                        name: ::core::default::Default::default(),
+                        armor: 0,
+                    }
+                }
+            }
+
+            impl Shield {
+                /// Creates a [ShieldBuilder] for serializing an instance of this table.
+                #[inline]
+                pub fn builder() -> ShieldBuilder<()> {
+                    ShieldBuilder(())
+                }
+
+                #[allow(clippy::too_many_arguments)]
+                pub fn create(
+                    builder: &mut ::planus::Builder,
+                    field_name: impl ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    field_armor: impl ::planus::WriteAsDefault<i16, i16>,
+                ) -> ::planus::Offset<Self> {
+                    let prepared_name = field_name.prepare(builder);
+                    let prepared_armor = field_armor.prepare(builder, &0);
+
+                    let mut table_writer: ::planus::table_writer::TableWriter<8> =
+                        ::core::default::Default::default();
+                    if prepared_name.is_some() {
+                        table_writer.write_entry::<::planus::Offset<str>>(0);
+                    }
+                    if prepared_armor.is_some() {
+                        table_writer.write_entry::<i16>(1);
+                    }
+
+                    unsafe {
+                        table_writer.finish(builder, |object_writer| {
+                            if let ::core::option::Option::Some(prepared_name) = prepared_name {
+                                object_writer.write::<_, _, 4>(&prepared_name);
+                            }
+                            if let ::core::option::Option::Some(prepared_armor) = prepared_armor {
+                                object_writer.write::<_, _, 2>(&prepared_armor);
+                            }
+                        });
+                    }
+                    builder.current_offset()
+                }
+            }
+
+            impl ::planus::WriteAs<::planus::Offset<Shield>> for Shield {
+                type Prepared = ::planus::Offset<Self>;
+
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield> {
+                    ::planus::WriteAsOffset::prepare(self, builder)
+                }
+            }
+
+            impl ::planus::WriteAsOptional<::planus::Offset<Shield>> for Shield {
+                type Prepared = ::planus::Offset<Self>;
+
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::Offset<Shield>> {
+                    ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
+                }
+            }
+
+            impl ::planus::WriteAsOffset<Shield> for Shield {
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield> {
+                    Shield::create(builder, &self.name, self.armor)
+                }
+            }
+
+            /// Builder for serializing an instance of the [Shield] type.
+            ///
+            /// Can be created using the [Shield::builder] method.
+            #[derive(Debug)]
+            #[must_use]
+            pub struct ShieldBuilder<State>(State);
+
+            impl ShieldBuilder<()> {
+                /// Setter for the [`name` field](Shield#structfield.name).
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn name<T0>(self, value: T0) -> ShieldBuilder<(T0,)>
+                where
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                {
+                    ShieldBuilder((value,))
+                }
+
+                /// Sets the [`name` field](Shield#structfield.name) to null.
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn name_as_null(self) -> ShieldBuilder<((),)> {
+                    self.name(())
+                }
+            }
+
+            impl<T0> ShieldBuilder<(T0,)> {
+                /// Setter for the [`armor` field](Shield#structfield.armor).
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn armor<T1>(self, value: T1) -> ShieldBuilder<(T0, T1)>
+                where
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                {
+                    let (v0,) = self.0;
+                    ShieldBuilder((v0, value))
+                }
+
+                /// Sets the [`armor` field](Shield#structfield.armor) to the default value.
+                #[inline]
+                #[allow(clippy::type_complexity)]
+                pub fn armor_as_default(self) -> ShieldBuilder<(T0, ::planus::DefaultValue)> {
+                    self.armor(::planus::DefaultValue)
+                }
+            }
+
+            impl<T0, T1> ShieldBuilder<(T0, T1)> {
+                /// Finish writing the builder to get an [Offset](::planus::Offset) to a serialized [Shield].
+                #[inline]
+                pub fn finish(self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield>
+                where
+                    Self: ::planus::WriteAsOffset<Shield>,
+                {
+                    ::planus::WriteAsOffset::prepare(&self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAs<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
+            {
+                type Prepared = ::planus::Offset<Shield>;
+
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield> {
+                    ::planus::WriteAsOffset::prepare(self, builder)
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAsOptional<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
+            {
+                type Prepared = ::planus::Offset<Shield>;
+
+                #[inline]
+                fn prepare(
+                    &self,
+                    builder: &mut ::planus::Builder,
+                ) -> ::core::option::Option<::planus::Offset<Shield>> {
+                    ::core::option::Option::Some(::planus::WriteAsOffset::prepare(self, builder))
+                }
+            }
+
+            impl<
+                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                    T1: ::planus::WriteAsDefault<i16, i16>,
+                > ::planus::WriteAsOffset<Shield> for ShieldBuilder<(T0, T1)>
+            {
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield> {
+                    let (v0, v1) = &self.0;
+                    Shield::create(builder, v0, v1)
+                }
+            }
+
+            /// Reference to a deserialized [Shield].
+            #[derive(Copy, Clone)]
+            pub struct ShieldRef<'a>(::planus::table_reader::Table<'a>);
+
+            impl<'a> ShieldRef<'a> {
+                /// Getter for the [`name` field](Shield#structfield.name).
+                #[inline]
+                pub fn name(
+                    &self,
+                ) -> ::planus::Result<::core::option::Option<&'a ::core::primitive::str>>
+                {
+                    self.0.access(0, "Shield", "name")
+                }
+
+                /// Getter for the [`armor` field](Shield#structfield.armor).
+                #[inline]
+                pub fn armor(&self) -> ::planus::Result<i16> {
+                    ::core::result::Result::Ok(self.0.access(1, "Shield", "armor")?.unwrap_or(0))
+                }
+            }
+
+            impl<'a> ::core::fmt::Debug for ShieldRef<'a> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut f = f.debug_struct("ShieldRef");
+                    if let ::core::option::Option::Some(field_name) = self.name().transpose() {
+                        f.field("name", &field_name);
+                    }
+                    f.field("armor", &self.armor());
+                    f.finish()
+                }
+            }
+
+            impl<'a> ::core::convert::TryFrom<ShieldRef<'a>> for Shield {
+                type Error = ::planus::Error;
+
+                #[allow(unreachable_code)]
+                fn try_from(value: ShieldRef<'a>) -> ::planus::Result<Self> {
+                    ::core::result::Result::Ok(Self {
+                        name: value.name()?.map(::core::convert::Into::into),
+                        armor: ::core::convert::TryInto::try_into(value.armor()?)?,
+                    })
+                }
+            }
+
+            impl<'a> ::planus::TableRead<'a> for ShieldRef<'a> {
+                #[inline]
+                fn from_buffer(
+                    buffer: ::planus::SliceWithStartOffset<'a>,
+                    offset: usize,
+                ) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
+                    ::core::result::Result::Ok(Self(::planus::table_reader::Table::from_buffer(
+                        buffer, offset,
+                    )?))
+                }
+            }
+
+            impl<'a> ::planus::VectorReadInner<'a> for ShieldRef<'a> {
+                type Error = ::planus::Error;
+                const STRIDE: usize = 4;
+
+                unsafe fn from_buffer(
+                    buffer: ::planus::SliceWithStartOffset<'a>,
+                    offset: usize,
+                ) -> ::planus::Result<Self> {
+                    ::planus::TableRead::from_buffer(buffer, offset).map_err(|error_kind| {
+                        error_kind.with_error_location(
+                            "[ShieldRef]",
+                            "get",
+                            buffer.offset_from_start,
+                        )
+                    })
+                }
+            }
+
+            /// # Safety
+            /// The planus compiler generates implementations that initialize
+            /// the bytes in `write_values`.
+            unsafe impl ::planus::VectorWrite<::planus::Offset<Shield>> for Shield {
+                type Value = ::planus::Offset<Shield>;
+                const STRIDE: usize = 4;
+                #[inline]
+                fn prepare(&self, builder: &mut ::planus::Builder) -> Self::Value {
+                    ::planus::WriteAs::prepare(self, builder)
+                }
+
+                #[inline]
+                unsafe fn write_values(
+                    values: &[::planus::Offset<Shield>],
+                    bytes: *mut ::core::mem::MaybeUninit<u8>,
+                    buffer_position: u32,
+                ) {
+                    let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; 4];
+                    for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
+                        ::planus::WriteAsPrimitive::write(
+                            v,
+                            ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
+                            buffer_position - (Self::STRIDE * i) as u32,
+                        );
+                    }
+                }
+            }
+
+            impl<'a> ::planus::ReadAsRoot<'a> for ShieldRef<'a> {
+                fn read_as_root(slice: &'a [u8]) -> ::planus::Result<Self> {
+                    ::planus::TableRead::from_buffer(
+                        ::planus::SliceWithStartOffset {
+                            buffer: slice,
+                            offset_from_start: 0,
+                        },
+                        0,
+                    )
+                    .map_err(|error_kind| {
+                        error_kind.with_error_location("[ShieldRef]", "read_as_root", 0)
                     })
                 }
             }

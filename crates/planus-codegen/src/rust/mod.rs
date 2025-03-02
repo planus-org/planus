@@ -10,7 +10,7 @@ use eyre::Context;
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
-    intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal},
+    intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal, TableFieldTagKind},
 };
 
 use super::backend::{
@@ -512,9 +512,11 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _, _) => {
-                            unreachable!("This should have been rejected in type-check")
-                        }
+                        ResolvedType::Union(_, _, info, relative_namespace) => format!(
+                            "::planus::Offset<{}>",
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                        )
+                        .into(),
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
                         }
@@ -545,8 +547,10 @@ impl Backend for RustBackend {
                                 .to_string()
                                 .into()
                         }
-                        ResolvedType::Union(_, _, _, _) => {
-                            unreachable!("This should have been rejected in type-check")
+                        ResolvedType::Union(_, _, info, relative_namespace) => {
+                            format_relative_namespace(relative_namespace, &info.owned_name)
+                                .to_string()
+                                .into()
                         }
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
@@ -574,9 +578,19 @@ impl Backend for RustBackend {
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
                         ),
-                        ResolvedType::Union(_, _, _, _) => {
-                            unreachable!("This should have been rejected in type-check")
-                        }
+                        ResolvedType::Union(_, union, info, relative_namespace) => {
+                            if union.variants.is_empty() {
+                                format!(
+                                    "::planus::UnionVector<'a, {}>",
+                                    format_relative_namespace(relative_namespace, &info.ref_name)
+                                )
+                            } else {
+                                format!(
+                                    "::planus::UnionVector<'a, {}<'a>>",
+                                    format_relative_namespace(relative_namespace, &info.ref_name)
+                                )
+                            }
+                        },
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
                         }
@@ -596,7 +610,6 @@ impl Backend for RustBackend {
                     match type_ {
                         ResolvedType::Table(..)
                         | ResolvedType::Enum(..)
-                        | ResolvedType::Union(..)
                         | ResolvedType::Vector(..)
                         | ResolvedType::String => "to_vec_result",
                         _ => "to_vec",
@@ -636,29 +649,42 @@ impl Backend for RustBackend {
                     AssignMode::Required => {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
-                        create_trait = format!("WriteAs<{vtable_type}>");
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsUnionVector<{owned_name}>");
+                        } else {
+                            create_trait = format!("WriteAs<{vtable_type}>");
+                        }
                     }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{read_name}>",);
                         owned_type = format!(
                             "::core::option::Option<::planus::alloc::vec::Vec<{owned_name}>>"
                         );
-                        create_trait = format!("WriteAsOptional<{vtable_type}>");
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsOptionalUnionVector<{owned_name}>");
+                        } else {
+                            create_trait = format!("WriteAsOptional<{vtable_type}>");
+                        }
                     }
                     AssignMode::HasDefault(Literal::Vector(v)) if v.is_empty() => {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
-                        create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
-
-                        serialize_default = Some("&()".into());
-                        deserialize_default = Some(
-                            if is_byte_slice {
-                                "&[]"
-                            } else {
-                                "::planus::Vector::new_empty()"
-                            }
-                            .into(),
-                        );
+                        if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
+                            create_trait = format!("WriteAsDefaultUnionVector<{owned_name}>");
+                            serialize_default = Some("".into());
+                            deserialize_default = Some("::planus::UnionVector::new_empty()".into());
+                        } else {
+                            create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
+                            serialize_default = Some("&()".into());
+                            deserialize_default = Some(
+                                if is_byte_slice {
+                                    "&[]"
+                                } else {
+                                    "::planus::Vector::new_empty()"
+                                }
+                                .into(),
+                            );
+                        }
                     }
                     AssignMode::HasDefault(..) => unreachable!(),
                 }

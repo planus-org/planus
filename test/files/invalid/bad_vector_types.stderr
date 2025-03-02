@@ -1,8 +1,8 @@
 error: Unsupported type
   ┌─ test/files/invalid/bad_vector_types.fbs:2:7
   │
-2 │   x: [Bar];
-  │       ^^^ Unions in vectors are not currently supported
+2 │   x: [[Bar]];
+  │       ^^^^^ Vectors in vectors are not currently supported
 
 error: Unsupported type
   ┌─ test/files/invalid/bad_vector_types.fbs:3:7

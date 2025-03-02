@@ -5,7 +5,8 @@ use planus_types::{ast::IntegerType, intermediate::TypeKind};
 use crate::{
     object_info::DeclarationInfo, ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject,
     InspectableFlatbuffer, IntegerObject, Object, OffsetObject, StringObject, StructObject,
-    TableObject, UnionObject, UnionTagObject, VTableObject, VectorObject,
+    TableObject, UnionObject, UnionTagObject, UnionVectorTagsObject, UnionVectorValuesObject,
+    VTableObject, VectorObject,
 };
 
 pub trait Children<'a> {
@@ -40,6 +41,9 @@ impl<'a> Children<'a> for Object<'a> {
             Object::Float(obj) => obj.children(buffer, callback),
             Object::Bool(obj) => obj.children(buffer, callback),
             Object::String(obj) => obj.children(buffer, callback),
+            Object::UnionVectorTags(obj) => obj.children(buffer, callback),
+            Object::UnionVectorValues(obj) => obj.children(buffer, callback),
+            Object::Unknown(_) => (),
         }
     }
 }
@@ -195,6 +199,7 @@ impl<'a> Children<'a> for VectorObject<'a> {
                 type_: IntegerType::U32,
             }),
         );
+
         for i in 0..self.len(buffer).unwrap_or(0) {
             if let Ok(Some(value)) = self.read(i, buffer) {
                 callback(Some(Cow::Owned(i.to_string())), value);
@@ -255,6 +260,73 @@ impl<'a> Children<'a> for StringObject {
     }
 }
 
+impl<'a> Children<'a> for UnionVectorTagsObject {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
+    ) {
+        let offset = self.tags_offset;
+        callback(
+            Some(Cow::Borrowed("length")),
+            Object::Integer(IntegerObject {
+                offset,
+                type_: IntegerType::U32,
+            }),
+        );
+
+        for i in 0..self.len(buffer).unwrap_or(0) {
+            let offset = offset + 4 + i;
+            let value = UnionTagObject {
+                offset,
+                declaration: self.declaration,
+            };
+            callback(Some(Cow::Owned(i.to_string())), Object::UnionTag(value));
+        }
+    }
+}
+
+impl<'a> Children<'a> for UnionVectorValuesObject {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
+    ) {
+        let offset = self.values_offset;
+        callback(
+            Some(Cow::Borrowed("length")),
+            Object::Integer(IntegerObject {
+                offset,
+                type_: IntegerType::U32,
+            }),
+        );
+
+        for i in 0..self.len(buffer).unwrap_or(0) {
+            let offset = offset + 4 + 4 * i;
+            let tag = self
+                .tags_offset
+                .and_then(|tag_offset| buffer.read_u8(tag_offset + 4 + i).ok());
+
+            if let Some(tag) = tag {
+                let value = UnionObject {
+                    offset,
+                    tag,
+                    declaration: self.declaration,
+                };
+                callback(Some(Cow::Owned(i.to_string())), Object::Union(value));
+            } else {
+                callback(
+                    Some(Cow::Owned(i.to_string())),
+                    Object::Offset(OffsetObject {
+                        offset,
+                        kind: crate::OffsetObjectKind::Unknown,
+                    }),
+                );
+            }
+        }
+    }
+}
+
 impl Byterange for Object<'_> {
     fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         match self {
@@ -271,6 +343,9 @@ impl Byterange for Object<'_> {
             Object::Float(obj) => obj.byterange(buffer),
             Object::Bool(obj) => obj.byterange(buffer),
             Object::String(obj) => obj.byterange(buffer),
+            Object::UnionVectorTags(obj) => obj.byterange(buffer),
+            Object::UnionVectorValues(obj) => obj.byterange(buffer),
+            Object::Unknown(offset) => (*offset, *offset),
         }
     }
 }
@@ -356,5 +431,17 @@ impl Byterange for StringObject {
             self.offset,
             self.offset + 4 + self.len(buffer).unwrap() as ByteIndex,
         )
+    }
+}
+
+impl Byterange for UnionVectorTagsObject {
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.tags_offset, self.tags_offset)
+    }
+}
+
+impl Byterange for UnionVectorValuesObject {
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        (self.values_offset, self.values_offset)
     }
 }

@@ -1,0 +1,27 @@
+RootRef {
+    value: Ok(
+        [
+            Ok(
+                InnerStruct(
+                    InnerStructRef {
+                        value: 17,
+                    },
+                ),
+            ),
+            Ok(
+                InnerTable(
+                    InnerTableRef {
+                        value: Ok(
+                            18,
+                        ),
+                    },
+                ),
+            ),
+            Ok(
+                String(
+                    "foo",
+                ),
+            ),
+        ],
+    ),
+}

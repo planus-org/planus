@@ -40,7 +40,7 @@ error: Table contains non-consecutive ids. Missing id 4
 23 │ table A4 {
    │ ^^^^^^^^
 
-error: Id assignments for fields of union type specify the id of the value.
+error: Id assignments for fields of union or union vector types specify the id of the value.
    ┌─ test/files/invalid/bad_field_ids.fbs:30:15
    │
 30 │     x: U (id: 0);

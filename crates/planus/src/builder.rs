@@ -1,6 +1,8 @@
 use core::{marker::PhantomData, mem::MaybeUninit};
 
-use crate::{backvec::BackVec, Offset, Primitive, WriteAsOffset};
+use crate::{
+    backvec::BackVec, Offset, Primitive, UnionVectorOffset, WriteAsOffset, WriteAsUnionVector,
+};
 
 #[derive(Debug)]
 /// Builder for serializing flatbuffers.
@@ -117,6 +119,14 @@ impl Builder {
         v.prepare(self)
     }
 
+    /// Serializes a slice of union values and returns the offset to it
+    pub fn create_union_vector<T>(
+        &mut self,
+        v: impl WriteAsUnionVector<T>,
+    ) -> UnionVectorOffset<T> {
+        v.prepare(self)
+    }
+
     /// Resets the builders internal state and clears the internal buffer.
     pub fn clear(&mut self) {
         self.inner.clear();
@@ -198,6 +208,9 @@ impl Builder {
     }
 
     #[doc(hidden)]
+    /// # Safety
+    ///
+    /// If you call this function, then the inner close needs to *always* initialize all the bytes in the slice
     pub unsafe fn write_with(
         &mut self,
         size: usize,

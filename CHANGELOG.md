@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump the Minimum Support Rust Version (MSRV) to 1.75.0
 - The `Primitive` and `VectorWrite` traits are now marked as unsafe to remind implementers of alignment constraints
+- \[Rust\]: Add support for union vectors [#287](https://github.com/planus-org/planus/pull/287)
+- Add support for displaying union vectors with `planus view` [#287](https://github.com/planus-org/planus/pull/287)
 
 ### Fixed
 

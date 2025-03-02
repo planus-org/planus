@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset};
+use crate::{builder::Builder, traits::*, Cursor, Offset, UnionVectorOffset};
 
 impl<T, P, const N: usize> WriteAsOffset<[P]> for [T; N]
 where
@@ -58,5 +58,37 @@ where
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<Offset<[P]>> {
         Some(WriteAsOffset::prepare(self, builder))
+    }
+}
+
+impl<T, P, const N: usize> WriteAsUnionVector<P> for [T; N]
+where
+    T: WriteAsUnion<P>,
+{
+    fn prepare(&self, builder: &mut Builder) -> UnionVectorOffset<P> {
+        WriteAsUnionVector::prepare(self.as_slice(), builder)
+    }
+}
+
+impl<T, P, const N: usize> WriteAsDefaultUnionVector<P> for [T; N]
+where
+    T: WriteAsUnion<P>,
+{
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(WriteAsUnionVector::prepare(self.as_slice(), builder))
+        }
+    }
+}
+
+impl<T, P, const N: usize> WriteAsOptionalUnionVector<P> for [T; N]
+where
+    T: WriteAsUnion<P>,
+{
+    #[inline]
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        Some(WriteAsUnionVector::prepare(self.as_slice(), builder))
     }
 }

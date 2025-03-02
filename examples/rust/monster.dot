@@ -32,9 +32,14 @@ digraph G
         <TD>Weapon</TD>
         <TD PORT="p0">MyGame.Sample.Weapon</TD>
       </TR>
+      <TR>
+        <TD>Shield</TD>
+        <TD PORT="p1">MyGame.Sample.Shield</TD>
+      </TR>
     </TABLE>>
   ];
   decl1:p0:e -> decl4:name [color = "#6e4ac9"];
+  decl1:p1:e -> decl5:name [color = "#8644c4"];
 
   decl2[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
@@ -112,21 +117,28 @@ digraph G
       <TR>
         <TD>8 / 9</TD>
         <TD>equipped</TD>
-        <TD>MyGame.Sample.Equipment (4 bytes)</TD>
+        <TD>MyGame.Sample.Equipment (5 bytes)</TD>
         <TD PORT="p7">optional</TD>
       </TR>
       <TR>
-        <TD>10</TD>
+        <TD>10 / 11</TD>
+        <TD>drops</TD>
+        <TD>[MyGame.Sample.Equipment] (8 bytes)</TD>
+        <TD PORT="p8">optional</TD>
+      </TR>
+      <TR>
+        <TD>12</TD>
         <TD>path</TD>
         <TD>[Vec3] (4 bytes)</TD>
-        <TD PORT="p8">optional</TD>
+        <TD PORT="p9">optional</TD>
       </TR></TABLE>>
   ];
-  decl3:p0:e -> decl2:name [color = "#5216ad"];
-  decl3:p5:e -> decl0:name [color = "#4410d3"];
-  decl3:p6:e -> decl4:name [color = "#47a3ad"];
-  decl3:p7:e -> decl1:name [color = "#f20444"];
-  decl3:p8:e -> decl2:name [color = "#053975"];
+  decl3:p0:e -> decl2:name [color = "#3daf1d"];
+  decl3:p5:e -> decl0:name [color = "#47a3ad"];
+  decl3:p6:e -> decl4:name [color = "#f20444"];
+  decl3:p7:e -> decl1:name [color = "#053975"];
+  decl3:p8:e -> decl1:name [color = "#e5577a"];
+  decl3:p9:e -> decl2:name [color = "#09f7ef"];
 
   decl4[ label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
@@ -142,6 +154,25 @@ digraph G
       <TR>
         <TD>1</TD>
         <TD>damage</TD>
+        <TD>int16 (2 bytes)</TD>
+        <TD PORT="p1">default 0</TD>
+      </TR></TABLE>>
+  ];
+
+  decl5[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="4" PORT="name">table MyGame.Sample.Shield</TD>
+      </TR>
+      <TR>
+        <TD>0</TD>
+        <TD>name</TD>
+        <TD>string (4 bytes)</TD>
+        <TD PORT="p0">optional</TD>
+      </TR>
+      <TR>
+        <TD>1</TD>
+        <TD>armor</TD>
         <TD>int16 (2 bytes)</TD>
         <TD PORT="p1">default 0</TD>
       </TR></TABLE>>

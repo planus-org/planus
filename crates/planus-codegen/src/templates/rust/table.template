@@ -64,6 +64,8 @@ impl {{info.owned_name}} {
             {%- endif -%}
                 {%- if field.field_type == BackendTableFieldType::UnionKey -%}
                 table_writer.write_entry::<u8>({{field.vtable_index}});
+                {%- else if field.field_type == BackendTableFieldType::UnionKeyVector -%}
+                table_writer.write_entry::<::planus::Offset<[u8]>>({{field.vtable_index}});
                 {%- else -%}
                 table_writer.write_entry::<{{field.info.vtable_type}}>({{field.vtable_index}});
                 {%- endif -%}
@@ -84,6 +86,8 @@ impl {{info.owned_name}} {
                         {%- match field.field_type -%}
                         {%- when BackendTableFieldType::UnionKey -%} object_writer.write::<_, _, 1>(&prepared_{{field.info.create_name}}.tag());
                         {%- when BackendTableFieldType::UnionValue -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}}.offset());
+                        {%- when BackendTableFieldType::UnionKeyVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.tags_offset());
+                        {%- when BackendTableFieldType::UnionValueVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.values_offset());
                         {%- when BackendTableFieldType::Other -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}});
                         {%- endmatch -%}
                     {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}
@@ -306,6 +310,12 @@ impl<'a> {{info.ref_name}}<'a> {
               self.0.access_union_required({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
               {% else %}
               self.0.access_union({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% endif %}
+            {% else if field.field_type == BackendTableFieldType::UnionValueVector %}
+              {% if field.info.required %}
+              self.0.access_union_vector_required({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
+              {% else %}
+              self.0.access_union_vector({{field.vtable_index-1}}, "{{info.owned_name}}", "{{field.info.name}}")
               {% endif %}
             {% else %}
               {% if field.info.required %}

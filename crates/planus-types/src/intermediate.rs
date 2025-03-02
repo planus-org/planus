@@ -260,11 +260,30 @@ pub struct TableField {
     pub type_: Type,
     pub assign_mode: AssignMode,
     pub object_value_size: u32,
-    pub object_tag_size: u32,
+    pub object_tag_kind: TableFieldTagKind,
     pub object_alignment_mask: u32,
     pub object_alignment: u32,
     pub deprecated: bool,
     pub docstrings: Docstrings,
+}
+
+#[derive(Copy, Clone, Debug)]
+/// Indicates whether a [`TableField`] has a preceding tag. Used by unions and union vectors.
+pub enum TableFieldTagKind {
+    None,
+    UnionTag,
+    UnionTagVector,
+}
+
+impl TableFieldTagKind {
+    /// The size of the preceding tag or 0 if not present.
+    pub fn size(self) -> u32 {
+        match self {
+            TableFieldTagKind::None => 0,
+            TableFieldTagKind::UnionTag => 1,
+            TableFieldTagKind::UnionTagVector => 4,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -346,6 +365,14 @@ impl TypeKind {
 
     pub fn is_enum(&self) -> bool {
         matches!(self, &TypeKind::SimpleType(SimpleType::Enum(..)))
+    }
+
+    pub fn is_type_with_tag(&self) -> bool {
+        match self {
+            TypeKind::Union(_) => true,
+            TypeKind::Vector(inner) => matches!(inner.kind, TypeKind::Union(_)),
+            _ => false,
+        }
     }
 
     fn add_children(&self, children: &mut BTreeSet<DeclarationIndex>) {
@@ -527,15 +554,9 @@ impl Table {
     ) -> Option<(&str, &TableField, bool)> {
         for (field_name, field) in &self.fields {
             if vtable_index == field.vtable_index {
-                return Some((
-                    field_name,
-                    field,
-                    matches!(field.type_.kind, TypeKind::Union(_)),
-                ));
+                return Some((field_name, field, field.type_.kind.is_type_with_tag()));
             }
-            if vtable_index == field.vtable_index + 1
-                && matches!(field.type_.kind, TypeKind::Union(_))
-            {
+            if vtable_index == field.vtable_index + 1 && field.type_.kind.is_type_with_tag() {
                 return Some((field_name, field, false));
             }
         }

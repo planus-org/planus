@@ -9,6 +9,8 @@ mod traits;
 
 /// Error types for serialization/deserialization
 pub mod errors;
+/// Types for interacting with vectors of unions in serialized data
+pub mod union_vectors;
 /// Types for interacting with vectors in serialized data
 pub mod vectors;
 
@@ -31,6 +33,7 @@ pub use crate::{
     errors::Error,
     slice_helpers::{ArrayWithStartOffset, SliceWithStartOffset},
     traits::*,
+    union_vectors::UnionVector,
     vectors::Vector,
 };
 
@@ -77,6 +80,12 @@ impl<P: Primitive, D: ?Sized> WriteAsDefault<P, D> for DefaultValue {
     }
 }
 
+impl<P> WriteAsDefaultUnionVector<P> for DefaultValue {
+    fn prepare(&self, _builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        None
+    }
+}
+
 impl From<Void> for crate::Error {
     fn from(v: Void) -> Self {
         match v {}
@@ -96,6 +105,16 @@ impl<T: ?Sized> Clone for Offset<T> {
     }
 }
 
+impl<T: ?Sized> Offset<T> {
+    #[doc(hidden)]
+    pub fn downcast(&self) -> Offset<()> {
+        Offset {
+            offset: self.offset,
+            phantom: core::marker::PhantomData,
+        }
+    }
+}
+
 /// An offset to a serialized union value of type T inside a buffer currently being built.
 pub struct UnionOffset<T: ?Sized> {
     tag: u8,
@@ -110,20 +129,10 @@ impl<T: ?Sized> Clone for UnionOffset<T> {
     }
 }
 
-impl<T: ?Sized> Offset<T> {
-    #[doc(hidden)]
-    pub fn downcast(&self) -> Offset<()> {
-        Offset {
-            offset: self.offset,
-            phantom: core::marker::PhantomData,
-        }
-    }
-}
-
 impl<T: ?Sized> UnionOffset<T> {
     #[doc(hidden)]
     #[inline]
-    pub fn new(tag: u8, offset: Offset<()>) -> UnionOffset<T> {
+    pub fn new(tag: u8, offset: Offset<()>) -> Self {
         Self {
             tag,
             offset,
@@ -141,5 +150,43 @@ impl<T: ?Sized> UnionOffset<T> {
     #[inline]
     pub fn offset(&self) -> Offset<()> {
         self.offset
+    }
+}
+
+/// An offset to a serialized vector of union values of type T and vector of union tags inside a buffer currently being built
+pub struct UnionVectorOffset<T: ?Sized> {
+    tags_offset: Offset<[u8]>,
+    values_offset: Offset<[Offset<()>]>,
+    phantom: core::marker::PhantomData<T>,
+}
+impl<T: ?Sized> Copy for UnionVectorOffset<T> {}
+impl<T: ?Sized> Clone for UnionVectorOffset<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> UnionVectorOffset<T> {
+    #[doc(hidden)]
+    #[inline]
+    pub fn new(tags_offset: Offset<[u8]>, values_offset: Offset<[Offset<()>]>) -> Self {
+        Self {
+            tags_offset,
+            values_offset,
+            phantom: core::marker::PhantomData,
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn tags_offset(&self) -> Offset<[u8]> {
+        self.tags_offset
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn values_offset(&self) -> Offset<[Offset<()>]> {
+        self.values_offset
     }
 }

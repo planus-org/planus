@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset};
+use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset, UnionVectorOffset};
 
 impl<P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &T {
     #[inline]
@@ -51,6 +51,27 @@ impl<T1: ?Sized, T2: ?Sized + WriteAsOptionalUnion<T1>> WriteAsOptionalUnion<T1>
     #[inline]
     fn prepare(&self, builder: &mut Builder) -> Option<UnionOffset<T1>> {
         T2::prepare(self, builder)
+    }
+}
+
+impl<P, T: ?Sized + WriteAsUnionVector<P>> WriteAsUnionVector<P> for &T {
+    #[inline]
+    fn prepare(&self, builder: &mut Builder) -> UnionVectorOffset<P> {
+        T::prepare(self, builder)
+    }
+}
+
+impl<P, T: ?Sized + WriteAsDefaultUnionVector<P>> WriteAsDefaultUnionVector<P> for &T {
+    #[inline]
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        T::prepare(self, builder)
+    }
+}
+
+impl<P, T: ?Sized + WriteAsOptionalUnionVector<P>> WriteAsOptionalUnionVector<P> for &T {
+    #[inline]
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<P>> {
+        T::prepare(self, builder)
     }
 }
 

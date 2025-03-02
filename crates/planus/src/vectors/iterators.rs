@@ -35,7 +35,7 @@ impl<T> Clone for Iter<'_, T> {
 
 impl<'buf, T: VectorRead<'buf>> Iter<'buf, T> {
     #[inline]
-    pub(crate) fn new(v: super::Vector<'buf, T>) -> Self {
+    pub(crate) fn new(v: Vector<'buf, T>) -> Self {
         Self { v }
     }
 }

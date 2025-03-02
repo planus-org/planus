@@ -25,7 +25,7 @@ pub struct Table {
 #[derive(Clone, Debug)]
 pub struct TableField {
     pub name: String,
-    pub primitive_size: u32,
+    pub field_size: u32,
     pub type_: Cow<'static, str>,
     pub type_ref: Option<DeclarationIndex>,
     pub assign_mode: Cow<'static, str>,
@@ -222,11 +222,12 @@ impl Backend for DotBackend {
     ) -> TableField {
         let (type_, type_ref) = get_name(&resolved_type);
 
-        let primitive_size = match resolved_type {
+        let field_size = match &resolved_type {
             ResolvedType::Struct(_, decl, _, _) => decl.size,
             ResolvedType::Table(_, _, _, _) => 4,
-            ResolvedType::Union(_, _, _, _) => 4,
+            ResolvedType::Union(_, _, _, _) => 5,
             ResolvedType::Enum(_, decl, _, _, _) => decl.type_.byte_size(),
+            ResolvedType::Vector(type_) if matches!(&**type_, ResolvedType::Union(..)) => 8,
             ResolvedType::Vector(_) => 4,
             ResolvedType::Array(_, _) => todo!(),
             ResolvedType::String => 4,
@@ -246,7 +247,7 @@ impl Backend for DotBackend {
 
         TableField {
             name: field_name.to_string(),
-            primitive_size,
+            field_size,
             type_,
             type_ref,
             assign_mode,

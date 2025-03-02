@@ -90,7 +90,6 @@ pub fn run_app(
     }));
 
     // create app and run it
-
     let res = run_inspector(&mut terminal, inspector);
 
     // Cleanup and display errors if any

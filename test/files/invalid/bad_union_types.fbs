@@ -6,6 +6,8 @@ union A0 {
   E: bool,
   F: uint8,
   G: float32,
+  H: [A0],
+  I: [AI],
   A0,
   A1,
   [bool],
@@ -14,6 +16,8 @@ union A0 {
   uint8,
   float32,
   string,
+  [A0],
+  [A1],
 }
 
 enum A1: uint8 {}

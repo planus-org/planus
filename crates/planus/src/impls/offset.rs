@@ -40,6 +40,14 @@ impl<T: ?Sized> WriteAsOptional<Offset<T>> for Offset<T> {
     }
 }
 
+impl<T: ?Sized, D> WriteAsDefault<Offset<T>, D> for Offset<T> {
+    type Prepared = Self;
+    #[inline]
+    fn prepare(&self, _builder: &mut Builder, _default: &D) -> Option<Self> {
+        Some(*self)
+    }
+}
+
 // # Safety
 // The implementation of `write_values` initializes all the bytes.
 unsafe impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {

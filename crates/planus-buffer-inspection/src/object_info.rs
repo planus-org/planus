@@ -6,7 +6,7 @@ use planus_types::intermediate::{
 use crate::{
     ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer, IntegerObject, Object,
     OffsetObject, StringObject, StructObject, TableObject, UnionObject, UnionTagObject,
-    VTableObject, VectorObject,
+    UnionVectorTagsObject, UnionVectorValuesObject, VTableObject, VectorObject,
 };
 
 pub trait DeclarationInfo {
@@ -190,6 +190,34 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
     }
 }
 
+impl<'a> ObjectName<'a> for UnionVectorTagsObject {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = if let Ok(len) = self.len(buffer) {
+            len.to_string()
+        } else {
+            "?".to_string()
+        };
+
+        let (path, _) = buffer.declarations.get_declaration(self.declaration);
+        let path = path.0.last().unwrap();
+        format!("[{path}; {len}]",)
+    }
+}
+
+impl<'a> ObjectName<'a> for UnionVectorValuesObject {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = if let Ok(len) = self.len(buffer) {
+            len.to_string()
+        } else {
+            "?".to_string()
+        };
+
+        let (path, _) = buffer.declarations.get_declaration(self.declaration);
+        let path = path.0.last().unwrap();
+        format!("[{path}; {len}]",)
+    }
+}
+
 impl<'a> ObjectName<'a> for ArrayObject<'a> {
     fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
         "ARRAY".to_string() // TODO
@@ -302,6 +330,9 @@ impl<'a> ObjectName<'a> for Object<'a> {
             Object::Float(obj) => obj.print_object(buffer),
             Object::Bool(obj) => obj.print_object(buffer),
             Object::String(obj) => obj.print_object(buffer),
+            Object::UnionVectorTags(obj) => obj.print_object(buffer),
+            Object::UnionVectorValues(obj) => obj.print_object(buffer),
+            Object::Unknown(_) => "?".to_string(),
         }
     }
 }

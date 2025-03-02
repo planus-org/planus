@@ -1,5 +1,5 @@
 table Foo {
-  x: [Bar];
+  x: [[Bar]];
   y: [[Foo: 1]];
   z: [[Foo]];
 }

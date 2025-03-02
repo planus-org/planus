@@ -1,4 +1,7 @@
-use crate::{errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion};
+use crate::{
+    errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion,
+    TableReadUnionVector,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Table<'buf> {
@@ -90,12 +93,13 @@ impl<'buf> Table<'buf> {
         type_: &'static str,
         method: &'static str,
     ) -> crate::Result<Option<T>> {
+        let source_location = crate::errors::ErrorLocation {
+            type_,
+            method,
+            byte_offset: self.object.offset_from_start,
+        };
         let make_error = |error_kind| crate::errors::Error {
-            source_location: crate::errors::ErrorLocation {
-                type_,
-                method,
-                byte_offset: self.object.offset_from_start,
-            },
+            source_location,
             error_kind,
         };
 
@@ -104,7 +108,7 @@ impl<'buf> Table<'buf> {
             let value_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
             let tag = u8::from_buffer(self.object, tag_offset).map_err(make_error)?;
             if tag_offset != 0 && value_offset != 0 && tag != 0 {
-                T::from_buffer(self.object, value_offset, tag)
+                T::from_buffer(self.object, tag, value_offset)
                     .map(Some)
                     .map_err(make_error)
             } else {
@@ -128,6 +132,54 @@ impl<'buf> Table<'buf> {
         method: &'static str,
     ) -> crate::Result<T> {
         self.access_union(vtable_offset, type_, method)?
+            .ok_or(crate::errors::Error {
+                source_location: crate::errors::ErrorLocation {
+                    type_,
+                    method,
+                    byte_offset: self.object.offset_from_start,
+                },
+                error_kind: ErrorKind::MissingRequired,
+            })
+    }
+
+    pub fn access_union_vector<T: TableReadUnionVector<'buf>>(
+        &self,
+        vtable_offset: usize,
+        type_: &'static str,
+        method: &'static str,
+    ) -> crate::Result<Option<T>> {
+        let source_location = crate::errors::ErrorLocation {
+            type_,
+            method,
+            byte_offset: self.object.offset_from_start,
+        };
+        let make_error = |error_kind| crate::errors::Error {
+            source_location,
+            error_kind,
+        };
+
+        if let Some(offset) = self.vtable.get(2 * vtable_offset..2 * (vtable_offset + 2)) {
+            let tags_offset = u16::from_le_bytes(offset[..2].try_into().unwrap()) as usize;
+            let values_offset = u16::from_le_bytes(offset[2..].try_into().unwrap()) as usize;
+            match (tags_offset, values_offset) {
+                (0, 0) => Ok(None),
+                (0, _) | (_, 0) => todo!(),
+                (tags_offset, values_offset) => Ok(Some(
+                    T::from_buffer(self.object, tags_offset, values_offset).map_err(make_error)?,
+                )),
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn access_union_vector_required<T: TableReadUnionVector<'buf>>(
+        &self,
+        vtable_offset: usize,
+        type_: &'static str,
+        method: &'static str,
+    ) -> crate::Result<T> {
+        self.access_union_vector(vtable_offset, type_, method)?
             .ok_or(crate::errors::Error {
                 source_location: crate::errors::ErrorLocation {
                     type_,

@@ -1,0 +1,21 @@
+table Inner {
+  value: uint8;
+}
+
+union Union {
+  String: string,
+  InnerTable,
+  InnerStruct,
+}
+
+table Root {
+  value: [Union] = null;
+}
+
+table InnerTable {
+  value: uint8;
+}
+
+struct InnerStruct {
+  value: uint8;
+}
