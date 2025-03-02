@@ -5,10 +5,11 @@
 - Grep for the old version number
 - Run `cargo make regenerate-examples`
 - Update CHANGELOG.md, including links at the bottom
-- Remember to update `Cargo.lock`
+- Remember to update `Cargo.lock` in test/
 - Commit changes to a branch and make a PR
 - Run `cargo publish --dry-run` on PR branch
 - Wait for CI and merge PR to main branch
 - Run `cargo publish` on main branch
+    * This might help: `for f in crates/*/Cargo.toml; do echo === $f ===; rg ^planus $f; echo; done`
 - Push tag and make a github release
 - Make an announcement on discord
