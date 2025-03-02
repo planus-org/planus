@@ -601,7 +601,6 @@ impl Backend for RustBackend {
                     match type_ {
                         ResolvedType::Table(..)
                         | ResolvedType::Enum(..)
-                        | ResolvedType::Union(..)
                         | ResolvedType::Vector(..)
                         | ResolvedType::String => "to_vec_result",
                         _ => "to_vec",
@@ -642,7 +641,7 @@ impl Backend for RustBackend {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
                         if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
-                            create_trait = format!("WriteAsUnionVector<{vtable_type}>");
+                            create_trait = format!("WriteAsUnionVector<{owned_name}>");
                         } else {
                             create_trait = format!("WriteAs<{vtable_type}>");
                         }
@@ -653,7 +652,7 @@ impl Backend for RustBackend {
                             "::core::option::Option<::planus::alloc::vec::Vec<{owned_name}>>"
                         );
                         if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
-                            create_trait = format!("WriteAsUnionVectorOptional<{vtable_type}>");
+                            create_trait = format!("WriteAsOptionalUnionVector<{owned_name}>");
                         } else {
                             create_trait = format!("WriteAsOptional<{vtable_type}>");
                         }
@@ -662,7 +661,7 @@ impl Backend for RustBackend {
                         read_type = read_name;
                         owned_type = format!("::planus::alloc::vec::Vec<{owned_name}>");
                         if matches!(field.object_tag_kind, TableFieldTagKind::UnionTagVector) {
-                            create_trait = format!("WriteAsUnionVectorDefault<{vtable_type}>");
+                            create_trait = format!("WriteAsDefaultUnionVector<{owned_name}>");
                         } else {
                             create_trait = format!("WriteAsDefault<{vtable_type}, ()>");
                         }

@@ -149,8 +149,8 @@ impl<T: ?Sized> UnionOffset<T> {
 
 /// An offset to a serialized vector of union values of type T and vector of union tags inside a buffer currently being built
 pub struct UnionVectorOffset<T: ?Sized> {
-    tags: Offset<[u8]>,
-    offsets: Offset<[Offset<()>]>,
+    tags_offset: Offset<[u8]>,
+    values_offset: Offset<[Offset<()>]>,
     phantom: core::marker::PhantomData<T>,
 }
 impl<T: ?Sized> Copy for UnionVectorOffset<T> {}
@@ -164,23 +164,23 @@ impl<T: ?Sized> Clone for UnionVectorOffset<T> {
 impl<T: ?Sized> UnionVectorOffset<T> {
     #[doc(hidden)]
     #[inline]
-    pub fn new(tags: Offset<[u8]>, offsets: Offset<[Offset<()>]>) -> Self {
+    pub fn new(tags_offset: Offset<[u8]>, values_offset: Offset<[Offset<()>]>) -> Self {
         Self {
-            tags,
-            offsets,
+            tags_offset,
+            values_offset,
             phantom: core::marker::PhantomData,
         }
     }
 
     #[doc(hidden)]
     #[inline]
-    pub fn tags(&self) -> Offset<[u8]> {
-        self.tags
+    pub fn tags_offset(&self) -> Offset<[u8]> {
+        self.tags_offset
     }
 
     #[doc(hidden)]
     #[inline]
-    pub fn offsets(&self) -> Offset<[Offset<()>]> {
-        self.offsets
+    pub fn values_offset(&self) -> Offset<[Offset<()>]> {
+        self.values_offset
     }
 }

@@ -91,6 +91,12 @@ pub trait WriteAsUnionVector<T: ?Sized> {
     fn prepare(&self, builder: &mut Builder) -> UnionVectorOffset<T>;
 }
 
+/// Trait used by generated code to serialize offsets to union.
+pub trait WriteAsDefaultUnionVector<T: ?Sized> {
+    #[doc(hidden)]
+    fn prepare(&self, builder: &mut Builder) -> Option<UnionVectorOffset<T>>;
+}
+
 /// Trait used by generated code to serialize offsets to optional unions.
 pub trait WriteAsOptionalUnionVector<T: ?Sized> {
     #[doc(hidden)]

@@ -1,5 +1,5 @@
 use crate::{
-    errors::ErrorKind, slice_helpers::SliceWithStartOffset, Offset, TableRead, TableReadUnion,
+    errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion,
     TableReadUnionVector,
 };
 

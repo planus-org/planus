@@ -86,8 +86,8 @@ impl {{info.owned_name}} {
                         {%- match field.field_type -%}
                         {%- when BackendTableFieldType::UnionKey -%} object_writer.write::<_, _, 1>(&prepared_{{field.info.create_name}}.tag());
                         {%- when BackendTableFieldType::UnionValue -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}}.offset());
-                        {%- when BackendTableFieldType::UnionKeyVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.tags());
-                        {%- when BackendTableFieldType::UnionValueVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.offsets());
+                        {%- when BackendTableFieldType::UnionKeyVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.tags_offset());
+                        {%- when BackendTableFieldType::UnionValueVector -%} object_writer.write::<_, _, 4>(&prepared_{{field.info.create_name}}.values_offset());
                         {%- when BackendTableFieldType::Other -%} object_writer.write::<_, _, {{field.info.primitive_size}}>(&prepared_{{field.info.create_name}});
                         {%- endmatch -%}
                     {%- if field.info.read_type.starts_with("::core::option::Option<") || field.info.serialize_default.is_some() -%}

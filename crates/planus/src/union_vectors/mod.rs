@@ -1,5 +1,5 @@
 mod iterators;
-mod vector;
+mod union_vector;
 
 pub use iterators::{Chunks, ChunksExact, Iter, RChunks, RChunksExact, Windows};
-pub use vector::UnionVector;
+pub use union_vector::UnionVector;

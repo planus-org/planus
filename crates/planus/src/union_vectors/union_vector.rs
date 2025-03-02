@@ -310,24 +310,6 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     }
 }
 
-/*
-TODO!
-impl<'buf, T, E> UnionVector<'buf, core::result::Result<T, E>> {
-    /// Copies self into a new `Vec`.
-    pub fn to_vec_result<O>(self) -> crate::Result<alloc::vec::Vec<O>>
-    where
-        T: crate::traits::VectorReadInner<'buf>,
-        E: core::convert::From<T::Error>,
-        O: core::convert::TryFrom<T>,
-        crate::errors::Error: From<E> + From<O::Error>,
-    {
-        self.iter()
-            .map(|v| O::try_from(v?).map_err(|e| e.into()))
-            .collect()
-    }
-}
-     */
-
 impl<'buf, T: VectorReadUnion<'buf>> IntoIterator for UnionVector<'buf, T> {
     type Item = crate::Result<T>;
     type IntoIter = super::Iter<'buf, T>;
