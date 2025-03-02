@@ -29,7 +29,17 @@ fn main() {
                 damage: 5,
             },
         ]),
-        equipped: Some(Equipment::Weapon(Box::new(Weapon {
+        equipped: Some(vec![
+            Equipment::Weapon(Box::new(Weapon {
+                name: Some("Sword".to_string()),
+                damage: 3,
+            })),
+            Equipment::Shield(Box::new(Shield {
+                name: Some("Shield".to_string()),
+                armor: 3,
+            })),
+        ]),
+        equipped2: Some(Equipment::Weapon(Box::new(Weapon {
             name: Some("Sword".to_string()),
             damage: 3,
         }))),
@@ -63,7 +73,17 @@ fn main() {
             .finish(&mut builder),
         Weapon::builder().name("Axe").damage(5).finish(&mut builder),
     ];
-    let equipped = Equipment::builder().weapon(weapons[1]).finish(&mut builder);
+    let equipped = [
+        Equipment::builder().weapon(weapons[1]).finish(&mut builder),
+        Equipment::builder()
+            .shield(
+                Shield::builder()
+                    .name("Shield")
+                    .armor(5)
+                    .finish(&mut builder),
+            )
+            .finish(&mut builder),
+    ];
     let monster = Monster::builder()
         .pos(Vec3 {
             x: 1.0,
@@ -77,6 +97,7 @@ fn main() {
         .color(Color::Red)
         .weapons(weapons)
         .equipped(equipped)
+        .equipped2(equipped[0])
         .path([
             Vec3 {
                 x: 1.0,
@@ -108,10 +129,16 @@ fn print_equipment(monster: MonsterRef<'_>) -> Result<(), planus::Error> {
     // If the field is optional, then an Result<Option<_>, planus::Error>.
     if let Some(equipped) = monster.equipped()? {
         // Unions translate to rust enums with data
-        match equipped {
-            EquipmentRef::Weapon(weapon) => {
-                // All generated types implement Debug
-                println!("{weapon:?}");
+        for item in equipped {
+            let item = item?;
+            match item {
+                EquipmentRef::Weapon(weapon) => {
+                    // All generated types implement Debug
+                    println!("{weapon:?}");
+                }
+                EquipmentRef::Shield(shield) => {
+                    println!("{shield:?}");
+                }
             }
         }
     }

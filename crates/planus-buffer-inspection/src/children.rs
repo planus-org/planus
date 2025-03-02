@@ -5,7 +5,7 @@ use planus_types::{ast::IntegerType, intermediate::TypeKind};
 use crate::{
     object_info::DeclarationInfo, ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject,
     InspectableFlatbuffer, IntegerObject, Object, OffsetObject, StringObject, StructObject,
-    TableObject, UnionObject, UnionTagObject, VTableObject, VectorObject,
+    TableObject, UnionObject, UnionTagObject, UnionVectorObject, VTableObject, VectorObject,
 };
 
 pub trait Children<'a> {
@@ -40,6 +40,7 @@ impl<'a> Children<'a> for Object<'a> {
             Object::Float(obj) => obj.children(buffer, callback),
             Object::Bool(obj) => obj.children(buffer, callback),
             Object::String(obj) => obj.children(buffer, callback),
+            Object::UnionVector(obj) => obj.children(buffer, callback),
         }
     }
 }
@@ -195,6 +196,7 @@ impl<'a> Children<'a> for VectorObject<'a> {
                 type_: IntegerType::U32,
             }),
         );
+
         for i in 0..self.len(buffer).unwrap_or(0) {
             if let Ok(Some(value)) = self.read(i, buffer) {
                 callback(Some(Cow::Owned(i.to_string())), value);
@@ -255,6 +257,69 @@ impl<'a> Children<'a> for StringObject {
     }
 }
 
+impl<'a> Children<'a> for UnionVectorObject<'a> {
+    fn children(
+        &self,
+        buffer: &InspectableFlatbuffer<'a>,
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
+    ) {
+        if self.is_tags {
+            let offset = self.tags_offset.unwrap();
+            callback(
+                Some(Cow::Borrowed("length")),
+                Object::Integer(IntegerObject {
+                    offset,
+                    type_: IntegerType::U32,
+                }),
+            );
+
+            let declaration = if let TypeKind::Union(declaration) = self.type_.kind {
+                declaration
+            } else {
+                panic!()
+            };
+
+            for i in 0..self.len(buffer).unwrap_or(0) {
+                let offset = offset + 4 + i;
+                let value = UnionTagObject {
+                    offset,
+                    declaration,
+                };
+                callback(Some(Cow::Owned(i.to_string())), Object::UnionTag(value));
+            }
+        } else {
+            let offset = self.values_offset.unwrap();
+            callback(
+                Some(Cow::Borrowed("length")),
+                Object::Integer(IntegerObject {
+                    offset,
+                    type_: IntegerType::U32,
+                }),
+            );
+
+            let declaration = if let TypeKind::Union(declaration) = self.type_.kind {
+                declaration
+            } else {
+                panic!()
+            };
+
+            let tag_offset = self.tags_offset.unwrap();
+
+            for i in 0..self.len(buffer).unwrap_or(0) {
+                let tag = buffer.read_u8(tag_offset + 4 + i).unwrap();
+
+                let offset = offset + 4 + i;
+                let value = UnionObject {
+                    offset,
+                    tag,
+                    declaration,
+                };
+                callback(Some(Cow::Owned(i.to_string())), Object::Union(value));
+            }
+        }
+    }
+}
+
 impl Byterange for Object<'_> {
     fn byterange(&self, buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
         match self {
@@ -271,6 +336,7 @@ impl Byterange for Object<'_> {
             Object::Float(obj) => obj.byterange(buffer),
             Object::Bool(obj) => obj.byterange(buffer),
             Object::String(obj) => obj.byterange(buffer),
+            Object::UnionVector(obj) => obj.byterange(buffer),
         }
     }
 }
@@ -356,5 +422,18 @@ impl Byterange for StringObject {
             self.offset,
             self.offset + 4 + self.len(buffer).unwrap() as ByteIndex,
         )
+    }
+}
+
+impl<'a> Byterange for UnionVectorObject<'a> {
+    fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
+        let offset = if self.is_tags {
+            self.tags_offset
+        } else {
+            self.values_offset
+        }
+        .unwrap();
+
+        (offset, offset)
     }
 }

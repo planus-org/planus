@@ -15,8 +15,8 @@ enum Color:byte {
 /// Weapons or other equipment
 union Equipment {
   /// Equipment of the weapon-type
-  Weapon
-  // Optionally add more tables.
+  Weapon,
+  Shield,
 }
 
 /// Vector in three dimensions
@@ -47,7 +47,8 @@ table Monster {
   /// List of all weapons
   weapons:[Weapon];
   /// Currently equiped item
-  equipped:Equipment;
+  equipped:[Equipment];
+  equipped2:Equipment;
   /// The projected path of the monster
   path:[Vec3];
 }
@@ -58,6 +59,11 @@ table Weapon {
   name:string;
   /// The damage of the weapon
   damage:short;
+}
+
+table Shield {
+  name:string;
+  armor:short;
 }
 
 root_type Monster;

@@ -6,7 +6,7 @@ use planus_types::intermediate::{
 use crate::{
     ArrayObject, BoolObject, EnumObject, FloatObject, InspectableFlatbuffer, IntegerObject, Object,
     OffsetObject, StringObject, StructObject, TableObject, UnionObject, UnionTagObject,
-    VTableObject, VectorObject,
+    UnionVectorObject, VTableObject, VectorObject,
 };
 
 pub trait DeclarationInfo {
@@ -190,6 +190,28 @@ impl<'a> ObjectName<'a> for VectorObject<'a> {
     }
 }
 
+impl<'a> ObjectName<'a> for UnionVectorObject<'a> {
+    fn print_object(&self, buffer: &InspectableFlatbuffer<'a>) -> String {
+        let len = if let Ok(len) = self.len(buffer) {
+            len.to_string()
+        } else {
+            "?".to_string()
+        };
+
+        if let TypeKind::Table(declaration_index)
+        | TypeKind::Union(declaration_index)
+        | TypeKind::SimpleType(SimpleType::Enum(declaration_index))
+        | TypeKind::SimpleType(SimpleType::Struct(declaration_index)) = self.type_.kind
+        {
+            let (path, _) = buffer.declarations.get_declaration(declaration_index);
+            let path = path.0.last().unwrap();
+            format!("[{path}; {len}]",)
+        } else {
+            format!("[{:?}; {len}]", self.type_.kind)
+        }
+    }
+}
+
 impl<'a> ObjectName<'a> for ArrayObject<'a> {
     fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
         "ARRAY".to_string() // TODO
@@ -302,6 +324,7 @@ impl<'a> ObjectName<'a> for Object<'a> {
             Object::Float(obj) => obj.print_object(buffer),
             Object::Bool(obj) => obj.print_object(buffer),
             Object::String(obj) => obj.print_object(buffer),
+            Object::UnionVector(obj) => obj.print_object(buffer),
         }
     }
 }

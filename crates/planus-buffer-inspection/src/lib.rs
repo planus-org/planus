@@ -113,6 +113,9 @@ pub enum Object<'a> {
     /// 4 bytes of offset to the inner object
     Union(UnionObject),
 
+    /// 4 bytes of offset to the tags vector and 4 bytes of offset to the values vector
+    UnionVector(UnionVectorObject<'a>),
+
     /// 1, 2, 4 or 8 bytes of enum tag
     Enum(EnumObject),
 
@@ -151,6 +154,13 @@ impl Object<'_> {
             Object::Float(inner) => inner.offset,
             Object::Bool(inner) => inner.offset,
             Object::String(inner) => inner.offset,
+            Object::UnionVector(inner) => {
+                if inner.is_tags {
+                    inner.tags_offset.unwrap()
+                } else {
+                    inner.values_offset.unwrap()
+                }
+            }
         }
     }
 
@@ -169,6 +179,7 @@ impl Object<'_> {
             Object::Float(_) => false,
             Object::Bool(_) => false,
             Object::String(_) => false,
+            Object::UnionVector(_) => true,
         }
     }
 
@@ -187,6 +198,7 @@ impl Object<'_> {
             Object::Float(inner) => Cow::Borrowed(inner.type_.flatbuffer_name()),
             Object::Bool(_) => Cow::Borrowed("bool"),
             Object::String(_) => Cow::Borrowed("string"),
+            Object::UnionVector(inner) => Cow::Owned(inner.type_name(declarations)),
         }
     }
 }
@@ -202,6 +214,14 @@ pub enum OffsetObjectKind<'a> {
     VTable(DeclarationIndex),
     Table(DeclarationIndex),
     Vector(&'a Type),
+    UnionVectorTags {
+        type_: &'a Type,
+        values: Option<ByteIndex>,
+    },
+    UnionVector {
+        type_: &'a Type,
+        tags: Option<ByteIndex>,
+    },
     String,
 }
 
@@ -283,6 +303,14 @@ pub struct VectorObject<'a> {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct UnionVectorObject<'a> {
+    pub is_tags: bool,
+    pub tags_offset: Option<ByteIndex>,
+    pub values_offset: Option<ByteIndex>,
+    pub type_: &'a Type,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct ArrayObject<'a> {
     pub offset: ByteIndex,
     pub type_: &'a Type,
@@ -344,6 +372,23 @@ impl<'a> OffsetObject<'a> {
                 declaration,
             })),
             OffsetObjectKind::Vector(type_) => Ok(Object::Vector(VectorObject { offset, type_ })),
+            OffsetObjectKind::UnionVector { type_, tags } => {
+                Ok(Object::UnionVector(UnionVectorObject {
+                    is_tags: false,
+                    tags_offset: tags,
+                    values_offset: Some(offset),
+                    type_,
+                }))
+            }
+
+            OffsetObjectKind::UnionVectorTags { type_, values } => {
+                Ok(Object::UnionVector(UnionVectorObject {
+                    is_tags: false,
+                    tags_offset: Some(offset),
+                    values_offset: values,
+                    type_,
+                }))
+            }
             OffsetObjectKind::String => Ok(Object::String(StringObject { offset })),
         }
     }
@@ -356,7 +401,9 @@ impl<'a> OffsetObject<'a> {
             OffsetObjectKind::Table(index) => {
                 Cow::Owned(format!("&table {}", declarations.get_declaration(index).0))
             }
-            OffsetObjectKind::Vector(type_) => {
+            OffsetObjectKind::Vector(type_)
+            | OffsetObjectKind::UnionVector { type_, .. }
+            | OffsetObjectKind::UnionVectorTags { type_, .. } => {
                 Cow::Owned(format!("&[{}]", declarations.format_type_kind(&type_.kind)))
             }
             OffsetObjectKind::String => Cow::Borrowed("&string"),
@@ -452,6 +499,28 @@ impl TableObject {
                 } else {
                     return Ok(None);
                 }
+            }
+            TypeKind::Vector(ref type_) if is_union_tag => {
+                let values = self
+                    .get_vtable(buffer)?
+                    .get_offset(field_index + 1, buffer)?
+                    .map(|tag_offset| self.offset + tag_offset as u32);
+
+                Object::Offset(OffsetObject {
+                    offset,
+                    kind: OffsetObjectKind::UnionVectorTags { type_, values },
+                })
+            }
+            TypeKind::Vector(ref type_) if matches!(type_.kind, TypeKind::Union(_)) => {
+                let tags = self
+                    .get_vtable(buffer)?
+                    .get_offset(field_index - 1, buffer)?
+                    .map(|tag_offset| self.offset + tag_offset as u32);
+
+                Object::Offset(OffsetObject {
+                    offset,
+                    kind: OffsetObjectKind::UnionVector { type_, tags },
+                })
             }
             TypeKind::Vector(ref type_) => Object::Offset(OffsetObject {
                 offset,
@@ -715,6 +784,20 @@ impl<'a> VectorObject<'a> {
             },
         };
         Ok(Some(object))
+    }
+
+    fn type_name(&self, declarations: &Declarations) -> String {
+        format!("[{}]", declarations.format_type_kind(&self.type_.kind))
+    }
+}
+
+impl<'a> UnionVectorObject<'a> {
+    pub fn len(&self, buffer: &InspectableFlatbuffer<'_>) -> Result<u32> {
+        if self.is_tags {
+            buffer.read_u32(self.tags_offset.unwrap())
+        } else {
+            buffer.read_u32(self.values_offset.unwrap())
+        }
     }
 
     fn type_name(&self, declarations: &Declarations) -> String {
