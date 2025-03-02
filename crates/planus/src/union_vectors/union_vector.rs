@@ -7,7 +7,7 @@ use crate::{
     TableReadUnionVector, VectorReadUnion,
 };
 
-/// A [`slice`]-like view into a serialized flatbuffer that deserializes on demand.
+/// A [`slice`]-like view of a union vector into a serialized flatbuffer that deserializes on demand.
 pub struct UnionVector<'buf, T: ?Sized> {
     tags: SliceWithStartOffset<'buf>,
     values: SliceWithStartOffset<'buf>,
@@ -24,7 +24,7 @@ impl<T: ?Sized> Clone for UnionVector<'_, T> {
 }
 
 impl<'buf, T: ?Sized> UnionVector<'buf, T> {
-    /// Returns an empty `Vector`
+    /// Returns an empty [`UnionVector`]
     ///
     /// This is typically not very useful, since the vector is read-only, but
     /// has uses for instance as a default value.
@@ -61,14 +61,14 @@ impl<'buf, T: ?Sized> UnionVector<'buf, T> {
 }
 
 impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
-    /// Returns the first element of the `Vector`, or `None` if it is empty.
+    /// Returns the first element of the [`UnionVector`], or [`None`] if it is empty.
     #[inline]
     #[must_use]
     pub fn first(self) -> Option<crate::Result<T>> {
         self.get(0)
     }
 
-    /// Returns the last element of the `Vector`, or `None` if it is empty.
+    /// Returns the last element of the [`UnionVector`], or [`None`] if it is empty.
     #[inline]
     #[must_use]
     pub fn last(self) -> Option<crate::Result<T>> {
@@ -100,7 +100,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*
     /// even if the resulting output is not used.
     ///
-    /// [`get`]: Vector::get
+    /// [`get`]: UnionVector::get
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     #[must_use]
@@ -118,11 +118,11 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         super::Iter::new(self)
     }
 
-    /// Returns an iterator over `chunk_size` elements of the [`Vector`] at a time, starting at the
+    /// Returns an iterator over `chunk_size` elements of the [`UnionVector`] at a time, starting at the
     /// beginning of the vector.
     ///
-    /// The chunks are [`Vector`]s themselves and do not overlap. If `chunk_size` does not
-    /// divide the length of the [`Vector`], then the last chunk will not have length `chunk_size`.
+    /// The chunks are [`UnionVector`]s themselves and do not overlap. If `chunk_size` does not
+    /// divide the length of the [`UnionVector`], then the last chunk will not have length `chunk_size`.
     ///
     /// See [`chunks_exact`] for a variant of this iterator that returns chunks of always exactly
     /// `chunk_size` elements, and [`rchunks`] for the same iterator but starting at the end of the
@@ -132,8 +132,8 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     ///
     /// Panics if `chunk_size` is 0.
     ///
-    /// [`chunks_exact`]: Vector::chunks_exact
-    /// [`rchunks`]: Vector::rchunks
+    /// [`chunks_exact`]: UnionVector::chunks_exact
+    /// [`rchunks`]: UnionVector::rchunks
     #[inline]
     #[must_use]
     pub fn chunks(self, chunk_size: usize) -> super::Chunks<'buf, T> {
@@ -141,11 +141,11 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         super::Chunks::new(self, chunk_size)
     }
 
-    /// Returns an iterator over `chunk_size` elements of the [`Vector`] at a time, starting at the end
+    /// Returns an iterator over `chunk_size` elements of the [`UnionVector`] at a time, starting at the end
     /// of the vector.
     ///
-    /// The chunks are [`Vector`]s themselves and do not overlap. If `chunk_size` does not
-    /// divide the length of the [`Vector`], then the last chunk will not have length `chunk_size`.
+    /// The chunks are [`UnionVector`]s themselves and do not overlap. If `chunk_size` does not
+    /// divide the length of the [`UnionVector`], then the last chunk will not have length `chunk_size`.
     ///
     /// See [`rchunks_exact`] for a variant of this iterator that returns chunks of always exactly
     /// `chunk_size` elements, and [`chunks`] for the same iterator but starting at the beginning
@@ -155,8 +155,8 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     ///
     /// Panics if `chunk_size` is 0.
     ///
-    /// [`rchunks_exact`]: Vector::rchunks_exact
-    /// [`chunks`]: Vector::chunks
+    /// [`rchunks_exact`]: UnionVector::rchunks_exact
+    /// [`chunks`]: UnionVector::chunks
     #[inline]
     #[must_use]
     pub fn rchunks(self, chunk_size: usize) -> super::RChunks<'buf, T> {
@@ -164,10 +164,10 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         super::RChunks::new(self, chunk_size)
     }
 
-    /// Returns an iterator over `chunk_size` elements of the [`Vector`] at a time, starting at the
+    /// Returns an iterator over `chunk_size` elements of the [`UnionVector`] at a time, starting at the
     /// beginning of the vector.
     ///
-    /// The chunks are [`Vector`]s themselves and do not overlap. If `chunk_size` does not
+    /// The chunks are [`UnionVector`]s themselves and do not overlap. If `chunk_size` does not
     /// divide the length of the vector, then the last up to `chunk_size-1` elements will
     /// be omitted and can be retrieved from the `remainder` function of the iterator.
     ///
@@ -181,8 +181,8 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     ///
     /// Panics if `chunk_size` is 0.
     ///
-    /// [`chunks`]: Vector::chunks
-    /// [`rchunks_exact`]: Vector::rchunks_exact
+    /// [`chunks`]: UnionVector::chunks
+    /// [`rchunks_exact`]: UnionVector::rchunks_exact
     #[inline]
     #[must_use]
     pub fn chunks_exact(self, chunk_size: usize) -> super::ChunksExact<'buf, T> {
@@ -190,10 +190,10 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         super::ChunksExact::new(self, chunk_size)
     }
 
-    /// Returns an iterator over `chunk_size` elements of the [`Vector`] at a time, starting at the
+    /// Returns an iterator over `chunk_size` elements of the [`UnionVector`] at a time, starting at the
     /// end of the vector.
     ///
-    /// The chunks are [`Vector`]s themselves and do not overlap. If `chunk_size` does not
+    /// The chunks are [`UnionVector`]s themselves and do not overlap. If `chunk_size` does not
     /// divide the length of the vector, then the last up to `chunk_size-1` elements will
     /// be omitted and can be retrieved from the `remainder` function of the iterator.
     ///
@@ -208,8 +208,8 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     ///
     /// Panics if `chunk_size` is 0.
     ///
-    /// [`rchunks`]: Vector::rchunks
-    /// [`chunks_exact`]: Vector::chunks_exact
+    /// [`rchunks`]: UnionVector::rchunks
+    /// [`chunks_exact`]: UnionVector::chunks_exact
     #[inline]
     #[must_use]
     pub fn rchunks_exact(self, chunk_size: usize) -> super::RChunksExact<'buf, T> {
@@ -273,7 +273,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         }
     }
 
-    /// Divides one [`Vector`] into two at an index, without doing bounds checking.
+    /// Divides one [`UnionVector`] into two at an index, without doing bounds checking.
     ///
     /// The first will contain all indices from `[0, mid)` (excluding
     /// the index `mid` itself) and the second will contain all
@@ -287,7 +287,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     /// even if the resulting output is not used. The caller has to ensure that
     /// `0 <= mid <= self.len()`.
     ///
-    /// [`split_at`]: Vector::split_at
+    /// [`split_at`]: UnionVector::split_at
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     #[inline]
     #[must_use]
