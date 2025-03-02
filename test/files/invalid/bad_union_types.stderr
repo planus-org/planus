@@ -41,50 +41,74 @@ error: Unsupported type
   │      ^^^^^^^ Floats in unions are not supported
 
 error: Unsupported type
-  ┌─ test/files/invalid/bad_union_types.fbs:9:3
+  ┌─ test/files/invalid/bad_union_types.fbs:9:6
   │
-9 │   A0,
-  │   ^^ Unions in unions are not supported
+9 │   H: [A0],
+  │      ^^^^ Vectors in unions are not supported
 
-error: Unsupported type
-   ┌─ test/files/invalid/bad_union_types.fbs:10:3
+error: Unknown type
+   ┌─ test/files/invalid/bad_union_types.fbs:10:7
    │
-10 │   A1,
-   │   ^^ Enums in unions are not supported
+10 │   I: [AI],
+   │       ^^
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:11:3
    │
-11 │   [bool],
-   │   ^^^^^^ Vectors in unions are not supported
+11 │   A0,
+   │   ^^ Unions in unions are not supported
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:12:3
    │
-12 │   [bool: 1],
-   │   ^^^^^^^^^ Arrays in unions are not supported
+12 │   A1,
+   │   ^^ Enums in unions are not supported
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:13:3
    │
-13 │   bool,
-   │   ^^^^ Bools in unions are not supported
+13 │   [bool],
+   │   ^^^^^^ Vectors in unions are not supported
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:14:3
    │
-14 │   uint8,
-   │   ^^^^^ Integers in unions are not supported
+14 │   [bool: 1],
+   │   ^^^^^^^^^ Arrays in unions are not supported
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:15:3
    │
-15 │   float32,
-   │   ^^^^^^^ Floats in unions are not supported
+15 │   bool,
+   │   ^^^^ Bools in unions are not supported
 
 error: Unsupported type
    ┌─ test/files/invalid/bad_union_types.fbs:16:3
    │
-16 │   string,
+16 │   uint8,
+   │   ^^^^^ Integers in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:17:3
+   │
+17 │   float32,
+   │   ^^^^^^^ Floats in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:18:3
+   │
+18 │   string,
    │   ^^^^^^ Strings in unions without variant names are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:19:3
+   │
+19 │   [A0],
+   │   ^^^^ Vectors in unions are not supported
+
+error: Unsupported type
+   ┌─ test/files/invalid/bad_union_types.fbs:20:3
+   │
+20 │   [A1],
+   │   ^^^^ Vectors in unions are not supported
 
