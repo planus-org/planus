@@ -268,13 +268,13 @@ pub struct TableField {
 }
 
 #[derive(Copy, Clone, Debug)]
+/// Indicates whether a [`TableField`] has a preceding tag. Used by unions and union vectors.
 pub enum TableFieldTagKind {
     None,
     UnionTag,
     UnionTagVector,
 }
 
-/// Indicates whether a [`TableField`] has a preceding tag. Used by unions and union vectors.
 impl TableFieldTagKind {
     /// The size of the preceding tag or 0 if not present.
     pub fn size(self) -> u32 {
