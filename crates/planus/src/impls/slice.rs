@@ -100,11 +100,15 @@ where
                 bytes.copy_from_slice(&len);
             });
             let values_offset = builder.current_offset();
-            builder.write_with(self.len(), u8::ALIGNMENT_MASK, |_buffer_position, bytes| {
-                let bytes = bytes.as_mut_ptr();
+            builder.write_with(
+                self.len(),
+                u32::ALIGNMENT_MASK,
+                |_buffer_position, bytes| {
+                    let bytes = bytes.as_mut_ptr();
 
-                bytes.copy_from(tmp_tags.as_ptr(), self.len());
-            });
+                    bytes.copy_from(tmp_tags.as_ptr(), self.len());
+                },
+            );
             builder.write_with(4, 0, |_buffer_position, bytes| {
                 let len = (self.len() as u32).to_le_bytes().map(MaybeUninit::new);
                 bytes.copy_from_slice(&len);
