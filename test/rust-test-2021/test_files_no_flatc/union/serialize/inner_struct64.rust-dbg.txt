@@ -1,0 +1,9 @@
+RootRef {
+    value: Ok(
+        InnerStruct64(
+            InnerStruct64Ref {
+                value: 17,
+            },
+        ),
+    ),
+}

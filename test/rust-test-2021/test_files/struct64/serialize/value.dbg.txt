@@ -1,0 +1,7 @@
+Root {
+    value: Some(
+        Struct64 {
+            value: 17,
+        },
+    ),
+}
