@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn test_drop() {
         struct DropCounter<'a>(&'a AtomicU8);
-        impl<'a> core::ops::Drop for DropCounter<'a> {
+        impl core::ops::Drop for DropCounter<'_> {
             fn drop(&mut self) {
                 self.0.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
             }
