@@ -40,7 +40,7 @@ tui = "0.19.0"
 vec_map = "0.8.2"
 
 # Our crates
-array-init-cursor = { version = "0.2.0", path = "crates/array-init-cursor" }
+array-init-cursor = { version = "0.2.1", path = "crates/array-init-cursor" }
 planus = { version = "1.1.1", path = "crates/planus", default-features = false }
 planus-buffer-inspection = { version = "1.1.1", path = "crates/planus-buffer-inspection" }
 planus-codegen = { version = "1.1.1", path = "crates/planus-codegen" }

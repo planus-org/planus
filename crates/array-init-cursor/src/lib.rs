@@ -25,12 +25,7 @@ impl<'a, T, const N: usize> Cursor<'a, T, N> {
     }
 
     fn write_impl(&mut self, value: [T; N]) {
-        *self.slice = unsafe {
-            let ptr = &value as *const [T; N] as *const [MaybeUninit<T>; N];
-            let read_value = core::ptr::read(ptr);
-            core::mem::drop(value);
-            read_value
-        };
+        *self.slice = value.map(|v| MaybeUninit::new(v));
     }
 
     /// Finishes the buffer by writing the remaining values.
@@ -53,8 +48,8 @@ impl<'a, T, const N: usize> Cursor<'a, T, N> {
         r
     }
 
-    unsafe fn into_buf(self) -> &'a mut [MaybeUninit<T>; N] {
-        core::mem::transmute(self)
+    fn into_buf(self) -> &'a mut [MaybeUninit<T>; N] {
+        unsafe { core::mem::transmute(self) }
     }
 
     /// Splits the cursor in two.
@@ -63,7 +58,7 @@ impl<'a, T, const N: usize> Cursor<'a, T, N> {
     /// `cargo check`, since the error is not discovered by `rustc` until it tries to instantiate
     /// the code.
     pub fn split<const L: usize, const R: usize>(self) -> (Cursor<'a, T, L>, Cursor<'a, T, R>) {
-        let buf = unsafe { self.into_buf() };
+        let buf = self.into_buf();
         let (l, r) = crate::util::split_mut::<_, N, L, R>(buf);
         (Cursor { slice: l }, Cursor { slice: r })
     }
@@ -92,5 +87,64 @@ impl<T, const N: usize> Drop for Cursor<'_, T, N> {
         if N > 0 {
             panic!("Cursor still has uninitialized bytes");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::sync::atomic::AtomicU8;
+
+    use super::*;
+
+    #[test]
+    fn test_drop() {
+        struct DropCounter<'a>(&'a AtomicU8);
+        impl core::ops::Drop for DropCounter<'_> {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+            }
+        }
+
+        let value = AtomicU8::new(0);
+        {
+            let mut data: [MaybeUninit<DropCounter<'_>>; 1] = [MaybeUninit::uninit()];
+            Cursor::new(&mut data).finish([DropCounter(&value)]);
+        }
+        assert_eq!(value.load(core::sync::atomic::Ordering::SeqCst), 0);
+
+        let value = AtomicU8::new(0);
+        {
+            let mut data: [MaybeUninit<DropCounter<'_>>; 2] =
+                [MaybeUninit::uninit(), MaybeUninit::uninit()];
+            Cursor::new(&mut data).finish([DropCounter(&value), DropCounter(&value)]);
+        }
+        assert_eq!(value.load(core::sync::atomic::Ordering::SeqCst), 0);
+
+        let value = AtomicU8::new(0);
+        {
+            let mut data: [MaybeUninit<DropCounter<'_>>; 1] = [MaybeUninit::uninit()];
+            Cursor::new(&mut data).finish([DropCounter(&value)]);
+            let [value] = data;
+            unsafe { value.assume_init() };
+        }
+        assert_eq!(value.load(core::sync::atomic::Ordering::SeqCst), 1);
+
+        let value = AtomicU8::new(0);
+        {
+            let mut data: [MaybeUninit<DropCounter<'_>>; 2] =
+                [MaybeUninit::uninit(), MaybeUninit::uninit()];
+            Cursor::new(&mut data).finish([DropCounter(&value), DropCounter(&value)]);
+            let [value0, value1] = data;
+            unsafe { value0.assume_init() };
+            unsafe { value1.assume_init() };
+        }
+        assert_eq!(value.load(core::sync::atomic::Ordering::SeqCst), 2);
+    }
+
+    #[test]
+    fn test_initalized() {
+        let mut data: [MaybeUninit<u8>; 4] = [MaybeUninit::new(0); 4];
+        Cursor::new(&mut data).write([1, 2]).finish([3, 4]);
+        assert_eq!(data.map(|d| unsafe { d.assume_init() }), [1, 2, 3, 4]);
     }
 }

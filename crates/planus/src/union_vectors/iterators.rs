@@ -1,8 +1,7 @@
 use core::num::NonZeroUsize;
 
-use crate::VectorReadUnion;
-
 use super::UnionVector;
+use crate::VectorReadUnion;
 
 fn div_ceil(lhs: usize, rhs: usize) -> usize {
     let d = lhs / rhs;

@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "array-init-cursor"
-version = "0.2.0"
+version = "0.2.1"
 
 [[package]]
 name = "ascii-canvas"
