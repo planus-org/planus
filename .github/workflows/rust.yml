@@ -25,17 +25,13 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install --no-install-recommends graphviz
       - uses: actions/checkout@v4.2.1
-      - uses: actions-rs/cargo@v1
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          command: install
-          args: cargo-make
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      - run: cargo install cargo-make
       - name: Flatbuffers binary cache
         id: flatbuffers-cache
         uses: actions/cache@v4
@@ -47,14 +43,7 @@ jobs:
         run: .github/workflows/build_flatbuffers.sh
       - name: Copy flatbuffers binary to /usr/bin
         run: sudo cp ~/flatc /usr/local/bin/
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-make
       - name: Removing 2024 tests when testing our MSRV
         if: matrix.rust == '1.75'
         run: rm -rf test/rust-test-2024
-      - uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: full-test
+      - run: cargo make full-test
