@@ -91,6 +91,7 @@ impl<'buf> Testable<'buf> for u64 {
 }
 
 #[track_caller]
+#[allow(clippy::uninlined_format_args)]
 fn eq<I1, I2>(iter1: I1, iter2: I2)
 where
     I1: Clone + Iterator + ExactSizeIterator,
@@ -101,7 +102,6 @@ where
     if !iter1.clone().eq(iter2.clone()) {
         let iter1 = iter1.collect::<Vec<_>>();
         let iter2 = iter2.collect::<Vec<_>>();
-        #[allow(clippy::uninlined_format_args)]
         panic!("Not equal: {iter1:?} {iter2:?}", iter1 = iter1, iter2 = iter2);
     }
     let mut len = iter2.len();
