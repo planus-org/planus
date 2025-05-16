@@ -101,7 +101,7 @@ where
     if !iter1.clone().eq(iter2.clone()) {
         let iter1 = iter1.collect::<Vec<_>>();
         let iter2 = iter2.collect::<Vec<_>>();
-        panic!("Not equal: {iter1:?} {iter2:?}", iter1 = iter1, iter2 = iter2);
+        panic!("Not equal: {iter1:?} {iter2:?}");
     }
     let mut len = iter2.len();
     assert_eq!(len, iter1.len());

@@ -56,7 +56,7 @@ fn test_serialize() {
 
             let mut dbg_rust_path = file_path.clone();
             dbg_rust_path.set_extension("rust-dbg.txt");
-            let rust_dbg = format!("{:#?}", root_ref);
+            let rust_dbg = format!("{root_ref:#?}");
             crate::tests::compare_regenerate_file_str(&dbg_rust_path, &rust_dbg, should_regenerate)
                 .unwrap();
 
@@ -64,7 +64,7 @@ fn test_serialize() {
             let mut dbg_path = file_path.clone();
             dbg_path.set_extension("dbg.txt");
             let flatc_dbg = flatbuffers::root::<flatc::Root>(data).unwrap();
-            let flatc_dbg = format!("{:#?}", flatc_dbg);
+            let flatc_dbg = format!("{flatc_dbg:#?}");
             crate::tests::compare_regenerate_file_str(&dbg_path, &flatc_dbg, should_regenerate)
                 .unwrap();
             // </FLATC>
