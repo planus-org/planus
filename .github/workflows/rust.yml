@@ -31,7 +31,6 @@ jobs:
         uses: baptiste0928/cargo-install@v3
         with:
           crate: cargo-make
-      - run: cargo install cargo-make
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
         with:
