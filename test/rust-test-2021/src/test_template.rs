@@ -90,7 +90,7 @@ fn test_deserialize() {
 
                 let mut debug_path = file_path.clone();
                 debug_path.set_extension("txt");
-                let root_dbg = format!("{:#?}", root_ref);
+                let root_dbg = format!("{root_ref:#?}");
 
                 crate::tests::compare_regenerate_file_str(
                     &debug_path,
