@@ -43,11 +43,10 @@ pub fn run_app(
 
         matching_paths.sort();
         if matching_paths.is_empty() {
-            println!("Could not find root type {:?}.", root_type);
+            println!("Could not find root type {root_type:?}.");
         } else {
             println!(
-                "Could not find root type {:?}. These are a few of the closest matching tables:",
-                root_type
+                "Could not find root type {root_type:?}. These are a few of the closest matching tables:"
             );
             for (_score, path) in matching_paths.iter().take(5) {
                 println!("- {path}");
@@ -96,7 +95,7 @@ pub fn run_app(
     cleanup_terminal(terminal.backend_mut().deref_mut())?;
 
     if let Err(err) = res {
-        println!("{:?}", err);
+        println!("{err:?}");
         Ok(ExitCode::FAILURE)
     } else {
         Ok(ExitCode::SUCCESS)

@@ -114,7 +114,7 @@ impl<'a> Children<'a> for TableObject {
             let (field_name, _field_decl, is_union_tag) =
                 decl.get_field_for_vtable_index(i as u32).unwrap();
             let field_name = if is_union_tag {
-                Cow::Owned(format!("union_key[{}]", field_name))
+                Cow::Owned(format!("union_key[{field_name}]"))
             } else {
                 Cow::Borrowed(field_name)
             };

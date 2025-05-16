@@ -91,6 +91,7 @@ impl<'buf> Testable<'buf> for u64 {
 }
 
 #[track_caller]
+#[allow(clippy::uninlined_format_args)]
 fn eq<I1, I2>(iter1: I1, iter2: I2)
 where
     I1: Clone + Iterator + ExactSizeIterator,
