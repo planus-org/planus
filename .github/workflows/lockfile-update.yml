@@ -16,9 +16,9 @@ jobs:
         uses: cachix/install-nix-action@v31
       - name: Cargo update
         run: |
-          cargo update '-config 'resolver.incompatible-rust-versions="fallback"'
+          cargo update --config 'resolver.incompatible-rust-versions="fallback"'
           cd test
-          cargo update '-config 'resolver.incompatible-rust-versions="fallback"'
+          cargo update --config 'resolver.incompatible-rust-versions="fallback"'
       - name: Nix update
         run: |
           nix flake update
