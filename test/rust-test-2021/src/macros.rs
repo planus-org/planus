@@ -39,6 +39,7 @@ macro_rules! check_type {
      */
     ($(+[ $($l:lifetime),* ])? $obj:ty => $method:ident($($arg:ty),* $(,)?) : $return:ty) => {
         const _: () = {
+            #[allow(dead_code)]
             trait HasMethod$(< $($l),* > )? {
                 const METHOD: fn( $($arg),* ) -> $return;
             }
@@ -50,6 +51,7 @@ macro_rules! check_type {
     ($(+[ $($l:lifetime),* ])? $obj:ty => impl $($trait_to_impl:tt)*) => {
         const _: () = {
             fn assert_impl<$($($l,)*)? T: $($trait_to_impl)*>() {}
+            #[allow(dead_code)]
             fn helper$(<$($l),*>)?($($(_: &$l()),*)?) {
                 assert_impl::<$obj>();
             }

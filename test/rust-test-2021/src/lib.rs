@@ -14,6 +14,7 @@ pub mod planus_test_no_flatc;
 #[cfg(feature = "std")]
 pub mod hexdump;
 
+#[cfg(test)]
 mod table_reader;
 
 #[cfg(all(feature = "std", test))]
