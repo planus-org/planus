@@ -123,11 +123,6 @@ impl CommentKind {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct Whitespace {
-    pub contains_newline: bool,
-}
-
 impl std::fmt::Debug for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
