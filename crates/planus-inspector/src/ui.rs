@@ -280,7 +280,7 @@ impl<'a> ViewState<'a> {
         f.render_widget(widget, area);
     }
 
-    fn legend_view(&self, _active_window: ActiveWindow) -> Paragraph {
+    fn legend_view(&self, _active_window: ActiveWindow) -> Paragraph<'_> {
         let text = "?: help menu   arrow keys: move cursor   enter: follow pointer   tab: cycle view focus";
         Paragraph::new(Spans::from(Span::styled(text, DEFAULT_STYLE)))
     }
