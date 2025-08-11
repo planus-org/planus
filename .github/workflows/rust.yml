@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install --no-install-recommends graphviz
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v5.0.0
       - name: Install rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Install cargo-make from crates.io
