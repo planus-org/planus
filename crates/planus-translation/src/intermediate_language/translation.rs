@@ -839,6 +839,7 @@ impl<'a> Translator<'a> {
         let mut required = false;
         let mut deprecated = false;
         let mut vtable_index = *next_vtable_index;
+        let mut forced_alignment = None;
 
         for m in &field.metadata.values {
             match &m.kind {
@@ -907,6 +908,11 @@ impl<'a> Translator<'a> {
                         *has_id_error = true;
                     }
                 }
+                MetadataValueKind::ForceAlign(n) => {
+                    if let Some(value) = self.translate_alignment(current_file_id, m.span, n) {
+                        forced_alignment = Some((value, m.span));
+                    }
+                }
                 _ => {
                     self.emit_metadata_support_error(
                         current_file_id,
@@ -958,6 +964,7 @@ impl<'a> Translator<'a> {
             object_tag_kind: TableFieldTagKind::None,
             object_alignment_mask: u32::MAX,
             object_alignment: u32::MAX,
+            forced_alignment,
             deprecated,
             docstrings: field.docstrings.clone(),
         })
@@ -1422,10 +1429,10 @@ impl<'a> Translator<'a> {
         for decl in self.declarations.values_mut() {
             let mut max_size = 4u32;
             let mut max_alignment = 0;
-            if let DeclarationKind::Table(decl) = &mut decl.kind {
-                for field in decl.fields.values_mut() {
+            if let DeclarationKind::Table(decl_kind) = &mut decl.kind {
+                for field in decl_kind.fields.values_mut() {
                     let mut tag_kind = TableFieldTagKind::None;
-                    let (value_size, alignment) = match &field.type_.kind {
+                    let (value_size, mut alignment) = match &field.type_.kind {
                         TypeKind::Table(_) | TypeKind::String => (4, 4),
                         TypeKind::Vector(inner) => {
                             if matches!(&inner.kind, TypeKind::Union(_)) {
@@ -1462,6 +1469,28 @@ impl<'a> Translator<'a> {
                         | TypeKind::SimpleType(SimpleType::Integer(ast::IntegerType::U64))
                         | TypeKind::SimpleType(SimpleType::Float(FloatType::F64)) => (8, 8),
                     };
+                    if let Some((forced_alignment, forced_alignment_span)) = field.forced_alignment
+                    {
+                        if alignment <= forced_alignment {
+                            alignment = forced_alignment;
+                        } else {
+                            self.ctx.emit_error(
+                                ErrorKind::MISC_SEMANTIC_ERROR,
+                                [
+                                    Label::primary(decl.file_id, forced_alignment_span)
+                                        .with_message(
+                                        "This attribute tries to force the alignment of the field",
+                                    ),
+                                    Label::secondary(decl.file_id, field.type_.span).with_message(
+                                        format!(
+                                        "However the minimum alignment of this type is {alignment}"
+                                    ),
+                                    ),
+                                ],
+                                Some("Alignment of table field cannot be forced to lower"),
+                            );
+                        }
+                    }
                     max_size = max_size.saturating_add(value_size + tag_kind.size());
                     max_alignment = max_alignment.max(alignment);
                     field.object_value_size = value_size;
@@ -1469,17 +1498,17 @@ impl<'a> Translator<'a> {
                     field.object_alignment = alignment;
                     field.object_alignment_mask = alignment - 1;
                 }
-                decl.max_size = max_size;
-                decl.max_alignment = max_alignment;
-                let mut indices = (0..decl.fields.len()).collect::<Vec<_>>();
+                decl_kind.max_size = max_size;
+                decl_kind.max_alignment = max_alignment;
+                let mut indices = (0..decl_kind.fields.len()).collect::<Vec<_>>();
                 indices.sort_by(|&i, &j| {
                     std::cmp::Ord::cmp(
-                        &decl.fields[i].object_alignment,
-                        &decl.fields[j].object_alignment,
+                        &decl_kind.fields[i].object_alignment,
+                        &decl_kind.fields[j].object_alignment,
                     )
                     .reverse()
                 });
-                decl.alignment_order = indices;
+                decl_kind.alignment_order = indices;
             }
         }
     }

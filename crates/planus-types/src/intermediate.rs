@@ -263,6 +263,7 @@ pub struct TableField {
     pub object_tag_kind: TableFieldTagKind,
     pub object_alignment_mask: u32,
     pub object_alignment: u32,
+    pub forced_alignment: Option<(u32, Span)>,
     pub deprecated: bool,
     pub docstrings: Docstrings,
 }
