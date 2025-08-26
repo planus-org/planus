@@ -7,7 +7,7 @@ edition = "2021"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 rust-version = "1.75"
-version = "1.1.1"
+version = "1.2.0"
 
 [workspace.dependencies]
 askama = "0.12"
@@ -41,13 +41,13 @@ vec_map = "0.8.2"
 
 # Our crates
 array-init-cursor = { version = "0.2.1", path = "crates/array-init-cursor" }
-planus = { version = "1.1.1", path = "crates/planus", default-features = false }
-planus-buffer-inspection = { version = "1.1.1", path = "crates/planus-buffer-inspection" }
-planus-codegen = { version = "1.1.1", path = "crates/planus-codegen" }
-planus-inspector = { version = "1.1.1", path = "crates/planus-inspector" }
-planus-lexer = { version = "1.1.1", path = "crates/planus-lexer" }
-planus-translation = { version = "1.1.1", path = "crates/planus-translation" }
-planus-types = { version = "1.1.1", path = "crates/planus-types" }
+planus = { version = "1.2.0", path = "crates/planus", default-features = false }
+planus-buffer-inspection = { version = "1.2.0", path = "crates/planus-buffer-inspection" }
+planus-codegen = { version = "1.2.0", path = "crates/planus-codegen" }
+planus-inspector = { version = "1.2.0", path = "crates/planus-inspector" }
+planus-lexer = { version = "1.2.0", path = "crates/planus-lexer" }
+planus-translation = { version = "1.2.0", path = "crates/planus-translation" }
+planus-types = { version = "1.2.0", path = "crates/planus-types" }
 
 # used for doctests
 planus-example = { path = "examples/rust" }
