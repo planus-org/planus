@@ -1,0 +1,23 @@
+table Align1 {
+  value: uint16 (force_align: 1);
+}
+
+table Align2 {
+  value: uint32 (force_align: 2);
+}
+
+table Align3 {
+  value: uint8 (force_align: 3);
+}
+
+table Align4 {
+  value: uint64 (force_align: 4);
+}
+
+struct Inner (force_align: 8) {
+  value: uint8;
+}
+
+table Align8 {
+  value: Inner (force_align: 4);
+}

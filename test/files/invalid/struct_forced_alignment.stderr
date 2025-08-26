@@ -1,5 +1,5 @@
 error: Alignment of struct cannot be forced to lower
-  ┌─ test/files/invalid/forced_alignment.fbs:1:16
+  ┌─ test/files/invalid/struct_forced_alignment.fbs:1:16
   │
 1 │ struct Align1 (force_align: 1) {
   │                ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the struct
@@ -7,7 +7,7 @@ error: Alignment of struct cannot be forced to lower
   │          ------ However the minimum alignment of this type is 2
 
 error: Alignment of struct cannot be forced to lower
-  ┌─ test/files/invalid/forced_alignment.fbs:5:16
+  ┌─ test/files/invalid/struct_forced_alignment.fbs:5:16
   │
 5 │ struct Align2 (force_align: 2) {
   │                ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the struct
@@ -15,13 +15,13 @@ error: Alignment of struct cannot be forced to lower
   │          ------ However the minimum alignment of this type is 4
 
 error: Alignment must be a power of two
-  ┌─ test/files/invalid/forced_alignment.fbs:9:16
+  ┌─ test/files/invalid/struct_forced_alignment.fbs:9:16
   │
 9 │ struct Align3 (force_align: 3) {
   │                ^^^^^^^^^^^^^^
 
 error: Alignment of struct cannot be forced to lower
-   ┌─ test/files/invalid/forced_alignment.fbs:13:16
+   ┌─ test/files/invalid/struct_forced_alignment.fbs:13:16
    │
 13 │ struct Align4 (force_align: 4) {
    │                ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the struct
@@ -29,7 +29,7 @@ error: Alignment of struct cannot be forced to lower
    │          ------ However the minimum alignment of this type is 8
 
 error: Alignment of struct cannot be forced to lower
-   ┌─ test/files/invalid/forced_alignment.fbs:21:16
+   ┌─ test/files/invalid/struct_forced_alignment.fbs:21:16
    │
 21 │ struct Align8 (force_align: 4) {
    │                ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the struct

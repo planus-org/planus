@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support for `force_align` on table fields [#307]](https://github.com/planus-org/planus/pull/307)
+
 ### Fixed
 
 ### Removed

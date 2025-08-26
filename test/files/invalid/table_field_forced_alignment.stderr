@@ -1,0 +1,38 @@
+error: Alignment must be a power of two
+   ┌─ test/files/invalid/table_field_forced_alignment.fbs:10:17
+   │
+10 │   value: uint8 (force_align: 3);
+   │                 ^^^^^^^^^^^^^^
+
+error: Alignment of table field cannot be forced to lower
+  ┌─ test/files/invalid/table_field_forced_alignment.fbs:2:18
+  │
+2 │   value: uint16 (force_align: 1);
+  │          ------  ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the field
+  │          │        
+  │          However the minimum alignment of this type is 2
+
+error: Alignment of table field cannot be forced to lower
+  ┌─ test/files/invalid/table_field_forced_alignment.fbs:6:18
+  │
+6 │   value: uint32 (force_align: 2);
+  │          ------  ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the field
+  │          │        
+  │          However the minimum alignment of this type is 4
+
+error: Alignment of table field cannot be forced to lower
+   ┌─ test/files/invalid/table_field_forced_alignment.fbs:14:18
+   │
+14 │   value: uint64 (force_align: 4);
+   │          ------  ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the field
+   │          │        
+   │          However the minimum alignment of this type is 8
+
+error: Alignment of table field cannot be forced to lower
+   ┌─ test/files/invalid/table_field_forced_alignment.fbs:22:17
+   │
+22 │   value: Inner (force_align: 4);
+   │          -----  ^^^^^^^^^^^^^^ This attribute tries to force the alignment of the field
+   │          │       
+   │          However the minimum alignment of this type is 8
+
