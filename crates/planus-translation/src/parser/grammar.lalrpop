@@ -289,8 +289,23 @@ Sign: Sign<'input> = {
   <l: @L> <token: SimpleToken<"-">> <r: @R> => Sign { span: sp(l, r), token, is_negative: true, },
 }
 
-IdentToken: IdentToken<'input> =
-  <l: @L> <token: ident> <r: @R> => IdentToken { span: sp(l, r), token_metadata: token.1, ident: token.0 };
+IdentToken: IdentToken<'input> = {
+  <l: @L> <token: ident> <r: @R> => IdentToken { span: sp(l, r), token_metadata: token.1, ident: token.0 },
+
+  // allow keywords as identifiers (using the keyword's static string)
+  <l: @L> <token_metadata: "include">          <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "include" },
+  <l: @L> <token_metadata: "native_include">   <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "native_include" },
+  <l: @L> <token_metadata: "namespace">        <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "namespace" },
+  <l: @L> <token_metadata: "attribute">        <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "attribute" },
+  <l: @L> <token_metadata: "table">            <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "table" },
+  <l: @L> <token_metadata: "struct">           <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "struct" },
+  <l: @L> <token_metadata: "enum">             <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "enum" },
+  <l: @L> <token_metadata: "union">            <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "union" },
+  <l: @L> <token_metadata: "root_type">        <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "root_type" },
+  <l: @L> <token_metadata: "rpc_service">      <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "rpc_service" },
+  <l: @L> <token_metadata: "file_extension">   <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "file_extension" },
+  <l: @L> <token_metadata: "file_identifier">  <r: @R> => IdentToken { span: sp(l, r), token_metadata, ident: "file_identifier" },
+};
 
 IntegerLiteral: IntegerLiteral<'input> =
   <l: @L> <token: int> <r: @R> => IntegerLiteral { span: sp(l, r), token_metadata: token.1, value: token.0 };
