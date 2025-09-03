@@ -237,6 +237,7 @@ InitialUnionValDeclaration: UnionValDeclaration<'input> =
   <l: @L>
     <name: (IdentToken SimpleToken<":">)?>
     <type_: Type>
+    <metadata: Metadata?>
     <comma: SimpleToken<",">>
   <r: @R> => UnionValDeclaration { span: sp(l, r), name, type_, comma: Some(comma) };
 
@@ -244,6 +245,7 @@ FinalUnionValDeclaration: UnionValDeclaration<'input> =
   <l: @L>
     <name: (IdentToken SimpleToken<":">)?>
     <type_: Type>
+    <metadata: Metadata?>
     <comma: SimpleToken<",">?>
   <r: @R> => UnionValDeclaration { span: sp(l, r), name, type_, comma: comma };
 
