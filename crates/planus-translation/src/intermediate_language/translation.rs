@@ -164,12 +164,17 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         namespace_path: &NamespacePath,
     ) -> Option<TypeKind> {
-        let absolute_path = self.ctx.absolute_path_from_parts(&namespace_path.parts);
-        let mut relative_path = current_namespace.clone();
-        relative_path.0.extend(absolute_path.0.iter().cloned());
         let mut hints: Vec<Label<FileId>> = Vec::new();
         let mut seen_hints = HashSet::new();
-        for path in [relative_path, absolute_path] {
+
+        // Lookup relative to each namespace from the current one to the root.
+        // This matches flatc (similar to C++)
+        let suffix = &self.ctx.absolute_path_from_parts(&namespace_path.parts).0;
+        let ns_len = current_namespace.0.len();
+        for prefix_len in (0..=ns_len).rev() {
+            let prefix = &current_namespace.0[..prefix_len];
+            let path = AbsolutePath([prefix, suffix].concat());
+
             if let Some((index, _name, decl)) = self.ast_declarations.get_full(&path) {
                 let result = match self.descriptions[index] {
                     TypeDescription::Table => TypeKind::Table(DeclarationIndex(index)),
