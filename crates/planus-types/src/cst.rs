@@ -197,6 +197,7 @@ pub struct UnionValDeclaration<'input> {
     pub span: Span,
     pub name: Option<(IdentToken<'input>, SimpleToken<'input>)>, // the token is the ':'
     pub type_: Type<'input>,
+    pub metadata: Option<Metadata<'input>>,
     pub comma: Option<SimpleToken<'input>>,
 }
 

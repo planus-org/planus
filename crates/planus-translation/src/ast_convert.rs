@@ -927,6 +927,15 @@ impl CstConverter<'_> {
 
         self.handle_many_invalid_docstrings(type_metas);
 
+        if let Some(metadata) = &variant.metadata {
+            self.handle_many_invalid_docstrings(metadata.token_metas());
+            self.emit_error(
+                ErrorKind::MISC_SEMANTIC_ERROR,
+                [Label::primary(self.schema.file_id, metadata.span)],
+                Some("metadata on union variants is not supported"),
+            );
+        }
+
         if let Some(comma) = &variant.comma {
             self.handle_invalid_docstrings(&comma.token_metadata);
         }
