@@ -1,0 +1,30 @@
+// Tests that keywords can be used as identifiers, matching flatc behavior.
+
+table include {
+  namespace: int;
+  attribute: int;
+  table: int;
+  struct: int;
+  enum: int;
+  union: int;
+  root_type: int;
+  rpc_service: int;
+  file_extension: int;
+  file_identifier: int;
+}
+
+enum native_include: byte {
+  namespace = 0,
+  attribute = 1,
+  table = 2,
+  struct = 3,
+  enum = 4,
+  union = 5,
+}
+
+table holder {
+  include: include;
+  native_include: native_include;
+}
+
+root_type holder;
