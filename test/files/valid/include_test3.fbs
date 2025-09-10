@@ -1,18 +1,22 @@
-include "A.fbs";
-include "A_A.fbs";
-include "A_B.fbs";
-include "B.fbs";
-include "B_A.fbs";
-include "B_B.fbs";
-include "../include_test2.fbs";
+include "include_helpers/A.fbs";
+include "include_helpers/A_A.fbs";
+include "include_helpers/A_B.fbs";
+include "include_helpers/B.fbs";
+include "include_helpers/B_A.fbs";
+include "include_helpers/B_B.fbs";
 
-namespace A.B;
+namespace A.B.C;
 
 table Table {
   here: Table;
   a: A.Table;
   a_a: A.A.Table;
   a_b: A.B.Table;
+  a_b_table_a_b: A.B.TableAB;
+  b_table_a_b: B.TableAB;
+  table_a_b: TableAB;
+  // The following is global.A.B.Table.
+  // It's not possible to reference global.B.Table from this namespace
   b: B.Table;
   b_a: B.A.Table;
   b_b: B.B.Table;
@@ -25,10 +29,6 @@ table Table {
   struct_b_a: B.A.Struct;
   struct_b_b: B.B.Struct;
   struct_c: C.Struct;
-}
-
-table TableAB {
-  here: TableAB;
 }
 
 table Struct {
