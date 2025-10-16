@@ -278,7 +278,7 @@ version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e4b418d52c9206820a56fc1aa28db73d67e346ba8ba6aa90987e8d6becef7e4"
 dependencies = [
- "codespan-reporting",
+ "codespan-reporting 0.12.0",
  "serde",
 ]
 
@@ -287,6 +287,17 @@ name = "codespan-reporting"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe6d2e5af09e8c8ad56c969f2157a3d4238cebc7c55f0a517728c38f7b200f81"
+dependencies = [
+ "serde",
+ "termcolor",
+ "unicode-width 0.2.1",
+]
+
+[[package]]
+name = "codespan-reporting"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba7a06c0b31fff5ff2e1e7d37dbf940864e2a974b336e1a2938d10af6e8fb283"
 dependencies = [
  "serde",
  "termcolor",
@@ -989,7 +1000,7 @@ version = "1.2.0"
 dependencies = [
  "bitflags 2.9.4",
  "codespan",
- "codespan-reporting",
+ "codespan-reporting 0.13.0",
  "indexmap",
  "lalrpop",
  "lalrpop-util",
