@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rust: ["1.75", stable, beta]
+        rust: ["1.83", stable, beta]
 
     runs-on: ${{ matrix.os }}
 
@@ -49,6 +49,6 @@ jobs:
       - name: Copy flatbuffers binary to /usr/bin
         run: sudo cp ~/flatc /usr/local/bin/
       - name: Removing 2024 tests when testing our MSRV
-        if: matrix.rust == '1.75'
+        if: matrix.rust == '1.83'
         run: rm -rf test/rust-test-2024
       - run: cargo make full-test

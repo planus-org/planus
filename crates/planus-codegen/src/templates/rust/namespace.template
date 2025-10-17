@@ -17,7 +17,7 @@ mod root {
 pub mod {{info.name}} {
 {%- endif -%}
     {%- for child in children -%}
-        {{- Namespace(child) -}}
+        {{- Namespace(child)|safe -}}
 
     {% endfor -%}
     {%- for child in declarations -%}

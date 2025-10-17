@@ -11,7 +11,7 @@ license = "MIT/Apache-2.0"
 color-eyre = "0.6.5"
 criterion = "0.5"
 flatbuffers = { version = "=24.3.25", git = "https://github.com/google/flatbuffers.git", tag = "v24.3.25" }
-serde = { version = "1.0.226", default-features = false, features = [
+serde = { version = "1.0.228", default-features = false, features = [
   "derive",
   "alloc",
 ] }
