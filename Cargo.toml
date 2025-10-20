@@ -11,7 +11,7 @@ version = "1.2.0"
 
 [workspace.dependencies]
 askama = "0.12"
-bitflags = "2.9.4"
+bitflags = "2.10.0"
 clap = { version = "4.5.48", features = ["derive", "color"] }
 clap_complete = "4.5.58"
 codespan = "0.12.0"
