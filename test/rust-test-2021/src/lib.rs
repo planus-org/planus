@@ -12,7 +12,7 @@ pub mod planus_test;
 pub mod planus_test_no_flatc;
 
 #[cfg(feature = "std")]
-#[clippy::msrv = "1.75.0"]
+#[clippy::msrv = "1.83.0"]
 pub mod hexdump;
 
 #[cfg(test)]

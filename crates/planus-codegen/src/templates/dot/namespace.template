@@ -5,7 +5,7 @@ digraph G
   rankdir=LR;
 {% endif %}
 {%- for child in children -%}
-    {{- Namespace(child) -}}
+    {{- Namespace(child)|safe -}}
 {% endfor -%}
 {%- for child in declarations %}
 {% match child -%}

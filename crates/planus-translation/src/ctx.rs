@@ -77,7 +77,7 @@ impl Ctx {
         if !labels.is_empty() {
             diagnostic = diagnostic.with_labels(labels);
         }
-        term::emit(
+        term::emit_to_write_style(
             &mut *self.error_stream.write().unwrap(),
             &self.error_config,
             &self.files,
