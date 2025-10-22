@@ -15,7 +15,7 @@ bitflags = "2.10.0"
 clap = { version = "4.5.48", features = ["derive", "color"] }
 clap_complete = "4.5.58"
 codespan = "0.12.0"
-codespan-reporting = "0.12.0"
+codespan-reporting = "0.13.1"
 color-eyre = "0.6.5"
 crossterm = "0.29.0"
 derive_more = "2.0.1"
