@@ -15,6 +15,7 @@ macro_rules! template {
 
 macro_rules! template_module {
     ($name:ident, $backend:ty, [$namespace:literal, $struct:literal, $table:literal, $enum:literal, $union:literal, $rpc_service:literal]) => {
+        #[allow(clippy::double_parens)]
         pub mod $name {
             #[allow(unused_imports)]
             use crate::backend_translation::{
