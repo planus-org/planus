@@ -861,7 +861,7 @@ impl Backend for RustBackend {
                     parent_info.ref_name,
                     name
                 );
-                can_do_infallible_conversion = false;
+                can_do_infallible_conversion = true;
             }
             ResolvedType::Bool => {
                 owned_type = "bool".to_string();

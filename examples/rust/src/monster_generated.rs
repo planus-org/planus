@@ -7,7 +7,7 @@ const _: () = ::planus::check_version_compatibility("planus-1.2.0");
 /// Generated from these locations:
 /// * File `examples/rust/monster.fbs`
 #[no_implicit_prelude]
-#[allow(dead_code, clippy::needless_lifetimes)]
+#[allow(clippy::needless_lifetimes)]
 mod root {
     /// The namespace `MyGame`
     ///
@@ -1149,7 +1149,7 @@ mod root {
 
             /// Reference to a deserialized [Monster].
             #[derive(Copy, Clone)]
-            pub struct MonsterRef<'a>(::planus::table_reader::Table<'a>);
+            pub struct MonsterRef<'a>(#[allow(dead_code)] ::planus::table_reader::Table<'a>);
 
             impl<'a> MonsterRef<'a> {
                 /// Getter for the [`pos` field](Monster#structfield.pos).
@@ -1584,7 +1584,7 @@ mod root {
 
             /// Reference to a deserialized [Weapon].
             #[derive(Copy, Clone)]
-            pub struct WeaponRef<'a>(::planus::table_reader::Table<'a>);
+            pub struct WeaponRef<'a>(#[allow(dead_code)] ::planus::table_reader::Table<'a>);
 
             impl<'a> WeaponRef<'a> {
                 /// Getter for the [`name` field](Weapon#structfield.name).
@@ -1898,7 +1898,7 @@ mod root {
 
             /// Reference to a deserialized [Shield].
             #[derive(Copy, Clone)]
-            pub struct ShieldRef<'a>(::planus::table_reader::Table<'a>);
+            pub struct ShieldRef<'a>(#[allow(dead_code)] ::planus::table_reader::Table<'a>);
 
             impl<'a> ShieldRef<'a> {
                 /// Getter for the [`name` field](Shield#structfield.name).
