@@ -297,7 +297,10 @@ impl<
 
 /// Reference to a deserialized [{{info.owned_name}}].
 #[derive(Copy, Clone)]
-pub struct {{info.ref_name}}<'a>(::planus::table_reader::Table<'a>);
+pub struct {{info.ref_name}}<'a>(
+    #[allow(dead_code)]
+    ::planus::table_reader::Table<'a>
+);
 
 impl<'a> {{info.ref_name}}<'a> {
     {% for field in fields.declaration_order() %}
