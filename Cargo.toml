@@ -10,7 +10,7 @@ rust-version = "1.83"
 version = "1.2.0"
 
 [workspace.dependencies]
-askama = "0.14.0"
+askama = "0.15.0"
 bitflags = "2.10.0"
 clap = { version = "4.5.50", features = ["derive", "color"] }
 clap_complete = "4.5.59"
