@@ -15,6 +15,10 @@ pub struct Command {
     #[clap(short = 'o')]
     #[clap(value_hint = ValueHint::AnyPath)]
     output_filename: PathBuf,
+
+    /// Skip running rustfmt on the generated code
+    #[clap(long)]
+    no_format: bool,
 }
 
 impl Command {
@@ -25,7 +29,7 @@ impl Command {
             return Ok(ExitCode::FAILURE);
         };
 
-        let res = generate_rust(&declarations)?;
+        let res = generate_rust(&declarations, !self.no_format)?;
         let mut file = std::fs::File::create(&self.output_filename)?;
         file.write_all(res.as_bytes())?;
         file.flush()?;
