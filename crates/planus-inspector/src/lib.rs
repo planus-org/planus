@@ -726,7 +726,7 @@ pub fn run_inspector<B: Backend>(
             should_draw = false;
         }
 
-        if crossterm::event::poll(Duration::MAX - Duration::from_secs(5))? {
+        if crossterm::event::poll(Duration::from_secs(1))? {
             match event::read()? {
                 Event::Key(key) => {
                     should_draw = inspector.on_key(key);
