@@ -2,12 +2,11 @@ use std::fmt::Debug;
 
 use planus_buffer_inspection::{InspectableFlatbuffer, Object};
 use planus_types::intermediate::Declarations;
-use tui::{
-    backend::Backend,
+use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Widget, Wrap},
     Frame,
 };
@@ -30,6 +29,7 @@ const CURSOR_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::UNDERLINED,
     sub_modifier: Modifier::DIM,
+    underline_color: None,
 };
 
 const INNER_AREA_STYLE: Style = Style {
@@ -37,6 +37,7 @@ const INNER_AREA_STYLE: Style = Style {
     bg: Some(DARK_MAGENTA),
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const OUTER_AREA_STYLE: Style = Style {
@@ -44,6 +45,7 @@ const OUTER_AREA_STYLE: Style = Style {
     bg: Some(DARK_BLUE),
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const ADDRESS_STYLE: Style = Style {
@@ -51,6 +53,7 @@ const ADDRESS_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const DEFAULT_STYLE: Style = Style {
@@ -58,6 +61,7 @@ const DEFAULT_STYLE: Style = Style {
     bg: Some(BLACK),
     add_modifier: Modifier::DIM,
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const OFFSET_STYLE: Style = Style {
@@ -65,6 +69,7 @@ const OFFSET_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::DIM,
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const EMPTY_STYLE: Style = Style {
@@ -72,6 +77,7 @@ const EMPTY_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const ACTIVE_STYLE: Style = Style {
@@ -79,6 +85,7 @@ const ACTIVE_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::empty(),
     sub_modifier: Modifier::empty(),
+    underline_color: None,
 };
 
 const ALERT_STYLE: Style = Style {
@@ -86,9 +93,10 @@ const ALERT_STYLE: Style = Style {
     bg: None,
     add_modifier: Modifier::BOLD,
     sub_modifier: Modifier::DIM,
+    underline_color: None,
 };
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
+pub fn draw(f: &mut Frame, inspector: &mut Inspector) {
     inspector.view_state.draw_main_ui(
         f,
         inspector.active_window,
@@ -99,12 +107,12 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 
     if let Some(modal_state) = inspector.modal.as_ref() {
         let modal_area = if let ModalState::GoToByte { .. } = modal_state {
-            let mut area = centered_rect(20, 20, f.size());
+            let mut area = centered_rect(20, 20, f.area());
             area.height = 3;
             area.width = 21;
             area
         } else {
-            centered_rect(60, 60, f.size())
+            centered_rect(60, 60, f.area())
         };
         inspector.view_state.draw_modal_view(
             f,
@@ -118,9 +126,9 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, inspector: &mut Inspector) {
 }
 
 impl<'a> ViewState<'a> {
-    fn draw_main_ui<B: Backend>(
+    fn draw_main_ui(
         &mut self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         active_window: ActiveWindow,
         modal_is_active: bool,
         buffer: &InspectableFlatbuffer<'a>,
@@ -130,8 +138,8 @@ impl<'a> ViewState<'a> {
 
         let areas = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Length(f.size().height.saturating_sub(1)), Min(0)].as_ref())
-            .split(f.size());
+            .constraints([Length(f.area().height.saturating_sub(1)), Min(0)].as_ref())
+            .split(f.area());
 
         let main_area = areas[0];
         let legend_area = areas[1];
@@ -168,9 +176,9 @@ impl<'a> ViewState<'a> {
         self.draw_legend_view(f, legend_area, active_window);
     }
 
-    pub fn draw_hex_view<B: Backend>(
+    pub fn draw_hex_view(
         &self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         area: Rect,
         is_active: bool,
         buffer: &InspectableFlatbuffer<'a>,
@@ -251,14 +259,14 @@ impl<'a> ViewState<'a> {
                         }
                     }
                 }
-                view.push(Spans::from(line));
+                view.push(Line::from(line));
             }
         }
 
         Paragraph::new(view)
     }
 
-    pub fn draw_object_view<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect, is_active: bool) {
+    pub fn draw_object_view(&mut self, f: &mut Frame, area: Rect, is_active: bool) {
         let block = block(is_active, " Object view ", OUTER_AREA_STYLE);
         let inner_area = block.inner(area);
 
@@ -282,22 +290,17 @@ impl<'a> ViewState<'a> {
 
     fn legend_view(&self, _active_window: ActiveWindow) -> Paragraph<'_> {
         let text = "?: help menu   arrow keys: move cursor   enter: follow pointer   tab: cycle view focus";
-        Paragraph::new(Spans::from(Span::styled(text, DEFAULT_STYLE)))
+        Paragraph::new(Span::styled(text, DEFAULT_STYLE))
     }
 
-    fn draw_legend_view<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        area: Rect,
-        active_window: ActiveWindow,
-    ) {
+    fn draw_legend_view(&self, f: &mut Frame, area: Rect, active_window: ActiveWindow) {
         let paragraph = self.legend_view(active_window);
         f.render_widget(paragraph, area);
     }
 
-    pub fn draw_info_view<B: Backend>(
+    pub fn draw_info_view(
         &self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         area: Rect,
         hex_view_state: &HexViewState,
         declarations: &Declarations,
@@ -318,7 +321,7 @@ impl<'a> ViewState<'a> {
     ) -> Paragraph<'_> {
         let mut text = Vec::new();
 
-        text.push(Spans::from(vec![
+        text.push(Line::from(vec![
             Span::styled("Cursor", CURSOR_STYLE),
             Span::raw(format!(
                 " {:0width$x}",
@@ -328,7 +331,7 @@ impl<'a> ViewState<'a> {
         ]));
         if let Some(info_view_area) = &info_view_data {
             let line = info_view_area.lines.cur();
-            text.push(Spans::from(vec![
+            text.push(Line::from(vec![
                 Span::styled("Inner", INNER_AREA_STYLE),
                 Span::raw(format!(
                     "  {:0width$x}-{:0width$x}",
@@ -338,17 +341,17 @@ impl<'a> ViewState<'a> {
                 )),
             ]));
 
-            text.push(Spans::from(Span::raw(format!(
+            text.push(Line::from(Span::raw(format!(
                 "  {}",
                 line.object.type_name(declarations)
             ))));
         } else {
-            text.push(Spans::from(Span::styled("Inner", INNER_AREA_STYLE)));
-            text.push(Spans::from(Span::raw("  -")));
+            text.push(Line::from(Span::styled("Inner", INNER_AREA_STYLE)));
+            text.push(Line::from(Span::raw("  -")));
         }
         if let Some(info_view_area) = &info_view_data {
             let line = &info_view_area.lines[0];
-            text.push(Spans::from(vec![
+            text.push(Line::from(vec![
                 Span::styled("Outer", OUTER_AREA_STYLE),
                 Span::raw(format!(
                     "  {:0width$x}-{:0width$x}",
@@ -357,19 +360,19 @@ impl<'a> ViewState<'a> {
                     width = hex_view_state.max_offset_hex_digits
                 )),
             ]));
-            text.push(Spans::from(Span::raw(format!(
+            text.push(Line::from(Span::raw(format!(
                 "  {}",
                 line.object.type_name(declarations)
             ))));
         } else {
-            text.push(Spans::from(Span::styled("Outer", OUTER_AREA_STYLE)));
-            text.push(Spans::from(Span::raw("  -")));
+            text.push(Line::from(Span::styled("Outer", OUTER_AREA_STYLE)));
+            text.push(Line::from(Span::raw("  -")));
         }
 
         if let Some(info_view_data) = &info_view_data {
             if info_view_data.interpretations.len() > 1 {
-                text.push(Spans::from(Span::raw("")));
-                text.push(Spans::from(Span::styled(
+                text.push(Line::from(Span::raw("")));
+                text.push(Line::from(Span::styled(
                     format!(
                         "Interpretation: {}/{}",
                         info_view_data.interpretations.index() + 1,
@@ -377,17 +380,17 @@ impl<'a> ViewState<'a> {
                     ),
                     ALERT_STYLE,
                 )));
-                text.push(Spans::from(Span::raw("[c]: Cycle interpretations")));
-                text.push(Spans::from(Span::raw("[i]: Pick interpretation")));
+                text.push(Line::from(Span::raw("[c]: Cycle interpretations")));
+                text.push(Line::from(Span::raw("[i]: Pick interpretation")));
             }
         }
 
         Paragraph::new(text).wrap(Wrap { trim: false })
     }
 
-    fn draw_modal_view<B: Backend>(
+    fn draw_modal_view(
         &self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         area: Rect,
         modal_state: &ModalState,
         hex_view_state: &HexViewState,
@@ -407,19 +410,19 @@ impl<'a> ViewState<'a> {
         match modal_state {
             ModalState::GoToByte { input } => {
                 let text = vec![
-                    Spans::from(vec![
+                    Line::from(vec![
                         Span::styled("0x", DEFAULT_STYLE),
                         Span::styled(input, ACTIVE_STYLE),
                     ]),
-                    Spans::default(),
+                    Line::default(),
                 ];
                 let block = block(true, " Go to offset ", DEFAULT_STYLE);
-                f.set_cursor(
+                f.set_cursor_position((
                     // Put cursor past the end of the input text
                     area.x + input.len() as u16 + 3,
                     // Move one line down, from the border to the input line
                     area.y + 1,
-                );
+                ));
                 f.render_widget(
                     Paragraph::new(text).block(block).wrap(Wrap { trim: false }),
                     area,
@@ -427,8 +430,8 @@ impl<'a> ViewState<'a> {
             }
             ModalState::XRefs { .. } => {
                 let text = vec![
-                    Spans::from(vec![Span::styled("0x", DEFAULT_STYLE)]),
-                    Spans::default(),
+                    Line::from(Span::styled("0x", DEFAULT_STYLE)),
+                    Line::default(),
                 ];
                 let block = block(true, " XRefs ", DEFAULT_STYLE);
                 f.render_widget(
@@ -452,7 +455,7 @@ impl<'a> ViewState<'a> {
                     } else {
                         DEFAULT_STYLE
                     };
-                    text.push(Spans::from(Span::styled(
+                    text.push(Line::from(Span::styled(
                         format!(
                             "{byte_index:0width$x} {name}",
                             width = hex_view_state.max_offset_hex_digits
@@ -474,27 +477,27 @@ impl<'a> ViewState<'a> {
             }
             ModalState::HelpMenu => {
                 let text = vec![
-                    Spans::from(Span::styled(
+                    Line::from(Span::styled(
                         "Tab: cycle Object/Hex view focus",
                         DEFAULT_STYLE,
                     )),
-                    Spans::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
-                    Spans::from(Span::styled(
+                    Line::from(Span::styled("Arrow keys: move cursor", DEFAULT_STYLE)),
+                    Line::from(Span::styled(
                         "Enter: go to entry / follow pointer",
                         DEFAULT_STYLE,
                     )),
-                    Spans::from(Span::styled(
+                    Line::from(Span::styled(
                         "Backspace: return from entry / pointer",
                         DEFAULT_STYLE,
                     )),
-                    Spans::from(Span::styled("H: open history modal", DEFAULT_STYLE)),
-                    Spans::from(Span::styled("G: go to offset", DEFAULT_STYLE)),
-                    Spans::from(Span::styled("I: open interpretations modal", DEFAULT_STYLE)),
-                    Spans::from(Span::styled(
+                    Line::from(Span::styled("H: open history modal", DEFAULT_STYLE)),
+                    Line::from(Span::styled("G: go to offset", DEFAULT_STYLE)),
+                    Line::from(Span::styled("I: open interpretations modal", DEFAULT_STYLE)),
+                    Line::from(Span::styled(
                         "C: cycle between interpretations",
                         DEFAULT_STYLE,
                     )),
-                    Spans::from(Span::styled("Q: quit", DEFAULT_STYLE)),
+                    Line::from(Span::styled("Q: quit", DEFAULT_STYLE)),
                 ];
 
                 let block = block(true, " Help ", DEFAULT_STYLE);

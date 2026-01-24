@@ -55,9 +55,9 @@ pub enum Token<'input> {
     )]
     FloatLiteral(&'input str),
 
-    #[regex(r"///[^\n]*", |lex| CommentToken { kind: CommentKind::OuterDocstring, content: &lex.slice()[3..] })]
-    #[regex(r"//![^\n]*", |lex| CommentToken { kind: CommentKind::InnerDocstring, content: &lex.slice()[3..] })]
-    #[regex(r"//[^\n]*", |lex| CommentToken { kind: CommentKind::Comment, content: &lex.slice()[2..] })]
+    #[regex(r"///[^\n]*", |lex| CommentToken { kind: CommentKind::OuterDocstring, content: &lex.slice()[3..] }, allow_greedy = true)]
+    #[regex(r"//![^\n]*", |lex| CommentToken { kind: CommentKind::InnerDocstring, content: &lex.slice()[3..] }, allow_greedy = true)]
+    #[regex(r"//[^\n]*", |lex| CommentToken { kind: CommentKind::Comment, content: &lex.slice()[2..] }, allow_greedy = true)]
     Comment(CommentToken<'input>),
 
     #[regex(r"(\n|\r\n)")]

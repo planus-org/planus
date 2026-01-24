@@ -13,7 +13,7 @@ description = "Internal library for planus."
 color-eyre.workspace = true
 crossterm.workspace = true
 fuzzy-matcher.workspace = true
-tui.workspace = true
+ratatui.workspace = true
 
 # Our crates
 planus-buffer-inspection.workspace = true

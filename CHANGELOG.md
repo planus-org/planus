@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Bump the Minimum Support Rust Version (MSRV) to 1.83.0
+- Bump the Minimum Support Rust Version (MSRV) to 1.88.0
 
 ### Fixed
 
