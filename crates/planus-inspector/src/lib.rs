@@ -11,7 +11,7 @@ use planus_buffer_inspection::{
     InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
-use tui::{backend::Backend, layout::Rect, Terminal};
+use ratatui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::{
     ui::{FoldState, Node, TreeState, TreeStateLine},
@@ -715,7 +715,7 @@ impl<'a> Inspector<'a> {
     }
 }
 
-pub fn run_inspector<B: Backend>(
+pub fn run_inspector<B: Backend<Error = std::io::Error>>(
     terminal: &mut Terminal<B>,
     mut inspector: Inspector,
 ) -> io::Result<()> {

@@ -9,7 +9,7 @@ use crossterm::{
 use fuzzy_matcher::FuzzyMatcher;
 use planus_translation::{translate_files_with_options, ConverterOptions};
 use planus_types::intermediate::{AbsolutePath, DeclarationIndex, DeclarationKind};
-use tui::{backend::CrosstermBackend, Terminal};
+use ratatui::{backend::CrosstermBackend, Terminal};
 
 use crate::{run_inspector, Inspector};
 
