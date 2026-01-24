@@ -5,7 +5,7 @@ license.workspace = true
 repository.workspace = true
 build = "build.rs"
 edition = "2018"
-rust-version = "1.83"
+rust-version = "1.88"
 
 [features]
 default = ["std", "vtable-cache", "string-cache", "bytes-cache"]
