@@ -63,7 +63,7 @@ fn generate_test_code(
             let Some(declarations) = planus_translation::translate_files(&[&file_path]) else {
                 bail!("Cannot translate code for {}", file_path.display())
             };
-            let code = planus_codegen::generate_rust(&declarations)
+            let code = planus_codegen::generate_rust(&declarations, true)
                 .wrap_err_with(|| eyre!("Cannot codegen for {}", file_path.display()))?;
             std::fs::write(&generated_full_path, code)
                 .wrap_err_with(|| eyre!("Cannot write output to {}", generated_full_path))?;

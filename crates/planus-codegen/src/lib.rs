@@ -19,7 +19,7 @@ mod dot;
 mod rust;
 mod templates;
 
-pub fn generate_rust(declarations: &Declarations) -> eyre::Result<String> {
+pub fn generate_rust(declarations: &Declarations, format: bool) -> eyre::Result<String> {
     let default_analysis = run_analysis(declarations, &mut rust::analysis::DefaultAnalysis);
     let eq_analysis = run_analysis(declarations, &mut rust::analysis::EqAnalysis);
     let infallible_analysis = run_analysis(
@@ -35,9 +35,13 @@ pub fn generate_rust(declarations: &Declarations) -> eyre::Result<String> {
         declarations,
     );
     let res = templates::rust::Namespace(&output).render().unwrap();
-    let res = rust::format_string(&res, Some(1_000_000))?;
-    let res = rust::format_string(&res, None)?;
-    Ok(res)
+    if format {
+        let res = rust::format_string(&res, Some(1_000_000))?;
+        let res = rust::format_string(&res, None)?;
+        Ok(res)
+    } else {
+        Ok(res)
+    }
 }
 
 pub fn generate_dot(declarations: &Declarations) -> String {
