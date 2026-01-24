@@ -7,12 +7,12 @@ pub fn hexdump_flatbuffer_table(buf: &[u8]) -> String {
     let vtable_offset =
         i32::from_le_bytes(buf[obj_start..obj_start + 4].try_into().unwrap()) as isize as usize;
     let vtable_start = obj_start.wrapping_sub(vtable_offset);
-    assert!(vtable_start % 2 == 0);
+    assert!(vtable_start.is_multiple_of(2));
     let vtable_size =
         u16::from_le_bytes(buf[vtable_start..vtable_start + 2].try_into().unwrap()) as usize;
     let obj_size =
         u16::from_le_bytes(buf[vtable_start + 2..vtable_start + 4].try_into().unwrap()) as usize;
-    assert!(vtable_size >= 4 && vtable_size % 2 == 0);
+    assert!(vtable_size >= 4 && vtable_size.is_multiple_of(2));
     assert!(obj_size >= 4);
 
     let vtable_end = vtable_start.checked_add(vtable_size).unwrap();
