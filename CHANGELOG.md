@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Bump the Minimum Support Rust Version (MSRV) to 1.88.0
+- Bump the Minimum Support Rust Version (MSRV) to 1.88.0 [#343](https://github.com/planus-org/planus/pull/343)
+- Add support for C++-esque name resolution in module paths [#314](https://github.com/planus-org/planus/pull/314)
 
 ### Fixed
 
@@ -19,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added support for `force_align` on table fields [#307]](https://github.com/planus-org/planus/pull/307)
+- Added support for `force_align` on table fields [#307](https://github.com/planus-org/planus/pull/307)
 
 ### Fixed
 
