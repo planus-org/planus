@@ -164,12 +164,26 @@ impl<'a> Translator<'a> {
         current_file_id: FileId,
         namespace_path: &NamespacePath,
     ) -> Option<TypeKind> {
-        let absolute_path = self.ctx.absolute_path_from_parts(&namespace_path.parts);
-        let mut relative_path = current_namespace.clone();
-        relative_path.0.extend(absolute_path.0.iter().cloned());
         let mut hints: Vec<Label<FileId>> = Vec::new();
         let mut seen_hints = HashSet::new();
-        for path in [relative_path, absolute_path] {
+
+        // Generate absolute path
+        let ns_len = current_namespace.0.len();
+        let mut path = current_namespace.clone();
+        path.0.extend(
+            namespace_path
+                .parts
+                .iter()
+                .map(|&part| self.ctx.resolve_identifier(part)),
+        );
+
+        // Lookup relative to each namespace from the current one to the root.
+        // This matches flatc (similar to C++)
+        for prefix_len in (0..=ns_len).rev() {
+            if prefix_len != ns_len {
+                path.0.remove(prefix_len);
+            }
+
             if let Some((index, _name, decl)) = self.ast_declarations.get_full(&path) {
                 let result = match self.descriptions[index] {
                     TypeDescription::Table => TypeKind::Table(DeclarationIndex(index)),
@@ -196,6 +210,7 @@ impl<'a> Translator<'a> {
                         return None;
                     }
                 };
+
                 if self
                     .reachability
                     .get(&current_file_id)
@@ -212,11 +227,13 @@ impl<'a> Translator<'a> {
                 }
             }
         }
+
         self.ctx.emit_error(
             ErrorKind::UNKNOWN_IDENTIFIER,
             std::iter::once(Label::primary(current_file_id, namespace_path.span)).chain(hints),
             Some("Unknown type"),
         );
+
         None
     }
 
