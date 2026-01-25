@@ -1,6 +1,6 @@
 pub use root::*;
 
-const _: () = ::planus::check_version_compatibility("planus-1.2.0");
+const _: () = ::planus::check_version_compatibility("planus-1.3.0");
 
 /// The root namespace
 ///

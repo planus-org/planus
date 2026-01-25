@@ -9,10 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Fixed
+
+### Removed
+
+## [1.3.0] - 2026-01-25
+
+### Added
+
 - Bump the Minimum Support Rust Version (MSRV) to 1.88.0 [#343](https://github.com/planus-org/planus/pull/343)
 - Add support for C++-esque name resolution in module paths [#314](https://github.com/planus-org/planus/pull/314)
+- Add `--format` flag to planus-cli to allow disable rustfmt formatting of the generated file [#341](https://github.com/planus-org/planus/pull/341)
 
 ### Fixed
+
+- Fixed planus inspector not working on MacOS [#342](https://github.com/planus-org/planus/pull/342)
 
 ### Removed
 
@@ -142,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/planus-org/planus/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/planus-org/planus/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/planus-org/planus/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/planus-org/planus/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/planus-org/planus/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/planus-org/planus/compare/v1.0.0...v1.1.0
