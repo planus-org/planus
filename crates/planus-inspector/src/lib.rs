@@ -628,10 +628,10 @@ impl<'a> Inspector<'a> {
             ModalState::GoToByte { input } => match key.code {
                 KeyCode::Char(c @ '0'..='9')
                 | KeyCode::Char(c @ 'a'..='f')
-                | KeyCode::Char(c @ 'A'..='F') => {
-                    if input.len() < 16 {
-                        input.push(c.to_ascii_lowercase());
-                    }
+                | KeyCode::Char(c @ 'A'..='F')
+                    if input.len() < 16 =>
+                {
+                    input.push(c.to_ascii_lowercase());
                 }
                 KeyCode::Enter => {
                     let addr = usize::from_str_radix(input, 16).unwrap();
