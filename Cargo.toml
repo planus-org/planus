@@ -13,7 +13,7 @@ version = "1.3.0"
 askama = "0.15.1"
 bitflags = "2.11.0"
 clap = { version = "4.5.54", features = ["derive", "color"] }
-clap_complete = "4.5.65"
+clap_complete = "4.6.0"
 codespan = "0.13.1"
 codespan-reporting = "0.13.1"
 color-eyre = "0.6.5"
