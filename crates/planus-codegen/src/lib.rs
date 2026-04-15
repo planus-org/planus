@@ -19,7 +19,22 @@ mod dot;
 mod rust;
 mod templates;
 
-pub fn generate_rust(declarations: &Declarations, format: bool) -> eyre::Result<String> {
+/// Options controlling Rust code generation.
+#[derive(Debug, Clone, Default)]
+pub struct RustOptions {
+    /// Run rustfmt on the generated output.
+    pub format: bool,
+    /// If `Some`, generated union enums are marked with
+    /// `#[serde(tag = "<name>")]`, producing an internally tagged
+    /// representation (`{"<name>": "Variant", ...fields}`) instead of
+    /// the default externally tagged one (`{"Variant": {...}}`).
+    pub serde_enum_tag: Option<String>,
+}
+
+pub fn generate_rust(
+    declarations: &Declarations,
+    options: &RustOptions,
+) -> eyre::Result<String> {
     let default_analysis = run_analysis(declarations, &mut rust::analysis::DefaultAnalysis);
     let eq_analysis = run_analysis(declarations, &mut rust::analysis::EqAnalysis);
     let infallible_analysis = run_analysis(
@@ -31,11 +46,12 @@ pub fn generate_rust(declarations: &Declarations, format: bool) -> eyre::Result<
             default_analysis,
             eq_analysis,
             infallible_analysis,
+            serde_enum_tag: options.serde_enum_tag.clone(),
         },
         declarations,
     );
     let res = templates::rust::Namespace(&output).render().unwrap();
-    if format {
+    if options.format {
         let res = rust::format_string(&res, Some(1_000_000))?;
         let res = rust::format_string(&res, None)?;
         Ok(res)

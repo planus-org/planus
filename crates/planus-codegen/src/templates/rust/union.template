@@ -4,6 +4,11 @@
 #[derive(Clone, Debug, PartialEq, PartialOrd,
 {% if info.should_do_eq %}Eq, Ord, Hash,{% endif %}
 ::serde::Serialize, ::serde::Deserialize)]
+{%- match info.serde_enum_tag -%}
+{%- when Some with (tag) -%}
+#[serde(tag = "{{ tag }}")]
+{%- when None -%}
+{%- endmatch %}
 pub enum {{ info.owned_name }}{
     {% for variant in variants -%}
         {% for docstring in variant.name_and_docs.docstrings.iter_strings() %}

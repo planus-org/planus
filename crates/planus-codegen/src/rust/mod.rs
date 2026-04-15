@@ -23,6 +23,9 @@ pub struct RustBackend {
     pub default_analysis: Vec<bool>,
     pub eq_analysis: Vec<bool>,
     pub infallible_analysis: Vec<bool>,
+    /// If set, generated union enums emit `#[serde(tag = "...")]` so they
+    /// use the internally tagged serde representation.
+    pub serde_enum_tag: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -97,6 +100,7 @@ pub struct Union {
     pub ref_name_with_lifetime: String,
     pub should_do_eq: bool,
     pub should_do_infallible_conversion: bool,
+    pub serde_enum_tag: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -280,6 +284,7 @@ impl Backend for RustBackend {
             ref_name,
             should_do_eq: self.eq_analysis[decl_id.0],
             should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
+            serde_enum_tag: self.serde_enum_tag.clone(),
         }
     }
 
