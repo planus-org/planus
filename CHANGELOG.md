@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Parse and preserve union variant metadata in the CST and formatter [#312](https://github.com/planus-org/planus/pull/312).
+
 ### Fixed
 
 ### Removed
