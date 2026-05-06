@@ -19,6 +19,7 @@ struct CstConverter<'ctx> {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct ConverterOptions {
     pub ignore_docstring_errors: bool,
+    pub ignore_unknown_metadata: bool,
 }
 
 pub fn convert(
@@ -929,11 +930,13 @@ impl CstConverter<'_> {
 
         if let Some(metadata) = &variant.metadata {
             self.handle_many_invalid_docstrings(metadata.token_metas());
-            self.emit_error(
-                ErrorKind::MISC_SEMANTIC_ERROR,
-                [Label::primary(self.schema.file_id, metadata.span)],
-                Some("metadata on union variants is not supported"),
-            );
+            if !self.converter_options.ignore_unknown_metadata {
+                self.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(self.schema.file_id, metadata.span)],
+                    Some("metadata on union variants is not supported"),
+                );
+            }
         }
 
         if let Some(comma) = &variant.comma {
@@ -1089,6 +1092,9 @@ impl CstConverter<'_> {
                 None
             };
             let key = MetadataValueKindKey::parse(metadata_value.key.ident).or_else(|| {
+                if self_.converter_options.ignore_unknown_metadata {
+                    return None;
+                }
                 self_.emit_error(
                     ErrorKind::MISC_SEMANTIC_ERROR,
                     [Label::primary(

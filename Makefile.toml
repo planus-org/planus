@@ -64,6 +64,28 @@ script = '''
         fi
     done
 
+    for f in test/files/ignore-unknown-metadata/*.fbs; do
+        if [ -f "$f" ]; then
+            echo -n "Checking $f without flag: "
+            target/debug/planus check $f >/dev/null 2>&1 && true
+            if [ $? -eq 0 ]; then
+                echo -e "\e[0;31munexpectedly compiled\e[0m"
+                failed=1
+            else
+                echo -e "\e[0;32mfailed as expected\e[0m"
+            fi
+
+            echo -n "Checking $f with --ignore-unknown-metadata: "
+            target/debug/planus --ignore-unknown-metadata check $f >/dev/null 2>&1 && true
+            if [ $? -eq 0 ]; then
+                echo -e "\e[0;32msuccess\e[0m"
+            else
+                echo -e "\e[0;31mcheck failed\e[0m"
+                failed=1
+            fi
+        fi
+    done
+
     if [ "$failed" = "1" ]; then
         echo "cargo make generate failed: $tmpdir"
         exit 1
