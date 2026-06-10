@@ -1,0 +1,24 @@
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
+///
+/// This trait is transport-agnostic: implement it to handle the requests
+/// of the rpc service using any transport of your choosing.
+pub trait {{ info.trait_name }} {
+    /// The fully-qualified name of this service in the flatbuffers schema.
+    const NAME: &'static str = "{{ info.service_name }}";
+
+    /// The error type returned by the methods of this service.
+    type Error;
+
+    {% for method in methods -%}
+    {% for docstring in method.name_and_docs.docstrings.iter_strings() %}
+    /// {{ docstring }}
+    {%- endfor %}
+    {%- if method.idempotent %}
+    ///
+    /// This method is marked as `idempotent` in the flatbuffers schema.
+    {%- endif %}
+    fn {{ method.name }}(&self, request: {{ method.argument_ref_type }}) -> ::core::result::Result<{{ method.return_owned_type }}, Self::Error>;
+    {% endfor %}
+}

@@ -112,10 +112,18 @@ pub struct UnionVariant {
 }
 
 #[derive(Clone, Debug)]
-pub struct RpcService {}
+pub struct RpcService {
+    pub trait_name: String,
+    pub service_name: String,
+}
 
 #[derive(Clone, Debug)]
-pub struct RpcMethod {}
+pub struct RpcMethod {
+    pub name: String,
+    pub argument_ref_type: String,
+    pub return_owned_type: String,
+    pub idempotent: bool,
+}
 
 const BINDING_KIND_TYPES: &str = "types";
 
@@ -280,6 +288,22 @@ impl Backend for RustBackend {
             ref_name,
             should_do_eq: self.eq_analysis[decl_id.0],
             should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
+        }
+    }
+
+    fn generate_rpc_service(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _decl_id: DeclarationIndex,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::RpcService,
+    ) -> RpcService {
+        let service_name = decl_name.to_string();
+        let decl_name = decl_name.0.last().unwrap();
+        RpcService {
+            trait_name: reserve_type_name(decl_name, declaration_names),
+            service_name,
         }
     }
 
@@ -987,6 +1011,42 @@ impl Backend for RustBackend {
             ref_type,
             is_struct,
             can_do_infallible_conversion,
+        }
+    }
+
+    fn generate_rpc_method(
+        &mut self,
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
+        _parent_info: &Self::RpcServiceInfo,
+        _parent: &intermediate::RpcService,
+        method_name: &str,
+        method: &intermediate::RpcMethod,
+        argument_type: ResolvedType<'_, Self>,
+        return_type: ResolvedType<'_, Self>,
+    ) -> RpcMethod {
+        let name = reserve_field_name(
+            method_name,
+            "name",
+            &mut translation_context.declaration_names,
+        );
+        let argument_ref_type = match argument_type {
+            ResolvedType::Table(_, _, info, relative_namespace) => format!(
+                "{}<'_>",
+                format_relative_namespace(&relative_namespace, &info.ref_name)
+            ),
+            _ => unreachable!("rpc method types are checked to be tables"),
+        };
+        let return_owned_type = match return_type {
+            ResolvedType::Table(_, _, info, relative_namespace) => {
+                format_relative_namespace(&relative_namespace, &info.owned_name).to_string()
+            }
+            _ => unreachable!("rpc method types are checked to be tables"),
+        };
+        RpcMethod {
+            name,
+            argument_ref_type,
+            return_owned_type,
+            idempotent: method.idempotent,
         }
     }
 }
