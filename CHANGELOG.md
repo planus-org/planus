@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for `rpc_service` declarations: each service generates a transport-agnostic Rust trait with one method per (unary) rpc method
+- Add support for `rpc_service` declarations: each service generates transport-agnostic sync and async Rust traits with one method per (unary) rpc method
 
 ### Fixed
 

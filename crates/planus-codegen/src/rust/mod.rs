@@ -114,6 +114,7 @@ pub struct UnionVariant {
 #[derive(Clone, Debug)]
 pub struct RpcService {
     pub trait_name: String,
+    pub async_trait_name: String,
     pub service_name: String,
 }
 
@@ -303,6 +304,7 @@ impl Backend for RustBackend {
         let decl_name = decl_name.0.last().unwrap();
         RpcService {
             trait_name: reserve_type_name(decl_name, declaration_names),
+            async_trait_name: reserve_type_name(&format!("{decl_name}Async"), declaration_names),
             service_name,
         }
     }
