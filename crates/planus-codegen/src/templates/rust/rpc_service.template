@@ -49,3 +49,72 @@ pub trait {{ info.async_trait_name }} {
     async fn {{ method.name }}(&self, request: {{ method.argument_ref_type }}) -> ::core::result::Result<{{ method.return_owned_type }}, Self::Error>;
     {% endfor %}
 }
+
+/// The methods of the rpc service `{{ info.service_name }}`.
+///
+/// Each method has a numeric id given by its zero-based position in the
+/// service declaration, which can be used to relay or route messages.
+/// Note that the ids follow declaration order, so removing or reordering
+/// methods in the schema changes them.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+{%- if !methods.is_empty() -%}
+#[repr(u32)]
+{%- endif -%}
+pub enum {{ info.method_enum_name }} {
+    {% for method in methods -%}
+        {% for docstring in method.name_and_docs.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {%- endfor %}
+        {{ method.variant_name }} = {{ loop.index0 }},
+    {% endfor %}
+}
+
+impl {{ info.method_enum_name }} {
+    /// Array containing all methods of the service, ordered by id
+    pub const ENUM_VALUES: [Self; {{ methods.len() }}] = [
+        {%- for method in methods -%} Self::{{ method.variant_name }}, {%- endfor -%}
+    ];
+
+    /// The id of the method, given by its zero-based position in the
+    /// service declaration
+    #[inline]
+    pub fn id(self) -> u32 {
+        match self {
+            {% for method in methods -%}
+                Self::{{ method.variant_name }} => {{ loop.index0 }},
+            {% endfor %}
+        }
+    }
+
+    /// The name of the method as declared in the flatbuffers schema
+    #[inline]
+    pub fn name(self) -> &'static str {
+        match self {
+            {% for method in methods -%}
+                Self::{{ method.variant_name }} => "{{ method.name_and_docs.original_name }}",
+            {% endfor %}
+        }
+    }
+}
+
+impl ::core::convert::TryFrom<u32> for {{ info.method_enum_name }} {
+    type Error = ::planus::errors::UnknownEnumTagKind;
+    #[inline]
+    fn try_from(value: u32) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind> {
+        #[allow(clippy::match_single_binding)]
+        match value {
+            {% for method in methods -%}
+                {{ loop.index0 }} => ::core::result::Result::Ok(Self::{{ method.variant_name }}),
+            {% endfor %}
+
+            _ => ::core::result::Result::Err(::planus::errors::UnknownEnumTagKind { tag: value as i128 }),
+        }
+    }
+}
+
+impl ::core::convert::From<{{ info.method_enum_name }}> for u32 {
+    #[inline]
+    fn from(value: {{ info.method_enum_name }}) -> Self {
+        value.id()
+    }
+}

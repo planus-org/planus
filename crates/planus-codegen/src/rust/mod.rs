@@ -115,12 +115,14 @@ pub struct UnionVariant {
 pub struct RpcService {
     pub trait_name: String,
     pub async_trait_name: String,
+    pub method_enum_name: String,
     pub service_name: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct RpcMethod {
     pub name: String,
+    pub variant_name: String,
     pub argument_ref_type: String,
     pub return_owned_type: String,
     pub idempotent: bool,
@@ -305,6 +307,7 @@ impl Backend for RustBackend {
         RpcService {
             trait_name: reserve_type_name(decl_name, declaration_names),
             async_trait_name: reserve_type_name(&format!("{decl_name}Async"), declaration_names),
+            method_enum_name: reserve_type_name(&format!("{decl_name}Method"), declaration_names),
             service_name,
         }
     }
@@ -1031,6 +1034,11 @@ impl Backend for RustBackend {
             "name",
             &mut translation_context.declaration_names,
         );
+        let variant_name = reserve_rust_enum_variant_name(
+            method_name,
+            "variant_name",
+            &mut translation_context.declaration_names,
+        );
         let argument_ref_type = match argument_type {
             ResolvedType::Table(_, _, info, relative_namespace) => format!(
                 "{}<'_>",
@@ -1046,6 +1054,7 @@ impl Backend for RustBackend {
         };
         RpcMethod {
             name,
+            variant_name,
             argument_ref_type,
             return_owned_type,
             idempotent: method.idempotent,

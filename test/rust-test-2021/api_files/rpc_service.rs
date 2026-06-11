@@ -44,6 +44,21 @@ impl GreeterAsync for MyAsyncGreeter {
 assert_eq!(<MyGreeter as Greeter>::NAME, "Greeter");
 assert_eq!(<MyAsyncGreeter as GreeterAsync>::NAME, "Greeter");
 
+assert_eq!(
+    GreeterMethod::ENUM_VALUES,
+    [GreeterMethod::SayHello, GreeterMethod::SayHelloAgain]
+);
+assert_eq!(GreeterMethod::SayHello.id(), 0);
+assert_eq!(GreeterMethod::SayHelloAgain.id(), 1);
+assert_eq!(GreeterMethod::SayHello.name(), "SayHello");
+assert_eq!(GreeterMethod::SayHelloAgain.name(), "SayHelloAgain");
+assert_eq!(
+    GreeterMethod::try_from(0u32).unwrap(),
+    GreeterMethod::SayHello
+);
+assert_eq!(u32::from(GreeterMethod::SayHelloAgain), 1);
+assert!(GreeterMethod::try_from(2u32).is_err());
+
 let mut builder = planus::Builder::new();
 let offset = HelloRequest::create(&mut builder, "Planus");
 let data = builder.finish(offset, None);
