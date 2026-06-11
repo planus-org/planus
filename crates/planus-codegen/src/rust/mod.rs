@@ -7,7 +7,7 @@ use std::{
 };
 
 use eyre::Context;
-use heck::{ToSnakeCase, ToUpperCamelCase};
+use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal, TableFieldTagKind},
@@ -116,6 +116,7 @@ pub struct RpcService {
     pub trait_name: String,
     pub async_trait_name: String,
     pub method_enum_name: String,
+    pub name_const: String,
     pub service_name: String,
 }
 
@@ -140,6 +141,14 @@ fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>)
 
 fn reserve_type_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
     let name = path.to_upper_camel_case().into();
+    declaration_names
+        .declaration_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
+        .into()
+}
+
+fn reserve_const_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
+    let name = path.to_shouty_snake_case().into();
     declaration_names
         .declaration_names
         .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
@@ -308,6 +317,7 @@ impl Backend for RustBackend {
             trait_name: reserve_type_name(decl_name, declaration_names),
             async_trait_name: reserve_type_name(&format!("{decl_name}Async"), declaration_names),
             method_enum_name: reserve_type_name(&format!("{decl_name}Method"), declaration_names),
+            name_const: reserve_const_name(&format!("{decl_name}Name"), declaration_names),
             service_name,
         }
     }

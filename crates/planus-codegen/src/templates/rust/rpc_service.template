@@ -1,3 +1,7 @@
+/// The fully-qualified name of the `{{ info.trait_name }}` service in the
+/// flatbuffers schema.
+pub const {{ info.name_const }}: &str = "{{ info.service_name }}";
+
 {% for docstring in docstrings.iter_strings() %}
 /// {{ docstring }}
 {%- endfor %}
@@ -6,7 +10,9 @@
 /// of the rpc service using any transport of your choosing.
 pub trait {{ info.trait_name }} {
     /// The fully-qualified name of this service in the flatbuffers schema.
-    const NAME: &'static str = "{{ info.service_name }}";
+    ///
+    /// Also available without an implementing type as [`{{ info.name_const }}`].
+    const NAME: &'static str = {{ info.name_const }};
 
     /// The error type returned by the methods of this service.
     type Error;
@@ -33,7 +39,9 @@ pub trait {{ info.trait_name }} {
 #[allow(async_fn_in_trait)]
 pub trait {{ info.async_trait_name }} {
     /// The fully-qualified name of this service in the flatbuffers schema.
-    const NAME: &'static str = "{{ info.service_name }}";
+    ///
+    /// Also available without an implementing type as [`{{ info.name_const }}`].
+    const NAME: &'static str = {{ info.name_const }};
 
     /// The error type returned by the methods of this service.
     type Error;
@@ -70,6 +78,9 @@ pub enum {{ info.method_enum_name }} {
 }
 
 impl {{ info.method_enum_name }} {
+    /// The fully-qualified name of the service in the flatbuffers schema
+    pub const SERVICE_NAME: &'static str = {{ info.name_const }};
+
     /// Array containing all methods of the service, ordered by id
     pub const ENUM_VALUES: [Self; {{ methods.len() }}] = [
         {%- for method in methods -%} Self::{{ method.variant_name }}, {%- endfor -%}

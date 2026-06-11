@@ -41,6 +41,8 @@ impl GreeterAsync for MyAsyncGreeter {
     }
 }
 
+assert_eq!(GREETER_NAME, "Greeter");
+assert_eq!(GreeterMethod::SERVICE_NAME, "Greeter");
 assert_eq!(<MyGreeter as Greeter>::NAME, "Greeter");
 assert_eq!(<MyAsyncGreeter as GreeterAsync>::NAME, "Greeter");
 
