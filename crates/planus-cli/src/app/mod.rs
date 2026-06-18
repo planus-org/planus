@@ -23,7 +23,7 @@ fn clap_v3_styling() -> Styles {
 }
 
 #[derive(Parser)]
-#[command(styles = clap_v3_styling())]
+#[command(styles = clap_v3_styling(), version)]
 pub struct App {
     #[clap(flatten)]
     app_options: AppOptions,
