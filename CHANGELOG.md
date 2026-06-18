@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead.
 
 ### Removed
 
