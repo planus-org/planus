@@ -1040,15 +1040,22 @@ pub fn format_string(s: &str, max_width: Option<u64>) -> eyre::Result<String> {
         .wait_with_output()
         .wrap_err("Unable to get the formatted file back from rustfmt")?;
 
-    if output.status.success() && output.stderr.is_empty() {
-        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-    } else if output.stderr.is_empty() {
-        eyre::bail!("rustfmt failed with exit code {}", output.status);
-    } else {
-        eyre::bail!(
+    match (output.status.success(), output.stderr.is_empty()) {
+        (true, true) => Ok(String::from_utf8_lossy(&output.stdout).into_owned()),
+        (true, false) => {
+            eprintln!("rustfmt succeeded but generated unexpected output on stderr:");
+            let error = String::from_utf8_lossy(&output.stderr);
+            for l in error.lines() {
+                eprintln!("   {l}");
+            }
+
+            Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+        }
+        (false, false) => eyre::bail!("rustfmt failed with exit code {}", output.status),
+        (false, true) => eyre::bail!(
             "rustfmt failed with exit code {} and message:\n{}",
             output.status,
             String::from_utf8_lossy(&output.stderr).into_owned(),
-        )
+        ),
     }
 }
