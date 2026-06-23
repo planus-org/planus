@@ -249,6 +249,8 @@ pub struct Table {
     pub max_size: u32,
     pub max_vtable_size: u32,
     pub max_alignment: u32,
+    /// The 4-byte file identifier this table is the `root_type` for, if any.
+    pub file_identifier: Option<[u8; 4]>,
 }
 
 #[derive(Debug)]
@@ -303,7 +305,11 @@ pub struct Struct {
 
 #[derive(Debug)]
 pub struct StructField {
+    /// The (element) type of the field. For a fixed-size array field this is the
+    /// element type and `array_len` carries the length.
     pub type_: SimpleType,
+    /// `Some(n)` if this field is a fixed-size array `[type_; n]`.
+    pub array_len: Option<u32>,
     pub offset: u32,
     pub size: u32,
     pub padding_after_field: u32,
@@ -315,6 +321,7 @@ pub struct Enum {
     pub type_: IntegerType,
     pub variants: IndexMap<IntegerLiteral, EnumVariant>,
     pub alignment: u32,
+    pub is_bit_flags: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -608,6 +615,26 @@ impl IntegerLiteral {
             crate::ast::IntegerType::I32 => Self::I32(0),
             crate::ast::IntegerType::I64 => Self::I64(0),
         }
+    }
+
+    /// Returns `1 << position` as a literal of the given integer type, used to
+    /// turn a `(bit_flags)` enum member's bit position into its stored value.
+    /// Returns `None` when `position` is out of range for the type's bit width.
+    pub fn from_bit_position(type_: &crate::ast::IntegerType, position: u32) -> Option<Self> {
+        use crate::ast::IntegerType;
+        if position >= type_.byte_size() * 8 {
+            return None;
+        }
+        Some(match type_ {
+            IntegerType::U8 => Self::U8(1 << position),
+            IntegerType::U16 => Self::U16(1 << position),
+            IntegerType::U32 => Self::U32(1 << position),
+            IntegerType::U64 => Self::U64(1 << position),
+            IntegerType::I8 => Self::I8(1 << position),
+            IntegerType::I16 => Self::I16(1 << position),
+            IntegerType::I32 => Self::I32(1 << position),
+            IntegerType::I64 => Self::I64(1 << position),
+        })
     }
 
     #[must_use]

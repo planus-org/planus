@@ -59,6 +59,27 @@ macro_rules! unsafe_gen_primitive_types {
                 Ok(<$ty>::from_le_bytes(*buffer))
             }
         }
+
+        // Fixed-size arrays of `$ty` written inline (as inside a struct).
+        /// # Safety
+        /// `ALIGNMENT` and `SIZE` match the actual alignment and size of the array.
+        unsafe impl<const N: usize> Primitive for [$ty; N] {
+            const ALIGNMENT: usize = $size;
+            const SIZE: usize = $size * N;
+        }
+
+        impl<const N: usize> WriteAsPrimitive<[$ty; N]> for [$ty; N] {
+            #[inline]
+            fn write<const M: usize>(&self, cursor: Cursor<'_, M>, _buffer_position: u32) {
+                let mut bytes = [0u8; M];
+                let mut offset = 0;
+                for v in self.iter() {
+                    bytes[offset..offset + $size].copy_from_slice(&v.to_le_bytes());
+                    offset += $size;
+                }
+                cursor.finish(bytes);
+            }
+        }
     };
 }
 

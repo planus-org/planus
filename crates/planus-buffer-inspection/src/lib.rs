@@ -125,8 +125,8 @@ pub enum Object<'a> {
     /// 4 bytes length field. The actual elements are their own values
     Vector(VectorObject<'a>),
 
-    /// 0 bytes, actual elements are their own values
-    Array(ArrayObject<'a>),
+    /// A fixed-size array; the elements are its children
+    Array(ArrayObject),
 
     /// 1, 2, 4 or 8 bytes of integer data
     Integer(IntegerObject),
@@ -322,17 +322,21 @@ pub struct UnionVectorValuesObject {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct ArrayObject<'a> {
+pub struct ArrayObject {
     pub offset: ByteIndex,
-    pub type_: &'a Type,
+    /// The (scalar) element type.
+    pub type_: SimpleType,
+    /// The number of elements.
     pub size: u32,
+    /// The byte size of a single element.
+    pub stride: u32,
 }
 
-impl ArrayObject<'_> {
+impl ArrayObject {
     pub fn type_name(&self, declarations: &Declarations) -> String {
         format!(
             "[{}; {}]",
-            declarations.format_type_kind(&self.type_.kind),
+            declarations.format_type_kind(&TypeKind::SimpleType(self.type_)),
             self.size
         )
     }
@@ -555,7 +559,8 @@ impl TableObject {
                 offset,
                 kind: OffsetObjectKind::Vector(type_),
             }),
-            TypeKind::Array(ref _type_, _size) => todo!(),
+            // Arrays are only valid inside structs, never as table fields.
+            TypeKind::Array(ref _type_, _size) => return Ok(None),
             TypeKind::SimpleType(type_) => match type_ {
                 SimpleType::Struct(declaration) => Object::Struct(StructObject {
                     offset,
@@ -603,6 +608,21 @@ impl StructObject {
         };
 
         let offset = self.offset + field.offset;
+        if let Some(size) = field.array_len {
+            let stride = match field.type_ {
+                SimpleType::Integer(type_) => type_.byte_size(),
+                SimpleType::Float(type_) => type_.byte_size(),
+                SimpleType::Bool => 1,
+                // Non-scalar array elements are rejected during translation.
+                SimpleType::Struct(_) | SimpleType::Enum(_) => return Err(Error),
+            };
+            return Ok(Object::Array(ArrayObject {
+                offset,
+                type_: field.type_,
+                size,
+                stride,
+            }));
+        }
         let object = match field.type_ {
             SimpleType::Struct(declaration) => Object::Struct(StructObject {
                 offset,

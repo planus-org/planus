@@ -27,6 +27,16 @@ impl ::core::default::Default for {{ info.owned_name }} {
 }
 {% endif %}
 
+{%- match info.file_identifier -%}
+{%- when Some(id_literal) -%}
+impl {{ info.owned_name }} {
+    /// The 4-byte file identifier for this table, declared via `file_identifier`
+    /// on the schema whose `root_type` is this table.
+    pub const IDENTIFIER: [u8; 4] = {{ id_literal }};
+}
+{%- when None -%}
+{%- endmatch %}
+
 impl {{info.owned_name}} {
     /// Creates a [{{info.builder_name}}] for serializing an instance of this table.
     #[inline]

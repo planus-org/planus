@@ -37,6 +37,9 @@ pub struct Table {
     pub builder_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
+    /// The `[u8; 4]` literal for this table's file identifier, if it is a root_type
+    /// with a `file_identifier`.
+    pub file_identifier: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +84,7 @@ pub struct StructField {
 pub struct Enum {
     pub name: String,
     pub repr_type: String,
+    pub is_bit_flags: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -213,7 +217,7 @@ impl Backend for RustBackend {
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
-        _decl: &intermediate::Table,
+        decl: &intermediate::Table,
     ) -> Table {
         let decl_name = decl_name.0.last().unwrap();
         Table {
@@ -222,6 +226,9 @@ impl Backend for RustBackend {
             builder_name: reserve_type_name(&format!("{decl_name}Builder"), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
+            file_identifier: decl
+                .file_identifier
+                .map(|id| format!("[{}, {}, {}, {}]", id[0], id[1], id[2], id[3])),
         }
     }
 
@@ -255,6 +262,7 @@ impl Backend for RustBackend {
         Enum {
             name: reserve_type_name(decl_name, declaration_names),
             repr_type: format!("{:?}", decl.type_).to_lowercase(),
+            is_bit_flags: decl.is_bit_flags,
         }
     }
 
@@ -485,6 +493,16 @@ impl Backend for RustBackend {
                         );
                         deserialize_default = Some(impl_default_code.clone());
                     }
+                    // bit_flags fields carry a numeric default (the empty set, or an
+                    // explicit flag combination) rather than a single named variant.
+                    AssignMode::HasDefault(Literal::Int(lit)) => {
+                        read_type = vtable_type.clone();
+                        owned_type = vtable_type.clone();
+                        create_trait = format!("WriteAsDefault<{owned_type}, {owned_type}>");
+                        impl_default_code = format!("{owned_type}({lit})").into();
+                        serialize_default = Some(format!("&{owned_type}({lit})").into());
+                        deserialize_default = Some(impl_default_code.clone());
+                    }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{vtable_type}>");
                         owned_type = read_type.clone();
@@ -574,6 +592,10 @@ impl Backend for RustBackend {
                             "::planus::Vector<'a, ::planus::Result<{}<'a>>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
                         ),
+                        ResolvedType::Enum(_, decl, info, relative_namespace, _) if decl.is_bit_flags => format!(
+                            "::planus::Vector<'a, {}>",
+                            format_relative_namespace(relative_namespace, &info.name)
+                        ),
                         ResolvedType::Enum(_, _, info, relative_namespace, _) => format!(
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
@@ -608,6 +630,8 @@ impl Backend for RustBackend {
                 }
                 fn vector_try_into_func(type_: &ResolvedType<'_, RustBackend>) -> &'static str {
                     match type_ {
+                        // bit_flags enums read infallibly, like plain integers.
+                        ResolvedType::Enum(_, decl, ..) if decl.is_bit_flags => "to_vec",
                         ResolvedType::Table(..)
                         | ResolvedType::Enum(..)
                         | ResolvedType::Vector(..)
@@ -846,21 +870,30 @@ impl Backend for RustBackend {
             }
             ResolvedType::Enum(_, decl, info, relative_namespace, _) => {
                 owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
-                getter_return_type = format!(
-                    "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
-                );
-                getter_code = format!(
-                    r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
+                if decl.is_bit_flags {
+                    // Any integer is a valid set of flags, so reading is infallible.
+                    getter_return_type = owned_type.clone();
+                    getter_code = format!(
+                        "{owned_type}({}::from_le_bytes(*buffer.as_array()))",
+                        integer_type(&decl.type_),
+                    );
+                } else {
+                    getter_return_type = format!(
+                        "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
+                    );
+                    getter_code = format!(
+                        r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
                     value.map_err(|e| e.with_error_location(
                         {:?},
                         {:?},
                         buffer.offset_from_start,
                     ))"#,
-                    owned_type,
-                    integer_type(&decl.type_),
-                    parent_info.ref_name,
-                    name
-                );
+                        owned_type,
+                        integer_type(&decl.type_),
+                        parent_info.ref_name,
+                        name
+                    );
+                }
                 can_do_infallible_conversion = true;
             }
             ResolvedType::Bool => {
@@ -879,6 +912,20 @@ impl Backend for RustBackend {
                 owned_type = float_type(&typ).to_string();
                 getter_return_type = owned_type.clone();
                 getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
+                can_do_infallible_conversion = true;
+            }
+            ResolvedType::Array(inner, n) => {
+                let (elem_type, elem_size) = match *inner {
+                    ResolvedType::Integer(typ) => (integer_type(&typ).to_string(), typ.byte_size()),
+                    ResolvedType::Float(typ) => (float_type(&typ).to_string(), typ.byte_size()),
+                    // Non-scalar array elements are rejected during translation.
+                    _ => unreachable!(),
+                };
+                owned_type = format!("[{elem_type}; {n}]");
+                getter_return_type = owned_type.clone();
+                getter_code = format!(
+                    "let buffer = buffer.as_array();\n::core::array::from_fn(|i| {elem_type}::from_le_bytes(::core::convert::TryInto::try_into(&buffer[i * {elem_size}..(i + 1) * {elem_size}]).unwrap()))"
+                );
                 can_do_infallible_conversion = true;
             }
             _ => unreachable!(),

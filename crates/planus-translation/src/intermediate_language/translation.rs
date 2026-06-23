@@ -22,6 +22,16 @@ pub struct Translator<'a> {
     declarations: IndexMap<AbsolutePath, Declaration>,
     namespaces: IndexMap<AbsolutePath, Namespace>,
     descriptions: Vec<TypeDescription>,
+    /// `(file_identifier)` declarations, resolved against their `root_type` in `finish`.
+    file_identifiers: Vec<FileIdentifier>,
+}
+
+/// A schema-level `file_identifier` together with the `root_type` it attaches to.
+struct FileIdentifier {
+    namespace: AbsolutePath,
+    file_id: FileId,
+    root_type: Option<(Span, ast::Type)>,
+    identifier: [u8; 4],
 }
 
 #[derive(Clone)]
@@ -60,6 +70,7 @@ impl<'a> Translator<'a> {
             declarations: Default::default(),
             descriptions: Default::default(),
             namespaces: Default::default(),
+            file_identifiers: Default::default(),
         }
     }
 
@@ -128,6 +139,22 @@ impl<'a> Translator<'a> {
                 ast::TypeDeclarationKind::Union(_) => TypeDescription::Union,
                 ast::TypeDeclarationKind::RpcService(_) => TypeDescription::RpcService,
             })
+        }
+
+        if let Some((_, lit)) = &schema.file_identifier {
+            match <[u8; 4]>::try_from(lit.value.as_bytes()) {
+                Ok(identifier) => self.file_identifiers.push(FileIdentifier {
+                    namespace: namespace_path.clone(),
+                    file_id: schema.file_id,
+                    root_type: schema.root_type.clone(),
+                    identifier,
+                }),
+                Err(_) => self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(schema.file_id, lit.span)],
+                    Some("file_identifier must be exactly 4 bytes"),
+                ),
+            }
         }
 
         while let Some(last) = namespace_path.pop() {
@@ -643,20 +670,38 @@ impl<'a> Translator<'a> {
                 self.ctx.resolve_identifier(*ident),
                 StructField {
                     type_,
+                    array_len: None,
                     offset: u32::MAX,
                     size: u32::MAX,
                     padding_after_field: u32::MAX,
                     docstrings: field.docstrings.clone(),
                 },
             )),
-            TypeKind::Array(_, _) => {
-                self.ctx.emit_error(
-                    ErrorKind::TYPE_ERROR,
-                    std::iter::once(Label::primary(current_file_id, field.type_.span)),
-                    Some("Arrays are not currently supported in planus"),
-                );
-                None
-            }
+            TypeKind::Array(inner, size) => match inner.kind {
+                // Fixed-size arrays of scalars are stored inline. Other element
+                // types (structs, enums, bool, nested arrays) are not yet supported.
+                TypeKind::SimpleType(element @ (SimpleType::Integer(_) | SimpleType::Float(_))) => {
+                    Some((
+                        self.ctx.resolve_identifier(*ident),
+                        StructField {
+                            type_: element,
+                            array_len: Some(size),
+                            offset: u32::MAX,
+                            size: u32::MAX,
+                            padding_after_field: u32::MAX,
+                            docstrings: field.docstrings.clone(),
+                        },
+                    ))
+                }
+                _ => {
+                    self.ctx.emit_error(
+                        ErrorKind::TYPE_ERROR,
+                        std::iter::once(Label::primary(current_file_id, inner.span)),
+                        Some("Only fixed-size arrays of integers and floats are currently supported in planus"),
+                    );
+                    None
+                }
+            },
         }
     }
 
@@ -1160,38 +1205,92 @@ impl<'a> Translator<'a> {
             max_size: u32::MAX,
             max_vtable_size,
             max_alignment: u32::MAX,
+            // Filled in by `finish` once `root_type`/`file_identifier` are resolved.
+            file_identifier: None,
         }
     }
 
     fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
         let alignment = decl.type_.byte_size();
+        let mut is_bit_flags = false;
+        let mut bit_flags_span = None;
         for m in &decl.metadata.values {
-            self.emit_metadata_support_error(
-                current_file_id,
-                m,
-                "enums",
-                m.kind.accepted_on_enums(),
+            match m.kind {
+                MetadataValueKind::BitFlags => {
+                    is_bit_flags = true;
+                    bit_flags_span = Some(m.span);
+                }
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "enums",
+                        m.kind.accepted_on_enums(),
+                    );
+                }
+            }
+        }
+
+        if is_bit_flags && !decl.type_.is_unsigned() {
+            self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, bit_flags_span.unwrap())
+                    .with_message("the underlying type of a bit_flags enum must be unsigned")],
+                Some(&format!("{} is signed", decl.type_.flatbuffer_name())),
             );
         }
 
         let mut variants: IndexMap<IntegerLiteral, EnumVariant> = IndexMap::new();
         let mut next_value = IntegerLiteral::default_value_from_type(&decl.type_);
+        let mut next_position = 0u32;
         for (ident, variant) in decl.variants.iter() {
-            let mut value = next_value;
             let name = self.ctx.resolve_identifier(*ident);
-            if let Some(assignment) = &variant.value {
-                if let Some(v) = self.translate_integer(
-                    current_file_id,
-                    assignment.span,
-                    assignment.is_negative,
-                    &assignment.value,
-                    &decl.type_,
-                ) {
-                    value = v;
+            // For bit_flags enums each member's literal is a bit *position*, and its
+            // stored value is `1 << position`; for plain enums the literal is the value.
+            let value = if is_bit_flags {
+                let position = if let Some(assignment) = &variant.value {
+                    match self.translate_integer(
+                        current_file_id,
+                        assignment.span,
+                        assignment.is_negative,
+                        &assignment.value,
+                        &decl.type_,
+                    ) {
+                        Some(v) => v.to_u64() as u32,
+                        None => continue,
+                    }
                 } else {
+                    next_position
+                };
+                let Some(value) = IntegerLiteral::from_bit_position(&decl.type_, position) else {
+                    self.ctx.emit_error(
+                        ErrorKind::NUMERICAL_RANGE_ERROR,
+                        [Label::primary(current_file_id, variant.span)
+                            .with_message("bit flag is out of range of the underlying type")],
+                        None,
+                    );
                     continue;
                 };
-            }
+                next_position = position + 1;
+                value
+            } else {
+                let mut value = next_value;
+                if let Some(assignment) = &variant.value {
+                    if let Some(v) = self.translate_integer(
+                        current_file_id,
+                        assignment.span,
+                        assignment.is_negative,
+                        &assignment.value,
+                        &decl.type_,
+                    ) {
+                        value = v;
+                    } else {
+                        continue;
+                    };
+                }
+                next_value = value.next();
+                value
+            };
             match variants.entry(value) {
                 Entry::Occupied(entry) => {
                     self.ctx.emit_error(
@@ -1215,12 +1314,12 @@ impl<'a> Translator<'a> {
                     });
                 }
             }
-            next_value = value.next();
         }
         Enum {
             variants,
             type_: decl.type_,
             alignment,
+            is_bit_flags,
         }
     }
 
@@ -1380,6 +1479,13 @@ impl<'a> Translator<'a> {
                 SimpleType::Integer(ast::IntegerType::I64)
                 | SimpleType::Integer(ast::IntegerType::U64)
                 | SimpleType::Float(FloatType::F64) => (8, 8),
+            };
+
+            // A fixed-size array occupies `element_size * len` bytes but keeps the
+            // element's alignment.
+            let cur_size = match get_struct_decl!().fields[field_id].array_len {
+                Some(len) => cur_size * len,
+                None => cur_size,
             };
 
             let (_ast_decl, ast_kind) = get_ast_decl!();
@@ -1566,6 +1672,39 @@ impl<'a> Translator<'a> {
         }
         self.resolve_table_sizes();
 
+        // Attach each schema-level file_identifier to the table named by its root_type.
+        // A file_identifier without a root_type has nothing to attach to and is ignored,
+        // matching flatc.
+        for fi in std::mem::take(&mut self.file_identifiers) {
+            let Some((_, root_type)) = &fi.root_type else {
+                continue;
+            };
+            let ast::TypeKind::Path(path) = &root_type.kind else {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(fi.file_id, root_type.span)],
+                    Some("root_type must name a table"),
+                );
+                continue;
+            };
+            match self.lookup_path(&fi.namespace, fi.file_id, path) {
+                Some(TypeKind::Table(idx)) => {
+                    if let Some((_, decl)) = self.declarations.get_index_mut(idx.0) {
+                        if let DeclarationKind::Table(table) = &mut decl.kind {
+                            table.file_identifier = Some(fi.identifier);
+                        }
+                    }
+                }
+                Some(_) => self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(fi.file_id, root_type.span)],
+                    Some("root_type must name a table"),
+                ),
+                // lookup_path already emitted an error for an unresolved path.
+                None => {}
+            }
+        }
+
         Declarations::new(self.namespaces, self.declarations)
     }
 
@@ -1604,17 +1743,25 @@ impl<'a> Translator<'a> {
 
     pub fn default_value_for_enum(&self, declaration_index: DeclarationIndex) -> Option<Literal> {
         match &self.descriptions[declaration_index.0] {
-            TypeDescription::Enum(decl) => decl
-                .variants
-                .iter()
-                .enumerate()
-                .filter_map(|(variant_index, (k, _v))| {
-                    (k.is_zero()).then_some(Literal::EnumTag {
-                        variant_index,
-                        value: *k,
+            TypeDescription::Enum(decl) => {
+                // A bit_flags field always defaults to the empty set (0), even though
+                // 0 is not a named variant.
+                if decl.is_bit_flags {
+                    return Some(Literal::Int(IntegerLiteral::default_value_from_type(
+                        &decl.type_,
+                    )));
+                }
+                decl.variants
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(variant_index, (k, _v))| {
+                        (k.is_zero()).then_some(Literal::EnumTag {
+                            variant_index,
+                            value: *k,
+                        })
                     })
-                })
-                .next(),
+                    .next()
+            }
             _ => unreachable!(),
         }
     }
