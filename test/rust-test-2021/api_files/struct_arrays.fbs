@@ -1,0 +1,18 @@
+struct Uuid { uuid: [uint8:16]; }
+
+struct Mat { data: [double:9]; }
+
+// Exercises an array sandwiched between scalars of different alignment.
+struct Mixed {
+  a: ubyte;
+  vals: [float:4];
+  b: uint64;
+}
+
+table Holder {
+  id: Uuid (required);
+  cov: Mat (required);
+  mix: Mixed (required);
+}
+
+root_type Holder;

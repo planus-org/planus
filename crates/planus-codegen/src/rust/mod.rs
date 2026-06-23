@@ -908,6 +908,20 @@ impl Backend for RustBackend {
                 getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
                 can_do_infallible_conversion = true;
             }
+            ResolvedType::Array(inner, n) => {
+                let (elem_type, elem_size) = match *inner {
+                    ResolvedType::Integer(typ) => (integer_type(&typ).to_string(), typ.byte_size()),
+                    ResolvedType::Float(typ) => (float_type(&typ).to_string(), typ.byte_size()),
+                    // Non-scalar array elements are rejected during translation.
+                    _ => unreachable!(),
+                };
+                owned_type = format!("[{elem_type}; {n}]");
+                getter_return_type = owned_type.clone();
+                getter_code = format!(
+                    "let buffer = buffer.as_array();\n::core::array::from_fn(|i| {elem_type}::from_le_bytes(::core::convert::TryInto::try_into(&buffer[i * {elem_size}..(i + 1) * {elem_size}]).unwrap()))"
+                );
+                can_do_infallible_conversion = true;
+            }
             _ => unreachable!(),
         }
         StructField {

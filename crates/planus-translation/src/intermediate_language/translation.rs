@@ -643,20 +643,38 @@ impl<'a> Translator<'a> {
                 self.ctx.resolve_identifier(*ident),
                 StructField {
                     type_,
+                    array_len: None,
                     offset: u32::MAX,
                     size: u32::MAX,
                     padding_after_field: u32::MAX,
                     docstrings: field.docstrings.clone(),
                 },
             )),
-            TypeKind::Array(_, _) => {
-                self.ctx.emit_error(
-                    ErrorKind::TYPE_ERROR,
-                    std::iter::once(Label::primary(current_file_id, field.type_.span)),
-                    Some("Arrays are not currently supported in planus"),
-                );
-                None
-            }
+            TypeKind::Array(inner, size) => match inner.kind {
+                // Fixed-size arrays of scalars are stored inline. Other element
+                // types (structs, enums, bool, nested arrays) are not yet supported.
+                TypeKind::SimpleType(element @ (SimpleType::Integer(_) | SimpleType::Float(_))) => {
+                    Some((
+                        self.ctx.resolve_identifier(*ident),
+                        StructField {
+                            type_: element,
+                            array_len: Some(size),
+                            offset: u32::MAX,
+                            size: u32::MAX,
+                            padding_after_field: u32::MAX,
+                            docstrings: field.docstrings.clone(),
+                        },
+                    ))
+                }
+                _ => {
+                    self.ctx.emit_error(
+                        ErrorKind::TYPE_ERROR,
+                        std::iter::once(Label::primary(current_file_id, inner.span)),
+                        Some("Only fixed-size arrays of integers and floats are currently supported in planus"),
+                    );
+                    None
+                }
+            },
         }
     }
 
@@ -1432,6 +1450,13 @@ impl<'a> Translator<'a> {
                 SimpleType::Integer(ast::IntegerType::I64)
                 | SimpleType::Integer(ast::IntegerType::U64)
                 | SimpleType::Float(FloatType::F64) => (8, 8),
+            };
+
+            // A fixed-size array occupies `element_size * len` bytes but keeps the
+            // element's alignment.
+            let cur_size = match get_struct_decl!().fields[field_id].array_len {
+                Some(len) => cur_size * len,
+                None => cur_size,
             };
 
             let (_ast_decl, ast_kind) = get_ast_decl!();

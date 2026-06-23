@@ -303,7 +303,11 @@ pub struct Struct {
 
 #[derive(Debug)]
 pub struct StructField {
+    /// The (element) type of the field. For a fixed-size array field this is the
+    /// element type and `array_len` carries the length.
     pub type_: SimpleType,
+    /// `Some(n)` if this field is a fixed-size array `[type_; n]`.
+    pub array_len: Option<u32>,
     pub offset: u32,
     pub size: u32,
     pub padding_after_field: u32,

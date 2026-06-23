@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add support for `(bit_flags)` enums, generated as a dependency-free flags newtype
+- Add support for fixed-size arrays of scalars in structs (e.g. `[uint8:16]`)
 
 ### Fixed
 
