@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use planus_types::{ast::IntegerType, intermediate::TypeKind};
+use planus_types::{
+    ast::IntegerType,
+    intermediate::{SimpleType, TypeKind},
+};
 
 use crate::{
     object_info::DeclarationInfo, ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject,
@@ -208,12 +211,24 @@ impl<'a> Children<'a> for VectorObject<'a> {
     }
 }
 
-impl<'a> Children<'a> for ArrayObject<'a> {
+impl<'a> Children<'a> for ArrayObject {
     fn children(
         &self,
         _buffer: &InspectableFlatbuffer<'a>,
-        _callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
+        mut callback: impl FnMut(Option<Cow<'a, str>>, Object<'a>),
     ) {
+        for i in 0..self.size {
+            let offset = self.offset + i * self.stride;
+            let object = match self.type_ {
+                SimpleType::Integer(type_) => Object::Integer(IntegerObject { offset, type_ }),
+                SimpleType::Float(type_) => Object::Float(FloatObject { offset, type_ }),
+                SimpleType::Bool => Object::Bool(BoolObject { offset }),
+                // Non-scalar array elements are rejected during translation, so an
+                // ArrayObject is never built for them.
+                SimpleType::Struct(_) | SimpleType::Enum(_) => continue,
+            };
+            callback(Some(Cow::Owned(i.to_string())), object);
+        }
     }
 }
 
@@ -401,9 +416,9 @@ impl Byterange for VectorObject<'_> {
     }
 }
 
-impl Byterange for ArrayObject<'_> {
+impl Byterange for ArrayObject {
     fn byterange(&self, _buffer: &InspectableFlatbuffer<'_>) -> (ByteIndex, ByteIndex) {
-        (self.offset, self.offset)
+        (self.offset, self.offset + self.size * self.stride)
     }
 }
 

@@ -218,9 +218,9 @@ impl<'a> ObjectName<'a> for UnionVectorValuesObject {
     }
 }
 
-impl<'a> ObjectName<'a> for ArrayObject<'a> {
+impl<'a> ObjectName<'a> for ArrayObject {
     fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        "ARRAY".to_string() // TODO
+        format!("[{} elements]", self.size)
     }
 }
 
@@ -261,7 +261,25 @@ impl<'a> ObjectName<'a> for EnumObject {
         if let DeclarationKind::Enum(e) = &decl.kind {
             let tag = tag.read(buffer).unwrap();
             let path = path.0.last().unwrap();
-            if let Some(variant) = e.variants.get(&tag) {
+            if e.is_bit_flags {
+                let mut value = tag.to_u64();
+                let mut parts = Vec::new();
+                for (flag, variant) in &e.variants {
+                    let flag = flag.to_u64();
+                    if flag != 0 && value & flag == flag {
+                        parts.push(format!("{path}::{}", variant.name));
+                        value &= !flag;
+                    }
+                }
+                if value != 0 {
+                    parts.push(format!("{path}::UnknownBits({value:#x})"));
+                }
+                if parts.is_empty() {
+                    format!("{path}::empty")
+                } else {
+                    parts.join(" | ")
+                }
+            } else if let Some(variant) = e.variants.get(&tag) {
                 format!("{path}::{}", variant.name)
             } else {
                 format!("{path}::UnknownTag({tag})")
