@@ -22,6 +22,16 @@ pub struct Translator<'a> {
     declarations: IndexMap<AbsolutePath, Declaration>,
     namespaces: IndexMap<AbsolutePath, Namespace>,
     descriptions: Vec<TypeDescription>,
+    /// `(file_identifier)` declarations, resolved against their `root_type` in `finish`.
+    file_identifiers: Vec<FileIdentifier>,
+}
+
+/// A schema-level `file_identifier` together with the `root_type` it attaches to.
+struct FileIdentifier {
+    namespace: AbsolutePath,
+    file_id: FileId,
+    root_type: Option<(Span, ast::Type)>,
+    identifier: [u8; 4],
 }
 
 #[derive(Clone)]
@@ -60,6 +70,7 @@ impl<'a> Translator<'a> {
             declarations: Default::default(),
             descriptions: Default::default(),
             namespaces: Default::default(),
+            file_identifiers: Default::default(),
         }
     }
 
@@ -128,6 +139,22 @@ impl<'a> Translator<'a> {
                 ast::TypeDeclarationKind::Union(_) => TypeDescription::Union,
                 ast::TypeDeclarationKind::RpcService(_) => TypeDescription::RpcService,
             })
+        }
+
+        if let Some((_, lit)) = &schema.file_identifier {
+            match <[u8; 4]>::try_from(lit.value.as_bytes()) {
+                Ok(identifier) => self.file_identifiers.push(FileIdentifier {
+                    namespace: namespace_path.clone(),
+                    file_id: schema.file_id,
+                    root_type: schema.root_type.clone(),
+                    identifier,
+                }),
+                Err(_) => self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(schema.file_id, lit.span)],
+                    Some("file_identifier must be exactly 4 bytes"),
+                ),
+            }
         }
 
         while let Some(last) = namespace_path.pop() {
@@ -1178,6 +1205,8 @@ impl<'a> Translator<'a> {
             max_size: u32::MAX,
             max_vtable_size,
             max_alignment: u32::MAX,
+            // Filled in by `finish` once `root_type`/`file_identifier` are resolved.
+            file_identifier: None,
         }
     }
 
@@ -1642,6 +1671,39 @@ impl<'a> Translator<'a> {
             assert!(parents.is_empty());
         }
         self.resolve_table_sizes();
+
+        // Attach each schema-level file_identifier to the table named by its root_type.
+        // A file_identifier without a root_type has nothing to attach to and is ignored,
+        // matching flatc.
+        for fi in std::mem::take(&mut self.file_identifiers) {
+            let Some((_, root_type)) = &fi.root_type else {
+                continue;
+            };
+            let ast::TypeKind::Path(path) = &root_type.kind else {
+                self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(fi.file_id, root_type.span)],
+                    Some("root_type must name a table"),
+                );
+                continue;
+            };
+            match self.lookup_path(&fi.namespace, fi.file_id, path) {
+                Some(TypeKind::Table(idx)) => {
+                    if let Some((_, decl)) = self.declarations.get_index_mut(idx.0) {
+                        if let DeclarationKind::Table(table) = &mut decl.kind {
+                            table.file_identifier = Some(fi.identifier);
+                        }
+                    }
+                }
+                Some(_) => self.ctx.emit_error(
+                    ErrorKind::TYPE_ERROR,
+                    [Label::primary(fi.file_id, root_type.span)],
+                    Some("root_type must name a table"),
+                ),
+                // lookup_path already emitted an error for an unresolved path.
+                None => {}
+            }
+        }
 
         Declarations::new(self.namespaces, self.declarations)
     }

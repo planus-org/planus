@@ -37,6 +37,9 @@ pub struct Table {
     pub builder_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
+    /// The `[u8; 4]` literal for this table's file identifier, if it is a root_type
+    /// with a `file_identifier`.
+    pub file_identifier: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -214,7 +217,7 @@ impl Backend for RustBackend {
         _translated_namespaces: &[Self::NamespaceInfo],
         decl_id: DeclarationIndex,
         decl_name: &AbsolutePath,
-        _decl: &intermediate::Table,
+        decl: &intermediate::Table,
     ) -> Table {
         let decl_name = decl_name.0.last().unwrap();
         Table {
@@ -223,6 +226,9 @@ impl Backend for RustBackend {
             builder_name: reserve_type_name(&format!("{decl_name}Builder"), declaration_names),
             should_do_default: self.default_analysis[decl_id.0],
             should_do_eq: self.eq_analysis[decl_id.0],
+            file_identifier: decl
+                .file_identifier
+                .map(|id| format!("[{}, {}, {}, {}]", id[0], id[1], id[2], id[3])),
         }
     }
 

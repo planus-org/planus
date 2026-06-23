@@ -249,6 +249,8 @@ pub struct Table {
     pub max_size: u32,
     pub max_vtable_size: u32,
     pub max_alignment: u32,
+    /// The 4-byte file identifier this table is the `root_type` for, if any.
+    pub file_identifier: Option<[u8; 4]>,
 }
 
 #[derive(Debug)]

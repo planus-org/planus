@@ -58,6 +58,15 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[doc(hidden)]
 pub type Cursor<'a, const N: usize> = array_init_cursor::Cursor<'a, u8, N>;
 
+/// Returns `true` if `buffer` carries the given 4-byte file identifier.
+///
+/// FlatBuffers stores an optional file identifier in bytes 4..8, immediately
+/// after the root table offset. This checks for its presence, matching the
+/// identifier written by [`Builder::finish`] when given `Some(identifier)`.
+pub fn buffer_has_identifier(buffer: &[u8], identifier: [u8; 4]) -> bool {
+    buffer.len() >= 8 && buffer[4..8] == identifier
+}
+
 #[doc(hidden)]
 pub enum Void {}
 

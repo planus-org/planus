@@ -11,8 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for `(bit_flags)` enums, generated as a dependency-free flags newtype
 - Add support for fixed-size arrays of scalars in structs (e.g. `[uint8:16]`)
+- Honor `file_identifier`/`root_type`: generate a `IDENTIFIER` associated constant for
+  the root table and add a `planus::buffer_has_identifier` runtime helper
 
 ### Fixed
+
+- Write the file identifier into bytes 4..8 (after the root offset) so buffers produced
+  by `Builder::finish(.., Some(id))` are byte-compatible with the official implementation
 
 ### Removed
 
