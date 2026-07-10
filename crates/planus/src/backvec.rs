@@ -128,7 +128,7 @@ impl Drop for BackVec {
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 
