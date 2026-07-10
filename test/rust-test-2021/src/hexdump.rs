@@ -24,11 +24,9 @@ pub fn hexdump_flatbuffer_table(buf: &[u8]) -> String {
     writeln!(out, "vtable @ 0x{vtable_start:02x}..0x{vtable_end:02x}").unwrap();
 
     let mut fields = vec![(obj_end, usize::MAX)];
-    for (i, field_offset) in buf[vtable_start + 4..vtable_end]
-        .chunks_exact(2)
-        .enumerate()
-    {
-        let field_offset = u16::from_le_bytes(field_offset.try_into().unwrap()) as usize;
+    let (field_offsets, _) = buf[vtable_start + 4..vtable_end].as_chunks::<2>();
+    for (i, field_offset) in field_offsets.iter().enumerate() {
+        let field_offset = u16::from_le_bytes(*field_offset) as usize;
         if field_offset != 0 {
             fields.push((obj_start + field_offset, i));
         }

@@ -455,10 +455,8 @@ impl VTableObject {
     ) -> Result<impl 'a + ExactSizeIterator<Item = u16> + DoubleEndedIterator> {
         let size = self.get_vtable_size(buffer)?;
         let slice: &[u8] = buffer.read_slice(self.offset, size as usize)?;
-        Ok(slice[4..].chunks_exact(2).map(move |chunk| {
-            let slice: &[u8; 2] = chunk.try_into().unwrap();
-            u16::from_le_bytes(*slice)
-        }))
+        let (chunks, _) = slice[4..].as_chunks::<2>();
+        Ok(chunks.iter().map(move |chunk| u16::from_le_bytes(*chunk)))
     }
 
     fn type_name(&self, declarations: &Declarations) -> String {
