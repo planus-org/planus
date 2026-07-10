@@ -173,6 +173,87 @@ fn format_relative_namespace<'a>(
     )
 }
 
+struct StructFieldType {
+    owned_type: String,
+    getter_return_type: String,
+    getter_code: String,
+    can_do_infallible_conversion: bool,
+}
+
+impl RustBackend {
+    fn struct_field_type(
+        &self,
+        resolved_type: ResolvedType<'_, Self>,
+        parent_info: &Struct,
+        name: &str,
+    ) -> StructFieldType {
+        match resolved_type {
+            ResolvedType::Struct(decl_id, _, info, relative_namespace) => {
+                let owned_type =
+                    format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
+                let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
+                StructFieldType {
+                    owned_type,
+                    getter_return_type: format!("{ref_name}<'a>"),
+                    getter_code: "::core::convert::From::from(buffer)".to_string(),
+                    can_do_infallible_conversion: self.infallible_analysis[decl_id.0],
+                }
+            }
+            ResolvedType::Enum(_, decl, info, relative_namespace, _) => {
+                let owned_type =
+                    format_relative_namespace(&relative_namespace, &info.name).to_string();
+                StructFieldType {
+                    getter_return_type: format!(
+                        "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
+                    ),
+                    getter_code: format!(
+                        r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
+                    value.map_err(|e| e.with_error_location(
+                        {:?},
+                        {:?},
+                        buffer.offset_from_start,
+                    ))"#,
+                        owned_type,
+                        integer_type(&decl.type_),
+                        parent_info.ref_name,
+                        name
+                    ),
+                    can_do_infallible_conversion: true,
+                    owned_type,
+                }
+            }
+            ResolvedType::Bool => {
+                let owned_type = "bool".to_string();
+                StructFieldType {
+                    getter_return_type: owned_type.clone(),
+                    getter_code: "buffer.as_array()[0] != 0".to_string(),
+                    can_do_infallible_conversion: true,
+                    owned_type,
+                }
+            }
+            ResolvedType::Integer(typ) => {
+                let owned_type = integer_type(&typ).to_string();
+                StructFieldType {
+                    getter_return_type: owned_type.clone(),
+                    getter_code: format!("{owned_type}::from_le_bytes(*buffer.as_array())"),
+                    can_do_infallible_conversion: true,
+                    owned_type,
+                }
+            }
+            ResolvedType::Float(typ) => {
+                let owned_type = float_type(&typ).to_string();
+                StructFieldType {
+                    getter_return_type: owned_type.clone(),
+                    getter_code: format!("{owned_type}::from_le_bytes(*buffer.as_array())"),
+                    can_do_infallible_conversion: true,
+                    owned_type,
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl Backend for RustBackend {
     type NamespaceInfo = Namespace;
     type TableInfo = Table;
@@ -830,59 +911,12 @@ impl Backend for RustBackend {
             "name",
             &mut translation_context.declaration_names,
         );
-        let owned_type;
-        let getter_code;
-        let getter_return_type;
-        let can_do_infallible_conversion;
-
-        match resolved_type {
-            ResolvedType::Struct(decl_id, _, info, relative_namespace) => {
-                owned_type =
-                    format_relative_namespace(&relative_namespace, &info.owned_name).to_string();
-                let ref_name = format_relative_namespace(&relative_namespace, &info.ref_name);
-                getter_return_type = format!("{ref_name}<'a>");
-                getter_code = "::core::convert::From::from(buffer)".to_string();
-                can_do_infallible_conversion = self.infallible_analysis[decl_id.0];
-            }
-            ResolvedType::Enum(_, decl, info, relative_namespace, _) => {
-                owned_type = format_relative_namespace(&relative_namespace, &info.name).to_string();
-                getter_return_type = format!(
-                    "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
-                );
-                getter_code = format!(
-                    r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
-                    value.map_err(|e| e.with_error_location(
-                        {:?},
-                        {:?},
-                        buffer.offset_from_start,
-                    ))"#,
-                    owned_type,
-                    integer_type(&decl.type_),
-                    parent_info.ref_name,
-                    name
-                );
-                can_do_infallible_conversion = true;
-            }
-            ResolvedType::Bool => {
-                owned_type = "bool".to_string();
-                getter_return_type = owned_type.clone();
-                getter_code = "buffer.as_array()[0] != 0".to_string();
-                can_do_infallible_conversion = true;
-            }
-            ResolvedType::Integer(typ) => {
-                owned_type = integer_type(&typ).to_string();
-                getter_return_type = owned_type.clone();
-                getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
-                can_do_infallible_conversion = true;
-            }
-            ResolvedType::Float(typ) => {
-                owned_type = float_type(&typ).to_string();
-                getter_return_type = owned_type.clone();
-                getter_code = format!("{owned_type}::from_le_bytes(*buffer.as_array())");
-                can_do_infallible_conversion = true;
-            }
-            _ => unreachable!(),
-        }
+        let StructFieldType {
+            owned_type,
+            getter_return_type,
+            getter_code,
+            can_do_infallible_conversion,
+        } = self.struct_field_type(resolved_type, parent_info, &name);
         StructField {
             name,
             owned_type,
