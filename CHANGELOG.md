@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add `--version` option to planus-cli
+- Add `--version` option to planus-cli [#364](https://github.com/planus-org/planus/pull/364)
 
 ### Fixed
 
