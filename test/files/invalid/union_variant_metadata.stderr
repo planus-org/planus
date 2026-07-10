@@ -1,0 +1,12 @@
+error: metadata on union variants is not supported
+  ┌─ test/files/invalid/union_variant_metadata.fbs:2:7
+  │
+2 │   Foo (custom_attr),
+  │       ^^^^^^^^^^^^^
+
+error: metadata on union variants is not supported
+  ┌─ test/files/invalid/union_variant_metadata.fbs:3:7
+  │
+3 │   Bar (deprecated),
+  │       ^^^^^^^^^^^^
+

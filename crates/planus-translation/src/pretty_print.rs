@@ -554,6 +554,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 .iter()
                 .flat_map(|(ident, equals)| [&ident.token_metadata, &equals.token_metadata])
                 .chain(decl.type_.kind.token_metas())
+                .chain(decl.metadata.iter().flat_map(|meta| meta.token_metas()))
                 .chain(decl.comma.iter().flat_map(|comma| [&comma.token_metadata])),
         )?;
         self.write_str(INDENT_STRING)?;
@@ -562,6 +563,7 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
             self.write_str(": ")?;
         }
         self.write_type(&decl.type_)?;
+        self.write_metadata(&decl.metadata)?;
         if decl.comma.is_some() {
             self.write_str(",")?;
         }

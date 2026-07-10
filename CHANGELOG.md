@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add `--version` option to planus-cli [#364](https://github.com/planus-org/planus/pull/364)
 
+- Parse and preserve union variant metadata in the CST and formatter [#312](https://github.com/planus-org/planus/pull/312).
+
 ### Fixed
 - Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363)
 
