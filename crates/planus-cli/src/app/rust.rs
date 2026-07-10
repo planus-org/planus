@@ -8,7 +8,7 @@ use planus_translation::translate_files_with_options;
 /// Generate rust code
 #[derive(Parser)]
 pub struct Command {
-    #[clap(value_hint = ValueHint::FilePath)]
+    #[clap(value_hint = ValueHint::FilePath, required = true)]
     files: Vec<PathBuf>,
 
     /// Output file
