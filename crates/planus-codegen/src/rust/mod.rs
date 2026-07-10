@@ -1046,6 +1046,20 @@ fn float_type(type_: &FloatType) -> &'static str {
 }
 
 pub fn format_string(s: &str, max_width: Option<u64>) -> eyre::Result<String> {
+    // Probe rustfmt up front so a missing binary yields a clear error.
+    let version_status = Command::new("rustfmt")
+        .arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .wrap_err("Unable to run rustfmt. Perhaps it is not installed?")?;
+    if !version_status.success() {
+        eyre::bail!(
+            "Unable to run rustfmt (perhaps it is not installed?): `rustfmt --version` exited with {version_status}"
+        );
+    }
+
     let mut child = Command::new("rustfmt");
 
     child
