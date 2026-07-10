@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-- Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead.
+- Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363)
 
 ### Removed
 
