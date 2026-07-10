@@ -1085,8 +1085,8 @@ pub fn format_string(s: &str, max_width: Option<u64>) -> eyre::Result<String> {
 
             Ok(String::from_utf8_lossy(&output.stdout).into_owned())
         }
-        (false, false) => eyre::bail!("rustfmt failed with exit code {}", output.status),
-        (false, true) => eyre::bail!(
+        (false, true) => eyre::bail!("rustfmt failed with exit code {}", output.status),
+        (false, false) => eyre::bail!(
             "rustfmt failed with exit code {} and message:\n{}",
             output.status,
             String::from_utf8_lossy(&output.stderr).into_owned(),
