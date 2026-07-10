@@ -105,9 +105,10 @@ pub struct Declarations {
 
 impl Declarations {
     pub fn new(
-        namespaces: IndexMap<AbsolutePath, Namespace>,
+        mut namespaces: IndexMap<AbsolutePath, Namespace>,
         declarations: IndexMap<AbsolutePath, Declaration>,
     ) -> Self {
+        namespaces.entry(AbsolutePath::ROOT_PATH).or_default();
         let children = declarations
             .values()
             .map(|decl| match &decl.kind {

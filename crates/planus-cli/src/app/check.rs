@@ -7,7 +7,7 @@ use planus_translation::translate_files_with_options;
 /// Check validity of .fbs files
 #[derive(Parser)]
 pub struct Command {
-    #[clap(value_hint = ValueHint::FilePath)]
+    #[clap(value_hint = ValueHint::FilePath, required = true)]
     files: Vec<PathBuf>,
 }
 
