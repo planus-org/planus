@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parse and preserve union variant metadata in the CST and formatter [#312](https://github.com/planus-org/planus/pull/312).
 
 ### Fixed
-- Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363)
+- Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363) [#373](https://github.com/planus-org/planus/pull/373)
 - Fixed a panic when building `Declarations` from zero schemas, and made the `check`, `dot`, and `rust` CLI subcommands reject invocations with no `.fbs` files. [#371](https://github.com/planus-org/planus/pull/371)
 
 ### Removed
