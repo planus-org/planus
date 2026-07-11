@@ -46,12 +46,16 @@ pub enum Command {
 pub struct AppOptions {
     #[clap(long)]
     pub ignore_docstring_errors: bool,
+
+    #[clap(long)]
+    pub ignore_unknown_metadata: bool,
 }
 
 impl AppOptions {
     pub fn to_converter_options(&self) -> ConverterOptions {
         ConverterOptions {
             ignore_docstring_errors: self.ignore_docstring_errors,
+            ignore_unknown_metadata: self.ignore_unknown_metadata,
         }
     }
 }

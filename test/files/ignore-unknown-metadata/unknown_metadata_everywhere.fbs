@@ -1,0 +1,24 @@
+table Request (meta_table) {
+  id: uint8 (meta_table_field);
+  kind: Kind (meta_table_field_second);
+}
+
+struct Point (meta_struct) {
+  x: float32 (meta_struct_field_x);
+  y: float32 (meta_struct_field_y);
+}
+
+enum Kind: uint8 (meta_enum) {
+  A,
+  B,
+}
+
+table Reply (meta_table_second) {
+  id: uint8 (meta_reply_field);
+  point: Point (meta_reply_point_field);
+}
+
+union Payload (meta_union) {
+  Request (meta_union_variant_request),
+  R: Reply (meta_union_variant_reply),
+}
