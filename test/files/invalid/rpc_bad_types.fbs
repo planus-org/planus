@@ -1,0 +1,13 @@
+struct Vec2 {
+  x: float;
+  y: float;
+}
+
+table Foo {
+  x: int;
+}
+
+rpc_service Bad {
+  M1(Vec2): Foo;
+  M2(Foo): string;
+}

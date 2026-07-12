@@ -989,13 +989,95 @@ impl<'a> Translator<'a> {
 
     fn translate_rpc_service(
         &self,
-        _current_namespace: &AbsolutePath,
-        _current_file_id: FileId,
-        _decl: &ast::RpcService,
+        current_namespace: &AbsolutePath,
+        current_file_id: FileId,
+        decl: &ast::RpcService,
     ) -> RpcService {
-        RpcService {
-            methods: Default::default(),
+        let methods = decl
+            .methods
+            .iter()
+            .filter_map(|(ident, method)| {
+                self.translate_rpc_method(current_namespace, current_file_id, method, ident)
+            })
+            .collect();
+        RpcService { methods }
+    }
+
+    fn check_valid_rpc_method_type(&self, current_file_id: FileId, type_: &Type) -> bool {
+        if matches!(type_.kind, TypeKind::Table(_)) {
+            true
+        } else {
+            self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, type_.span)
+                    .with_message("Rpc methods only support tables as argument and return types")],
+                Some("Unsupported type"),
+            );
+            false
         }
+    }
+
+    fn translate_rpc_method(
+        &self,
+        current_namespace: &AbsolutePath,
+        current_file_id: FileId,
+        method: &ast::RpcMethod,
+        ident: &string_interner::symbol::SymbolU32,
+    ) -> Option<(String, RpcMethod)> {
+        let mut idempotent = false;
+        for m in &method.metadata.values {
+            match &m.kind {
+                MetadataValueKind::Streaming(value) => match value.value.as_str() {
+                    "none" => (),
+                    "client" | "server" | "bidi" => {
+                        self.ctx.emit_error(
+                            ErrorKind::NOT_SUPPORTED,
+                            [Label::primary(current_file_id, m.span)],
+                            Some("Streaming rpc methods are not currently supported"),
+                        );
+                    }
+                    _ => {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [Label::primary(current_file_id, m.span)],
+                            Some(
+                                "Streaming must be one of \"none\", \"client\", \"server\" or \"bidi\"",
+                            ),
+                        );
+                    }
+                },
+                MetadataValueKind::Idempotent => idempotent = true,
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "rpc methods",
+                        m.kind.accepted_on_rpc_methods(),
+                    );
+                }
+            }
+        }
+
+        let argument_type =
+            self.translate_type(current_namespace, current_file_id, &method.argument_type);
+        let return_type =
+            self.translate_type(current_namespace, current_file_id, &method.return_type);
+        let (argument_type, return_type) = (argument_type?, return_type?);
+        let argument_type_valid = self.check_valid_rpc_method_type(current_file_id, &argument_type);
+        let return_type_valid = self.check_valid_rpc_method_type(current_file_id, &return_type);
+        if !argument_type_valid || !return_type_valid {
+            return None;
+        }
+
+        Some((
+            self.ctx.resolve_identifier(*ident),
+            RpcMethod {
+                argument_type,
+                return_type,
+                idempotent,
+                docstrings: method.docstrings.clone(),
+            },
+        ))
     }
 
     fn emit_metadata_support_error(

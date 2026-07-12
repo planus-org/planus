@@ -7,7 +7,7 @@ use std::{
 };
 
 use eyre::Context;
-use heck::{ToSnakeCase, ToUpperCamelCase};
+use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use planus_types::{
     ast::{FloatType, IntegerType},
     intermediate::{self, AbsolutePath, AssignMode, DeclarationIndex, Literal, TableFieldTagKind},
@@ -112,10 +112,22 @@ pub struct UnionVariant {
 }
 
 #[derive(Clone, Debug)]
-pub struct RpcService {}
+pub struct RpcService {
+    pub trait_name: String,
+    pub async_trait_name: String,
+    pub method_enum_name: String,
+    pub name_const: String,
+    pub service_name: String,
+}
 
 #[derive(Clone, Debug)]
-pub struct RpcMethod {}
+pub struct RpcMethod {
+    pub name: String,
+    pub variant_name: String,
+    pub argument_ref_type: String,
+    pub return_owned_type: String,
+    pub idempotent: bool,
+}
 
 const BINDING_KIND_TYPES: &str = "types";
 
@@ -129,6 +141,14 @@ fn reserve_module_name(path: &str, namespace_names: &mut NamespaceNames<'_, '_>)
 
 fn reserve_type_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
     let name = path.to_upper_camel_case().into();
+    declaration_names
+        .declaration_names
+        .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
+        .into()
+}
+
+fn reserve_const_name(path: &str, declaration_names: &mut DeclarationNames<'_, '_>) -> String {
+    let name = path.to_shouty_snake_case().into();
     declaration_names
         .declaration_names
         .try_reserve_repeat(BINDING_KIND_TYPES, name, '_')
@@ -361,6 +381,25 @@ impl Backend for RustBackend {
             ref_name,
             should_do_eq: self.eq_analysis[decl_id.0],
             should_do_infallible_conversion: self.infallible_analysis[decl_id.0],
+        }
+    }
+
+    fn generate_rpc_service(
+        &mut self,
+        declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        _decl_id: DeclarationIndex,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::RpcService,
+    ) -> RpcService {
+        let service_name = decl_name.to_string();
+        let decl_name = decl_name.0.last().unwrap();
+        RpcService {
+            trait_name: reserve_type_name(decl_name, declaration_names),
+            async_trait_name: reserve_type_name(&format!("{decl_name}Async"), declaration_names),
+            method_enum_name: reserve_type_name(&format!("{decl_name}Method"), declaration_names),
+            name_const: reserve_const_name(&format!("{decl_name}Name"), declaration_names),
+            service_name,
         }
     }
 
@@ -1021,6 +1060,48 @@ impl Backend for RustBackend {
             ref_type,
             is_struct,
             can_do_infallible_conversion,
+        }
+    }
+
+    fn generate_rpc_method(
+        &mut self,
+        translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
+        _parent_info: &Self::RpcServiceInfo,
+        _parent: &intermediate::RpcService,
+        method_name: &str,
+        method: &intermediate::RpcMethod,
+        argument_type: ResolvedType<'_, Self>,
+        return_type: ResolvedType<'_, Self>,
+    ) -> RpcMethod {
+        let name = reserve_field_name(
+            method_name,
+            "name",
+            &mut translation_context.declaration_names,
+        );
+        let variant_name = reserve_rust_enum_variant_name(
+            method_name,
+            "variant_name",
+            &mut translation_context.declaration_names,
+        );
+        let argument_ref_type = match argument_type {
+            ResolvedType::Table(_, _, info, relative_namespace) => format!(
+                "{}<'_>",
+                format_relative_namespace(&relative_namespace, &info.ref_name)
+            ),
+            _ => unreachable!("rpc method types are checked to be tables"),
+        };
+        let return_owned_type = match return_type {
+            ResolvedType::Table(_, _, info, relative_namespace) => {
+                format_relative_namespace(&relative_namespace, &info.owned_name).to_string()
+            }
+            _ => unreachable!("rpc method types are checked to be tables"),
+        };
+        RpcMethod {
+            name,
+            variant_name,
+            argument_ref_type,
+            return_owned_type,
+            idempotent: method.idempotent,
         }
     }
 }

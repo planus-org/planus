@@ -1,0 +1,10 @@
+table Foo {
+  x: int;
+}
+
+rpc_service Bad {
+  M1(Foo): Foo (streaming: "client");
+  M2(Foo): Foo (streaming: "server");
+  M3(Foo): Foo (streaming: "bidi");
+  M4(Foo): Foo (streaming: "nonsense");
+}

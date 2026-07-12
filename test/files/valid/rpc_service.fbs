@@ -1,0 +1,16 @@
+namespace example;
+
+table HelloRequest {
+  name: string;
+}
+
+table HelloReply {
+  message: string;
+}
+
+/// A simple greeting service.
+rpc_service Greeter {
+  SayHello(HelloRequest): HelloReply;
+  /// Says hello, but is also idempotent.
+  SayHelloAgain(HelloRequest): HelloReply (idempotent, streaming: "none");
+}

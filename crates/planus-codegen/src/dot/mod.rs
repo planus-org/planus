@@ -75,17 +75,19 @@ pub struct UnionVariant {
 
 #[derive(Clone, Debug)]
 pub struct RpcService {
-    pub _decl_id: DeclarationIndex,
-    pub _name: String,
+    pub decl_id: DeclarationIndex,
+    pub name: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct RpcMethod {
-    pub _name: String,
-    pub _arg_type: String,
-    pub _arg_type_ref: Option<DeclarationIndex>,
-    pub _return_type: String,
-    pub _return_type_ref: Option<DeclarationIndex>,
+    pub name: String,
+    pub argument_type: Cow<'static, str>,
+    pub argument_type_ref: Option<DeclarationIndex>,
+    pub argument_color: String,
+    pub return_type: Cow<'static, str>,
+    pub return_type_ref: Option<DeclarationIndex>,
+    pub return_color: String,
 }
 
 impl DotBackend {
@@ -211,6 +213,20 @@ impl Backend for DotBackend {
         }
     }
 
+    fn generate_rpc_service(
+        &mut self,
+        _declaration_names: &mut DeclarationNames<'_, '_>,
+        _translated_namespaces: &[Self::NamespaceInfo],
+        decl_id: DeclarationIndex,
+        decl_name: &AbsolutePath,
+        _decl: &intermediate::RpcService,
+    ) -> RpcService {
+        RpcService {
+            decl_id,
+            name: decl_name.to_string(),
+        }
+    }
+
     fn generate_table_field(
         &mut self,
         _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
@@ -305,6 +321,30 @@ impl Backend for DotBackend {
             type_,
             type_ref,
             color: self.random_color(),
+        }
+    }
+
+    fn generate_rpc_method(
+        &mut self,
+        _translation_context: &mut DeclarationTranslationContext<'_, '_, Self>,
+        _parent_info: &Self::RpcServiceInfo,
+        _parent: &intermediate::RpcService,
+        method_name: &str,
+        _method: &intermediate::RpcMethod,
+        argument_type: ResolvedType<'_, Self>,
+        return_type: ResolvedType<'_, Self>,
+    ) -> RpcMethod {
+        let (argument_type, argument_type_ref) = get_name(&argument_type);
+        let (return_type, return_type_ref) = get_name(&return_type);
+
+        RpcMethod {
+            name: method_name.to_string(),
+            argument_type,
+            argument_type_ref,
+            argument_color: self.random_color(),
+            return_type,
+            return_type_ref,
+            return_color: self.random_color(),
         }
     }
 }

@@ -22,13 +22,6 @@ pub fn check_ast(ctx: &Ctx, schema: &ast::Schema) {
 
     for decl in schema.type_declarations.values() {
         match &decl.kind {
-            ast::TypeDeclarationKind::RpcService(_) => {
-                ctx.emit_error(
-                    ErrorKind::NOT_SUPPORTED,
-                    [Label::primary(schema.file_id, decl.definition_span)],
-                    Some("Rpc services are not currently supported"),
-                );
-            }
             ast::TypeDeclarationKind::Struct(inner_decl) if inner_decl.fields.is_empty() => {
                 ctx.emit_error(
                     ErrorKind::NOT_SUPPORTED,
