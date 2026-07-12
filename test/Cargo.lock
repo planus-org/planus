@@ -166,12 +166,6 @@ checksum = "b71798fca2c1fe1086445a7258a4bc81e6e49dcd24c8d0dd9a1e57395b603f51"
 
 [[package]]
 name = "bitflags"
-version = "1.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
-
-[[package]]
-name = "bitflags"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
@@ -512,10 +506,10 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "flatbuffers"
-version = "24.3.25"
-source = "git+https://github.com/google/flatbuffers.git?tag=v24.3.25#595bf0007ab1929570c7671f091313c8fc20644e"
+version = "25.12.19"
+source = "git+https://github.com/google/flatbuffers.git?tag=v25.12.19#7e163021e59cca4f8e1e35a7c828b5c6b7915953"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags",
  "rustc_version",
 ]
 
@@ -953,7 +947,7 @@ dependencies = [
 name = "planus-translation"
 version = "1.3.0"
 dependencies = [
- "bitflags 2.13.0",
+ "bitflags",
  "codespan",
  "codespan-reporting",
  "indexmap",
@@ -1107,7 +1101,7 @@ version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed2bf2547551a7053d6fdfafda3f938979645c44812fbfcda098faae3f1a362d"
 dependencies = [
- "bitflags 2.13.0",
+ "bitflags",
 ]
 
 [[package]]

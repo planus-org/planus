@@ -5,12 +5,30 @@ use color_eyre::{
     Result,
 };
 
+// Keep in sync with the pinned `flatbuffers` dep in `test/Cargo.toml` and with
+// `flatbuffers` in `flake.nix`. Generated code is version-specific, so the
+// locally-installed `flatc` must match the crate we link against.
+const EXPECTED_FLATC_VERSION: &str = "25.12.19";
+
 fn main() -> Result<()> {
     color_eyre::install()?;
 
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=PLANUS_SKIP_FLATC");
+    println!("cargo:rerun-if-env-changed=PLANUS_REQUIRE_FLATC");
 
     let out_dir = env::var("OUT_DIR").unwrap();
+
+    let require_flatc = env::var_os("PLANUS_REQUIRE_FLATC").is_some();
+    let flatc_available = if env::var_os("PLANUS_SKIP_FLATC").is_some() {
+        if require_flatc {
+            bail!("PLANUS_SKIP_FLATC and PLANUS_REQUIRE_FLATC are both set — pick one.",);
+        }
+        println!("cargo:warning=PLANUS_SKIP_FLATC is set; skipping flatc-generated tests.");
+        false
+    } else {
+        probe_flatc(require_flatc)?
+    };
 
     // Create API tests
     let planus_api_dir = format!("{out_dir}/planus_api");
@@ -24,7 +42,7 @@ fn main() -> Result<()> {
         "test_files",
         &planus_test_dir,
         Some(&serialize_template),
-        true,
+        flatc_available,
     )?;
 
     generate_test_code(
@@ -35,6 +53,53 @@ fn main() -> Result<()> {
     )?;
 
     Ok(())
+}
+
+// Returns `Ok(true)` when a local `flatc` matches `EXPECTED_FLATC_VERSION`. Otherwise, if
+// `require_flatc` is `false` (the default), emits a `cargo:warning=` explaining what happened
+// and returns `Ok(false)` so downstream test generation transparently falls back to the no-flatc
+// path instead of producing generated Rust that fails to compile against the pinned `flatbuffers`
+// crate. When `require_flatc` is `true` (set via `PLANUS_REQUIRE_FLATC=1` in CI), returns `Err`
+// instead so a version drift fails the build rather than silently reducing coverage.
+fn probe_flatc(require_flatc: bool) -> Result<bool> {
+    // In lax mode a probe failure becomes a `cargo:warning=` and falls back to no-flatc codegen.
+    // In strict mode (CI) the same failure aborts the build.
+    let report = |problem: String| -> Result<bool> {
+        if require_flatc {
+            bail!(
+                "{problem} PLANUS_REQUIRE_FLATC is set: install flatc {EXPECTED_FLATC_VERSION} \
+                 (see flake.nix) or unset PLANUS_REQUIRE_FLATC.",
+            )
+        } else {
+            println!(
+                "cargo:warning={problem} Skipping flatc-generated tests. Install flatc \
+                 {EXPECTED_FLATC_VERSION} (see flake.nix) or set PLANUS_SKIP_FLATC=1 to silence \
+                 this warning.",
+            );
+            Ok(false)
+        }
+    };
+
+    let output = match Command::new("flatc").arg("--version").output() {
+        Ok(output) => output,
+        Err(err) => return report(format!("Could not run `flatc --version`: {err}.")),
+    };
+    if !output.status.success() {
+        return report(format!("`flatc --version` exited with {}.", output.status));
+    }
+    // Expected output: "flatc version 25.12.19\n"
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let Some(reported) = stdout.split_whitespace().last() else {
+        return report(format!(
+            "Could not parse `flatc --version` output {stdout:?}."
+        ));
+    };
+    if reported == EXPECTED_FLATC_VERSION {
+        return Ok(true);
+    }
+    report(format!(
+        "Local flatc version {reported} does not match the expected {EXPECTED_FLATC_VERSION}.",
+    ))
 }
 
 fn generate_test_code(
