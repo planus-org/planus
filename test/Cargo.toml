@@ -10,7 +10,10 @@ license = "MIT/Apache-2.0"
 [workspace.dependencies]
 color-eyre = "0.6.5"
 criterion = "0.8.2"
-flatbuffers = { version = "=24.3.25", git = "https://github.com/google/flatbuffers.git", tag = "v24.3.25" }
+# Keep this version in sync with EXPECTED_FLATC_VERSION in test/rust-test-*/build.rs and with
+# `flatbuffers` in flake.nix. `flatc` and the flatbuffers crate must match — generated Rust code
+# is version-specific.
+flatbuffers = { version = "=25.12.19", git = "https://github.com/google/flatbuffers.git", tag = "v25.12.19" }
 serde = { version = "1.0.228", default-features = false, features = [
   "derive",
   "alloc",

@@ -2,7 +2,12 @@ name: CI
 
 env:
   CARGO_TERM_COLOR: always
-  FLATBUFFER_VERSION: 24.3.25
+  # Keep in sync with `EXPECTED_FLATC_VERSION` in test/rust-test-*/build.rs, the pinned
+  # `flatbuffers` crate in test/Cargo.toml, and `flatbuffers` in flake.nix.
+  FLATBUFFER_VERSION: 25.12.19
+  # Force build.rs to hard-fail (rather than warn + skip) if the installed flatc doesn't match,
+  # so a future version drift between the crate and the CI-built flatc is caught here.
+  PLANUS_REQUIRE_FLATC: "1"
 
 on:
   push:
