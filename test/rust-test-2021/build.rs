@@ -69,7 +69,7 @@ fn probe_flatc(require_flatc: bool) -> Result<bool> {
             bail!(
                 "{problem} PLANUS_REQUIRE_FLATC is set: install flatc {EXPECTED_FLATC_VERSION} \
                  (see flake.nix) or unset PLANUS_REQUIRE_FLATC.",
-            )
+            );
         } else {
             println!(
                 "cargo:warning={problem} Skipping flatc-generated tests. Install flatc \
@@ -126,7 +126,7 @@ fn generate_test_code(
             let generated = format!("{file_stem}_planus_generated.rs");
             let generated_full_path = format!("{out_dir}/{generated}");
             let Some(declarations) = planus_translation::translate_files(&[&file_path]) else {
-                bail!("Cannot translate code for {}", file_path.display())
+                bail!("Cannot translate code for {}", file_path.display());
             };
             let code = planus_codegen::generate_rust(&declarations, true)
                 .wrap_err_with(|| eyre!("Cannot codegen for {}", file_path.display()))?;
