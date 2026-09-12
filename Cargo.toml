@@ -3,7 +3,7 @@ members = ["crates/*", "examples/rust"]
 resolver = "2"
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/planus-org/planus"
 rust-version = "1.88"

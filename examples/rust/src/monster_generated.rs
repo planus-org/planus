@@ -980,8 +980,8 @@ mod root {
                 pub fn weapons<T6>(self, value: T6) -> MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6)>
                 where
                     T6: ::planus::WriteAsOptional<
-                        ::planus::Offset<[::planus::Offset<self::Weapon>]>,
-                    >,
+                            ::planus::Offset<[::planus::Offset<self::Weapon>]>,
+                        >,
                 {
                     let (v0, v1, v2, v3, v4, v5) = self.0;
                     MonsterBuilder((v0, v1, v2, v3, v4, v5, value))
@@ -1080,17 +1080,17 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<self::Vec3>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                    T2: ::planus::WriteAsDefault<i16, i16>,
-                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
-                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
-                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
-                > ::planus::WriteAs<::planus::Offset<Monster>>
+                T0: ::planus::WriteAsOptional<self::Vec3>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+                T2: ::planus::WriteAsDefault<i16, i16>,
+                T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+            > ::planus::WriteAs<::planus::Offset<Monster>>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 type Prepared = ::planus::Offset<Monster>;
@@ -1102,17 +1102,17 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<self::Vec3>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                    T2: ::planus::WriteAsDefault<i16, i16>,
-                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
-                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
-                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
-                > ::planus::WriteAsOptional<::planus::Offset<Monster>>
+                T0: ::planus::WriteAsOptional<self::Vec3>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+                T2: ::planus::WriteAsDefault<i16, i16>,
+                T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+            > ::planus::WriteAsOptional<::planus::Offset<Monster>>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 type Prepared = ::planus::Offset<Monster>;
@@ -1127,17 +1127,17 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<self::Vec3>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                    T2: ::planus::WriteAsDefault<i16, i16>,
-                    T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
-                    T5: ::planus::WriteAsDefault<self::Color, self::Color>,
-                    T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
-                    T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
-                    T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
-                    T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
-                > ::planus::WriteAsOffset<Monster>
+                T0: ::planus::WriteAsOptional<self::Vec3>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+                T2: ::planus::WriteAsDefault<i16, i16>,
+                T3: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T4: ::planus::WriteAsOptional<::planus::Offset<[u8]>>,
+                T5: ::planus::WriteAsDefault<self::Color, self::Color>,
+                T6: ::planus::WriteAsOptional<::planus::Offset<[::planus::Offset<self::Weapon>]>>,
+                T7: ::planus::WriteAsOptionalUnion<self::Equipment>,
+                T8: ::planus::WriteAsOptionalUnionVector<self::Equipment>,
+                T9: ::planus::WriteAsOptional<::planus::Offset<[self::Vec3]>>,
+            > ::planus::WriteAsOffset<Monster>
                 for MonsterBuilder<(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
             {
                 #[inline]
@@ -1542,9 +1542,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAs<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAs<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
             {
                 type Prepared = ::planus::Offset<Weapon>;
 
@@ -1555,9 +1555,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAsOptional<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAsOptional<::planus::Offset<Weapon>> for WeaponBuilder<(T0, T1)>
             {
                 type Prepared = ::planus::Offset<Weapon>;
 
@@ -1571,9 +1571,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAsOffset<Weapon> for WeaponBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAsOffset<Weapon> for WeaponBuilder<(T0, T1)>
             {
                 #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Weapon> {
@@ -1856,9 +1856,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAs<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAs<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
             {
                 type Prepared = ::planus::Offset<Shield>;
 
@@ -1869,9 +1869,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAsOptional<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAsOptional<::planus::Offset<Shield>> for ShieldBuilder<(T0, T1)>
             {
                 type Prepared = ::planus::Offset<Shield>;
 
@@ -1885,9 +1885,9 @@ mod root {
             }
 
             impl<
-                    T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
-                    T1: ::planus::WriteAsDefault<i16, i16>,
-                > ::planus::WriteAsOffset<Shield> for ShieldBuilder<(T0, T1)>
+                T0: ::planus::WriteAsOptional<::planus::Offset<::core::primitive::str>>,
+                T1: ::planus::WriteAsDefault<i16, i16>,
+            > ::planus::WriteAsOffset<Shield> for ShieldBuilder<(T0, T1)>
             {
                 #[inline]
                 fn prepare(&self, builder: &mut ::planus::Builder) -> ::planus::Offset<Shield> {

@@ -48,32 +48,34 @@ impl<const VTABLE_MAX_BYTES: usize> TableWriter<VTABLE_MAX_BYTES> {
 
     #[inline]
     pub unsafe fn finish(mut self, builder: &mut Builder, f: impl FnOnce(&mut ObjectWriter<'_>)) {
-        write_array(
-            &mut self.vtable_buffer,
-            0,
-            (self.vtable_size as u16).to_le_bytes(),
-        );
-        write_array(
-            &mut self.vtable_buffer,
-            2,
-            (self.object_size as u16).to_le_bytes(),
-        );
+        unsafe {
+            write_array(
+                &mut self.vtable_buffer,
+                0,
+                (self.vtable_size as u16).to_le_bytes(),
+            );
+            write_array(
+                &mut self.vtable_buffer,
+                2,
+                (self.object_size as u16).to_le_bytes(),
+            );
 
-        let vtable_offset = builder.write_vtable(&self.vtable_buffer[..self.vtable_size]);
+            let vtable_offset = builder.write_vtable(&self.vtable_buffer[..self.vtable_size]);
 
-        builder.write_with(
-            self.object_size - 4,
-            self.object_alignment_mask,
-            |offset, bytes| {
-                f(&mut ObjectWriter { offset, bytes });
-            },
-        );
-        builder.write_with(4, 0, |buffer_position, bytes| {
-            let len = (vtable_offset as i32 - buffer_position as i32)
-                .to_le_bytes()
-                .map(MaybeUninit::new);
-            bytes.copy_from_slice(&len);
-        });
+            builder.write_with(
+                self.object_size - 4,
+                self.object_alignment_mask,
+                |offset, bytes| {
+                    f(&mut ObjectWriter { offset, bytes });
+                },
+            );
+            builder.write_with(4, 0, |buffer_position, bytes| {
+                let len = (vtable_offset as i32 - buffer_position as i32)
+                    .to_le_bytes()
+                    .map(MaybeUninit::new);
+                bytes.copy_from_slice(&len);
+            });
+        }
     }
 }
 

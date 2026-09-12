@@ -1,10 +1,10 @@
 use core::{marker::PhantomData, num::NonZeroUsize};
 
 use crate::{
+    TableReadUnionVector, VectorReadUnion,
     errors::{self, ErrorKind},
     impls::array_from_buffer,
     slice_helpers::SliceWithStartOffset,
-    TableReadUnionVector, VectorReadUnion,
 };
 
 /// A [`slice`]-like view of a union vector into a serialized flatbuffer that deserializes on demand.
@@ -108,7 +108,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
     where
         I: UnionVectorIndex<'buf, T>,
     {
-        index.get_unchecked(self)
+        unsafe { index.get_unchecked(self) }
     }
 
     /// Returns an iterator over the vector.
@@ -295,7 +295,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVector<'buf, T> {
         self,
         mid: usize,
     ) -> (UnionVector<'buf, T>, UnionVector<'buf, T>) {
-        (self.get_unchecked(..mid), self.get_unchecked(mid..))
+        unsafe { (self.get_unchecked(..mid), self.get_unchecked(mid..)) }
     }
 }
 
@@ -401,7 +401,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T>
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        into_range_unchecked(vector.len, self).get_unchecked(vector)
+        unsafe { into_range_unchecked(vector.len, self).get_unchecked(vector) }
     }
 }
 
@@ -419,11 +419,13 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T> for usize {
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        debug_assert!(self < vector.len);
-        debug_assert!(vector.len.checked_mul(4).unwrap() <= vector.tags.len());
-        debug_assert!(vector.len.checked_mul(4).unwrap() <= vector.values.len());
-        let tag = *vector.tags.buffer.get_unchecked(self);
-        <T as VectorReadUnion>::from_buffer(vector.values, tag, 4 * self)
+        unsafe {
+            debug_assert!(self < vector.len);
+            debug_assert!(vector.len.checked_mul(4).unwrap() <= vector.tags.len());
+            debug_assert!(vector.len.checked_mul(4).unwrap() <= vector.values.len());
+            let tag = *vector.tags.buffer.get_unchecked(self);
+            <T as VectorReadUnion>::from_buffer(vector.values, tag, 4 * self)
+        }
     }
 }
 
@@ -469,7 +471,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T> for core::ops::Ra
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        (self.start..vector.len).get_unchecked(vector)
+        unsafe { (self.start..vector.len).get_unchecked(vector) }
     }
 }
 
@@ -499,7 +501,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T>
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        (*self.start()..self.end() + 1).get_unchecked(vector)
+        unsafe { (*self.start()..self.end() + 1).get_unchecked(vector) }
     }
 }
 
@@ -513,7 +515,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T> for core::ops::Ra
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        (0..self.end).get_unchecked(vector)
+        unsafe { (0..self.end).get_unchecked(vector) }
     }
 }
 
@@ -529,7 +531,7 @@ impl<'buf, T: VectorReadUnion<'buf>> UnionVectorIndex<'buf, T>
 
     #[inline]
     unsafe fn get_unchecked(self, vector: UnionVector<'buf, T>) -> Self::Output {
-        (0..=self.end).get_unchecked(vector)
+        unsafe { (0..=self.end).get_unchecked(vector) }
     }
 }
 

@@ -1,8 +1,8 @@
-use std::collections::{btree_map, BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashSet, btree_map};
 
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
-use indexmap::{map::Entry, IndexMap};
+use indexmap::{IndexMap, map::Entry};
 use planus_types::{
     ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath},
     intermediate::*,
@@ -466,20 +466,18 @@ impl<'a> Translator<'a> {
                 }
             }
             (LiteralKind::Constant(s), _) => {
-                if let SimpleType(Enum(decl_index)) = &type_.kind {
-                    if let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0] {
-                        if let Some((variant_index, (key, _value))) = decl
-                            .variants
-                            .iter()
-                            .enumerate()
-                            .find(|(_variant_index, (_key, variant))| &variant.name == s)
-                        {
-                            return Some(Literal::EnumTag {
-                                variant_index,
-                                value: *key,
-                            });
-                        }
-                    }
+                if let SimpleType(Enum(decl_index)) = &type_.kind
+                    && let TypeDescription::Enum(decl) = &self.descriptions[decl_index.0]
+                    && let Some((variant_index, (key, _value))) = decl
+                        .variants
+                        .iter()
+                        .enumerate()
+                        .find(|(_variant_index, (_key, variant))| &variant.name == s)
+                {
+                    return Some(Literal::EnumTag {
+                        variant_index,
+                        value: *key,
+                    });
                 }
 
                 self.ctx.emit_error(
@@ -1009,7 +1007,9 @@ impl<'a> Translator<'a> {
             (true, true) => format!("Metadata attribute is not currently supported on {kind}"),
             (true, false) => "Metadata attribute is not currently supported".to_string(),
             (false, true) => format!("Metadata attribute does not make sense on {kind}"),
-            (false, false) => format!("Metadata attribute does not make sense on {kind} (but is additionally not supported in planus)"),
+            (false, false) => format!(
+                "Metadata attribute does not make sense on {kind} (but is additionally not supported in planus)"
+            ),
         };
 
         self.ctx.emit_error(
@@ -1400,26 +1400,26 @@ impl<'a> Translator<'a> {
 
         let (ast_decl, ast_kind) = get_ast_decl!();
         for m in &ast_kind.metadata.values {
-            if let MetadataValueKind::ForceAlign(n) = &m.kind {
-                if let Some(value) = self.translate_alignment(ast_decl.file_id, m.span, n) {
-                    if max_alignment <= value {
-                        max_alignment = value;
-                    } else {
-                        self.ctx.emit_error(
-                            ErrorKind::MISC_SEMANTIC_ERROR,
-                            std::iter::once(Label::primary(ast_decl.file_id, m.span).with_message(
-                                "This attribute tries to force the alignment of the struct",
-                            ))
-                            .chain(
-                                max_alignment_span.into_iter().map(|span| {
-                                    Label::secondary(ast_decl.file_id, span).with_message(format!(
+            if let MetadataValueKind::ForceAlign(n) = &m.kind
+                && let Some(value) = self.translate_alignment(ast_decl.file_id, m.span, n)
+            {
+                if max_alignment <= value {
+                    max_alignment = value;
+                } else {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        std::iter::once(Label::primary(ast_decl.file_id, m.span).with_message(
+                            "This attribute tries to force the alignment of the struct",
+                        ))
+                        .chain(max_alignment_span.into_iter().map(
+                            |span| {
+                                Label::secondary(ast_decl.file_id, span).with_message(format!(
                                     "However the minimum alignment of this type is {max_alignment}"
                                 ))
-                                }),
-                            ),
-                            Some("Alignment of struct cannot be forced to lower"),
-                        );
-                    }
+                            },
+                        )),
+                        Some("Alignment of struct cannot be forced to lower"),
+                    );
                 }
             }
         }

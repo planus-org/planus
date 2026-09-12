@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset};
+use crate::{Cursor, Offset, builder::Builder, traits::*};
 
 impl WriteAsOffset<str> for alloc::string::String {
     #[inline]
@@ -57,12 +57,14 @@ unsafe impl VectorWrite<Offset<str>> for alloc::string::String {
         bytes: *mut MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [MaybeUninit<u8>; 4];
-        for (i, v) in values.iter().enumerate() {
-            v.write(
-                Cursor::new(&mut *bytes.add(i)),
-                buffer_position - (4 * i) as u32,
-            );
+        unsafe {
+            let bytes = bytes as *mut [MaybeUninit<u8>; 4];
+            for (i, v) in values.iter().enumerate() {
+                v.write(
+                    Cursor::new(&mut *bytes.add(i)),
+                    buffer_position - (4 * i) as u32,
+                );
+            }
         }
     }
 }

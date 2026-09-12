@@ -54,10 +54,12 @@ impl<'buf> SliceWithStartOffset<'buf> {
         &self,
         amount: usize,
     ) -> ArrayWithStartOffset<'buf, N> {
-        let buffer = self.buffer.get_unchecked(amount..amount + N);
-        ArrayWithStartOffset {
-            buffer: buffer.try_into().unwrap(),
-            offset_from_start: self.offset_from_start + amount,
+        unsafe {
+            let buffer = self.buffer.get_unchecked(amount..amount + N);
+            ArrayWithStartOffset {
+                buffer: buffer.try_into().unwrap(),
+                offset_from_start: self.offset_from_start + amount,
+            }
         }
     }
 }

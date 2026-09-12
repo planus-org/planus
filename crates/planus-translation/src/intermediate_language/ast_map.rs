@@ -5,7 +5,7 @@ use planus_types::ast::Schema;
 use crate::{
     ast_convert::ConverterOptions,
     ctx::Ctx,
-    util::sorted_map::{sorted_map, SortedMap, SortedSet},
+    util::sorted_map::{SortedMap, SortedSet, sorted_map},
 };
 
 #[derive(Default)]
@@ -138,21 +138,27 @@ mod tests {
             file_id1_reach.sort();
             file_id2_reach.sort();
 
-            assert!(reachability
-                .get(&file_id1)
-                .unwrap()
-                .iter()
-                .eq(&file_id1_reach));
-            assert!(reachability
-                .get(&file_id2)
-                .unwrap()
-                .iter()
-                .eq(&file_id2_reach));
-            assert!(reachability
-                .get(&file_id3)
-                .unwrap()
-                .iter()
-                .eq(&file_id3_reach));
+            assert!(
+                reachability
+                    .get(&file_id1)
+                    .unwrap()
+                    .iter()
+                    .eq(&file_id1_reach)
+            );
+            assert!(
+                reachability
+                    .get(&file_id2)
+                    .unwrap()
+                    .iter()
+                    .eq(&file_id2_reach)
+            );
+            assert!(
+                reachability
+                    .get(&file_id3)
+                    .unwrap()
+                    .iter()
+                    .eq(&file_id3_reach)
+            );
         }
     }
 }

@@ -3,17 +3,17 @@ use std::fmt::Debug;
 use planus_buffer_inspection::{InspectableFlatbuffer, Object};
 use planus_types::intermediate::Declarations;
 use ratatui::{
+    Frame,
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Widget, Wrap},
-    Frame,
 };
 
 use crate::{
-    vec_with_index::VecWithIndex, ActiveWindow, HexViewState, InfoViewData, Inspector, ModalState,
-    RangeMatch, ViewState,
+    ActiveWindow, HexViewState, InfoViewData, Inspector, ModalState, RangeMatch, ViewState,
+    vec_with_index::VecWithIndex,
 };
 
 const DARK_BLUE: Color = Color::Rgb(62, 103, 113);
@@ -369,20 +369,20 @@ impl<'a> ViewState<'a> {
             text.push(Line::from(Span::raw("  -")));
         }
 
-        if let Some(info_view_data) = &info_view_data {
-            if info_view_data.interpretations.len() > 1 {
-                text.push(Line::from(Span::raw("")));
-                text.push(Line::from(Span::styled(
-                    format!(
-                        "Interpretation: {}/{}",
-                        info_view_data.interpretations.index() + 1,
-                        info_view_data.interpretations.len()
-                    ),
-                    ALERT_STYLE,
-                )));
-                text.push(Line::from(Span::raw("[c]: Cycle interpretations")));
-                text.push(Line::from(Span::raw("[i]: Pick interpretation")));
-            }
+        if let Some(info_view_data) = &info_view_data
+            && info_view_data.interpretations.len() > 1
+        {
+            text.push(Line::from(Span::raw("")));
+            text.push(Line::from(Span::styled(
+                format!(
+                    "Interpretation: {}/{}",
+                    info_view_data.interpretations.index() + 1,
+                    info_view_data.interpretations.len()
+                ),
+                ALERT_STYLE,
+            )));
+            text.push(Line::from(Span::raw("[c]: Cycle interpretations")));
+            text.push(Line::from(Span::raw("[i]: Pick interpretation")));
         }
 
         Paragraph::new(text).wrap(Wrap { trim: false })

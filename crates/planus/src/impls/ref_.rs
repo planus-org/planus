@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset, UnionOffset, UnionVectorOffset};
+use crate::{Cursor, Offset, UnionOffset, UnionVectorOffset, builder::Builder, traits::*};
 
 impl<P: Primitive, T: ?Sized + WriteAsPrimitive<P>> WriteAsPrimitive<P> for &T {
     #[inline]
@@ -92,6 +92,8 @@ unsafe impl<P: Primitive, T: ?Sized + VectorWrite<P>> VectorWrite<P> for &T {
         bytes: *mut MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        T::write_values(values, bytes, buffer_position);
+        unsafe {
+            T::write_values(values, bytes, buffer_position);
+        }
     }
 }

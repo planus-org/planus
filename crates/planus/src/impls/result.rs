@@ -7,6 +7,6 @@ where
     const STRIDE: usize = T::STRIDE;
 
     unsafe fn from_buffer(buffer: crate::SliceWithStartOffset<'buf>, offset: usize) -> Self {
-        Ok(T::from_buffer(buffer, offset)?)
+        unsafe { Ok(T::from_buffer(buffer, offset)?) }
     }
 }

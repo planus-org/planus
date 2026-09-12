@@ -1,11 +1,11 @@
 use core::{marker::PhantomData, num::NonZeroUsize};
 
 use crate::{
+    TableRead,
     errors::{self, ErrorKind},
     impls::array_from_buffer,
     slice_helpers::SliceWithStartOffset,
     traits::VectorRead,
-    TableRead,
 };
 
 /// A [`slice`]-like view into a serialized flatbuffer that deserializes on demand.
@@ -104,7 +104,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     where
         I: VectorIndex<'buf, T>,
     {
-        index.get_unchecked(self)
+        unsafe { index.get_unchecked(self) }
     }
 
     /// Returns an iterator over the vector.
@@ -288,7 +288,7 @@ impl<'buf, T: VectorRead<'buf>> Vector<'buf, T> {
     #[inline]
     #[must_use]
     pub unsafe fn split_at_unchecked(self, mid: usize) -> (Vector<'buf, T>, Vector<'buf, T>) {
-        (self.get_unchecked(..mid), self.get_unchecked(mid..))
+        unsafe { (self.get_unchecked(..mid), self.get_unchecked(mid..)) }
     }
 }
 
@@ -411,7 +411,7 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T>
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        into_range_unchecked(vector.len, self).get_unchecked(vector)
+        unsafe { into_range_unchecked(vector.len, self).get_unchecked(vector) }
     }
 }
 
@@ -429,9 +429,11 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T> for usize {
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        debug_assert!(self < vector.len);
-        debug_assert!(vector.len.checked_mul(T::STRIDE).unwrap() <= vector.buffer.len());
-        T::from_buffer(vector.buffer, T::STRIDE * self)
+        unsafe {
+            debug_assert!(self < vector.len);
+            debug_assert!(vector.len.checked_mul(T::STRIDE).unwrap() <= vector.buffer.len());
+            T::from_buffer(vector.buffer, T::STRIDE * self)
+        }
     }
 }
 
@@ -473,7 +475,7 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T> for core::ops::RangeFrom<us
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        (self.start..vector.len).get_unchecked(vector)
+        unsafe { (self.start..vector.len).get_unchecked(vector) }
     }
 }
 
@@ -501,7 +503,7 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T> for core::ops::RangeInclusi
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        (*self.start()..self.end() + 1).get_unchecked(vector)
+        unsafe { (*self.start()..self.end() + 1).get_unchecked(vector) }
     }
 }
 
@@ -515,7 +517,7 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T> for core::ops::RangeTo<usiz
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        (0..self.end).get_unchecked(vector)
+        unsafe { (0..self.end).get_unchecked(vector) }
     }
 }
 
@@ -529,7 +531,7 @@ impl<'buf, T: VectorRead<'buf>> VectorIndex<'buf, T> for core::ops::RangeToInclu
 
     #[inline]
     unsafe fn get_unchecked(self, vector: Vector<'buf, T>) -> Self::Output {
-        (0..=self.end).get_unchecked(vector)
+        unsafe { (0..=self.end).get_unchecked(vector) }
     }
 }
 

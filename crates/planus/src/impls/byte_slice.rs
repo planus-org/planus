@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-    errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Builder, Cursor, Offset,
+    Builder, Cursor, Offset, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*,
 };
 
 impl<'buf> TableRead<'buf> for &'buf [u8] {

@@ -8,8 +8,8 @@ mod view;
 use std::process::ExitCode;
 
 use clap::{
-    builder::{styling::AnsiColor, Styles},
     Parser,
+    builder::{Styles, styling::AnsiColor},
 };
 use color_eyre::Result;
 use planus_translation::ConverterOptions;

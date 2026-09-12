@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
 use clap::{CommandFactory, Parser};
-use clap_complete::{generate, Shell};
+use clap_complete::{Shell, generate};
 use color_eyre::Result;
 
 /// Generate shell completion scripts

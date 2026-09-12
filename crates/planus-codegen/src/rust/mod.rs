@@ -671,7 +671,7 @@ impl Backend for RustBackend {
                                     format_relative_namespace(relative_namespace, &info.ref_name)
                                 )
                             }
-                        },
+                        }
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
                         }
@@ -679,12 +679,21 @@ impl Backend for RustBackend {
                             unreachable!("This should have been rejected in type-check")
                         }
                         ResolvedType::String => {
-                            "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>".into()
+                            "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>"
+                                .into()
                         }
                         ResolvedType::Bool => "::planus::Vector<'a, bool>".into(),
-                        ResolvedType::Integer(type_) if matches!(type_, IntegerType::U8 | IntegerType::I8) => format!("&'a [{}]", integer_type(type_)),
-                        ResolvedType::Integer(type_) => format!("::planus::Vector<'a, {}>", integer_type(type_)),
-                        ResolvedType::Float(type_) => format!("::planus::Vector<'a, {}>", float_type(type_)),
+                        ResolvedType::Integer(type_)
+                            if matches!(type_, IntegerType::U8 | IntegerType::I8) =>
+                        {
+                            format!("&'a [{}]", integer_type(type_))
+                        }
+                        ResolvedType::Integer(type_) => {
+                            format!("::planus::Vector<'a, {}>", integer_type(type_))
+                        }
+                        ResolvedType::Float(type_) => {
+                            format!("::planus::Vector<'a, {}>", float_type(type_))
+                        }
                     }
                 }
                 fn vector_try_into_func(type_: &ResolvedType<'_, RustBackend>) -> &'static str {
@@ -1063,7 +1072,7 @@ pub fn format_string(s: &str, max_width: Option<u64>) -> eyre::Result<String> {
     let mut child = Command::new("rustfmt");
 
     child
-        .arg("--edition=2021")
+        .arg("--edition=2024")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
