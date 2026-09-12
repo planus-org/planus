@@ -589,13 +589,17 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .fields
                     .iter()
                     .map(|(field_name, field)| {
-                        let translated_type = translate_simple_type(
+                        let element_type = translate_simple_type(
                             &translation_context,
                             declarations,
                             &full_translated_decls,
                             &field.type_,
                             &decl_path.clone_pop(),
                         );
+                        let translated_type = match field.array_len {
+                            Some(len) => ResolvedType::Array(Box::new(element_type), len),
+                            None => element_type,
+                        };
                         BackendStructField {
                             info: backend.generate_struct_field(
                                 &mut translation_context,

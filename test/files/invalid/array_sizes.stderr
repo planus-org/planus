@@ -10,15 +10,15 @@ error: size is too large
 3 │   y: [bool: 99999999999999999];
   │             ^^^^^^^^^^^^^^^^^
 
-error: Arrays are not currently supported in planus
-  ┌─ test/files/invalid/array_sizes.fbs:2:6
+error: Only fixed-size arrays of integers and floats are currently supported in planus
+  ┌─ test/files/invalid/array_sizes.fbs:2:7
   │
 2 │   x: [bool: -1];
-  │      ^^^^^^^^^^
+  │       ^^^^
 
-error: Arrays are not currently supported in planus
-  ┌─ test/files/invalid/array_sizes.fbs:3:6
+error: Only fixed-size arrays of integers and floats are currently supported in planus
+  ┌─ test/files/invalid/array_sizes.fbs:3:7
   │
 3 │   y: [bool: 99999999999999999];
-  │      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  │       ^^^^
 
