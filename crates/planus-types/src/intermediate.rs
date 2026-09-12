@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::BTreeSet, fmt::Display};
 use codespan::{FileId, Span};
 use indexmap::IndexMap;
 
-use crate::ast::{Docstrings, FloatType, IntegerType};
+use crate::ast::{Docstrings, FloatType, IntegerType, NamespacePath};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct AbsolutePath(pub Vec<String>);
@@ -77,7 +77,7 @@ impl<'a, 'b> From<&'b &'a DeclarationIndex> for DeclarationIndex {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct NamespaceIndex(pub usize);
 impl NamespaceIndex {
     pub const INVALID: NamespaceIndex = NamespaceIndex(usize::MAX);
@@ -200,6 +200,8 @@ pub struct Namespace {
     pub docstrings: Docstrings,
     pub child_namespaces: IndexMap<String, NamespaceIndex>,
     pub declaration_ids: IndexMap<String, DeclarationIndex>,
+    pub file_identifier: Option<[u8; 4]>,
+    pub root_type: Option<(FileId, NamespacePath, Span)>,
 }
 
 impl Default for Namespace {
@@ -209,6 +211,8 @@ impl Default for Namespace {
             docstrings: Docstrings::new(None),
             child_namespaces: Default::default(),
             declaration_ids: Default::default(),
+            file_identifier: None,
+            root_type: None,
         }
     }
 }
@@ -250,7 +254,6 @@ pub struct Table {
     pub max_size: u32,
     pub max_vtable_size: u32,
     pub max_alignment: u32,
-    /// The 4-byte file identifier this table is the `root_type` for, if any.
     pub file_identifier: Option<[u8; 4]>,
 }
 

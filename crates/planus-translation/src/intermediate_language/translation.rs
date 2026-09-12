@@ -1,8 +1,8 @@
-use std::collections::{btree_map, BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashSet, btree_map};
 
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
-use indexmap::{map::Entry, IndexMap};
+use indexmap::{IndexMap, map::Entry};
 use planus_types::{
     ast::{self, FloatType, LiteralKind, MetadataValueKind, NamespacePath},
     intermediate::*,
@@ -22,16 +22,6 @@ pub struct Translator<'a> {
     declarations: IndexMap<AbsolutePath, Declaration>,
     namespaces: IndexMap<AbsolutePath, Namespace>,
     descriptions: Vec<TypeDescription>,
-    /// `(file_identifier)` declarations, resolved against their `root_type` in `finish`.
-    file_identifiers: Vec<FileIdentifier>,
-}
-
-/// A schema-level `file_identifier` together with the `root_type` it attaches to.
-struct FileIdentifier {
-    namespace: AbsolutePath,
-    file_id: FileId,
-    root_type: Option<(Span, ast::Type)>,
-    identifier: [u8; 4],
 }
 
 #[derive(Clone)]
@@ -70,7 +60,6 @@ impl<'a> Translator<'a> {
             declarations: Default::default(),
             descriptions: Default::default(),
             namespaces: Default::default(),
-            file_identifiers: Default::default(),
         }
     }
 
@@ -98,6 +87,58 @@ impl<'a> Translator<'a> {
             .locations
             .extend(schema.docstrings.locations.iter().cloned());
         namespace.docstrings.default_docstring = default_docstring_for_namespace(&namespace_path);
+
+        if let Some((file_identifier_span, lit)) = &schema.file_identifier {
+            let mut identifier = [0u8; 4];
+            let chars = lit.value.chars().collect::<Vec<char>>();
+            if chars.len() == 4 {
+                for (ib, c) in identifier.iter_mut().zip(chars) {
+                    if let Ok(c) = u8::try_from(c) {
+                        *ib = c;
+                    } else {
+                        self.ctx.emit_error(
+                            ErrorKind::MISC_SEMANTIC_ERROR,
+                            [Label::primary(schema.file_id, *file_identifier_span)],
+                            Some("file_identifier must be exactly 4 bytes"),
+                        );
+                    }
+                }
+            } else {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(schema.file_id, *file_identifier_span)],
+                    Some("file_identifier must be exactly 4 bytes"),
+                );
+            }
+
+            namespace.file_identifier = Some(identifier);
+        }
+
+        if let Some((root_type_span, root_type)) = &schema.root_type {
+            if let ast::TypeKind::Path(root_path) = &root_type.kind {
+                if let Some((current_root_file_id, _, current_root_span)) = &namespace.root_type {
+                    self.ctx.emit_error(
+                        ErrorKind::TYPE_DEFINED_TWICE,
+                        [
+                            Label::secondary(*current_root_file_id, *current_root_span)
+                                .with_message("first definition was here"),
+                            Label::secondary(schema.file_id, *root_type_span)
+                                .with_message("second definition was here"),
+                        ],
+                        Some("Overlapping root_type declarations"),
+                    );
+                } else {
+                    namespace.root_type =
+                        Some((schema.file_id, root_path.clone(), *root_type_span));
+                }
+            } else {
+                self.ctx.emit_error(
+                    ErrorKind::MISC_SEMANTIC_ERROR,
+                    [Label::primary(schema.file_id, *root_type_span)],
+                    Some("root_type must be a table"),
+                );
+            }
+        }
 
         for decl in schema.type_declarations.values() {
             let name = self.ctx.resolve_identifier(decl.identifier.value);
@@ -139,22 +180,6 @@ impl<'a> Translator<'a> {
                 ast::TypeDeclarationKind::Union(_) => TypeDescription::Union,
                 ast::TypeDeclarationKind::RpcService(_) => TypeDescription::RpcService,
             })
-        }
-
-        if let Some((_, lit)) = &schema.file_identifier {
-            match <[u8; 4]>::try_from(lit.value.as_bytes()) {
-                Ok(identifier) => self.file_identifiers.push(FileIdentifier {
-                    namespace: namespace_path.clone(),
-                    file_id: schema.file_id,
-                    root_type: schema.root_type.clone(),
-                    identifier,
-                }),
-                Err(_) => self.ctx.emit_error(
-                    ErrorKind::MISC_SEMANTIC_ERROR,
-                    [Label::primary(schema.file_id, lit.span)],
-                    Some("file_identifier must be exactly 4 bytes"),
-                ),
-            }
         }
 
         while let Some(last) = namespace_path.pop() {
@@ -1036,7 +1061,9 @@ impl<'a> Translator<'a> {
             (true, true) => format!("Metadata attribute is not currently supported on {kind}"),
             (true, false) => "Metadata attribute is not currently supported".to_string(),
             (false, true) => format!("Metadata attribute does not make sense on {kind}"),
-            (false, false) => format!("Metadata attribute does not make sense on {kind} (but is additionally not supported in planus)"),
+            (false, false) => format!(
+                "Metadata attribute does not make sense on {kind} (but is additionally not supported in planus)"
+            ),
         };
 
         self.ctx.emit_error(
@@ -1595,36 +1622,24 @@ impl<'a> Translator<'a> {
         }
         self.resolve_table_sizes();
 
-        // Attach each schema-level file_identifier to the table named by its root_type.
-        // A file_identifier without a root_type has nothing to attach to and is ignored,
-        // matching flatc.
-        for fi in std::mem::take(&mut self.file_identifiers) {
-            let Some((_, root_type)) = &fi.root_type else {
-                continue;
-            };
-            let ast::TypeKind::Path(path) = &root_type.kind else {
-                self.ctx.emit_error(
-                    ErrorKind::TYPE_ERROR,
-                    [Label::primary(fi.file_id, root_type.span)],
-                    Some("root_type must name a table"),
-                );
-                continue;
-            };
-            match self.lookup_path(&fi.namespace, fi.file_id, path) {
-                Some(TypeKind::Table(idx)) => {
-                    if let Some((_, decl)) = self.declarations.get_index_mut(idx.0) {
-                        if let DeclarationKind::Table(table) = &mut decl.kind {
-                            table.file_identifier = Some(fi.identifier);
-                        }
+        for (namespace_index, (namespace_path, namespace)) in self.namespaces.iter().enumerate() {
+            if let Some((root_type_file_id, root_type, root_type_span)) = &namespace.root_type {
+                if let Some(TypeKind::Table(table_index)) =
+                    self.lookup_path(namespace_path, *root_type_file_id, root_type)
+                    && let decl = &mut self.declarations[table_index.0]
+                    && decl.namespace_id == NamespaceIndex(namespace_index)
+                    && let DeclarationKind::Table(table) = &mut decl.kind
+                {
+                    if let Some(file_identifier) = &namespace.file_identifier {
+                        table.file_identifier = Some(*file_identifier);
                     }
+                } else {
+                    self.ctx.emit_error(
+                        ErrorKind::MISC_SEMANTIC_ERROR,
+                        [Label::primary(*root_type_file_id, *root_type_span)],
+                        Some("root_type must be a table in the same namespace"),
+                    );
                 }
-                Some(_) => self.ctx.emit_error(
-                    ErrorKind::TYPE_ERROR,
-                    [Label::primary(fi.file_id, root_type.span)],
-                    Some("root_type must name a table"),
-                ),
-                // lookup_path already emitted an error for an unresolved path.
-                None => {}
             }
         }
 

@@ -12,7 +12,7 @@ pub(crate) enum Text {
     EscapeCharacter,
     #[regex(r"\\u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]")]
     Codepoint,
-    #[regex(r"\\x[0-7][0-9a-fA-F]")]
+    #[regex(r"\\x[0-7a-fA-F][0-9a-fA-F]")]
     Byte,
     #[token("\"")]
     #[token("\'")]

@@ -37,8 +37,6 @@ pub struct Table {
     pub builder_name: String,
     pub should_do_default: bool,
     pub should_do_eq: bool,
-    /// The `[u8; 4]` literal for this table's file identifier, if it is a root_type
-    /// with a `file_identifier`.
     pub file_identifier: Option<String>,
 }
 
@@ -308,7 +306,7 @@ impl Backend for RustBackend {
             should_do_eq: self.eq_analysis[decl_id.0],
             file_identifier: decl
                 .file_identifier
-                .map(|id| format!("[{}, {}, {}, {}]", id[0], id[1], id[2], id[3])),
+                .map(|file_identifier| file_identifier.escape_ascii().to_string()),
         }
     }
 
@@ -677,7 +675,7 @@ impl Backend for RustBackend {
                                     format_relative_namespace(relative_namespace, &info.ref_name)
                                 )
                             }
-                        },
+                        }
                         ResolvedType::Vector(_) => {
                             unreachable!("This should have been rejected in type-check")
                         }
@@ -685,12 +683,21 @@ impl Backend for RustBackend {
                             unreachable!("This should have been rejected in type-check")
                         }
                         ResolvedType::String => {
-                            "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>".into()
+                            "::planus::Vector<'a, ::planus::Result<&'a ::core::primitive::str>>"
+                                .into()
                         }
                         ResolvedType::Bool => "::planus::Vector<'a, bool>".into(),
-                        ResolvedType::Integer(type_) if matches!(type_, IntegerType::U8 | IntegerType::I8) => format!("&'a [{}]", integer_type(type_)),
-                        ResolvedType::Integer(type_) => format!("::planus::Vector<'a, {}>", integer_type(type_)),
-                        ResolvedType::Float(type_) => format!("::planus::Vector<'a, {}>", float_type(type_)),
+                        ResolvedType::Integer(type_)
+                            if matches!(type_, IntegerType::U8 | IntegerType::I8) =>
+                        {
+                            format!("&'a [{}]", integer_type(type_))
+                        }
+                        ResolvedType::Integer(type_) => {
+                            format!("::planus::Vector<'a, {}>", integer_type(type_))
+                        }
+                        ResolvedType::Float(type_) => {
+                            format!("::planus::Vector<'a, {}>", float_type(type_))
+                        }
                     }
                 }
                 fn vector_try_into_func(type_: &ResolvedType<'_, RustBackend>) -> &'static str {

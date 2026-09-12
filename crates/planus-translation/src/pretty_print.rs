@@ -8,11 +8,7 @@ use planus_types::cst::{
 const INDENT_STRING: &str = "    ";
 
 fn indent_string(do_indent: bool) -> &'static str {
-    if do_indent {
-        INDENT_STRING
-    } else {
-        ""
-    }
+    if do_indent { INDENT_STRING } else { "" }
 }
 
 pub struct PrettyPrinter<'writer, 'src, T> {
@@ -454,8 +450,9 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                 let dropped_tokens = &error_recovery.dropped_tokens;
                 if !dropped_tokens.is_empty() {
                     self.begin_new_paragraph()?;
-                    let (mut start, TokenWithMetadata(_token, token_metadata), _end) =
+                    let (start, TokenWithMetadata(_token, token_metadata), _end) =
                         dropped_tokens.first().unwrap();
+                    let mut start = *start;
                     for pre_comment_block in token_metadata.pre_comment_blocks.iter() {
                         if let Some(pre_comment) = pre_comment_block.0.first() {
                             start = start.min(pre_comment.span.start());
@@ -463,8 +460,9 @@ impl<'writer, 'src, T: std::fmt::Write> PrettyPrinter<'writer, 'src, T> {
                         }
                     }
 
-                    let (_start, TokenWithMetadata(_token, token_metadata), mut end) =
+                    let (_start, TokenWithMetadata(_token, token_metadata), end) =
                         dropped_tokens.last().unwrap();
+                    let mut end = *end;
                     if let Some(post_comment) = &token_metadata.post_comment {
                         end = end.max(post_comment.span.end());
                     }

@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-    builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
+    Cursor, builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*,
 };
 
 /// # Safety
@@ -30,11 +30,7 @@ impl WriteAsDefault<bool, bool> for bool {
     type Prepared = Self;
     #[inline]
     fn prepare(&self, _builder: &mut Builder, default: &bool) -> Option<bool> {
-        if self == default {
-            None
-        } else {
-            Some(*self)
-        }
+        if self == default { None } else { Some(*self) }
     }
 }
 
@@ -61,7 +57,7 @@ impl<'buf> VectorRead<'buf> for bool {
 
     #[inline]
     unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> bool {
-        *buffer.as_slice().get_unchecked(offset) != 0
+        unsafe { *buffer.as_slice().get_unchecked(offset) != 0 }
     }
 }
 
