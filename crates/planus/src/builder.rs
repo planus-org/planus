@@ -258,13 +258,16 @@ impl Builder {
         let root = root.prepare(self);
 
         if let Some(file_identifier) = file_identifier {
-            // TODO: how does alignment interact with file identifiers? Is the alignment with out without the header?
+            // The 8-byte header [root offset | file identifier] is aligned to the
+            // root's alignment so the root table that follows stays aligned. The
+            // builder prepends, so the identifier is written first to land in
+            // bytes 4..8, leaving the root offset at bytes 0..4 (matching flatc).
             let offset = self.prepare_write(
                 8,
                 <Offset<T> as Primitive>::ALIGNMENT_MASK.max(self.alignment_mask),
             ) as u32;
-            self.write(&(offset - 4 - root.offset).to_le_bytes());
             self.write(&file_identifier);
+            self.write(&(offset - root.offset).to_le_bytes());
         } else {
             let offset = self.prepare_write(
                 4,

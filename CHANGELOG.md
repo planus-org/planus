@@ -12,12 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parse and preserve union variant metadata in the CST and formatter [#312](https://github.com/planus-org/planus/pull/312).
 - Add `--ignore-unknown-metadata` to allow generating code from schemas that include generator-specific attributes.
 - Allow keywords as identifiers like flatc [#313](https://github.com/planus-org/planus/pull/313)
+- Honor `file_identifier`/`root_type`: generate a `IDENTIFIER` associated constant for
+  the root table and add a `planus::buffer_has_identifier` runtime helper
 
 ### Fixed
 - Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363) [#373](https://github.com/planus-org/planus/pull/373)
 - Fixed a panic when building `Declarations` from zero schemas, and made the `check`, `dot`, and `rust` CLI subcommands reject invocations with no `.fbs` files. [#371](https://github.com/planus-org/planus/pull/371)
 - Give a clear error when rustfmt is not installed instead of a confusing broken-pipe write failure. [#374](https://github.com/planus-org/planus/pull/374)
 - Skip flatc-generated tests with a warning when local `flatc` doesn't match the pinned `flatbuffers` crate, instead of failing to build. Also bumped the pin to 25.12.19. [#375](https://github.com/planus-org/planus/pull/375)
+- Write the file identifier into bytes 4..8 (after the root offset) so buffers produced
+  by `Builder::finish(.., Some(id))` are byte-compatible with the official implementation
 
 ### Removed
 
