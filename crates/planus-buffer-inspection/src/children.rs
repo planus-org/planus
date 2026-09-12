@@ -3,10 +3,10 @@ use std::borrow::Cow;
 use planus_types::{ast::IntegerType, intermediate::TypeKind};
 
 use crate::{
-    object_info::DeclarationInfo, ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject,
-    InspectableFlatbuffer, IntegerObject, Object, OffsetObject, StringObject, StructObject,
-    TableObject, UnionObject, UnionTagObject, UnionVectorTagsObject, UnionVectorValuesObject,
-    VTableObject, VectorObject,
+    ArrayObject, BoolObject, ByteIndex, EnumObject, FloatObject, InspectableFlatbuffer,
+    IntegerObject, Object, OffsetObject, StringObject, StructObject, TableObject, UnionObject,
+    UnionTagObject, UnionVectorTagsObject, UnionVectorValuesObject, VTableObject, VectorObject,
+    object_info::DeclarationInfo,
 };
 
 pub trait Children<'a> {

@@ -1,8 +1,8 @@
-use std::collections::{hash_map, HashMap};
+use std::collections::{HashMap, hash_map};
 
 use codespan::{FileId, Span};
 use codespan_reporting::diagnostic::Label;
-use indexmap::{map::Entry, IndexMap};
+use indexmap::{IndexMap, map::Entry};
 use planus_lexer::{Comment, CommentKind, TokenMetadata};
 use planus_types::{ast::*, cst};
 

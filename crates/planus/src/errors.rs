@@ -72,7 +72,10 @@ impl core::fmt::Display for ErrorKind {
                 tags_len,
                 values_len,
             } => {
-                write!(f, "Mismatched lengths between tag and value vectors. Length of tags = {tags_len}, length of values = {values_len}")
+                write!(
+                    f,
+                    "Mismatched lengths between tag and value vectors. Length of tags = {tags_len}, length of values = {values_len}"
+                )
             }
             ErrorKind::UnknownEnumTag { source } => source.fmt(f),
             ErrorKind::UnknownUnionTag { tag } => write!(f, "Unknown union (tag = {tag})"),

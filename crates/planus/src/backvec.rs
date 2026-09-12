@@ -106,12 +106,14 @@ impl BackVec {
     }
 
     pub unsafe fn extend_write(&mut self, count: usize, f: impl FnOnce(&mut [MaybeUninit<u8>])) {
-        self.reserve(count);
-        let new_offset = self.offset.wrapping_sub(count);
-        let ptr = self.ptr.as_ptr().add(new_offset) as *mut MaybeUninit<u8>;
-        let slice = core::slice::from_raw_parts_mut(ptr, count);
-        f(slice);
-        self.offset = new_offset;
+        unsafe {
+            self.reserve(count);
+            let new_offset = self.offset.wrapping_sub(count);
+            let ptr = self.ptr.as_ptr().add(new_offset) as *mut MaybeUninit<u8>;
+            let slice = core::slice::from_raw_parts_mut(ptr, count);
+            f(slice);
+            self.offset = new_offset;
+        }
     }
 }
 

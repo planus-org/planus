@@ -4,14 +4,14 @@ use color_eyre::Result;
 use crossterm::{
     cursor::Show,
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use fuzzy_matcher::FuzzyMatcher;
-use planus_translation::{translate_files_with_options, ConverterOptions};
+use planus_translation::{ConverterOptions, translate_files_with_options};
 use planus_types::intermediate::{AbsolutePath, DeclarationIndex, DeclarationKind};
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{Terminal, backend::CrosstermBackend};
 
-use crate::{run_inspector, Inspector};
+use crate::{Inspector, run_inspector};
 
 pub fn run_app(
     schema_file: &Path,

@@ -6,12 +6,12 @@ use std::{io, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use planus_buffer_inspection::{
+    InspectableFlatbuffer, Object,
     object_info::ObjectName,
     object_mapping::{Interpretation, Line, ObjectIndex, ObjectMapping},
-    InspectableFlatbuffer, Object,
 };
 use planus_types::intermediate::DeclarationIndex;
-use ratatui::{backend::Backend, layout::Rect, Terminal};
+use ratatui::{Terminal, backend::Backend, layout::Rect};
 
 use crate::{
     ui::{FoldState, Node, TreeState, TreeStateLine},
@@ -112,16 +112,16 @@ pub enum RangeMatch {
 
 impl Ranges {
     pub fn best_match(&self, value: usize) -> Option<RangeMatch> {
-        if let Some(inner_range) = &self.inner_range {
-            if inner_range.contains(&value) {
-                return Some(RangeMatch::Inner);
-            }
+        if let Some(inner_range) = &self.inner_range
+            && inner_range.contains(&value)
+        {
+            return Some(RangeMatch::Inner);
         }
 
-        if let Some(outer_range) = &self.outer_range {
-            if outer_range.contains(&value) {
-                return Some(RangeMatch::Outer);
-            }
+        if let Some(outer_range) = &self.outer_range
+            && outer_range.contains(&value)
+        {
+            return Some(RangeMatch::Outer);
         }
 
         None
@@ -304,12 +304,11 @@ impl<'a> ViewState<'a> {
         buffer: &InspectableFlatbuffer<'a>,
         line_index: usize,
     ) {
-        if let Some(info_view_date) = &mut self.info_view_data {
-            if let Some(byte_index) =
+        if let Some(info_view_date) = &mut self.info_view_data
+            && let Some(byte_index) =
                 info_view_date.set_line_pos(object_mapping, buffer, line_index)
-            {
-                self.byte_index = byte_index;
-            }
+        {
+            self.byte_index = byte_index;
         }
     }
 
@@ -462,20 +461,15 @@ impl<'a> Inspector<'a> {
                 }
             }
             KeyCode::Enter if self.modal.is_none() => {
-                if let Some(info_view_data) = &mut self.view_state.info_view_data {
-                    if let Object::Offset(offset_object) = &info_view_data.lines.cur().object {
-                        if let Ok(inner) = offset_object.follow_offset(&self.buffer) {
-                            let old_view_state = std::mem::replace(
-                                &mut self.view_state,
-                                ViewState::new_for_object(
-                                    &self.object_mapping,
-                                    &self.buffer,
-                                    inner,
-                                ),
-                            );
-                            self.view_stack.push(old_view_state);
-                        }
-                    }
+                if let Some(info_view_data) = &mut self.view_state.info_view_data
+                    && let Object::Offset(offset_object) = &info_view_data.lines.cur().object
+                    && let Ok(inner) = offset_object.follow_offset(&self.buffer)
+                {
+                    let old_view_state = std::mem::replace(
+                        &mut self.view_state,
+                        ViewState::new_for_object(&self.object_mapping, &self.buffer, inner),
+                    );
+                    self.view_stack.push(old_view_state);
                 }
                 true
             }

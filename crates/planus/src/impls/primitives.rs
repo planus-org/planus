@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-    builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
+    Cursor, builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*,
 };
 
 macro_rules! unsafe_gen_primitive_types {
@@ -33,11 +33,7 @@ macro_rules! unsafe_gen_primitive_types {
             #[inline]
             fn prepare(&self, _builder: &mut Builder, default: &$ty) -> Option<Self> {
                 #[allow(clippy::float_cmp)]
-                if self == default {
-                    None
-                } else {
-                    Some(*self)
-                }
+                if self == default { None } else { Some(*self) }
             }
         }
 
@@ -69,8 +65,10 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
             const STRIDE: usize = $size;
             #[inline]
             unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> $ty {
-                let buffer = buffer.unchecked_advance_as_array(offset).as_array();
-                <$ty>::from_le_bytes(*buffer)
+                unsafe {
+                    let buffer = buffer.unchecked_advance_as_array(offset).as_array();
+                    <$ty>::from_le_bytes(*buffer)
+                }
             }
         }
 
@@ -90,12 +88,14 @@ macro_rules! unsafe_gen_primitive_types_with_vectors {
                 bytes: *mut MaybeUninit<u8>,
                 buffer_position: u32,
             ) {
-                let bytes = bytes as *mut [MaybeUninit<u8>; $size];
-                for (i, v) in values.iter().enumerate() {
-                    v.write(
-                        Cursor::new(&mut *bytes.add(i)),
-                        buffer_position - ($size * i) as u32,
-                    );
+                unsafe {
+                    let bytes = bytes as *mut [MaybeUninit<u8>; $size];
+                    for (i, v) in values.iter().enumerate() {
+                        v.write(
+                            Cursor::new(&mut *bytes.add(i)),
+                            buffer_position - ($size * i) as u32,
+                        );
+                    }
                 }
             }
         }

@@ -1,8 +1,8 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-    builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, Cursor, Offset,
-    Result, UnionOffset, UnionVectorOffset,
+    Cursor, Offset, Result, UnionOffset, UnionVectorOffset, builder::Builder, errors::ErrorKind,
+    slice_helpers::SliceWithStartOffset,
 };
 
 #[doc(hidden)]

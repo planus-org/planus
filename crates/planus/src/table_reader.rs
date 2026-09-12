@@ -1,6 +1,6 @@
 use crate::{
-    errors::ErrorKind, slice_helpers::SliceWithStartOffset, TableRead, TableReadUnion,
-    TableReadUnionVector,
+    TableRead, TableReadUnion, TableReadUnionVector, errors::ErrorKind,
+    slice_helpers::SliceWithStartOffset,
 };
 
 #[derive(Copy, Clone, Debug)]

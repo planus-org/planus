@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use crate::{builder::Builder, traits::*, Cursor, Offset};
+use crate::{Cursor, Offset, builder::Builder, traits::*};
 
 /// # Safety
 /// An offset is a 32-bit unsigned integer + a zero-sized type.
@@ -65,12 +65,14 @@ unsafe impl<T: ?Sized> VectorWrite<Offset<T>> for Offset<T> {
         bytes: *mut MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [MaybeUninit<u8>; 4];
-        for (i, v) in values.iter().enumerate() {
-            v.write(
-                Cursor::new(&mut *bytes.add(i)),
-                buffer_position - (Self::STRIDE * i) as u32,
-            );
+        unsafe {
+            let bytes = bytes as *mut [MaybeUninit<u8>; 4];
+            for (i, v) in values.iter().enumerate() {
+                v.write(
+                    Cursor::new(&mut *bytes.add(i)),
+                    buffer_position - (Self::STRIDE * i) as u32,
+                );
+            }
         }
     }
 }

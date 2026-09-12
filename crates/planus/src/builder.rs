@@ -1,7 +1,7 @@
 use core::{marker::PhantomData, mem::MaybeUninit};
 
 use crate::{
-    backvec::BackVec, Offset, Primitive, UnionVectorOffset, WriteAsOffset, WriteAsUnionVector,
+    Offset, Primitive, UnionVectorOffset, WriteAsOffset, WriteAsUnionVector, backvec::BackVec,
 };
 
 #[derive(Debug)]
@@ -217,11 +217,13 @@ impl Builder {
         alignment_mask: usize,
         f: impl FnOnce(u32, &mut [MaybeUninit<u8>]),
     ) {
-        let offset = self.prepare_write(size, alignment_mask) as u32;
-        self.inner.extend_write(size, |bytes| f(offset, bytes));
-        #[cfg(debug_assertions)]
-        {
-            self.missing_bytes = self.missing_bytes.checked_sub(size).unwrap();
+        unsafe {
+            let offset = self.prepare_write(size, alignment_mask) as u32;
+            self.inner.extend_write(size, |bytes| f(offset, bytes));
+            #[cfg(debug_assertions)]
+            {
+                self.missing_bytes = self.missing_bytes.checked_sub(size).unwrap();
+            }
         }
     }
 

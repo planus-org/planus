@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, UnionOffset, UnionVectorOffset};
+use crate::{UnionOffset, UnionVectorOffset, builder::Builder, traits::*};
 
 impl<P: Primitive, T: WriteAsOptional<P>> WriteAsOptional<P> for Option<T> {
     type Prepared = T::Prepared;

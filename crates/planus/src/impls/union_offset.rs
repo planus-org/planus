@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, UnionOffset};
+use crate::{UnionOffset, builder::Builder, traits::*};
 
 impl<T: ?Sized> WriteAsUnion<T> for UnionOffset<T> {
     #[inline]

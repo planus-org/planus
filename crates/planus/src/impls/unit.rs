@@ -1,7 +1,7 @@
 use crate::{
+    Cursor, UnionOffset, UnionVectorOffset, Void, WriteAsOptionalUnionVector,
     builder::Builder,
     traits::{Primitive, WriteAsOptional, WriteAsOptionalUnion, WriteAsPrimitive},
-    Cursor, UnionOffset, UnionVectorOffset, Void, WriteAsOptionalUnionVector,
 };
 
 impl<P: Primitive> WriteAsPrimitive<P> for Void {

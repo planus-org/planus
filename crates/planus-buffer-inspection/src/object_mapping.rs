@@ -4,9 +4,9 @@ use indexmap::IndexMap;
 use planus_types::intermediate::{DeclarationIndex, DeclarationKind};
 
 use crate::{
+    ByteIndex, InspectableFlatbuffer, Object, OffsetObject, OffsetObjectKind,
     children::{Byterange, Children},
     object_info::ObjectName,
-    ByteIndex, InspectableFlatbuffer, Object, OffsetObject, OffsetObjectKind,
 };
 
 pub type ObjectIndex = usize;
@@ -280,10 +280,10 @@ impl<'a> ObjectMappingBuilder<'a> {
             return;
         }
 
-        if let Object::Offset(offset_object) = current {
-            if let Ok(inner) = offset_object.follow_offset(buffer) {
-                self.process_root_object(inner, buffer);
-            }
+        if let Object::Offset(offset_object) = current
+            && let Ok(inner) = offset_object.follow_offset(buffer)
+        {
+            self.process_root_object(inner, buffer);
         }
 
         let mut range = current.byterange(buffer);
@@ -311,10 +311,10 @@ impl<'a> ObjectMappingBuilder<'a> {
         range.0 = range.0.min(crange.0);
         range.1 = range.1.max(crange.1);
 
-        if let Object::Offset(offset_object) = current {
-            if let Ok(inner) = offset_object.follow_offset(buffer) {
-                self.process_root_object(inner, buffer);
-            }
+        if let Object::Offset(offset_object) = current
+            && let Ok(inner) = offset_object.follow_offset(buffer)
+        {
+            self.process_root_object(inner, buffer);
         }
 
         current.children(buffer, |child_name, child| {

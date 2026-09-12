@@ -165,10 +165,10 @@ impl<B: ?Sized + Backend, F: Fn(&B::NamespaceInfo) -> &str> std::fmt::Display
         for _ in 0..self.value.ascend_count {
             write!(f, "{}{}", self.super_name, self.separator)?;
         }
-        if self.value.ascend_count == 0 {
-            if let Some(self_name) = self.self_name {
-                write!(f, "{self_name}")?;
-            }
+        if self.value.ascend_count == 0
+            && let Some(self_name) = self.self_name
+        {
+            write!(f, "{self_name}")?;
         }
         #[allow(clippy::bool_to_int_with_if)]
         let skip = if self.output_shared_ancestor { 0 } else { 1 };

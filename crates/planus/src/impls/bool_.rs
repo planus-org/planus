@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-    builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*, Cursor,
+    Cursor, builder::Builder, errors::ErrorKind, slice_helpers::SliceWithStartOffset, traits::*,
 };
 
 /// # Safety
@@ -30,11 +30,7 @@ impl WriteAsDefault<bool, bool> for bool {
     type Prepared = Self;
     #[inline]
     fn prepare(&self, _builder: &mut Builder, default: &bool) -> Option<bool> {
-        if self == default {
-            None
-        } else {
-            Some(*self)
-        }
+        if self == default { None } else { Some(*self) }
     }
 }
 
@@ -61,7 +57,7 @@ impl<'buf> VectorRead<'buf> for bool {
 
     #[inline]
     unsafe fn from_buffer(buffer: SliceWithStartOffset<'buf>, offset: usize) -> bool {
-        *buffer.as_slice().get_unchecked(offset) != 0
+        unsafe { *buffer.as_slice().get_unchecked(offset) != 0 }
     }
 }
 
@@ -83,9 +79,11 @@ unsafe impl VectorWrite<bool> for bool {
         bytes: *mut MaybeUninit<u8>,
         buffer_position: u32,
     ) {
-        let bytes = bytes as *mut [MaybeUninit<u8>; 1];
-        for (i, v) in values.iter().enumerate() {
-            v.write(Cursor::new(&mut *bytes.add(i)), buffer_position - i as u32);
+        unsafe {
+            let bytes = bytes as *mut [MaybeUninit<u8>; 1];
+            for (i, v) in values.iter().enumerate() {
+                v.write(Cursor::new(&mut *bytes.add(i)), buffer_position - i as u32);
+            }
         }
     }
 }

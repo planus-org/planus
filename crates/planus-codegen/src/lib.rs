@@ -46,6 +46,6 @@ pub fn generate_rust(declarations: &Declarations, format: bool) -> eyre::Result<
 
 pub fn generate_dot(declarations: &Declarations) -> String {
     let output = run_backend(&mut DotBackend { color_seed: 0 }, declarations);
-    let res = templates::dot::Namespace(&output).render().unwrap();
-    res
+
+    templates::dot::Namespace(&output).render().unwrap()
 }

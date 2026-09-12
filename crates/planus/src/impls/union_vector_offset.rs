@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, UnionVectorOffset};
+use crate::{UnionVectorOffset, builder::Builder, traits::*};
 
 impl<T: ?Sized> WriteAsUnionVector<T> for UnionVectorOffset<T> {
     #[inline]

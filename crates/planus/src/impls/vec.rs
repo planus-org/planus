@@ -1,4 +1,4 @@
-use crate::{builder::Builder, traits::*, Offset, UnionVectorOffset};
+use crate::{Offset, UnionVectorOffset, builder::Builder, traits::*};
 
 impl<T, P> WriteAsOffset<[P]> for alloc::vec::Vec<T>
 where

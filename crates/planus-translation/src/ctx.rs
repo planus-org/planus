@@ -9,9 +9,8 @@ use codespan::{ByteIndex, FileId, Files, LineNumber, Span};
 use codespan_reporting::{
     diagnostic::{Diagnostic, Label, Severity},
     term::{
-        self,
+        self, Config,
         termcolor::{BufferedStandardStream, ColorChoice},
-        Config,
     },
 };
 use indexmap::IndexMap;
