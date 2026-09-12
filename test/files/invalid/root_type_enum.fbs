@@ -1,0 +1,2 @@
+enum Color : byte { Red, Green, Blue }
+root_type Color;

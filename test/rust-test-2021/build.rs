@@ -30,13 +30,16 @@ fn main() -> Result<()> {
         probe_flatc(require_flatc)?
     };
 
-    // Create API tests
+    // Create API tests. Companions may opt into flatc bindings (for cross-checking
+    // against the upstream flatbuffers crate) by wrapping the relevant assertions in
+    // `<FLATC>`/`</FLATC>` markers; see `generate_test_code`.
     let planus_api_dir = format!("{out_dir}/planus_api");
-    generate_test_code("api_files", &planus_api_dir, None, false)?;
+    generate_test_code("api_files", &planus_api_dir, None, flatc_available)?;
 
     // Create serialize/deserialize tests
     let planus_test_dir = format!("{out_dir}/planus_test");
     let planus_test_no_flatc_dir = format!("{out_dir}/planus_test_no_flatc");
+    println!("cargo:rerun-if-changed=src/test_template.rs");
     let serialize_template = std::fs::read_to_string("src/test_template.rs").unwrap();
     generate_test_code(
         "test_files",
@@ -112,6 +115,9 @@ fn generate_test_code(
 
     let mut mod_code = String::new();
 
+    // Regenerate if a schema or companion is added/removed/renamed in the input directory.
+    println!("cargo:rerun-if-changed={in_dir}");
+
     for entry in std::fs::read_dir(in_dir).wrap_err_with(|| eyre!("Cannot read dir: {}", in_dir))? {
         let entry = entry.wrap_err("Error doing readdir")?;
         let file_path = entry.path();
@@ -121,6 +127,9 @@ fn generate_test_code(
                 .is_some_and(|extension| extension == "fbs")
         {
             let file_stem = file_path.file_stem().unwrap().to_str().unwrap();
+
+            // Regenerate when this schema changes.
+            println!("cargo:rerun-if-changed={}", file_path.display());
 
             // Generate planus code
             let generated = format!("{file_stem}_planus_generated.rs");
@@ -133,8 +142,27 @@ fn generate_test_code(
             std::fs::write(&generated_full_path, code)
                 .wrap_err_with(|| eyre!("Cannot write output to {}", generated_full_path))?;
 
+            // Companion test bodies (the `template == None` case, i.e. `api_files`) live in a
+            // sibling `.rs` file. Read it up front so we can decide whether this particular
+            // schema needs flatc: only companions that actually use flatc (marked with a
+            // `<FLATC>` section) get flatc bindings, so schemas flatc cannot parse — e.g. ones
+            // using keywords as identifiers — stay planus-only even when flatc is available.
+            let companion = if template.is_none() {
+                let mut path = file_path.to_owned();
+                path.set_extension("rs");
+                println!("cargo:rerun-if-changed={}", path.display());
+                std::fs::read_to_string(&path).ok()
+            } else {
+                None
+            };
+            let want_flatc = generate_flatc
+                && match &companion {
+                    Some(companion) => companion.contains("<FLATC>"),
+                    None => template.is_some(),
+                };
+
             let flatc_generated = format!("{file_stem}_generated.rs");
-            if generate_flatc {
+            if want_flatc {
                 assert!(Command::new("flatc")
                     .args(["--rust", "-o", out_dir])
                     .arg(&file_path)
@@ -164,7 +192,7 @@ fn generate_test_code(
                 "use alloc::{{boxed::Box, format, string::String, vec, vec::Vec}};"
             )
             .unwrap();
-            if generate_flatc {
+            if want_flatc {
                 writeln!(code, "#[path = {flatc_generated:?}]").unwrap();
                 writeln!(
                     code,
@@ -183,22 +211,11 @@ fn generate_test_code(
             writeln!(code).unwrap();
 
             if let Some(template) = template {
-                if generate_flatc {
-                    code += template;
-                } else {
-                    let (start, end) = template.split_once("<FLATC>").unwrap();
-                    let (_mid, end) = end.split_once("</FLATC>").unwrap();
-                    code += start;
-                    code += end;
-                }
-            } else {
-                let mut path = file_path.to_owned();
-                path.set_extension("rs");
-                if let Ok(test_code) = std::fs::read_to_string(&path) {
-                    writeln!(code, "#[test] fn {code_module_name}() {{").unwrap();
-                    code += &test_code;
-                    writeln!(code, "}}").unwrap();
-                }
+                code += &strip_flatc_if_needed(template, want_flatc);
+            } else if let Some(companion) = companion {
+                writeln!(code, "#[test] fn {code_module_name}() {{").unwrap();
+                code += &strip_flatc_if_needed(&companion, want_flatc);
+                writeln!(code, "}}").unwrap();
             }
 
             std::fs::write(code_file_full_path, code)
@@ -213,4 +230,24 @@ fn generate_test_code(
         .wrap_err("Cannot write the api glue code")?;
 
     Ok(())
+}
+
+// Handle the `<FLATC>`/`</FLATC>` markers in a template or companion test body. When flatc code
+// is available (`keep`), the markers are left in place as ordinary line comments and the code
+// between them is compiled. Otherwise the marked section (which references the `flatc` module)
+// is removed so the test still compiles without flatc. Bodies without markers are returned
+// unchanged.
+fn strip_flatc_if_needed(code: &str, keep: bool) -> String {
+    if keep {
+        return code.to_string();
+    }
+    match code.split_once("<FLATC>") {
+        Some((start, rest)) => {
+            let (_flatc, end) = rest
+                .split_once("</FLATC>")
+                .expect("`<FLATC>` marker without a matching `</FLATC>`");
+            format!("{start}{end}")
+        }
+        None => code.to_string(),
+    }
 }

@@ -1,0 +1,11 @@
+// The root_type refers to a table by its qualified path inside a namespace, and
+// the file_identifier attaches to that table.
+namespace my.pkg;
+
+table Msg {
+  x: int;
+  label: string;
+}
+
+root_type my.pkg.Msg;
+file_identifier "NSP1";

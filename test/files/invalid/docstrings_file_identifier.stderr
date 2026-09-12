@@ -59,8 +59,12 @@ error: Inner doc comments are not meaningful here.
    │ ^^^^^^^^^
 
 error: file_identifier must be exactly 4 bytes
-  ┌─ test/files/invalid/docstrings_file_identifier.fbs:7:1
-  │
-7 │ "foo" /// Bad6
-  │ ^^^^^
+  ┌─ test/files/invalid/docstrings_file_identifier.fbs:5:1
+  │  
+5 │ ╭ file_identifier /// Bad4
+6 │ │ /// Bad5
+7 │ │ "foo" /// Bad6
+8 │ │ /// Bad7
+9 │ │ ; /// Bad8
+  │ ╰─^
 

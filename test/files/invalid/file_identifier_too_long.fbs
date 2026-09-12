@@ -1,0 +1,3 @@
+table Foo {}
+root_type Foo;
+file_identifier "FOOBAR";

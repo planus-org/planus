@@ -1,0 +1,6 @@
+error: file_identifier must be exactly 4 bytes
+  ┌─ test/files/invalid/file_identifier_non_ascii.fbs:5:1
+  │
+5 │ file_identifier "MSG€";
+  │ ^^^^^^^^^^^^^^^^^^^^^^^
+

@@ -1,0 +1,11 @@
+error: Overlapping root_type declarations
+  ┌─ test/files/invalid/helpers/root_type_overlap1.fbs:2:1
+  │
+2 │ root_type A;
+  │ ------------ first definition was here
+  │
+  ┌─ test/files/invalid/helpers/root_type_overlap2.fbs:2:1
+  │
+2 │ root_type B;
+  │ ------------ second definition was here
+

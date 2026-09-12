@@ -1,0 +1,6 @@
+error: file_identifier must be exactly 4 bytes
+  ┌─ test/files/invalid/file_identifier_too_long.fbs:3:1
+  │
+3 │ file_identifier "FOOBAR";
+  │ ^^^^^^^^^^^^^^^^^^^^^^^^^
+

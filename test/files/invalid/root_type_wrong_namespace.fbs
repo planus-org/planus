@@ -1,0 +1,7 @@
+include "helpers/root_type_other_namespace.fbs";
+
+namespace here;
+
+// `other.Foo` resolves to a table, but not one in the namespace that declares
+// the root_type, which is not allowed.
+root_type other.Foo;

@@ -1,0 +1,5 @@
+table Foo {}
+root_type Foo;
+// Four Unicode scalar values, but the last one does not fit in a single byte,
+// so it cannot be part of a 4-byte file identifier.
+file_identifier "MSG€";

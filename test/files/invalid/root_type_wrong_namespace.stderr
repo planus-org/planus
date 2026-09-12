@@ -1,0 +1,6 @@
+error: root_type must be a table in the same namespace
+  ┌─ test/files/invalid/root_type_wrong_namespace.fbs:7:1
+  │
+7 │ root_type other.Foo;
+  │ ^^^^^^^^^^^^^^^^^^^^
+

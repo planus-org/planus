@@ -1,0 +1,6 @@
+// Two included files in the same (root) namespace each declare a root_type,
+// which conflict when the schema is assembled.
+include "helpers/root_type_overlap1.fbs";
+include "helpers/root_type_overlap2.fbs";
+
+table Foo {}

@@ -1,0 +1,6 @@
+error: root_type must be a table
+  ┌─ test/files/invalid/root_type_not_a_table.fbs:2:1
+  │
+2 │ root_type [Foo];
+  │ ^^^^^^^^^^^^^^^^
+

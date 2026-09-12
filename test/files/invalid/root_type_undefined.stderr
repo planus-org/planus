@@ -1,0 +1,12 @@
+error: Unknown type
+  ┌─ test/files/invalid/root_type_undefined.fbs:1:11
+  │
+1 │ root_type DoesNotExist;
+  │           ^^^^^^^^^^^^
+
+error: root_type must be a table in the same namespace
+  ┌─ test/files/invalid/root_type_undefined.fbs:1:1
+  │
+1 │ root_type DoesNotExist;
+  │ ^^^^^^^^^^^^^^^^^^^^^^^
+
