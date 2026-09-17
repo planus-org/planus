@@ -26,7 +26,6 @@ pub enum BackendDeclaration<B: ?Sized + Backend> {
     Struct(BackendStruct<B>),
     Enum(BackendEnum<B>),
     Union(BackendUnion<B>),
-    #[allow(dead_code)]
     RpcService(BackendRpcService<B>),
 }
 
@@ -66,9 +65,9 @@ pub struct BackendUnion<B: ?Sized + Backend> {
 
 #[derive(Debug, Clone)]
 pub struct BackendRpcService<B: ?Sized + Backend> {
-    pub _docstrings: Docstrings,
-    pub _info: B::RpcServiceInfo,
-    pub _methods: Vec<B::RpcMethodInfo>,
+    pub docstrings: Docstrings,
+    pub info: B::RpcServiceInfo,
+    pub methods: Vec<BackendVariant<B::RpcMethodInfo>>,
 }
 
 #[derive(Debug, Clone)]
@@ -299,7 +298,9 @@ fn translate_type_index<'a, B: ?Sized + Backend>(
         DeclInfo::Union(translated_decl, decl) => {
             ResolvedType::Union(index, decl, translated_decl, relative_path)
         }
-        DeclInfo::RpcService(_translated_decl, _decl) => todo!(),
+        DeclInfo::RpcService(_translated_decl, _decl) => {
+            unreachable!("rpc services cannot be used as types")
+        }
     }
 }
 
@@ -494,7 +495,20 @@ pub fn run_backend<B: ?Sized + Backend>(
                     ),
                     decl,
                 ),
-                DeclarationKind::RpcService(_decl) => todo!(),
+                DeclarationKind::RpcService(decl) => DeclInfo::RpcService(
+                    backend.generate_rpc_service(
+                        &mut DeclarationNames {
+                            _global_names: global_names,
+                            _namespace_names: namespace_names,
+                            declaration_names,
+                        },
+                        &translated_namespaces,
+                        DeclarationIndex(decl_id),
+                        decl_name,
+                        decl,
+                    ),
+                    decl,
+                ),
             };
             (decl_name.clone(), decl)
         })
@@ -650,7 +664,47 @@ pub fn run_backend<B: ?Sized + Backend>(
                     .collect(),
                 docstrings: (orig_decl.1).docstrings.clone(),
             }),
-            DeclInfo::RpcService(_translated_decl, _decl) => todo!(),
+            DeclInfo::RpcService(translated_decl, decl) => {
+                BackendDeclaration::RpcService(BackendRpcService {
+                    info: translated_decl.clone(),
+                    methods: decl
+                        .methods
+                        .iter()
+                        .map(|(method_name, method)| {
+                            let argument_type = translate_type(
+                                &translation_context,
+                                declarations,
+                                &full_translated_decls,
+                                &method.argument_type,
+                                &decl_path.clone_pop(),
+                            );
+                            let return_type = translate_type(
+                                &translation_context,
+                                declarations,
+                                &full_translated_decls,
+                                &method.return_type,
+                                &decl_path.clone_pop(),
+                            );
+                            BackendVariant {
+                                name_and_docs: NameAndDocstrings {
+                                    original_name: method_name.clone(),
+                                    docstrings: method.docstrings.clone(),
+                                },
+                                variant: backend.generate_rpc_method(
+                                    &mut translation_context,
+                                    translated_decl,
+                                    decl,
+                                    method_name,
+                                    method,
+                                    argument_type,
+                                    return_type,
+                                ),
+                            }
+                        })
+                        .collect(),
+                    docstrings: (orig_decl.1).docstrings.clone(),
+                })
+            }
         };
         full_translated_decls.insert(i, decl);
     }

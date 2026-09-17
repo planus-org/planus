@@ -1,0 +1,131 @@
+/// The fully-qualified name of the `{{ info.trait_name }}` service in the
+/// flatbuffers schema.
+pub const {{ info.name_const }}: &str = "{{ info.service_name }}";
+
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
+///
+/// This trait is transport-agnostic: implement it to handle the requests
+/// of the rpc service using any transport of your choosing.
+pub trait {{ info.trait_name }} {
+    /// The fully-qualified name of this service in the flatbuffers schema.
+    ///
+    /// Also available without an implementing type as [`{{ info.name_const }}`].
+    const NAME: &'static str = {{ info.name_const }};
+
+    /// The error type returned by the methods of this service.
+    type Error;
+
+    {% for method in methods -%}
+    {% for docstring in method.name_and_docs.docstrings.iter_strings() %}
+    /// {{ docstring }}
+    {%- endfor %}
+    {%- if method.idempotent %}
+    ///
+    /// This method is marked as `idempotent` in the flatbuffers schema.
+    {%- endif %}
+    fn {{ method.name }}(&self, request: {{ method.argument_ref_type }}) -> ::core::result::Result<{{ method.return_owned_type }}, Self::Error>;
+    {% endfor %}
+}
+
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
+///
+/// This is the async version of [`{{ info.trait_name }}`]. It is
+/// transport-agnostic: implement it to handle the requests of the rpc
+/// service using any transport of your choosing.
+#[allow(async_fn_in_trait)]
+pub trait {{ info.async_trait_name }} {
+    /// The fully-qualified name of this service in the flatbuffers schema.
+    ///
+    /// Also available without an implementing type as [`{{ info.name_const }}`].
+    const NAME: &'static str = {{ info.name_const }};
+
+    /// The error type returned by the methods of this service.
+    type Error;
+
+    {% for method in methods -%}
+    {% for docstring in method.name_and_docs.docstrings.iter_strings() %}
+    /// {{ docstring }}
+    {%- endfor %}
+    {%- if method.idempotent %}
+    ///
+    /// This method is marked as `idempotent` in the flatbuffers schema.
+    {%- endif %}
+    async fn {{ method.name }}(&self, request: {{ method.argument_ref_type }}) -> ::core::result::Result<{{ method.return_owned_type }}, Self::Error>;
+    {% endfor %}
+}
+
+/// The methods of the rpc service `{{ info.service_name }}`.
+///
+/// Each method has a numeric id given by its zero-based position in the
+/// service declaration, which can be used to relay or route messages.
+/// Note that the ids follow declaration order, so removing or reordering
+/// methods in the schema changes them.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, ::serde::Serialize, ::serde::Deserialize)]
+{%- if !methods.is_empty() -%}
+#[repr(u32)]
+{%- endif -%}
+pub enum {{ info.method_enum_name }} {
+    {% for method in methods -%}
+        {% for docstring in method.name_and_docs.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {%- endfor %}
+        {{ method.variant_name }} = {{ loop.index0 }},
+    {% endfor %}
+}
+
+impl {{ info.method_enum_name }} {
+    /// The fully-qualified name of the service in the flatbuffers schema
+    pub const SERVICE_NAME: &'static str = {{ info.name_const }};
+
+    /// Array containing all methods of the service, ordered by id
+    pub const ENUM_VALUES: [Self; {{ methods.len() }}] = [
+        {%- for method in methods -%} Self::{{ method.variant_name }}, {%- endfor -%}
+    ];
+
+    /// The id of the method, given by its zero-based position in the
+    /// service declaration
+    #[inline]
+    pub fn id(self) -> u32 {
+        match self {
+            {% for method in methods -%}
+                Self::{{ method.variant_name }} => {{ loop.index0 }},
+            {% endfor %}
+        }
+    }
+
+    /// The name of the method as declared in the flatbuffers schema
+    #[inline]
+    pub fn name(self) -> &'static str {
+        match self {
+            {% for method in methods -%}
+                Self::{{ method.variant_name }} => "{{ method.name_and_docs.original_name }}",
+            {% endfor %}
+        }
+    }
+}
+
+impl ::core::convert::TryFrom<u32> for {{ info.method_enum_name }} {
+    type Error = ::planus::errors::UnknownEnumTagKind;
+    #[inline]
+    fn try_from(value: u32) -> ::core::result::Result<Self, ::planus::errors::UnknownEnumTagKind> {
+        #[allow(clippy::match_single_binding)]
+        match value {
+            {% for method in methods -%}
+                {{ loop.index0 }} => ::core::result::Result::Ok(Self::{{ method.variant_name }}),
+            {% endfor %}
+
+            _ => ::core::result::Result::Err(::planus::errors::UnknownEnumTagKind { tag: value as i128 }),
+        }
+    }
+}
+
+impl ::core::convert::From<{{ info.method_enum_name }}> for u32 {
+    #[inline]
+    fn from(value: {{ info.method_enum_name }}) -> Self {
+        value.id()
+    }
+}

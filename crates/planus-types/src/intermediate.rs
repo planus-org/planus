@@ -345,6 +345,8 @@ pub struct RpcService {
 pub struct RpcMethod {
     pub argument_type: Type,
     pub return_type: Type,
+    pub idempotent: bool,
+    pub docstrings: Docstrings,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--ignore-unknown-metadata` to allow generating code from schemas that include generator-specific attributes.
 - Allow keywords as identifiers like flatc [#313](https://github.com/planus-org/planus/pull/313)
 
+- Add support for `rpc_service` declarations: each service generates transport-agnostic sync and async Rust traits with one method per (unary) rpc method, plus a method enum with stable numeric ids for routing/relaying messages
+
 ### Fixed
 - Fixed rustfmt error handling. Don't return error if rustfmt succeed but prints to stderr, just print out stderr instead. [#363](https://github.com/planus-org/planus/pull/363) [#373](https://github.com/planus-org/planus/pull/373)
 - Fixed a panic when building `Declarations` from zero schemas, and made the `check`, `dot`, and `rust` CLI subcommands reject invocations with no `.fbs` files. [#371](https://github.com/planus-org/planus/pull/371)
