@@ -81,6 +81,7 @@ pub struct StructField {
 pub struct Enum {
     pub name: String,
     pub repr_type: String,
+    pub is_bit_flags: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -202,24 +203,37 @@ impl RustBackend {
             ResolvedType::Enum(_, decl, info, relative_namespace, _) => {
                 let owned_type =
                     format_relative_namespace(&relative_namespace, &info.name).to_string();
-                StructFieldType {
-                    getter_return_type: format!(
-                        "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
-                    ),
-                    getter_code: format!(
-                        r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
+                if decl.is_bit_flags {
+                    // Any integer is a valid set of flags, so reading is infallible.
+                    StructFieldType {
+                        getter_return_type: owned_type.clone(),
+                        getter_code: format!(
+                            "{owned_type}({}::from_le_bytes(*buffer.as_array()))",
+                            integer_type(&decl.type_),
+                        ),
+                        can_do_infallible_conversion: true,
+                        owned_type,
+                    }
+                } else {
+                    StructFieldType {
+                        getter_return_type: format!(
+                            "::core::result::Result<{owned_type}, ::planus::errors::UnknownEnumTag>"
+                        ),
+                        getter_code: format!(
+                            r#"let value: ::core::result::Result<{}, _> = ::core::convert::TryInto::try_into({}::from_le_bytes(*buffer.as_array()));
                     value.map_err(|e| e.with_error_location(
                         {:?},
                         {:?},
                         buffer.offset_from_start,
                     ))"#,
+                            owned_type,
+                            integer_type(&decl.type_),
+                            parent_info.ref_name,
+                            name
+                        ),
+                        can_do_infallible_conversion: true,
                         owned_type,
-                        integer_type(&decl.type_),
-                        parent_info.ref_name,
-                        name
-                    ),
-                    can_do_infallible_conversion: true,
-                    owned_type,
+                    }
                 }
             }
             ResolvedType::Bool => {
@@ -336,6 +350,7 @@ impl Backend for RustBackend {
         Enum {
             name: reserve_type_name(decl_name, declaration_names),
             repr_type: format!("{:?}", decl.type_).to_lowercase(),
+            is_bit_flags: decl.is_bit_flags,
         }
     }
 
@@ -566,6 +581,16 @@ impl Backend for RustBackend {
                         );
                         deserialize_default = Some(impl_default_code.clone());
                     }
+                    // bit_flags fields carry a numeric default (the empty set, or an
+                    // explicit flag combination) rather than a single named variant.
+                    AssignMode::HasDefault(Literal::Int(lit)) => {
+                        read_type = vtable_type.clone();
+                        owned_type = vtable_type.clone();
+                        create_trait = format!("WriteAsDefault<{owned_type}, {owned_type}>");
+                        impl_default_code = format!("{owned_type}({lit})").into();
+                        serialize_default = Some(format!("&{owned_type}({lit})").into());
+                        deserialize_default = Some(impl_default_code.clone());
+                    }
                     AssignMode::Optional => {
                         read_type = format!("::core::option::Option<{vtable_type}>");
                         owned_type = read_type.clone();
@@ -655,6 +680,10 @@ impl Backend for RustBackend {
                             "::planus::Vector<'a, ::planus::Result<{}<'a>>>",
                             format_relative_namespace(relative_namespace, &info.ref_name)
                         ),
+                        ResolvedType::Enum(_, decl, info, relative_namespace, _) if decl.is_bit_flags => format!(
+                            "::planus::Vector<'a, {}>",
+                            format_relative_namespace(relative_namespace, &info.name)
+                        ),
                         ResolvedType::Enum(_, _, info, relative_namespace, _) => format!(
                             "::planus::Vector<'a, ::core::result::Result<{}, ::planus::errors::UnknownEnumTag>>",
                             format_relative_namespace(relative_namespace, &info.name)
@@ -698,6 +727,8 @@ impl Backend for RustBackend {
                 }
                 fn vector_try_into_func(type_: &ResolvedType<'_, RustBackend>) -> &'static str {
                     match type_ {
+                        // bit_flags enums read infallibly, like plain integers.
+                        ResolvedType::Enum(_, decl, ..) if decl.is_bit_flags => "to_vec",
                         ResolvedType::Table(..)
                         | ResolvedType::Enum(..)
                         | ResolvedType::Vector(..)

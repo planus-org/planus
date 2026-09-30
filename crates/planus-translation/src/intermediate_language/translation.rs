@@ -1165,33 +1165,85 @@ impl<'a> Translator<'a> {
 
     fn translate_enum(&self, current_file_id: FileId, decl: &ast::Enum) -> Enum {
         let alignment = decl.type_.byte_size();
+        let mut is_bit_flags = false;
+        let mut bit_flags_span = None;
         for m in &decl.metadata.values {
-            self.emit_metadata_support_error(
-                current_file_id,
-                m,
-                "enums",
-                m.kind.accepted_on_enums(),
+            match m.kind {
+                MetadataValueKind::BitFlags => {
+                    is_bit_flags = true;
+                    bit_flags_span = Some(m.span);
+                }
+                _ => {
+                    self.emit_metadata_support_error(
+                        current_file_id,
+                        m,
+                        "enums",
+                        m.kind.accepted_on_enums(),
+                    );
+                }
+            }
+        }
+
+        if is_bit_flags && !decl.type_.is_unsigned() {
+            self.ctx.emit_error(
+                ErrorKind::TYPE_ERROR,
+                [Label::primary(current_file_id, bit_flags_span.unwrap())
+                    .with_message("the underlying type of a bit_flags enum must be unsigned")],
+                Some(&format!("{} is signed", decl.type_.flatbuffer_name())),
             );
         }
 
         let mut variants: IndexMap<IntegerLiteral, EnumVariant> = IndexMap::new();
         let mut next_value = IntegerLiteral::default_value_from_type(&decl.type_);
+        let mut next_position = 0u32;
         for (ident, variant) in decl.variants.iter() {
-            let mut value = next_value;
             let name = self.ctx.resolve_identifier(*ident);
-            if let Some(assignment) = &variant.value {
-                if let Some(v) = self.translate_integer(
-                    current_file_id,
-                    assignment.span,
-                    assignment.is_negative,
-                    &assignment.value,
-                    &decl.type_,
-                ) {
-                    value = v;
+            // For bit_flags enums each member's literal is a bit *position*, and its
+            // stored value is `1 << position`; for plain enums the literal is the value.
+            let value = if is_bit_flags {
+                let position = if let Some(assignment) = &variant.value {
+                    match self.translate_integer(
+                        current_file_id,
+                        assignment.span,
+                        assignment.is_negative,
+                        &assignment.value,
+                        &decl.type_,
+                    ) {
+                        Some(v) => v.to_u64() as u32,
+                        None => continue,
+                    }
                 } else {
+                    next_position
+                };
+                let Some(value) = IntegerLiteral::from_bit_position(&decl.type_, position) else {
+                    self.ctx.emit_error(
+                        ErrorKind::NUMERICAL_RANGE_ERROR,
+                        [Label::primary(current_file_id, variant.span)
+                            .with_message("bit flag is out of range of the underlying type")],
+                        None,
+                    );
                     continue;
                 };
-            }
+                next_position = position + 1;
+                value
+            } else {
+                let mut value = next_value;
+                if let Some(assignment) = &variant.value {
+                    if let Some(v) = self.translate_integer(
+                        current_file_id,
+                        assignment.span,
+                        assignment.is_negative,
+                        &assignment.value,
+                        &decl.type_,
+                    ) {
+                        value = v;
+                    } else {
+                        continue;
+                    };
+                }
+                next_value = value.next();
+                value
+            };
             match variants.entry(value) {
                 Entry::Occupied(entry) => {
                     self.ctx.emit_error(
@@ -1215,12 +1267,12 @@ impl<'a> Translator<'a> {
                     });
                 }
             }
-            next_value = value.next();
         }
         Enum {
             variants,
             type_: decl.type_,
             alignment,
+            is_bit_flags,
         }
     }
 
@@ -1604,17 +1656,25 @@ impl<'a> Translator<'a> {
 
     pub fn default_value_for_enum(&self, declaration_index: DeclarationIndex) -> Option<Literal> {
         match &self.descriptions[declaration_index.0] {
-            TypeDescription::Enum(decl) => decl
-                .variants
-                .iter()
-                .enumerate()
-                .filter_map(|(variant_index, (k, _v))| {
-                    (k.is_zero()).then_some(Literal::EnumTag {
-                        variant_index,
-                        value: *k,
+            TypeDescription::Enum(decl) => {
+                // A bit_flags field always defaults to the empty set (0), even though
+                // 0 is not a named variant.
+                if decl.is_bit_flags {
+                    return Some(Literal::Int(IntegerLiteral::default_value_from_type(
+                        &decl.type_,
+                    )));
+                }
+                decl.variants
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(variant_index, (k, _v))| {
+                        (k.is_zero()).then_some(Literal::EnumTag {
+                            variant_index,
+                            value: *k,
+                        })
                     })
-                })
-                .next(),
+                    .next()
+            }
             _ => unreachable!(),
         }
     }

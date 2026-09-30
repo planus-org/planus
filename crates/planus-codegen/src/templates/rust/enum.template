@@ -1,3 +1,235 @@
+{%- if info.is_bit_flags -%}
+{% for docstring in docstrings.iter_strings() %}
+/// {{ docstring }}
+{%- endfor %}
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, ::serde::Serialize, ::serde::Deserialize)]
+#[repr(transparent)]
+pub struct {{ info.name }}(pub {{ info.repr_type }});
+
+#[allow(non_upper_case_globals)]
+impl {{ info.name }} {
+    {% for variant in variants -%}
+        {% for docstring in variant.name_and_docs.docstrings.iter_strings() %}
+        /// {{ docstring }}
+        {%- endfor %}
+        pub const {{ variant.name }}: {{ info.name }} = {{ info.name }}({{ variant.value }});
+    {% endfor %}
+
+    /// The empty set of flags.
+    pub const fn empty() -> Self {
+        Self(0)
+    }
+
+    /// The set of all defined flags.
+    pub const fn all() -> Self {
+        Self(0 {%- for variant in variants %} | Self::{{ variant.name }}.0 {%- endfor %})
+    }
+
+    /// The raw underlying integer value.
+    pub const fn bits(&self) -> {{ info.repr_type }} {
+        self.0
+    }
+
+    /// Returns `true` if no flags are set.
+    pub const fn is_empty(&self) -> bool {
+        self.0 == 0
+    }
+
+    /// Returns `true` if all of the flags in `other` are set in `self`.
+    pub const fn contains(&self, other: Self) -> bool {
+        (self.0 & other.0) == other.0
+    }
+
+    /// Returns `true` if any of the flags in `other` are set in `self`.
+    pub const fn intersects(&self, other: Self) -> bool {
+        (self.0 & other.0) != 0
+    }
+}
+
+impl ::core::convert::From<{{ info.repr_type }}> for {{ info.name }} {
+    #[inline]
+    fn from(value: {{ info.repr_type }}) -> Self {
+        Self(value)
+    }
+}
+
+impl ::core::convert::From<{{ info.name }}> for {{ info.repr_type }} {
+    #[inline]
+    fn from(value: {{ info.name }}) -> Self {
+        value.0
+    }
+}
+
+impl ::core::ops::BitOr for {{ info.name }} {
+    type Output = Self;
+    #[inline]
+    fn bitor(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+}
+
+impl ::core::ops::BitOrAssign for {{ info.name }} {
+    #[inline]
+    fn bitor_assign(&mut self, other: Self) {
+        self.0 |= other.0;
+    }
+}
+
+impl ::core::ops::BitAnd for {{ info.name }} {
+    type Output = Self;
+    #[inline]
+    fn bitand(self, other: Self) -> Self {
+        Self(self.0 & other.0)
+    }
+}
+
+impl ::core::ops::BitAndAssign for {{ info.name }} {
+    #[inline]
+    fn bitand_assign(&mut self, other: Self) {
+        self.0 &= other.0;
+    }
+}
+
+impl ::core::ops::BitXor for {{ info.name }} {
+    type Output = Self;
+    #[inline]
+    fn bitxor(self, other: Self) -> Self {
+        Self(self.0 ^ other.0)
+    }
+}
+
+impl ::core::ops::BitXorAssign for {{ info.name }} {
+    #[inline]
+    fn bitxor_assign(&mut self, other: Self) {
+        self.0 ^= other.0;
+    }
+}
+
+impl ::core::ops::Not for {{ info.name }} {
+    type Output = Self;
+    #[inline]
+    fn not(self) -> Self {
+        Self(!self.0 & Self::all().0)
+    }
+}
+
+impl ::core::fmt::Debug for {{ info.name }} {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut first = true;
+        f.write_str("{{ info.name }}(")?;
+        {% for variant in variants -%}
+        if self.contains({{ info.name }}::{{ variant.name }}) {
+            if !first {
+                f.write_str(" | ")?;
+            }
+            first = false;
+            f.write_str("{{ variant.name }}")?;
+        }
+        {% endfor -%}
+        let _ = first;
+        f.write_str(")")
+    }
+}
+
+/// # Safety
+/// The Planus compiler correctly calculates `ALIGNMENT` and `SIZE`.
+unsafe impl ::planus::Primitive for {{ info.name }} {
+    const ALIGNMENT: usize = {{ size }};
+    const SIZE: usize = {{ size }};
+}
+
+impl ::planus::WriteAsPrimitive<{{ info.name }}> for {{ info.name }} {
+    #[inline]
+    fn write<const N: usize>(&self, cursor: ::planus::Cursor<'_, N>, buffer_position: u32) {
+        self.0.write(cursor, buffer_position);
+    }
+}
+
+impl ::planus::WriteAs<{{ info.name }}> for {{ info.name }} {
+    type Prepared = Self;
+
+    #[inline]
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> {{ info.name }} {
+        *self
+    }
+}
+
+impl ::planus::WriteAsDefault<{{ info.name }}, {{ info.name }}> for {{ info.name }} {
+    type Prepared = Self;
+
+    #[inline]
+    fn prepare(&self, _builder: &mut ::planus::Builder, default: &{{ info.name }}) -> ::core::option::Option<{{ info.name }}> {
+        if self == default {
+            ::core::option::Option::None
+        } else {
+            ::core::option::Option::Some(*self)
+        }
+    }
+}
+
+impl ::planus::WriteAsOptional<{{ info.name }}> for {{ info.name }} {
+    type Prepared = Self;
+
+    #[inline]
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> ::core::option::Option<{{ info.name }}> {
+        ::core::option::Option::Some(*self)
+    }
+}
+
+impl<'buf> ::planus::TableRead<'buf> for {{ info.name }} {
+    #[inline]
+    fn from_buffer(buffer: ::planus::SliceWithStartOffset<'buf>, offset: usize) -> ::core::result::Result<Self, ::planus::errors::ErrorKind> {
+        let n: {{ info.repr_type }} = ::planus::TableRead::from_buffer(buffer, offset)?;
+        ::core::result::Result::Ok(Self(n))
+    }
+}
+
+impl<'buf> ::planus::VectorRead<'buf> for {{ info.name }} {
+    const STRIDE: usize = {{ size }};
+    #[inline]
+    unsafe fn from_buffer(buffer: ::planus::SliceWithStartOffset<'buf>, offset: usize) -> Self {
+        {%- if info.repr_type == "u8" -%}
+        Self(unsafe { *buffer.buffer.get_unchecked(offset) })
+        {%- else -%}
+        Self(unsafe { <{{ info.repr_type }} as ::planus::VectorRead>::from_buffer(buffer, offset) })
+        {%- endif -%}
+    }
+}
+
+/// # Safety
+/// The planus compiler generates implementations that initialize
+/// the bytes in `write_values`.
+unsafe impl ::planus::VectorWrite<{{ info.name }}> for {{ info.name }} {
+    const STRIDE: usize = {{ size }};
+
+    type Value = Self;
+
+    #[inline]
+    fn prepare(&self, _builder: &mut ::planus::Builder) -> Self {
+        *self
+    }
+
+    #[inline]
+    unsafe fn write_values(
+        values: &[Self],
+        bytes: *mut ::core::mem::MaybeUninit<u8>,
+        buffer_position: u32,
+    ) {
+        let bytes = bytes as *mut [::core::mem::MaybeUninit<u8>; {{ size }}];
+        for (i, v) in ::core::iter::Iterator::enumerate(values.iter()) {
+            ::planus::WriteAsPrimitive::write(
+                v,
+                ::planus::Cursor::new(unsafe { &mut *bytes.add(i) }),
+                {% if size == 1 %}
+                buffer_position - i as u32,
+                {% else %}
+                buffer_position - ({{ size }} * i) as u32,
+                {% endif %}
+            );
+        }
+    }
+}
+{%- else -%}
 {% for docstring in docstrings.iter_strings() %}
 /// {{ docstring }}
 {%- endfor %}
@@ -153,3 +385,4 @@ unsafe impl ::planus::VectorWrite<{{info.name}}> for {{ info.name }} {
         }
     }
 }
+{%- endif -%}

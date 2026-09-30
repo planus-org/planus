@@ -1,0 +1,12 @@
+enum Fault : uint16 (bit_flags) {
+  A,
+  B,
+  C = 10,
+}
+
+table Holder {
+  flags: Fault;
+  list: [Fault];
+}
+
+root_type Holder;
