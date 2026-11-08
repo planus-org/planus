@@ -382,7 +382,7 @@ impl<T> Clone for ChunksExact<'_, T> {
 impl<'buf, T: VectorReadUnion<'buf>> ChunksExact<'buf, T> {
     #[inline]
     pub(crate) fn new(v: UnionVector<'buf, T>, chunk_size: NonZeroUsize) -> Self {
-        let len = v.len() / chunk_size.get() * chunk_size.get();
+        let len = v.len() / chunk_size * chunk_size.get();
         let (v, rem) = unsafe { v.split_at_unchecked(len) };
         Self { v, rem, chunk_size }
     }
