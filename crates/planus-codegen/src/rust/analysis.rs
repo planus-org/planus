@@ -186,9 +186,8 @@ impl DeclarationAnalysis for EqAnalysis {
 
 fn infallible_conversion_simple_type(infallible_conversion: &[bool], type_: &SimpleType) -> bool {
     match type_ {
-        SimpleType::Struct(decl_id) => infallible_conversion[decl_id.0],
+        SimpleType::Struct(decl_id) | SimpleType::Enum(decl_id) => infallible_conversion[decl_id.0],
         SimpleType::Bool | SimpleType::Integer(_) | SimpleType::Float(_) => true,
-        SimpleType::Enum(_) => false,
     }
 }
 
@@ -213,11 +212,11 @@ impl DeclarationAnalysis for InfallibleConversionAnalysis {
         _decl_id: DeclarationIndex,
         declaration: &Declaration,
     ) -> Self::State {
-        match declaration.kind {
+        match &declaration.kind {
             DeclarationKind::Struct(_) | DeclarationKind::Union(_) => true,
-            DeclarationKind::Enum(_)
-            | DeclarationKind::Table(_)
-            | DeclarationKind::RpcService(_) => false,
+            // A bit_flags enum reads infallibly: any integer is a valid set of flags.
+            DeclarationKind::Enum(decl) => decl.is_bit_flags,
+            DeclarationKind::Table(_) | DeclarationKind::RpcService(_) => false,
         }
     }
 
@@ -251,9 +250,13 @@ impl DeclarationAnalysis for InfallibleConversionAnalysis {
                     }
                 }
             }
-            DeclarationKind::Table(_)
-            | DeclarationKind::Enum(_)
-            | DeclarationKind::RpcService(_) => {
+            // A bit_flags enum reads infallibly; a plain enum can fail with UnknownEnumTag.
+            DeclarationKind::Enum(decl) => {
+                if !decl.is_bit_flags {
+                    cur_conversion_possible = false;
+                }
+            }
+            DeclarationKind::Table(_) | DeclarationKind::RpcService(_) => {
                 cur_conversion_possible = false;
             }
         }

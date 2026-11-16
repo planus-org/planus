@@ -87,7 +87,7 @@ Things we do not currently support:
 - `rpc_service`
 - `file_extension`, `file_identifier` and `root_type`
 - Fixed-size arrays
-- Any attribute besides `required`, `deprecated`, `id` or `force_align`.
+- Any attribute besides `required`, `deprecated`, `id`, `force_align` or `bit_flags`.
 - Some of the more exotic literal values, like hexadecimal floats or unicode surrogate pair parsing.
 
 Things we will probably never support:
