@@ -22,9 +22,9 @@ error: Only simple types are permitted in structs
 5 │   x3: [bool];
   │       ^^^^^^ Vectors in structs are not supported
 
-error: Arrays are not currently supported in planus
-  ┌─ test/files/invalid/struct_with_complex_types.fbs:6:7
+error: Only fixed-size arrays of integers and floats are currently supported in planus
+  ┌─ test/files/invalid/struct_with_complex_types.fbs:6:8
   │
 6 │   x4: [bool: 4];
-  │       ^^^^^^^^^
+  │        ^^^^
 

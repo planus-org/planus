@@ -218,9 +218,9 @@ impl<'a> ObjectName<'a> for UnionVectorValuesObject {
     }
 }
 
-impl<'a> ObjectName<'a> for ArrayObject<'a> {
+impl<'a> ObjectName<'a> for ArrayObject {
     fn print_object(&self, _buffer: &InspectableFlatbuffer<'a>) -> String {
-        "ARRAY".to_string() // TODO
+        format!("[{} elements]", self.size)
     }
 }
 

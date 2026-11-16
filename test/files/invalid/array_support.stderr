@@ -1,6 +1,0 @@
-error: Arrays are not currently supported in planus
-  ┌─ test/files/invalid/array_support.fbs:2:6
-  │
-2 │   x: [uint8: 1];
-  │      ^^^^^^^^^^
-
