@@ -1,0 +1,10 @@
+// An 8-byte-aligned root (contains a double) so the identifier-with-alignment
+// path is exercised.
+table Message {
+  x: double;
+  n: uint64;
+  tag: ubyte;
+}
+
+root_type Message;
+file_identifier "MSG1";
