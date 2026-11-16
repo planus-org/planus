@@ -1,0 +1,24 @@
+error: Streaming rpc methods are not currently supported
+  ┌─ test/files/invalid/rpc_streaming.fbs:6:17
+  │
+6 │   M1(Foo): Foo (streaming: "client");
+  │                 ^^^^^^^^^^^^^^^^^^^
+
+error: Streaming rpc methods are not currently supported
+  ┌─ test/files/invalid/rpc_streaming.fbs:7:17
+  │
+7 │   M2(Foo): Foo (streaming: "server");
+  │                 ^^^^^^^^^^^^^^^^^^^
+
+error: Streaming rpc methods are not currently supported
+  ┌─ test/files/invalid/rpc_streaming.fbs:8:17
+  │
+8 │   M3(Foo): Foo (streaming: "bidi");
+  │                 ^^^^^^^^^^^^^^^^^
+
+error: Streaming must be one of "none", "client", "server" or "bidi"
+  ┌─ test/files/invalid/rpc_streaming.fbs:9:17
+  │
+9 │   M4(Foo): Foo (streaming: "nonsense");
+  │                 ^^^^^^^^^^^^^^^^^^^^^
+

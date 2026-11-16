@@ -54,9 +54,15 @@ error: cannot define rpc method x twice
 30 │   x(uint32): uint32;
    │   ------------------ second method was here
 
-error: Rpc services are not currently supported
-   ┌─ test/files/invalid/defined_twice.fbs:28:1
+error: Unsupported type
+   ┌─ test/files/invalid/defined_twice.fbs:29:5
    │
-28 │ rpc_service A5 {
-   │ ^^^^^^^^^^^^^^
+29 │   x(string): string;
+   │     ^^^^^^ Rpc methods only support tables as argument and return types
+
+error: Unsupported type
+   ┌─ test/files/invalid/defined_twice.fbs:29:14
+   │
+29 │   x(string): string;
+   │              ^^^^^^ Rpc methods only support tables as argument and return types
 

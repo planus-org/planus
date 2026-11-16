@@ -1,0 +1,26 @@
+  decl{{info.decl_id}}[ label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD colspan="3" PORT="name">rpc_service {{info.name}}</TD>
+      </TR>
+      {%- for (method_id, method) in methods.iter().enumerate() %}
+      <TR>
+        <TD>{{method.name}}</TD>
+        <TD PORT="arg{{method_id}}">{{method.argument_type}}</TD>
+        <TD PORT="ret{{method_id}}">{{method.return_type}}</TD>
+      </TR>
+      {%- endfor %}
+    </TABLE>>
+  ];
+  {%- for (method_id, method) in methods.iter().enumerate() -%}
+  {%- match method.argument_type_ref -%}
+  {%- when Some with (v) %}
+  decl{{info.decl_id}}:arg{{method_id}}:e -> decl{{v}}:name [color = "{{method.argument_color}}"];
+  {%- when None -%}
+  {%- endmatch -%}
+  {%- match method.return_type_ref -%}
+  {%- when Some with (v) %}
+  decl{{info.decl_id}}:ret{{method_id}}:e -> decl{{v}}:name [color = "{{method.return_color}}"];
+  {%- when None -%}
+  {%- endmatch -%}
+  {%- endfor %}

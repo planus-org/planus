@@ -1,0 +1,12 @@
+error: Unsupported type
+   ┌─ test/files/invalid/rpc_bad_types.fbs:11:6
+   │
+11 │   M1(Vec2): Foo;
+   │      ^^^^ Rpc methods only support tables as argument and return types
+
+error: Unsupported type
+   ┌─ test/files/invalid/rpc_bad_types.fbs:12:12
+   │
+12 │   M2(Foo): string;
+   │            ^^^^^^ Rpc methods only support tables as argument and return types
+

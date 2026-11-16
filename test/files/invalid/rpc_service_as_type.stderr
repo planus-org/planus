@@ -1,9 +1,3 @@
-error: Rpc services are not currently supported
-  ┌─ test/files/invalid/rpc_service_as_type.fbs:5:1
-  │
-5 │ rpc_service Bar {
-  │ ^^^^^^^^^^^^^^^
-
 error: Cannot use the RpcService Bar in a type context
   ┌─ test/files/invalid/rpc_service_as_type.fbs:2:6
   │
