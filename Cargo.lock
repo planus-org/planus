@@ -1770,9 +1770,9 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rust-lapper"
-version = "1.3.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aafed57460ca80eb88c33989af3a31348dbde8e68f86f4fe2107c1a5fcd55b8"
+checksum = "30af0ce494f4e7a61d28aa63d1240e53d2cd542881ec20db84fdeca11ead748e"
 dependencies = [
  "num-traits",
 ]
